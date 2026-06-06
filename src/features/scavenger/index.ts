@@ -1,0 +1,1 @@
+export { scavengerFeature } from './feature';
