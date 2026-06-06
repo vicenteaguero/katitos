@@ -1,0 +1,1 @@
+export { gamesFeature } from './feature';
