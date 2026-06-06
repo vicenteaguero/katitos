@@ -1,0 +1,1 @@
+export { languageFeature } from './feature';
