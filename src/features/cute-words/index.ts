@@ -1,0 +1,1 @@
+export { cuteWordsFeature } from './feature';
