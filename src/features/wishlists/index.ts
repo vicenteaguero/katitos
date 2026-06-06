@@ -1,0 +1,1 @@
+export { wishlistsFeature } from './feature';
