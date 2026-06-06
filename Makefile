@@ -15,7 +15,8 @@ POOLER_HOST ?= aws-1-eu-central-1.pooler.supabase.com
 POOLER_PORT ?= 5432
 
 .DEFAULT_GOAL := help
-.PHONY: help link db-push db-diff db-pull functions-deploy deploy
+.PHONY: help link db-push db-diff db-pull functions-deploy deploy \
+        vercel-link vercel-status vercel-env vercel-deploy vercel-prod
 
 # Source creds (set -a exports them so python sees them) + build the session-pooler
 # URL with the password percent-encoded (it can contain `%`, `@`, etc.).
@@ -50,3 +51,21 @@ functions-deploy: ## Deploy edge functions (--use-api = server-side bundle, no D
 	@supabase functions deploy currency-rates --use-api
 
 deploy: db-push functions-deploy ## Push schema + deploy functions
+
+# ── Vercel (CLI already authed; katitos lives in the default scope) ─────────
+VERCEL_PROJECT ?= katitos
+
+vercel-link: ## Link this repo to the Vercel project (creates gitignored .vercel/)
+	@vercel link --yes --project $(VERCEL_PROJECT)
+
+vercel-status: ## Recent deployments
+	@vercel ls $(VERCEL_PROJECT)
+
+vercel-env: ## List production env vars
+	@vercel env ls production
+
+vercel-deploy: ## Deploy a preview build
+	@vercel deploy
+
+vercel-prod: ## Deploy to production (note: git push to main also auto-deploys)
+	@vercel deploy --prod
