@@ -1,0 +1,1 @@
+export { quizzesFeature } from './feature';
