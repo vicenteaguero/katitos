@@ -1,0 +1,23 @@
+# Local development orchestration.
+#
+# The Supabase stack (Postgres, Auth, Storage, Realtime, Studio) is NOT defined
+# here — it is managed by the Supabase CLI, which runs its own Docker Compose
+# project. Start it with `supabase start` (or `npm run supabase:start`).
+#
+# This file runs ONLY the Vite dev server. The browser runs on the host, so the
+# client talks to Supabase at http://127.0.0.1:54321 (set in .env.local via
+# VITE_SUPABASE_URL) — the container itself does not need to reach Supabase.
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: katitos-web
+    ports:
+      - '5173:5173'
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true # reliable file watching on macOS bind mounts
+    restart: unless-stopped
