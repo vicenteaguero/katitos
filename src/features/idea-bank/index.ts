@@ -1,0 +1,1 @@
+export { ideaBankFeature } from './feature';
