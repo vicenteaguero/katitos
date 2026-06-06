@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Design tokens. Visual design is deliberately deferred — these are sane,
+ * neutral placeholders. A future redesign changes ONLY this block.
+ */
+:root {
+  --color-bg: #0f0f12;
+  --color-surface: #18181d;
+  --color-surface-2: #212128;
+  --color-border: #2c2c34;
+  --color-fg: #f4f4f6;
+  --color-muted: #9a9aa6;
+  --color-accent: #e25b7f;
+  --color-accent-fg: #ffffff;
+  --color-danger: #e5484d;
+  --color-success: #46a758;
+  --color-warning: #f5a623;
+
+  --radius: 0.625rem;
+  --radius-lg: 0.875rem;
+  --radius-xl: 1.25rem;
+
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'SF Pro', 'Segoe UI', Roboto, system-ui,
+    sans-serif;
+
+  --app-max-width: 32rem; /* phone-first column */
+
+  color-scheme: dark;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  /* respect iOS safe areas (notch / home indicator) */
+  overscroll-behavior-y: none;
+}
+
+/* Hide scrollbars on the phone column but keep scrollability. */
+@media (max-width: 640px) {
+  ::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+button {
+  font-family: inherit;
+}
