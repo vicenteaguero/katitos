@@ -34,6 +34,142 @@ export type Database = {
   }
   public: {
     Tables: {
+      album_chapters: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          emoji: string | null
+          id: string
+          position: number
+          slug: string
+          subtitle: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          emoji?: string | null
+          id?: string
+          position: number
+          slug: string
+          subtitle?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          emoji?: string | null
+          id?: string
+          position?: number
+          slug?: string
+          subtitle?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      album_slots: {
+        Row: {
+          chapter_id: string
+          created_at: string
+          created_by: string | null
+          gate_end_doy: number | null
+          gate_label: string | null
+          gate_start_doy: number | null
+          hint: string | null
+          id: string
+          is_duo: boolean
+          position: number
+          source: string
+          tier: string
+          title: string
+        }
+        Insert: {
+          chapter_id: string
+          created_at?: string
+          created_by?: string | null
+          gate_end_doy?: number | null
+          gate_label?: string | null
+          gate_start_doy?: number | null
+          hint?: string | null
+          id?: string
+          is_duo?: boolean
+          position: number
+          source?: string
+          tier?: string
+          title: string
+        }
+        Update: {
+          chapter_id?: string
+          created_at?: string
+          created_by?: string | null
+          gate_end_doy?: number | null
+          gate_label?: string | null
+          gate_start_doy?: number | null
+          hint?: string | null
+          id?: string
+          is_duo?: boolean
+          position?: number
+          source?: string
+          tier?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "album_slots_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "album_chapters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      album_stickers: {
+        Row: {
+          caption: string | null
+          created_at: string
+          created_by: string
+          half: string
+          id: string
+          image_path: string
+          location: string | null
+          slot_id: string
+          taken_on: string | null
+          updated_at: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          created_by?: string
+          half?: string
+          id?: string
+          image_path: string
+          location?: string | null
+          slot_id: string
+          taken_on?: string | null
+          updated_at?: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          created_by?: string
+          half?: string
+          id?: string
+          image_path?: string
+          location?: string | null
+          slot_id?: string
+          taken_on?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "album_stickers_slot_id_fkey"
+            columns: ["slot_id"]
+            isOneToOne: false
+            referencedRelation: "album_slots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_opens: {
         Row: {
           id: string
@@ -793,6 +929,135 @@ export type Database = {
         }
         Relationships: []
       }
+      know_me_answers: {
+        Row: {
+          day_id: string
+          guess_choice: string
+          id: string
+          own_choice: string
+          reaction_path: string | null
+          submitted_at: string
+          user_id: string
+        }
+        Insert: {
+          day_id: string
+          guess_choice: string
+          id?: string
+          own_choice: string
+          reaction_path?: string | null
+          submitted_at?: string
+          user_id?: string
+        }
+        Update: {
+          day_id?: string
+          guess_choice?: string
+          id?: string
+          own_choice?: string
+          reaction_path?: string | null
+          submitted_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "know_me_answers_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "know_me_days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      know_me_days: {
+        Row: {
+          couple_day: string
+          created_at: string
+          id: string
+          question_id: string
+        }
+        Insert: {
+          couple_day: string
+          created_at?: string
+          id?: string
+          question_id: string
+        }
+        Update: {
+          couple_day?: string
+          created_at?: string
+          id?: string
+          question_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "know_me_days_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "know_me_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      know_me_presence: {
+        Row: {
+          day_id: string
+          id: string
+          submitted_at: string
+          user_id: string
+        }
+        Insert: {
+          day_id: string
+          id?: string
+          submitted_at?: string
+          user_id?: string
+        }
+        Update: {
+          day_id?: string
+          id?: string
+          submitted_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "know_me_presence_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "know_me_days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      know_me_questions: {
+        Row: {
+          active: boolean
+          category: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_custom: boolean
+          options: Json
+          prompt: string
+        }
+        Insert: {
+          active?: boolean
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_custom?: boolean
+          options: Json
+          prompt: string
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_custom?: boolean
+          options?: Json
+          prompt?: string
+        }
+        Relationships: []
+      }
       phrases: {
         Row: {
           added_by: string
@@ -1030,6 +1295,123 @@ export type Database = {
           },
         ]
       }
+      tree_milestones: {
+        Row: {
+          achieved_at: string
+          couple_day: string
+          created_at: string
+          created_by: string
+          emoji: string | null
+          id: string
+          kind: string
+          note: string | null
+          slot: number
+          threshold: number | null
+          title: string
+        }
+        Insert: {
+          achieved_at?: string
+          couple_day: string
+          created_at?: string
+          created_by?: string
+          emoji?: string | null
+          id?: string
+          kind: string
+          note?: string | null
+          slot: number
+          threshold?: number | null
+          title: string
+        }
+        Update: {
+          achieved_at?: string
+          couple_day?: string
+          created_at?: string
+          created_by?: string
+          emoji?: string | null
+          id?: string
+          kind?: string
+          note?: string | null
+          slot?: number
+          threshold?: number | null
+          title?: string
+        }
+        Relationships: []
+      }
+      tree_state: {
+        Row: {
+          created_at: string
+          current_streak: number
+          growth_points: number
+          id: boolean
+          last_streak_day: string | null
+          last_watered_at: string | null
+          last_watered_by: string | null
+          longest_streak: number
+          planted_at: string
+          seed: number
+          updated_at: string
+          water_count: number
+        }
+        Insert: {
+          created_at?: string
+          current_streak?: number
+          growth_points?: number
+          id?: boolean
+          last_streak_day?: string | null
+          last_watered_at?: string | null
+          last_watered_by?: string | null
+          longest_streak?: number
+          planted_at?: string
+          seed: number
+          updated_at?: string
+          water_count?: number
+        }
+        Update: {
+          created_at?: string
+          current_streak?: number
+          growth_points?: number
+          id?: boolean
+          last_streak_day?: string | null
+          last_watered_at?: string | null
+          last_watered_by?: string | null
+          longest_streak?: number
+          planted_at?: string
+          seed?: number
+          updated_at?: string
+          water_count?: number
+        }
+        Relationships: []
+      }
+      tree_waterings: {
+        Row: {
+          couple_day: string
+          created_at: string
+          growth_added: number
+          health_before: number | null
+          id: string
+          watered_at: string
+          watered_by: string
+        }
+        Insert: {
+          couple_day: string
+          created_at?: string
+          growth_added?: number
+          health_before?: number | null
+          id?: string
+          watered_at?: string
+          watered_by?: string
+        }
+        Update: {
+          couple_day?: string
+          created_at?: string
+          growth_added?: number
+          health_before?: number | null
+          id?: string
+          watered_at?: string
+          watered_by?: string
+        }
+        Relationships: []
+      }
       trip_items: {
         Row: {
           created_at: string
@@ -1262,11 +1644,100 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      know_me_revealed: {
+        Row: {
+          day_id: string | null
+          guess_choice: string | null
+          id: string | null
+          own_choice: string | null
+          reaction_path: string | null
+          submitted_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          day_id?: string | null
+          guess_choice?: string | null
+          id?: string | null
+          own_choice?: string | null
+          reaction_path?: string | null
+          submitted_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          day_id?: string | null
+          guess_choice?: string | null
+          id?: string | null
+          own_choice?: string | null
+          reaction_path?: string | null
+          submitted_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "know_me_answers_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "know_me_days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       is_member: { Args: never; Returns: boolean }
+      know_me_ensure_today: {
+        Args: never
+        Returns: {
+          couple_day: string
+          created_at: string
+          id: string
+          question_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "know_me_days"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      know_me_reveal: {
+        Args: { p_day_id: string }
+        Returns: {
+          guess_choice: string
+          is_self: boolean
+          own_choice: string
+          reaction_path: string
+          user_id: string
+        }[]
+      }
+      know_me_submit: {
+        Args: { p_guess: string; p_own: string }
+        Returns: undefined
+      }
       partner_id: { Args: never; Returns: string }
+      water_tree: {
+        Args: never
+        Returns: {
+          created_at: string
+          current_streak: number
+          growth_points: number
+          id: boolean
+          last_streak_day: string | null
+          last_watered_at: string | null
+          last_watered_by: string | null
+          longest_streak: number
+          planted_at: string
+          seed: number
+          updated_at: string
+          water_count: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "tree_state"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       [_ in never]: never
