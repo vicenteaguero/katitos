@@ -27,8 +27,14 @@ import { georgiaFeature } from '@features/georgia';
 import { scavengerFeature } from '@features/scavenger';
 import { wishlistsFeature } from '@features/wishlists';
 import { languageFeature } from '@features/language';
+import { treeFeature } from '@features/tree';
+import { knowMeFeature } from '@features/know-me';
+import { albumFeature } from '@features/album';
 
 export const features: FeatureModule[] = [
+  treeFeature,
+  knowMeFeature,
+  albumFeature,
   polaroidFeature,
   countdownsFeature,
   quizzesFeature,
