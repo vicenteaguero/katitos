@@ -4,6 +4,9 @@ import { test, expect } from '@playwright/test';
 // authed shell with no uncaught exceptions.
 const ROUTES = [
   '/',
+  '/tree',
+  '/know-me',
+  '/album',
   '/polaroid',
   '/countdowns',
   '/quizzes',
