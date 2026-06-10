@@ -64,3 +64,107 @@ body {
 button {
   font-family: inherit;
 }
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * Our Tree — ambient sway + growth/bloom. Transform/opacity only (GPU).
+ * ────────────────────────────────────────────────────────────────────────── */
+@keyframes tree-sway {
+  0%,
+  100% {
+    transform: rotate(-0.6deg);
+  }
+  50% {
+    transform: rotate(0.6deg);
+  }
+}
+.sway-branch {
+  transform-box: fill-box;
+  transform-origin: bottom center;
+  animation: tree-sway 6s ease-in-out infinite;
+  animation-delay: var(--sway-delay, 0s);
+}
+@keyframes tree-bloom {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.tree-bloom {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: tree-bloom 0.8s ease-out both;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * Pololini Album — book page-flip (3D) + sticker peel/foil.
+ * ────────────────────────────────────────────────────────────────────────── */
+.book-stage {
+  perspective: 2000px;
+}
+.book-leaf {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.book-leaf.snap {
+  transition: transform 280ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.book-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.book-face--back {
+  transform: rotateY(180deg);
+}
+@keyframes album-peel {
+  0% {
+    transform: translateY(-6px) scale(1.08) rotate(-3deg);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.45);
+    opacity: 0.85;
+  }
+  60% {
+    transform: translateY(0) scale(1.02) rotate(1deg);
+  }
+  100% {
+    transform: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    opacity: 1;
+  }
+}
+.album-stick {
+  animation: album-peel 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes album-foil-sheen {
+  0% {
+    background-position: -120% 0;
+  }
+  100% {
+    background-position: 220% 0;
+  }
+}
+.album-foil {
+  background-image: linear-gradient(
+    110deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 60%
+  );
+  background-size: 220% 100%;
+  animation: album-foil-sheen 3.5s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sway-branch,
+  .tree-bloom,
+  .album-stick,
+  .album-foil,
+  .book-leaf.snap {
+    animation: none !important;
+    transition: none !important;
+  }
+}
