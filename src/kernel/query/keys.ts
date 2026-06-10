@@ -93,4 +93,24 @@ export const qk = {
   currency: {
     rates: () => ['currency', 'rates'] as const,
   },
+  tree: {
+    all: () => ['tree'] as const,
+    state: () => ['tree', 'state'] as const,
+    waterings: () => ['tree', 'waterings'] as const,
+    milestones: () => ['tree', 'milestones'] as const,
+  },
+  knowMe: {
+    all: () => ['know-me'] as const,
+    today: () => ['know-me', 'today'] as const,
+    myAnswer: (dayId: string) => ['know-me', dayId, 'mine'] as const,
+    reveal: (dayId: string) => ['know-me', dayId, 'reveal'] as const,
+    history: () => ['know-me', 'history'] as const,
+    stats: () => ['know-me', 'stats'] as const,
+  },
+  album: {
+    all: () => ['album'] as const,
+    chapters: () => ['album', 'chapters'] as const,
+    slots: () => ['album', 'slots'] as const,
+    stickers: () => ['album', 'stickers'] as const,
+  },
 } as const;
