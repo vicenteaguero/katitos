@@ -11,6 +11,8 @@ export { Segmented } from './segmented';
 export type { SegmentOption } from './segmented';
 export { PageHeader } from './page-header';
 export { Fab } from './fab';
+export { FilePickerButton } from './file-picker-button';
+export type { FilePickerButtonProps } from './file-picker-button';
 export { Toaster } from './toaster';
 export { toast, useToastStore } from './toast';
 export type { ToastTone, ToastItem } from './toast';
