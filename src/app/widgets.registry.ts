@@ -13,6 +13,9 @@ import { CurrencyWidget } from '@features/currency';
 import { FlowersWidget } from '@features/flowers';
 import { FightTimerWidget } from '@features/fight-timer';
 import { FinanceWidget } from '@features/finance';
+import { TreeWidget } from '@features/tree';
+import { KnowMeWidget } from '@features/know-me';
+import { AlbumWidget } from '@features/album';
 
 // Dashboard widgets contributed by features. Appended as features are built.
 export const widgets: DashboardWidget[] = [
@@ -51,6 +54,25 @@ export const widgets: DashboardWidget[] = [
     featureId: 'polaroid',
     Component: TodayPolaroidWidget,
     order: 10,
+  }),
+  defineWidget({
+    id: 'tree',
+    featureId: 'tree',
+    Component: TreeWidget,
+    order: 11,
+  }),
+  defineWidget({
+    id: 'know-me',
+    featureId: 'know-me',
+    Component: KnowMeWidget,
+    order: 12,
+  }),
+  defineWidget({
+    id: 'album-progress',
+    featureId: 'album',
+    Component: AlbumWidget,
+    order: 21,
+    size: 2,
   }),
   defineWidget({
     id: 'next-countdown',
