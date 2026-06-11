@@ -38,10 +38,11 @@ export function MilestoneSheet({ milestone, onClose }: MilestoneSheetProps) {
       title={milestone ? `${milestone.emoji ?? '🌟'} ${milestone.title}` : ''}
     >
       {milestone && (
-        <div className="space-y-3">
-          <p className="text-sm text-muted">
+        <div className="space-y-7">
+          <p className="font-sans text-xs font-semibold uppercase tracking-[0.28em] text-success">
             {DateTime.fromISO(milestone.achieved_at).toFormat('LLLL d, yyyy')}
           </p>
+          <div className="seam" aria-hidden="true" />
           <Field label="Note">
             <Textarea
               value={note}
