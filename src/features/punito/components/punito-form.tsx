@@ -53,21 +53,30 @@ export function PunitoForm({
   });
 
   return (
-    <form onSubmit={submit} className="space-y-3">
-      <Field label="Promise" error={errors.title?.message}>
-        <Input placeholder="No phones at dinner" {...register('title')} />
-      </Field>
-      <Field label="Details">
-        <Textarea placeholder="optional" {...register('description')} />
-      </Field>
-      <Field label="Level" error={errors.level?.message}>
-        <Select {...register('level')}>
-          <option value="soft">Soft</option>
-          <option value="serious">Serious</option>
-        </Select>
-      </Field>
+    <form onSubmit={submit} className="space-y-7">
+      <p className="eyebrow text-copper">
+        {initial ? 'Amend the Promise' : 'A New Pinky Promise'}
+      </p>
+
+      <div className="space-y-5">
+        <Field label="Promise" error={errors.title?.message}>
+          <Input placeholder="No phones at dinner" {...register('title')} />
+        </Field>
+        <Field label="Details">
+          <Textarea placeholder="optional" {...register('description')} />
+        </Field>
+        <Field label="Level" error={errors.level?.message}>
+          <Select {...register('level')}>
+            <option value="soft">Soft</option>
+            <option value="serious">Serious</option>
+          </Select>
+        </Field>
+      </div>
+
+      <hr className="seam" aria-hidden="true" />
+
       <Button full type="submit" disabled={isSubmitting}>
-        {initial ? 'Save' : 'Add puñito'}
+        {initial ? 'Save' : 'Seal a new puñito 🤙'}
       </Button>
     </form>
   );
