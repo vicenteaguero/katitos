@@ -58,7 +58,7 @@ export function GoalCard({
         className="block w-full text-left"
         onClick={() => onOpen(goal)}
       >
-        <div className="h-1.5 w-full overflow-hidden bg-surface gilt-hairline-flat">
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
           <div
             className="gold-shimmer h-full bg-success transition-[width]"
             style={{ width: `${pct}%` }}
