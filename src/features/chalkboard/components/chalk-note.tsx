@@ -42,12 +42,12 @@ export function ChalkNoteItem({
       }}
       className="chalk-note group absolute max-w-[220px] cursor-grab touch-none select-none whitespace-pre-wrap break-words rounded-none px-3 pb-2 pt-4 active:cursor-grabbing"
     >
-      {/* The gilt magnet seal pinning the note to the slate */}
+      {/* The round brushed-steel magnet holding the note to the fridge slate */}
       <span
         aria-hidden="true"
-        className="absolute left-1/2 top-0 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle_at_35%_30%,var(--gilt-spark),var(--gilt-bright)_45%,var(--gilt-deep))] shadow-[0_1px_3px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,241,201,0.6)]"
+        className="absolute left-1/2 top-0 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle_at_35%_30%,var(--gilt-spark),var(--gilt-bright)_45%,var(--gilt-deep))] shadow-[0_2px_4px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.7)]"
       />
-      <span className="block font-display text-[1.35rem] font-light italic leading-snug [text-shadow:0_0_1px_rgba(255,255,255,0.25),0_1px_1px_rgba(0,0,0,0.45)]">
+      <span className="block font-display text-[1.35rem] font-light italic leading-snug [text-shadow:0_0_2px_rgba(255,253,245,0.35),0_1px_1px_rgba(0,0,0,0.5)]">
         {note.body}
       </span>
       {canDelete && (
