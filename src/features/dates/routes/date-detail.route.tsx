@@ -62,15 +62,31 @@ function DetailsCard({ date }: { date: DateWithRatings }) {
   };
 
   return (
-    <Card className="space-y-3">
-      <div className="flex items-start justify-between gap-3">
-        <h1 className="min-w-0 text-xl font-bold text-fg">{date.title}</h1>
-        <Badge tone={STATUS_TONES[status]} className="shrink-0">
-          {STATUS_LABELS[status]}
-        </Badge>
+    <Card className="footlight space-y-3">
+      {/* The featured card — lit on a marble stage */}
+      <div className="marble gilt-hairline relative -mx-7 -mt-7 mb-2 px-7 py-8 shadow-catch">
+        <span
+          aria-hidden
+          className="pointer-events-none absolute right-5 top-5 select-none font-display text-2xl leading-none text-purple/60"
+        >
+          ♦
+        </span>
+        <p className="eyebrow mb-3 justify-start text-purple before:hidden">
+          Featured Card
+        </p>
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="min-w-0 font-display text-4xl font-semibold leading-[1.05] tracking-tight text-accent">
+            {date.title}
+          </h1>
+          <Badge tone={STATUS_TONES[status]} className="shrink-0">
+            {STATUS_LABELS[status]}
+          </Badge>
+        </div>
       </div>
       <label className="block space-y-1.5">
-        <span className="block text-sm font-medium text-muted">Status</span>
+        <span className="block font-sans text-xs font-semibold uppercase tracking-[0.18em] text-gold">
+          Status
+        </span>
         <Select
           value={status}
           onChange={(e) => onStatus(e.target.value)}
@@ -83,7 +99,9 @@ function DetailsCard({ date }: { date: DateWithRatings }) {
         </Select>
       </label>
       <label className="block space-y-1.5">
-        <span className="block text-sm font-medium text-muted">Place</span>
+        <span className="block font-sans text-xs font-semibold uppercase tracking-[0.18em] text-gold">
+          Place
+        </span>
         <Input
           defaultValue={date.place ?? ''}
           placeholder="Where to?"
@@ -95,7 +113,9 @@ function DetailsCard({ date }: { date: DateWithRatings }) {
         />
       </label>
       <label className="block space-y-1.5">
-        <span className="block text-sm font-medium text-muted">Category</span>
+        <span className="block font-sans text-xs font-semibold uppercase tracking-[0.18em] text-gold">
+          Category
+        </span>
         <Input
           defaultValue={date.category ?? ''}
           placeholder="Dinner, movie, outdoors…"
@@ -272,18 +292,24 @@ function RatingsCard({ date }: { date: DateWithRatings }) {
     members?.find((m) => m.user_id === r.user_id)?.display_name ?? 'Someone';
 
   return (
-    <Card className="space-y-3">
+    <Card className="space-y-4">
       <CardTitle>Ratings</CardTitle>
-      <ul className="space-y-3">
-        {ratings.map((r) => (
-          <li key={r.user_id} className="space-y-1">
+      <ul className="space-y-0">
+        {ratings.map((r, i) => (
+          <li key={r.user_id} className="space-y-2 py-3 first:pt-0">
+            {/* Both partners' scores stitched by the two-color seam */}
+            {i > 0 && <div className="seam mb-3 -mt-3" aria-hidden />}
             <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-medium text-fg">
+              <span className="font-display text-lg italic text-fg">
                 {memberName(r)}
               </span>
               <StarsDisplay value={r.stars} />
             </div>
-            {r.review && <p className="text-sm text-muted">{r.review}</p>}
+            {r.review && (
+              <p className="font-display text-base italic leading-snug text-muted">
+                “{r.review}”
+              </p>
+            )}
           </li>
         ))}
       </ul>
@@ -305,7 +331,7 @@ function PhotoTile({ photo }: { photo: DatePhotoRow }) {
     );
   };
   return (
-    <div className="relative overflow-hidden rounded-lg bg-surface-2">
+    <div className="gilt-hairline-flat relative overflow-hidden rounded-none bg-surface-2 shadow-catch">
       <DatePhoto
         path={photo.image_path}
         alt={photo.caption ?? 'date photo'}
@@ -315,12 +341,12 @@ function PhotoTile({ photo }: { photo: DatePhotoRow }) {
         label="Delete photo"
         onClick={onDelete}
         disabled={del.isPending}
-        className="absolute right-1 top-1 h-8 w-8 bg-black/50 text-white active:bg-black/70"
+        className="absolute right-1.5 top-1.5 h-8 w-8 rounded-none bg-bg/70 text-fg active:bg-bg/90"
       >
         <Trash2 className="h-4 w-4" />
       </IconButton>
       {photo.caption && (
-        <p className="absolute inset-x-0 bottom-0 truncate bg-black/50 px-2 py-1 text-xs text-white">
+        <p className="absolute inset-x-0 bottom-0 truncate bg-bg/70 px-2.5 py-1.5 font-display text-sm italic text-fg">
           {photo.caption}
         </p>
       )}
@@ -391,9 +417,9 @@ export function DateDetailRoute() {
   const backLink = (
     <Link
       to="/dates"
-      className="inline-flex items-center gap-1 text-sm text-muted"
+      className="inline-flex items-center gap-1 font-sans text-xs font-semibold uppercase tracking-[0.18em] text-gold transition hover:text-fg"
     >
-      <ChevronLeft size={16} /> All dates
+      <ChevronLeft size={16} /> The Deck
     </Link>
   );
 
@@ -409,7 +435,7 @@ export function DateDetailRoute() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="curtain-reveal space-y-6">
       {backLink}
       <DetailsCard date={date} />
       <BudgetCard date={date} />
