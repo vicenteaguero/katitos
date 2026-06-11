@@ -8,7 +8,7 @@ import {
 import { cn } from '../lib/cn';
 
 const base =
-  'w-full rounded border border-border bg-surface-2 px-3 py-2.5 text-fg placeholder:text-muted focus:border-accent focus:outline-none';
+  'w-full rounded-none border border-border bg-surface-2 px-4 py-3 font-sans text-fg shadow-catch placeholder:text-muted transition-colors duration-200 focus:border-gold focus:outline-none focus:shadow-candle';
 
 export const Input = forwardRef<
   HTMLInputElement,
@@ -56,15 +56,19 @@ export function Field({
   children: ReactNode;
 }) {
   return (
-    <label className="block space-y-1.5">
+    <label className="block space-y-2.5">
       {label && (
-        <span className="block text-sm font-medium text-muted">{label}</span>
+        <span className="block font-sans text-xs font-semibold uppercase tracking-[0.18em] text-gold">
+          {label}
+        </span>
       )}
       {children}
       {error ? (
-        <span className="block text-xs text-danger">{error}</span>
+        <span className="block font-sans text-xs text-danger">{error}</span>
       ) : (
-        hint && <span className="block text-xs text-muted">{hint}</span>
+        hint && (
+          <span className="block font-sans text-xs text-muted">{hint}</span>
+        )
       )}
     </label>
   );
