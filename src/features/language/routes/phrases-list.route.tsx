@@ -47,41 +47,52 @@ export function PhrasesListRoute() {
   const hasPhrases = !!data && data.length > 0;
 
   return (
-    <div>
-      <PageHeader title="Language" subtitle="Teach each other" />
+    <div className="curtain-reveal space-y-12">
+      <PageHeader title="Language" subtitle="Learning each other's tongue 💙" />
 
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <Segmented
-          options={LANG_OPTIONS}
-          value={language}
-          onChange={setLanguage}
-        />
-        {hasPhrases && (
-          <Link to={`/language/practice/${language}`}>
-            <Button variant="secondary" size="sm">
-              <GraduationCap size={16} /> Practice
-            </Button>
-          </Link>
-        )}
-      </div>
+      <section className="space-y-7">
+        <p className="eyebrow">The Phrasebook</p>
 
-      {isLoading ? (
-        <LoadingScreen />
-      ) : isError ? (
-        <Empty icon="⚠️" title="Couldn't load" hint="Try again in a moment." />
-      ) : !hasPhrases ? (
-        <Empty
-          icon="🗣️"
-          title={`No ${LANG_LABELS[language]} phrases yet`}
-          hint="Tap + to teach your partner something new."
-        />
-      ) : (
-        <div className="space-y-3">
-          {data.map((p) => (
-            <PhraseCard key={p.id} phrase={p} onDelete={handleDelete} />
-          ))}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Segmented
+            options={LANG_OPTIONS}
+            value={language}
+            onChange={setLanguage}
+          />
+          {hasPhrases && (
+            <Link to={`/language/practice/${language}`}>
+              <Button variant="secondary" size="sm">
+                <GraduationCap size={16} /> Practice
+              </Button>
+            </Link>
+          )}
         </div>
-      )}
+
+        {/* The relationship as one gold-stitched line — her tongue to his. */}
+        <hr className="seam" aria-hidden="true" />
+
+        {isLoading ? (
+          <LoadingScreen />
+        ) : isError ? (
+          <Empty
+            icon="⚠️"
+            title="Couldn't load"
+            hint="Try again in a moment."
+          />
+        ) : !hasPhrases ? (
+          <Empty
+            icon="🗣️"
+            title={`No ${LANG_LABELS[language]} phrases yet`}
+            hint="Tap + to teach your partner something new."
+          />
+        ) : (
+          <div className="curtain-stagger space-y-4">
+            {data.map((p) => (
+              <PhraseCard key={p.id} phrase={p} onDelete={handleDelete} />
+            ))}
+          </div>
+        )}
+      </section>
 
       <Fab label="Add phrase" onClick={() => setAdding(true)}>
         <Plus />
