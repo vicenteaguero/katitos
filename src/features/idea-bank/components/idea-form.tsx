@@ -53,19 +53,22 @@ export function IdeaForm({
   });
 
   return (
-    <form onSubmit={submit} className="space-y-3">
-      <Field label="Title" error={errors.title?.message}>
-        <Input
-          placeholder="Plan a virtual movie night"
-          {...register('title')}
-        />
-      </Field>
-      <Field label="Category">
-        <Input placeholder="optional" {...register('category')} />
-      </Field>
-      <Field label="Description">
-        <Textarea placeholder="optional" {...register('description')} />
-      </Field>
+    <form onSubmit={submit} className="space-y-7">
+      <p className="eyebrow">Into the vault</p>
+      <div className="space-y-5">
+        <Field label="Title" error={errors.title?.message}>
+          <Input
+            placeholder="Plan a virtual movie night"
+            {...register('title')}
+          />
+        </Field>
+        <Field label="Category">
+          <Input placeholder="optional" {...register('category')} />
+        </Field>
+        <Field label="Description">
+          <Textarea placeholder="optional" {...register('description')} />
+        </Field>
+      </div>
       <Button full type="submit" disabled={isSubmitting}>
         {initial ? 'Save' : 'Add idea'}
       </Button>
