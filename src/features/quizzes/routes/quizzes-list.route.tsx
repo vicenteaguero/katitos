@@ -5,7 +5,6 @@ import { qk } from '@kernel/query';
 import { useTableSync } from '@kernel/realtime';
 import {
   Badge,
-  Card,
   Empty,
   Fab,
   IconButton,
@@ -29,46 +28,58 @@ export function QuizzesListRoute() {
   const [building, setBuilding] = useState(false);
 
   return (
-    <div>
+    <div className="curtain-reveal">
       <PageHeader
         title="Quizzes"
         subtitle="Make them, play them, compare, laugh"
       />
+
+      <p className="eyebrow mb-8 text-copper before:bg-copper after:bg-copper">
+        Tonight's Programme
+      </p>
 
       {isLoading ? (
         <LoadingScreen />
       ) : !data || data.length === 0 ? (
         <Empty icon="🃏" title="No quizzes yet" hint="Tap + to make one." />
       ) : (
-        <div className="space-y-3">
-          {data.map((d) => (
-            <Card
+        <div className="curtain-stagger space-y-4">
+          {data.map((d, i) => (
+            <div
               key={d.id}
-              className="flex items-center justify-between gap-3"
+              style={{ '--i': i } as React.CSSProperties}
+              className="velvet-2 gilt-hairline group relative flex items-stretch gap-4 rounded-none shadow-loge"
             >
               <Link
                 to={`/quizzes/${d.id}`}
-                className="flex min-w-0 flex-1 items-center gap-3"
+                className="lift-press flex min-w-0 flex-1 items-center gap-4 p-6"
               >
-                <span className="text-2xl">{emojiFor(d.kind)}</span>
-                <div className="min-w-0">
-                  <p className="truncate font-semibold">{d.title}</p>
+                {/* The playbill seat-number: the deck's emoji on a gilt-framed tile */}
+                <span className="gilt-hairline-flat candle-flicker flex h-14 w-14 shrink-0 items-center justify-center rounded-none bg-surface text-3xl shadow-catch">
+                  {emojiFor(d.kind)}
+                </span>
+                <div className="min-w-0 space-y-2">
+                  <p className="truncate font-display text-2xl font-medium leading-none tracking-tight text-fg">
+                    {d.title}
+                  </p>
                   <Badge tone="accent">{d.mode}</Badge>
                 </div>
               </Link>
-              <IconButton
-                label="Delete"
-                onClick={() => {
-                  if (confirm(`Delete "${d.title}"?`))
-                    del.mutate(d.id, {
-                      onSuccess: () => toast.success('Deleted'),
-                      onError: (e) => toast.error(e.message),
-                    });
-                }}
-              >
-                <Trash2 className="h-4 w-4" />
-              </IconButton>
-            </Card>
+              <div className="flex items-center pr-5">
+                <IconButton
+                  label="Delete"
+                  onClick={() => {
+                    if (confirm(`Delete "${d.title}"?`))
+                      del.mutate(d.id, {
+                        onSuccess: () => toast.success('Deleted'),
+                        onError: (e) => toast.error(e.message),
+                      });
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </IconButton>
+              </div>
+            </div>
           ))}
         </div>
       )}
