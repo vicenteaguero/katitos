@@ -47,14 +47,14 @@ export function TreeWidget() {
 
   return (
     <Link to="/tree">
-      <Card className="flex h-full flex-col">
+      <Card className="footlight flex h-full flex-col">
         <CardTitle>Our Tree</CardTitle>
         {bounds && (
           <svg
             viewBox={`${bounds.minX - 20} ${bounds.minY - 20} ${
               bounds.maxX - bounds.minX + 40
             } ${bounds.maxY - bounds.minY + 40}`}
-            className="my-1 h-20 w-full"
+            className="my-2 h-20 w-full"
             preserveAspectRatio="xMidYMax meet"
           >
             <g>
@@ -73,7 +73,7 @@ export function TreeWidget() {
                       cx={x2}
                       cy={y2}
                       r={Math.max(1.5, seg.width + 1)}
-                      fill="#4caf50"
+                      fill="var(--color-success)"
                       opacity={0.85}
                     />
                   );
@@ -85,7 +85,7 @@ export function TreeWidget() {
                     y1={seg.y1}
                     x2={x2}
                     y2={y2}
-                    stroke="#6b4423"
+                    stroke="var(--color-brown)"
                     strokeWidth={seg.width}
                     strokeLinecap="round"
                     className={
@@ -104,7 +104,9 @@ export function TreeWidget() {
             </g>
           </svg>
         )}
-        <p className="mt-auto text-sm font-semibold text-accent">{status}</p>
+        <p className="mt-auto font-sans text-xs font-semibold uppercase tracking-[0.18em] text-success">
+          {status}
+        </p>
       </Card>
     </Link>
   );
