@@ -18,7 +18,7 @@ export function OptionGrid({
   locked?: boolean;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div className="grid grid-cols-2 gap-3.5">
       {options.map((o) => (
         <button
           key={o.id}
@@ -26,19 +26,21 @@ export function OptionGrid({
           disabled={locked}
           onClick={() => onSelect(o.id)}
           className={cn(
-            'flex flex-col gap-2 rounded-lg border p-3 text-left transition active:scale-95 disabled:active:scale-100',
+            'lift-press flex flex-col gap-3 rounded-none p-4 text-left shadow-catch outline-none transition focus-visible:shadow-candle disabled:pointer-events-none',
             selected === o.id
-              ? 'border-accent bg-accent/10'
-              : 'border-border bg-surface-2'
+              ? 'gilt-hairline bg-purple/25 text-fg shadow-candle'
+              : 'gilt-hairline-flat velvet-2 text-muted hover:text-fg'
           )}
         >
           {o.imagePath && (
             <KnowMeImage
               path={o.imagePath}
-              className="h-24 w-full rounded object-cover"
+              className="h-24 w-full rounded-none object-cover"
             />
           )}
-          <span className="text-sm font-medium">{o.label}</span>
+          <span className="font-sans text-sm font-semibold tracking-[0.01em]">
+            {o.label}
+          </span>
         </button>
       ))}
     </div>
