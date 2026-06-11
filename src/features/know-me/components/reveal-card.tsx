@@ -46,7 +46,7 @@ export function RevealCard({
         {today.question.prompt}
       </p>
 
-      <div className="gilt-hairline-flat velvet-2 space-y-3 rounded-none p-5 font-sans text-sm shadow-catch">
+      <div className="bg-surface-2 space-y-3 rounded-lg p-5 font-sans text-sm">
         <div className="text-muted">
           You really are:{' '}
           <b className="font-semibold text-fg">
@@ -105,10 +105,10 @@ export function RevealCard({
               {row?.reaction_path ? (
                 <KnowMeImage
                   path={row.reaction_path}
-                  className="gilt-hairline aspect-square w-full rounded-none object-cover shadow-catch"
+                  className="aspect-square w-full rounded-lg object-cover"
                 />
               ) : (
-                <div className="gilt-hairline-flat velvet-2 flex aspect-square w-full items-center justify-center rounded-none text-3xl text-muted shadow-catch">
+                <div className="bg-surface-2 flex aspect-square w-full items-center justify-center rounded-lg text-3xl text-muted">
                   {who === 'me' ? '🙂' : (partner?.emoji ?? '❤️')}
                 </div>
               )}
