@@ -49,11 +49,11 @@ export function DaysTogetherRoute() {
     <div className="curtain-reveal space-y-12">
       <PageHeader title="Together" subtitle={`since ${start}`} />
 
-      {/* The running tally — a lit marble stage, the grand gilt numeral. */}
+      {/* The running tally — a lit tonal stage, the grand gilt numeral. */}
       <section className="space-y-7">
         <p className="eyebrow">Our Running Tally</p>
         <div className="footlight">
-          <div className="marble gilt-hairline relative overflow-hidden rounded-none px-7 py-12 text-center shadow-loge">
+          <div className="relative overflow-hidden rounded-lg bg-surface-2 px-7 py-12 text-center">
             <p className="font-display text-base font-medium uppercase tracking-[0.28em] text-brown">
               Days Together
             </p>
@@ -70,7 +70,9 @@ export function DaysTogetherRoute() {
 
       {/* The supporting program — small gilded loge cards. */}
       <section className="space-y-7">
-        <p className="eyebrow">The Program</p>
+        <p className="font-sans text-xs font-semibold uppercase tracking-[0.18em] text-muted">
+          The Program
+        </p>
         <div className="grid grid-cols-2 gap-3">
           <Card className="text-center">
             <CardTitle className="text-lg">Weeks</CardTitle>
@@ -89,7 +91,9 @@ export function DaysTogetherRoute() {
 
       {/* The next act — the countdown to come. */}
       <section className="space-y-7">
-        <p className="eyebrow">The Next Act</p>
+        <p className="font-sans text-xs font-semibold uppercase tracking-[0.18em] text-muted">
+          The Next Act
+        </p>
         <Card className="text-center">
           <CardTitle>Next monthsversary</CardTitle>
           <p className="gilt-text gold-shimmer mt-4 font-display text-3xl font-semibold tabular-nums">
