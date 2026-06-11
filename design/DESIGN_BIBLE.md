@@ -1,16 +1,40 @@
 # Katitos — DESIGN BIBLE
 
+> ## ⚠️ DIRECTION OVERRIDE (2026-06 — read first, supersedes everything below)
+>
+> The owners corrected the direction. These rules WIN over any "Bolshoi / opera / velvet / gold leaf" language later in this file:
+>
+> 1. **NO YELLOW GOLD.** The one metal is **WHITE GOLD / silver** (cool, pale). Tokens `--color-border`, `--gold`, `--gilt-*` and classes `.gilt-text` / `.gold-shimmer` / `text-gold` now resolve to white-gold — keep using them, but never add a yellow/amber hex.
+> 2. **NO VELVET / opera-floor textures.** Surfaces are **flat, clean, modern**. `.velvet` / `.velvet-2` are now plain flat panels. This is an **app**, not a theatre floor.
+> 3. **Palette:** wine red (accent) · white-gold/silver · black & white · her **purple/brown** · his **olive/cream**. NOVAT-inspired = the great **silver** dome (silver, not gold).
+> 4. **Fast & flowing**: light DOM, short snappy transitions, no heavy gradients/grain/footlight overlays.
+> 5. **Square corners** stay. Direction name is now **"Silver Hall."**
+>    Everything below is kept for structure (type scale, motion, spacing, signatures) — re-read it through these five rules.
+
 **The single source of truth.** Every later agent MUST obey this document. When a
 detail is ambiguous, this file wins. When you add a feature, you do not invent a
 new visual language — you _perform within this one_.
 
 ---
 
-## 0. The Direction — "Bolshoi Nocturne"
+## 0. The Direction — "NOVAT Nocturne — The Silver Dome"
 
 > _An imperial opera box rendered in oxblood velvet, candle-warmed gold leaf, and
-> snow-marble — where her wine-purple royalty and his olive-cream warmth meet on a
-> black-and-white stage, every square edge framed in a single gilt hairline._
+> snow-marble — crowned now by the colossal silver-grey cupola of the NOVAT, the
+> largest theatre in Russia. Where her wine-purple royalty and his olive-cream
+> warmth meet on a black-and-white stage, beneath a monumental dome and grand
+> colonnade, every square edge framed in a single gilt hairline._
+
+This direction **evolves** "Bolshoi Nocturne" — it does not replace it. Every
+existing token, class, and keyframe stays intact and backward-compatible. We now
+draw a second architectural layer over the velvet house: the **NOVAT** — the
+Новосибирский театр оперы и балета, the Novosibirsk Opera and Ballet Theatre, the
+largest theatre building in Russia (the "Siberian Coliseum"). Where Bolshoi
+Nocturne gave us the _interior_ (velvet, candle, gilt), the NOVAT layer gives us
+the **monumental architecture**: the silver dome, the colonnade, the chandelier,
+and Stalinist-classical scale. Silver is the one cool note added — the
+monumental stone of the building's exterior — used sparingly so the palette stays
+wine/gold/purple/olive/cream.
 
 Katitos is a private love app for two: **Anastasia** (Russia) and **Vicente**
 (Chile). Long-distance, international. The brand mark is a cat head with
@@ -318,6 +342,67 @@ light always falls from **above** (top catch-light) and **below** (footlight).
 
 ---
 
+## 9b. The NOVAT architectural layer — the Silver Dome (NEW)
+
+The NOVAT gives Katitos its **monumental exterior**. Bolshoi Nocturne is the warm
+interior you sit in; the NOVAT layer is the great building you walk up to. Used
+**sparingly and structurally** — one architectural moment per feature (§10), never
+clutter. The palette is unchanged: wine/gold/purple/olive/cream remain the soul.
+**Silver is the only new note** — the cool monumental stone of the dome and
+colonnade, plus a rare crystal-white highlight for the chandelier's sparkle.
+
+### Confirmed NOVAT signatures (researched) → UI motifs
+
+| NOVAT signature (real building)                                                                                                                                   | Translated to UI                                                                                              |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| **The colossal silver-grey DOME** — 60m wide, 35m high, one of the largest domes in Russia (the Bolshoi could fit inside); self-supporting, smooth/ribbed cupola. | `.dome` — a crowning semicircular ribbed cupola ornament atop a hero, in silver/pewter with a gilt rim.       |
+| **The grand neoclassical COLONNADE / portico** — a long row of tall fluted columns across the monumental façade.                                                  | `.colonnade` frame/divider + `.fluting` texture — slender fluted verticals capped by a gilt entablature line. |
+| **Monumental Stalinist-classical SCALE & axial SYMMETRY** — the "Siberian Coliseum," everything centered and grand.                                               | `.monument` type helper — extra-tall tracking, centered, stone-weight grand titles.                           |
+| **The great CRYSTAL CHANDELIER & COFFERED ceilings** of the deep red + gold + crystal-white hall.                                                                 | `.chandelier` radial crystal ornament (centerpiece/divider) + `.coffer` coffered inset grid texture.          |
+
+### The new tokens
+
+| Token           | Hex / value   | Name          | When to use                                                                        |
+| --------------- | ------------- | ------------- | ---------------------------------------------------------------------------------- |
+| `--silver`      | `#AEB4BC`     | Dome Pewter   | The cool monumental stone of the dome/colonnade. Sparing — never a romantic color. |
+| `--pewter`      | `#6E747C`     | Shadow Pewter | The shaded/ribbed side of silver stone; pole of the silver gradient.               |
+| `--crystal`     | `#EAF2FF`     | Crystal Light | Cool white-blue chandelier highlight. The rarest sparkle — used in single points.  |
+| `--grad-dome`   | radial cupola | Cupola        | The ribbed/coffered radial fill of the dome's curve.                               |
+| `--grad-silver` | linear pewter | Stone Sheen   | The brushed-stone sheen on silver surfaces / column fluting.                       |
+
+Tailwind: `text-silver bg-silver border-silver`, `text-pewter bg-pewter`,
+`text-crystal bg-crystal`.
+
+### The four NOVAT classes
+
+| Class         | What it does                                                                                                                                                              |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.dome`       | A crowning **semicircular ribbed cupola** header ornament (conic ribs + radial cupola shade + a gilt rim line). Sits atop a hero section as the silver dome of the house. |
+| `.coffer`     | A subtle **coffered-ceiling inset grid** texture (a faint recessed-square lattice) for ceilings/headers.                                                                  |
+| `.colonnade`  | A **row-of-columns** frame/divider: repeating fluted verticals (silver) capped by a gilt **entablature** hairline.                                                        |
+| `.fluting`    | Vertical **column fluting** texture for tall panels — the channeled face of a fluted column.                                                                              |
+| `.chandelier` | A **radial crystal light** ornament: concentric gilt rings + crystal sparkle points. Hero centerpiece / divider; gentle `.chandelier-glow` (transform/opacity only).      |
+| `.monument`   | **Monumental type helper** — extra-tall letter-tracking, centered, stone weight, for the grand titles.                                                                    |
+
+All NOVAT motion (`chandelier-glow`) is `transform`/`opacity` only and fully
+disabled under `prefers-reduced-motion: reduce` (static fallback). Square corners
+remain law — the dome's curve is an ornament _drawn inside_ a square box, never a
+border-radius on a panel.
+
+### NOVAT signature per feature (one architectural moment each)
+
+Each feature earns **exactly one** NOVAT architectural moment, never all of them:
+
+- a **domed hero** (`.dome` crowning the title), OR
+- a **colonnade frame** (`.colonnade` / `.fluting` framing tall content), OR
+- a **chandelier ornament** (`.chandelier` as a hero centerpiece or section divider).
+
+Plus, optionally, `.monument` on the single grandest title and a whisper of
+`.coffer` on a header ceiling. Silver and crystal appear only here — they never
+leak into romantic actions, which stay wine/gold/purple/olive/cream.
+
+---
+
 ## 10. Feature signature guideline — how each feature gets its OWN identity
 
 Every feature stays inside this language but earns a distinct character by choosing
@@ -340,7 +425,11 @@ Recipe for a new feature:
    `.curtain-reveal`.
 3. **Pick a texture moment**: most screens are `.velvet`; a feature may earn ONE
    `.marble` "lit stage" panel for its hero, or a `.footlight` behind its title.
-4. **Always** wear the gilt hairline frame, square corners, the eyebrow, and respect
+4. **Pick ONE NOVAT architectural moment** (§9b): a domed hero (`.dome`), a
+   colonnade frame (`.colonnade`/`.fluting`), or a chandelier ornament
+   (`.chandelier`). One per feature — never stack them. `.monument` may grace the
+   single grandest title; `.coffer` may whisper on a header.
+5. **Always** wear the gilt hairline frame, square corners, the eyebrow, and respect
    spacing (§5) + reduced-motion (§7).
 
 Examples (existing): **Our Tree** → success/olive accent, `tree-sway`/`tree-bloom`,
