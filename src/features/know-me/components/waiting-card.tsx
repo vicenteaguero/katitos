@@ -24,11 +24,11 @@ export function WaitingCard({
 
   return (
     <Card className="km-candle space-y-7 text-center">
-      <p className="eyebrow">Before the Curtain</p>
+      <p className="font-sans text-sm text-muted">Before the Curtain</p>
       <p className="font-display text-3xl font-medium leading-tight tracking-tight text-fg">
         {today.question.prompt}
       </p>
-      <div className="gilt-hairline-flat velvet-2 space-y-2 rounded-none p-5 text-left font-sans text-sm text-muted shadow-catch">
+      <div className="bg-surface-2 space-y-2 rounded-lg p-5 text-left font-sans text-sm text-muted">
         <div>
           You said:{' '}
           <b className="font-semibold text-fg">{labelOf(ownChoice)}</b>
