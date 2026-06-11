@@ -52,7 +52,7 @@ export function FightTimerRoute() {
           className="footlight candle-flicker pointer-events-none absolute inset-x-0 -top-6 -bottom-10 -z-10"
           aria-hidden="true"
         />
-        <PageHeader title="Fights" subtitle="We always make up 💛" />
+        <PageHeader title="Fights" subtitle="We always make up ❤️" />
       </div>
 
       {isLoading ? (
@@ -67,7 +67,7 @@ export function FightTimerRoute() {
               <Card className="space-y-6 text-center">
                 <CardTitle>No fight right now</CardTitle>
                 <p className="font-sans text-sm leading-relaxed text-muted">
-                  All good between us 💛
+                  All good between us ❤️
                 </p>
                 <Button
                   full
