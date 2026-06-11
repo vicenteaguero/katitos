@@ -1,16 +1,48 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router';
+import type { ComponentType } from 'react';
 import { Home, LayoutGrid, Settings } from 'lucide-react';
 import { Sheet } from '@kernel/ui';
 import { cn } from '@kernel/lib';
 import { featureRegistry } from '../features.registry';
 
+type NavIcon = ComponentType<{ className?: string }>;
+
 const PRIMARY_LIMIT = 3;
 
-function navItemClass(active: boolean): string {
-  return cn(
-    'flex flex-1 flex-col items-center gap-0.5 py-2 text-xs',
-    active ? 'text-accent' : 'text-muted'
+function NavItem({
+  active,
+  icon: Icon,
+  label,
+}: {
+  active: boolean;
+  icon: NavIcon;
+  label: string;
+}) {
+  return (
+    <span
+      className={cn(
+        'relative flex flex-1 flex-col items-center justify-center gap-1 px-1 py-2.5',
+        'min-h-[44px] font-sans text-[0.6875rem] font-semibold uppercase tracking-[0.14em]',
+        'transition-colors duration-200',
+        active ? 'text-gold' : 'text-muted'
+      )}
+    >
+      <Icon
+        className={cn(
+          'h-5 w-5 transition-colors duration-200',
+          active ? 'text-accent' : 'text-muted'
+        )}
+      />
+      <span className="max-w-16 truncate">{label}</span>
+      {active && (
+        <span
+          aria-hidden="true"
+          className="draw-rule absolute inset-x-3 top-0 h-px"
+          style={{ background: 'var(--grad-gilt)' }}
+        />
+      )}
+    </span>
   );
 }
 
@@ -24,23 +56,19 @@ export function BottomNav() {
 
   return (
     <>
-      <nav className="fixed inset-x-0 bottom-0 z-30 mx-auto flex max-w-app items-stretch border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
-        <NavLink
-          to="/"
-          end
-          className={({ isActive }) => navItemClass(isActive)}
-        >
-          <Home className="h-5 w-5" />
-          Home
+      <nav className="velvet-2 gilt-hairline-flat fixed inset-x-0 bottom-0 z-30 mx-auto flex max-w-app items-stretch rounded-none border-x-0 border-b-0 border-t pb-[env(safe-area-inset-bottom)] shadow-loge backdrop-blur">
+        <NavLink to="/" end className="flex flex-1 lift-press">
+          {({ isActive }) => (
+            <NavItem active={isActive} icon={Home} label="Home" />
+          )}
         </NavLink>
 
         {primary.map((e) => {
           const Icon = e.icon;
           const active = location.pathname.startsWith(e.to);
           return (
-            <NavLink key={e.to} to={e.to} className={navItemClass(active)}>
-              <Icon className="h-5 w-5" />
-              <span className="max-w-16 truncate">{e.label}</span>
+            <NavLink key={e.to} to={e.to} className="flex flex-1 lift-press">
+              <NavItem active={active} icon={Icon} label={e.label} />
             </NavLink>
           );
         })}
@@ -48,40 +76,46 @@ export function BottomNav() {
         <button
           type="button"
           onClick={() => setMoreOpen(true)}
-          className={navItemClass(false)}
+          className="flex flex-1 lift-press"
         >
-          <LayoutGrid className="h-5 w-5" />
-          More
+          <NavItem active={false} icon={LayoutGrid} label="More" />
         </button>
       </nav>
 
       <Sheet
         open={moreOpen}
         onClose={() => setMoreOpen(false)}
-        title="Everything"
+        title="The Program"
       >
-        <div className="grid grid-cols-3 gap-3 pb-2">
-          {entries.map((e) => {
+        <p className="eyebrow mb-7">The Repertoire</p>
+        <div className="curtain-stagger grid grid-cols-3 gap-3.5 pb-2">
+          {entries.map((e, i) => {
             const Icon = e.icon;
             return (
               <NavLink
                 key={e.to}
                 to={e.to}
                 onClick={() => setMoreOpen(false)}
-                className="flex flex-col items-center gap-1.5 rounded-lg border border-border bg-surface-2 p-3 text-center text-xs text-fg"
+                style={{ '--i': i } as React.CSSProperties}
+                className="velvet gilt-hairline-flat lift-press flex flex-col items-center gap-2 rounded-none p-4 text-center"
               >
-                <Icon className="h-6 w-6 text-accent" />
-                <span className="truncate">{e.label}</span>
+                <Icon className="h-6 w-6 text-gold" />
+                <span className="font-sans text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-fg truncate max-w-full">
+                  {e.label}
+                </span>
               </NavLink>
             );
           })}
           <NavLink
             to="/settings"
             onClick={() => setMoreOpen(false)}
-            className="flex flex-col items-center gap-1.5 rounded-lg border border-border bg-surface-2 p-3 text-center text-xs text-fg"
+            style={{ '--i': entries.length } as React.CSSProperties}
+            className="velvet gilt-hairline-flat lift-press flex flex-col items-center gap-2 rounded-none p-4 text-center"
           >
-            <Settings className="h-6 w-6 text-accent" />
-            <span>Settings</span>
+            <Settings className="h-6 w-6 text-gold" aria-hidden="true" />
+            <span className="font-sans text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-fg">
+              Settings
+            </span>
           </NavLink>
         </div>
       </Sheet>
