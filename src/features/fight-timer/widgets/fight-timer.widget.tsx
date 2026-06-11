@@ -9,7 +9,7 @@ export function FightTimerWidget() {
   const now = useNow(1000);
 
   let body = (
-    <p className="mt-2 font-display text-lg italic text-muted">All good 💛</p>
+    <p className="mt-2 font-display text-lg italic text-muted">All good ❤️</p>
   );
   if (active) {
     const dur = now
