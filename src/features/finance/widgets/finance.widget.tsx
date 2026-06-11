@@ -19,16 +19,16 @@ export function FinanceWidget() {
         <CardTitle>Saving for us</CardTitle>
         {goal ? (
           <>
-            <p className="mt-1 truncate text-base font-semibold">
+            <p className="mt-1 truncate font-display text-lg font-semibold tracking-tight text-fg">
               {goal.title}
             </p>
-            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-surface-2">
+            <div className="mt-3 h-1.5 w-full overflow-hidden bg-surface gilt-hairline-flat">
               <div
-                className="h-full rounded-full bg-accent"
+                className="gold-shimmer h-full bg-success"
                 style={{ width: `${pct}%` }}
               />
             </div>
-            <p className="mt-1 text-2xl font-bold tabular-nums text-accent">
+            <p className="gilt-text mt-2 text-3xl font-semibold tabular-nums">
               {pct}%
             </p>
           </>
