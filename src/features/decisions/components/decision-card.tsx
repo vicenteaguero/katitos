@@ -20,17 +20,21 @@ export function DecisionCard({
   const isAgreed = decision.status === 'agreed';
 
   return (
-    <Card className="space-y-3">
+    <Card className="space-y-6">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <h3 className="truncate font-semibold">{decision.topic}</h3>
+          <div className="flex items-center gap-3">
+            <h3 className="truncate font-display text-2xl font-semibold leading-tight tracking-tight text-fg">
+              {decision.topic}
+            </h3>
             <Badge tone={isAgreed ? 'success' : 'neutral'}>
               {isAgreed ? 'Agreed' : 'Open'}
             </Badge>
           </div>
           {decision.description && (
-            <p className="mt-1 text-sm text-muted">{decision.description}</p>
+            <p className="mt-2 font-sans text-sm leading-relaxed text-muted">
+              {decision.description}
+            </p>
           )}
         </div>
         <div className="flex shrink-0 gap-1">
@@ -40,18 +44,20 @@ export function DecisionCard({
         </div>
       </div>
 
+      {/* The dramatic verdict — settled on a lit marble plate, the agreed
+          value gilded with a slow gold-foil sweep. The feature's signature. */}
       {isAgreed && (
-        <div className="rounded bg-success/15 px-3 py-2 text-success">
-          <span className="text-xs font-medium uppercase tracking-wide">
-            Agreed on
-          </span>
-          <p className="text-lg font-semibold">
+        <div className="marble gilt-hairline relative px-6 py-5 text-center shadow-loge">
+          <p className="eyebrow !text-brown">Settled On</p>
+          <p className="gilt-text gold-shimmer mt-3 font-display text-5xl font-semibold leading-none tracking-tight">
             {decision.agreed_value ?? '—'}
           </p>
         </div>
       )}
 
-      <ul className="space-y-1 text-sm">
+      <div className="seam" aria-hidden="true" />
+
+      <ul className="space-y-2 font-sans text-sm">
         {(members ?? []).map((m) => {
           const pos = decision.decision_positions.find(
             (p) => p.user_id === m.user_id
@@ -62,7 +68,9 @@ export function DecisionCard({
                 {m.emoji ? `${m.emoji} ` : ''}
                 {m.display_name}:
               </span>
-              <span className="font-medium">{pos?.position ?? '—'}</span>
+              <span className="font-display text-lg font-semibold tracking-tight text-fg">
+                {pos?.position ?? '—'}
+              </span>
               {pos?.note && (
                 <span className="truncate text-xs text-muted">
                   — {pos.note}
