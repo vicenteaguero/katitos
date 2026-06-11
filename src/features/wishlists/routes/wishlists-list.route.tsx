@@ -60,8 +60,13 @@ export function WishlistsListRoute() {
   });
 
   return (
-    <div>
-      <PageHeader title="Wishlists" subtitle="Swipe together" />
+    <div className="curtain-reveal">
+      <PageHeader
+        title="Wishlists"
+        subtitle="A registry of things we wish for"
+      />
+
+      <p className="eyebrow mb-8">The Registry</p>
 
       {isLoading ? (
         <LoadingScreen />
@@ -69,12 +74,12 @@ export function WishlistsListRoute() {
         <Empty icon="⚠️" title="Couldn't load" hint="Try again in a moment." />
       ) : !data || data.length === 0 ? (
         <Empty
-          icon="💚"
-          title="No wishlists yet"
-          hint="Tap + to start a list you'll swipe through together."
+          icon="🕮"
+          title="An empty registry"
+          hint="Tap + to begin a curated list you'll swipe through together."
         />
       ) : (
-        <div className="space-y-3">
+        <div className="curtain-stagger space-y-6">
           {data.map((list) => (
             <WishlistCard key={list.id} list={list} />
           ))}
