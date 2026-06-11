@@ -51,21 +51,30 @@ export function BabyNameCard({ name }: { name: BabyNameWithVotes }) {
     members?.find((m) => m.user_id === v.user_id)?.display_name ?? 'Someone';
 
   return (
-    <Card className="space-y-3">
+    <Card className="space-y-5">
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="truncate text-lg font-semibold">{name.name}</h3>
+        {/* The dreamed name on a lit ivory stage — Cormorant, like an engraved nameplate. */}
+        <div className="marble gilt-hairline-flat min-w-0 flex-1 px-5 py-4">
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-2">
+            <h3 className="truncate font-display text-3xl font-semibold leading-tight tracking-tight text-accent">
+              {name.name}
+            </h3>
             <Badge tone={genderTone[gender]}>{genderLabel[gender]}</Badge>
           </div>
           {name.meaning && (
-            <p className="mt-1 text-sm text-fg">{name.meaning}</p>
+            <p className="mt-2 font-display text-base font-light italic leading-snug text-brown">
+              {name.meaning}
+            </p>
           )}
           {name.origin && (
-            <p className="text-xs text-muted">Origin: {name.origin}</p>
+            <p className="mt-1 font-sans text-xs font-medium uppercase tracking-[0.12em] text-brown/70">
+              Origin · {name.origin}
+            </p>
           )}
           {name.notes && (
-            <p className="mt-1 truncate text-xs text-muted">{name.notes}</p>
+            <p className="mt-2 truncate font-sans text-xs text-brown/80">
+              {name.notes}
+            </p>
           )}
         </div>
         <IconButton
@@ -79,25 +88,26 @@ export function BabyNameCard({ name }: { name: BabyNameWithVotes }) {
       </div>
 
       {votes.length > 0 && (
-        <div className="flex flex-wrap gap-x-2 gap-y-1 text-xs text-muted">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-sans text-xs text-muted">
           {votes.map((v) => (
-            <span key={v.user_id}>
-              {memberName(v)} {voteEmoji(v.vote)}
+            <span key={v.user_id} className="inline-flex items-center gap-1">
+              <span className="text-purple">{memberName(v)}</span>
+              <span aria-hidden>{voteEmoji(v.vote)}</span>
             </span>
           ))}
         </div>
       )}
 
-      <div className="flex gap-2">
+      <div className="flex gap-3">
         <button
           type="button"
           onClick={() => castVote(1)}
           disabled={vote.isPending}
           className={cn(
-            'flex h-10 flex-1 items-center justify-center gap-2 rounded font-medium transition disabled:opacity-50',
+            'lift-press flex h-12 flex-1 items-center justify-center gap-2 rounded-none font-sans text-sm font-semibold tracking-[0.02em] transition disabled:opacity-50',
             myVote === 1
-              ? 'bg-success text-white'
-              : 'bg-surface-2 text-fg active:bg-border'
+              ? 'bg-success gilt-hairline-flat text-accent-fg shadow-catch'
+              : 'velvet-2 gilt-hairline-flat text-fg hover:brightness-110'
           )}
         >
           <span aria-hidden>💚</span> Like
@@ -107,10 +117,10 @@ export function BabyNameCard({ name }: { name: BabyNameWithVotes }) {
           onClick={() => castVote(-1)}
           disabled={vote.isPending}
           className={cn(
-            'flex h-10 flex-1 items-center justify-center gap-2 rounded font-medium transition disabled:opacity-50',
+            'lift-press flex h-12 flex-1 items-center justify-center gap-2 rounded-none font-sans text-sm font-semibold tracking-[0.02em] transition disabled:opacity-50',
             myVote === -1
-              ? 'bg-danger text-white'
-              : 'bg-surface-2 text-fg active:bg-border'
+              ? 'bg-danger gilt-hairline-flat text-accent-fg shadow-catch'
+              : 'velvet-2 gilt-hairline-flat text-fg hover:brightness-110'
           )}
         >
           <span aria-hidden>✖️</span> Pass
