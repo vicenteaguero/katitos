@@ -56,7 +56,7 @@ export function GoalDetail({ goal }: { goal: GoalWithContribs }) {
 
   return (
     <div className="space-y-7">
-      <div className="marble gilt-hairline space-y-4 p-7 shadow-loge">
+      <div className="marble space-y-4 rounded-lg p-7">
         <div className="flex items-baseline justify-between gap-3">
           <span className="font-display text-3xl font-semibold tracking-tight text-accent tabular-nums">
             {formatMoney(saved, goal.currency)}
@@ -65,7 +65,7 @@ export function GoalDetail({ goal }: { goal: GoalWithContribs }) {
             {pct}%
           </span>
         </div>
-        <div className="h-1.5 w-full overflow-hidden bg-brown gilt-hairline-flat">
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-brown">
           <div
             className="gold-shimmer h-full bg-success transition-[width]"
             style={{ width: `${pct}%` }}
@@ -125,7 +125,7 @@ export function GoalDetail({ goal }: { goal: GoalWithContribs }) {
             {contributions.map((c) => (
               <li
                 key={c.id}
-                className="velvet-2 gilt-hairline-flat flex items-start justify-between gap-3 px-4 py-3 shadow-catch"
+                className="flex items-start justify-between gap-3 rounded-lg bg-surface-2 px-4 py-3"
               >
                 <div className="min-w-0">
                   <p className="font-display text-base font-semibold tracking-tight text-fg">
