@@ -39,36 +39,52 @@ export function BabyNamesListRoute() {
   }, [data, filter]);
 
   return (
-    <div>
-      <PageHeader title="Baby names" subtitle="Like or pass — together" />
+    <div className="curtain-reveal space-y-12">
+      <PageHeader
+        title="Baby names"
+        subtitle="Dreaming up our little ones — like or pass, together 💜"
+      />
 
-      <div className="mb-4">
+      {/* The relationship as one gold-stitched line beneath the program head. */}
+      <hr className="seam" aria-hidden="true" />
+
+      <section className="space-y-7">
+        <p className="eyebrow text-purple before:bg-purple after:bg-purple">
+          The Cradle Book
+        </p>
+
         <Segmented options={filters} value={filter} onChange={setFilter} />
-      </div>
 
-      {isLoading ? (
-        <LoadingScreen />
-      ) : isError ? (
-        <Empty icon="⚠️" title="Couldn't load" hint="Try again in a moment." />
-      ) : visible.length === 0 ? (
-        <Empty
-          icon="👶"
-          title={
-            data && data.length > 0 ? 'None in this filter' : 'No names yet'
-          }
-          hint={
-            data && data.length > 0
-              ? 'Try another gender filter.'
-              : 'Tap + to propose a name.'
-          }
-        />
-      ) : (
-        <div className="space-y-3">
-          {visible.map((n) => (
-            <BabyNameCard key={n.id} name={n} />
-          ))}
-        </div>
-      )}
+        {isLoading ? (
+          <LoadingScreen />
+        ) : isError ? (
+          <Empty
+            icon="⚠️"
+            title="Couldn't load"
+            hint="Try again in a moment."
+          />
+        ) : visible.length === 0 ? (
+          <Empty
+            icon="👶"
+            title={
+              data && data.length > 0 ? 'None in this filter' : 'No names yet'
+            }
+            hint={
+              data && data.length > 0
+                ? 'Try another gender filter.'
+                : 'Tap + to propose a name.'
+            }
+          />
+        ) : (
+          <div className="curtain-stagger space-y-5">
+            {visible.map((n, index) => (
+              <div key={n.id} style={{ '--i': index } as React.CSSProperties}>
+                <BabyNameCard name={n} />
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       <Fab label="Propose name" onClick={() => setCreating(true)}>
         <Plus />
