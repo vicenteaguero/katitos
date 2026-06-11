@@ -6,7 +6,7 @@
 >
 > 1. **NO YELLOW GOLD.** The one metal is **WHITE GOLD / silver** (cool, pale). Tokens `--color-border`, `--gold`, `--gilt-*` and classes `.gilt-text` / `.gold-shimmer` / `text-gold` now resolve to white-gold — keep using them, but never add a yellow/amber hex.
 > 2. **NO VELVET / opera-floor textures.** Surfaces are **flat, clean, modern**. `.velvet` / `.velvet-2` are now plain flat panels. This is an **app**, not a theatre floor.
-> 3. **Palette:** wine red (accent) · white-gold/silver · black & white · her **purple/brown** · his **olive/cream**. NOVAT-inspired = the great **silver** dome (silver, not gold).
+> 3. **Palette (ONLY these — NO PURPLE):** HER = wine red · brown · **glossy green** (emerald) · black · white. HIM = **sandstorm** (cream) · **military green** (olive) · **charcoal** black · snow white. Metal = **white gold** (cool, never yellow). NOTE: the `--color-purple` token is REPURPOSED to her glossy green — there is no purple in the app.
 > 4. **Fast & flowing**: light DOM, short snappy transitions, no heavy gradients/grain/footlight overlays.
 > 5. **Square corners** stay. Direction name is now **"Silver Hall."**
 >    Everything below is kept for structure (type scale, motion, spacing, signatures) — re-read it through these five rules.
