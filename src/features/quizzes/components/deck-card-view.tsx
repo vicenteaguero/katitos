@@ -49,10 +49,10 @@ export function DeckCardView({
       {(card.prompt.imagePath || card.prompt.audioPath) && (
         <div className="space-y-4">
           {card.prompt.imagePath && (
-            <div className="gilt-hairline overflow-hidden rounded-none shadow-loge">
+            <div className="overflow-hidden rounded-lg">
               <QuizImage
                 path={card.prompt.imagePath}
-                className="max-h-72 w-full rounded-none object-cover"
+                className="max-h-72 w-full object-cover"
               />
             </div>
           )}
@@ -83,17 +83,17 @@ export function DeckCardView({
                 onClick={() => onAnswer({ optionId: o.id })}
                 style={{ '--i': i } as React.CSSProperties}
                 className={cn(
-                  'lift-press group relative isolate flex w-full items-center gap-4 overflow-hidden rounded-none border p-4 text-left font-sans transition disabled:pointer-events-none',
+                  'lift-press group relative isolate flex w-full items-center gap-4 overflow-hidden rounded p-4 text-left font-sans transition disabled:pointer-events-none',
                   selected
-                    ? 'gilt-hairline bg-copper/15 text-fg shadow-catch'
-                    : 'gilt-hairline-flat text-fg hover:bg-surface-2 disabled:opacity-80'
+                    ? 'bg-copper/15 text-fg'
+                    : 'bg-surface-2 text-fg disabled:opacity-80'
                 )}
               >
                 {o.imagePath && (
-                  <div className="gilt-hairline-flat shrink-0 overflow-hidden rounded-none">
+                  <div className="shrink-0 overflow-hidden rounded">
                     <QuizImage
                       path={o.imagePath}
-                      className="h-16 w-16 rounded-none object-cover"
+                      className="h-16 w-16 object-cover"
                     />
                   </div>
                 )}
@@ -103,10 +103,8 @@ export function DeckCardView({
                 <span
                   aria-hidden="true"
                   className={cn(
-                    'flex h-6 w-6 shrink-0 items-center justify-center rounded-none border text-xs font-semibold transition',
-                    selected
-                      ? 'border-copper bg-copper/30 text-warning candle-flicker'
-                      : 'border-border/50 text-muted'
+                    'flex h-6 w-6 shrink-0 items-center justify-center rounded text-xs font-semibold transition',
+                    selected ? 'bg-copper/30 text-fg' : 'bg-surface text-muted'
                   )}
                 >
                   {selected ? '✦' : String.fromCharCode(65 + i)}
@@ -140,10 +138,8 @@ export function DeckCardView({
       )}
 
       {isRevealed && (
-        <div className="velvet gilt-hairline space-y-4 rounded-none p-6 shadow-catch">
-          <p className="eyebrow text-copper before:bg-copper after:bg-copper">
-            The Reveal
-          </p>
+        <div className="bg-surface-2 space-y-4 rounded-lg p-6">
+          <p className="font-sans text-sm text-muted">The Reveal</p>
 
           <div className="space-y-3 font-sans text-sm">
             <div className="flex items-baseline justify-between gap-3">
