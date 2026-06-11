@@ -4,7 +4,7 @@ import { defineGame, type GamePlayProps } from '@kernel/registry';
 import { Button } from '@kernel/ui';
 import { cn } from '@kernel/lib';
 
-const EMOJIS = ['🐱', '🌸', '✈️', '☕', '🌙', '💛', '🍓', '🎲'];
+const EMOJIS = ['🐱', '🌸', '✈️', '☕', '🌙', '❤️', '🍓', '🎲'];
 const PAIRS = 6;
 
 interface Tile {
