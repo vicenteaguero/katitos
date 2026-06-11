@@ -48,14 +48,13 @@ export function QuizzesListRoute() {
             <div
               key={d.id}
               style={{ '--i': i } as React.CSSProperties}
-              className="velvet-2 gilt-hairline group relative flex items-stretch gap-4 rounded-none shadow-loge"
+              className="bg-surface-2 group relative flex items-stretch gap-4 rounded-lg"
             >
               <Link
                 to={`/quizzes/${d.id}`}
                 className="lift-press flex min-w-0 flex-1 items-center gap-4 p-6"
               >
-                {/* The playbill seat-number: the deck's emoji on a gilt-framed tile */}
-                <span className="gilt-hairline-flat candle-flicker flex h-14 w-14 shrink-0 items-center justify-center rounded-none bg-surface text-3xl shadow-catch">
+                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded bg-surface text-3xl">
                   {emojiFor(d.kind)}
                 </span>
                 <div className="min-w-0 space-y-2">
