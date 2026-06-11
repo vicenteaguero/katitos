@@ -151,15 +151,15 @@ export function TreeRoute() {
         <p className="eyebrow">Our Living Stage</p>
 
         <div className="relative">
-          {/* The sapling on a lit stage: gilt-hairline framed canvas, velvet
-              house behind, footlight glow rising from the soil within. */}
+          {/* The sapling on a lit stage: the canvas is the screen's one
+              hairline-framed artifact, footlight glow rising from the soil. */}
           <TreeCanvas
             seed={Number(tree.seed)}
             stage={stageFromPoints(tree.growth_points)}
             health={liveHealth}
             milestones={anchors}
             onTapMilestone={onTapMilestone}
-            className="velvet gilt-hairline aspect-[3/4] w-full rounded-none shadow-loge"
+            className="gilt-hairline aspect-[3/4] w-full rounded-lg bg-surface"
           />
           <div className="pointer-events-none absolute inset-x-3 top-3">
             <TreeHud state={tree} health={liveHealth} />
