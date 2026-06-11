@@ -47,30 +47,52 @@ export function ChalkboardRoute() {
 
   return (
     <div className="curtain-reveal space-y-12">
-      <header className="footlight space-y-4">
+      <header className="space-y-4">
         <p className="eyebrow">Fridge Wall</p>
         <PageHeader
-          title="The wall"
-          subtitle="Our endless slate — write in chalk, drag where you like"
+          title="The fridge"
+          subtitle="Our kitchen door — scribble in chalk, drag the magnets around"
         />
       </header>
 
-      {/* The gilt/wood frame holding the slate board on the wall */}
+      {/* A literal refrigerator standing on the dark stage:
+          brushed-steel body, a freezer/door seam, a tall handle, and a
+          magnetic slate board where the chalk notes live. */}
       <section className="space-y-3">
         <div
-          className="gilt-hairline relative bg-brown p-2 shadow-loge"
+          className="relative mx-auto w-full max-w-[760px] rounded-none border border-border/50 p-4 shadow-loge"
           style={{
+            // Brushed stainless steel — flat vertical neutral/silver gradient
+            backgroundColor: '#c9c6be',
             backgroundImage:
-              'repeating-linear-gradient(91deg, rgba(0,0,0,0.18) 0px, rgba(0,0,0,0.18) 1px, transparent 1px, transparent 7px)',
+              'linear-gradient(90deg, #9a978d 0%, #d4d1ca 14%, #eae8e1 30%, #d0cdc6 50%, #eae8e1 70%, #d4d1ca 86%, #9a978d 100%)',
           }}
         >
+          {/* Freezer / fridge door split seam */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-4 top-[22%] h-px bg-[#9a978d]/70 shadow-[0_1px_0_rgba(255,255,255,0.5)]"
+          />
+          {/* Long vertical door handle */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute right-1.5 top-[26%] bottom-[10%] w-2 rounded-none border border-border/60"
+            style={{
+              backgroundImage:
+                'linear-gradient(90deg, #8e8b82 0%, #f2f0ea 45%, #b9b6ae 100%)',
+              boxShadow:
+                '0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.6)',
+            }}
+          />
+
+          {/* The magnetic chalk/blackboard panel stuck on the door */}
           <div
             ref={boardRef}
-            className="relative h-[68vh] overflow-auto rounded-none border border-border/40 shadow-[inset_0_2px_18px_rgba(0,0,0,0.6),inset_0_0_0_1px_rgba(232,217,181,0.04)]"
+            className="relative mr-6 h-[64vh] overflow-auto rounded-none border-4 border-[#1a1a1c] shadow-[inset_0_2px_18px_rgba(0,0,0,0.7),0_2px_6px_rgba(0,0,0,0.4)]"
             style={{
-              backgroundColor: '#161a1c',
+              backgroundColor: '#23272a',
               backgroundImage:
-                'radial-gradient(120% 60% at 18% 8%, rgba(232,217,181,0.05) 0%, transparent 42%), radial-gradient(90% 70% at 88% 96%, rgba(232,217,181,0.04) 0%, transparent 50%), repeating-conic-gradient(from 12deg at 30% 40%, rgba(232,217,181,0.015) 0deg 4deg, transparent 4deg 9deg)',
+                'radial-gradient(120% 60% at 18% 8%, rgba(255,255,255,0.04) 0%, transparent 42%), radial-gradient(90% 70% at 88% 96%, rgba(255,255,255,0.03) 0%, transparent 50%)',
             }}
           >
             <div className="relative h-[1600px] w-[1600px]">
@@ -87,7 +109,7 @@ export function ChalkboardRoute() {
           </div>
         </div>
         <p className="px-1 text-center font-sans text-xs italic text-muted">
-          Pinned with gilt. Hung on the wall between two countries.
+          Held by magnets. The kitchen we share across two countries.
         </p>
       </section>
 
