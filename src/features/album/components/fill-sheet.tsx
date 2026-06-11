@@ -81,8 +81,8 @@ export function FillSheet({
       <Sheet open={open} onClose={onClose} title={slot?.title ?? 'Add sticker'}>
         <div className="space-y-3">
           {slot?.is_duo && (
-            <p className="text-xs text-muted">
-              This is a duo slot — you're filling your half ({half}).
+            <p className="text-brown font-display text-sm italic">
+              A duo plate — you're stitching in your half ({half}).
             </p>
           )}
 
@@ -90,7 +90,7 @@ export function FillSheet({
             <img
               src={previewUrl}
               alt="preview"
-              className="aspect-square w-full rounded-lg object-cover"
+              className="gilt-hairline aspect-square w-full object-cover shadow-loge"
             />
           ) : (
             <div className="flex gap-2">
