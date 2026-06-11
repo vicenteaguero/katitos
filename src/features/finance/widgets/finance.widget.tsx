@@ -22,11 +22,8 @@ export function FinanceWidget() {
             <p className="mt-1 truncate font-display text-lg font-semibold tracking-tight text-fg">
               {goal.title}
             </p>
-            <div className="mt-3 h-1.5 w-full overflow-hidden bg-surface gilt-hairline-flat">
-              <div
-                className="gold-shimmer h-full bg-success"
-                style={{ width: `${pct}%` }}
-              />
+            <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
+              <div className="h-full bg-success" style={{ width: `${pct}%` }} />
             </div>
             <p className="gilt-text mt-2 text-3xl font-semibold tabular-nums">
               {pct}%
