@@ -96,51 +96,76 @@ export function ScavengerRoute() {
   };
 
   return (
-    <div>
-      <PageHeader
-        title="Date cards"
-        subtitle="Claim them in secret in Georgia 🇬🇪"
-      />
+    <div className="curtain-reveal space-y-12">
+      <div className="relative">
+        {/* A single candle glow behind the quest's title — the treasure map lit. */}
+        <div
+          className="footlight pointer-events-none absolute inset-x-0 -top-8 bottom-0"
+          aria-hidden="true"
+        />
+        <div className="relative">
+          <PageHeader
+            title="Date cards"
+            subtitle="Claim them in secret in Georgia 🇬🇪"
+          />
 
-      <Card className="mb-3 flex justify-around text-center">
-        <div>
-          <p className="text-2xl font-bold text-accent">
-            {claimed.length}/{list.length}
-          </p>
-          <p className="text-xs text-muted">claimed</p>
-        </div>
-        <div>
-          <p className="text-2xl font-bold text-accent">{points}</p>
-          <p className="text-xs text-muted">points</p>
-        </div>
-      </Card>
-
-      {isLoading ? (
-        <LoadingScreen />
-      ) : list.length === 0 ? (
-        <Empty icon="🃏" title="No date cards yet" hint="Tap + to add one." />
-      ) : (
-        <div className="space-y-3">
-          {list.map((c) => (
-            <ScavengerCardItem
-              key={c.id}
-              card={c}
-              onClaim={setClaiming}
-              onArgue={(card) => {
-                setArguing(card);
-                setArgText(
-                  card.scavenger_arguments.find((a) => a.user_id === userId)
-                    ?.body ?? ''
-                );
-              }}
-              onUnclaim={(card) => unclaim.mutate(card.id)}
-              onDelete={(card) => {
-                if (confirm(`Delete "${card.title}"?`)) del.mutate(card.id);
-              }}
+          <Card className="flex justify-around text-center shadow-candle">
+            <div className="space-y-1">
+              <p className="gilt-text font-display text-4xl font-semibold tabular-nums">
+                {claimed.length}/{list.length}
+              </p>
+              <p className="eyebrow">Claimed</p>
+            </div>
+            <div
+              className="mx-2 w-px self-stretch bg-border/40"
+              aria-hidden="true"
             />
-          ))}
+            <div className="space-y-1">
+              <p className="gilt-text font-display text-4xl font-semibold tabular-nums">
+                {points}
+              </p>
+              <p className="eyebrow">Points</p>
+            </div>
+          </Card>
         </div>
-      )}
+      </div>
+
+      {/* The relationship as one gold-stitched line before the quest unfurls. */}
+      <hr className="seam" aria-hidden="true" />
+
+      <section className="space-y-7">
+        <p className="eyebrow">The Quest</p>
+        {isLoading ? (
+          <LoadingScreen />
+        ) : list.length === 0 ? (
+          <Empty
+            icon="✉"
+            title="No date cards yet"
+            hint="Tap + to seal your first clue."
+          />
+        ) : (
+          <div className="curtain-stagger space-y-3">
+            {list.map((c) => (
+              <ScavengerCardItem
+                key={c.id}
+                card={c}
+                onClaim={setClaiming}
+                onArgue={(card) => {
+                  setArguing(card);
+                  setArgText(
+                    card.scavenger_arguments.find((a) => a.user_id === userId)
+                      ?.body ?? ''
+                  );
+                }}
+                onUnclaim={(card) => unclaim.mutate(card.id)}
+                onDelete={(card) => {
+                  if (confirm(`Delete "${card.title}"?`)) del.mutate(card.id);
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </section>
 
       <Fab label="Add card" onClick={() => setAdding(true)}>
         <Plus />
@@ -174,7 +199,7 @@ export function ScavengerRoute() {
       <Sheet
         open={adding}
         onClose={() => setAdding(false)}
-        title="New date card"
+        title="Seal a new clue"
       >
         <div className="space-y-3">
           <Field label="Title">
