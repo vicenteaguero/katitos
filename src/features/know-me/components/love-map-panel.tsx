@@ -8,7 +8,7 @@ function Dial({ label, pct }: { label: string; pct: number }) {
     <div className="flex-1 space-y-3 text-center">
       {/* A square gilt-framed tile with a percent and an Imperial-Purple meter
           that fills from below — her royal note rising like footlight. */}
-      <div className="gilt-hairline velvet-2 relative grid h-24 w-full place-items-center overflow-hidden rounded-none shadow-catch">
+      <div className="bg-surface-2 relative grid h-24 w-full place-items-center overflow-hidden rounded-lg">
         <div
           className="absolute inset-x-0 bottom-0 bg-purple/35"
           style={{ height: `${pct}%` }}
