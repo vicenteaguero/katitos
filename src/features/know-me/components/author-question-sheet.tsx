@@ -99,9 +99,7 @@ export function AuthorQuestionSheet({
               />
               <FilePickerButton
                 onPick={(file) => setImages((im) => ({ ...im, [id]: file }))}
-                className={
-                  images[id] ? 'gilt-hairline bg-purple/25 text-fg' : ''
-                }
+                className={images[id] ? 'bg-purple/25 text-fg' : ''}
               >
                 <ImagePlus size={18} />
               </FilePickerButton>
