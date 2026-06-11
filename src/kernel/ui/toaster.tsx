@@ -2,7 +2,7 @@ import { cn } from '../lib/cn';
 import { useToastStore, type ToastTone } from './toast';
 
 const tones: Record<ToastTone, string> = {
-  info: 'velvet-2 text-fg',
+  info: 'bg-surface-2 text-fg',
   success: 'bg-success text-accent-fg',
   error: 'bg-danger text-accent-fg',
 };
@@ -17,7 +17,7 @@ export function Toaster() {
           key={t.id}
           onClick={() => dismiss(t.id)}
           className={cn(
-            'curtain-reveal gilt-hairline pointer-events-auto w-full max-w-app rounded-none px-5 py-3.5 text-left font-sans text-sm font-semibold tracking-[0.02em] shadow-loge',
+            'curtain-reveal pointer-events-auto w-full max-w-app rounded-lg px-5 py-3.5 text-left font-sans text-sm font-semibold tracking-[0.02em] shadow-loge',
             tones[t.tone]
           )}
         >
