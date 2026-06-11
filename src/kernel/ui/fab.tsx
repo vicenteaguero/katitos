@@ -12,7 +12,7 @@ export function Fab({
       type="button"
       aria-label={label}
       className={cn(
-        'fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-stage z-30 flex h-16 w-16 items-center justify-center overflow-hidden rounded-none velvet-2 gilt-hairline text-accent-fg shadow-loge outline-none transition lift-press btn-catchlight candle-flicker hover:brightness-110 focus-visible:shadow-candle',
+        'fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-stage z-30 flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-accent text-accent-fg shadow-loge outline-none transition lift-press hover:brightness-110 focus-visible:ring-2 focus-visible:ring-gold/30',
         className
       )}
       {...props}
