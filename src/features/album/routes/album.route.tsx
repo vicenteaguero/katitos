@@ -115,7 +115,7 @@ export function AlbumRoute() {
   if (chLoading || slLoading) return <LoadingScreen />;
 
   return (
-    <div className="space-y-3">
+    <div className="curtain-reveal space-y-7">
       <PageHeader title="Pololini Album" subtitle="Our life in stickers" />
 
       <AlbumHud progress={progress} spread={spread} maxSpread={maxSpread} />
