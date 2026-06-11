@@ -47,8 +47,10 @@ export function DecisionCard({
       {/* The dramatic verdict — settled on a lit marble plate, the agreed
           value gilded with a slow gold-foil sweep. The feature's signature. */}
       {isAgreed && (
-        <div className="marble gilt-hairline relative px-6 py-5 text-center shadow-loge">
-          <p className="eyebrow !text-brown">Settled On</p>
+        <div className="marble relative rounded-lg px-6 py-5 text-center">
+          <p className="font-sans text-xs font-semibold uppercase tracking-[0.18em] text-brown">
+            Settled On
+          </p>
           <p className="gilt-text gold-shimmer mt-3 font-display text-5xl font-semibold leading-none tracking-tight">
             {decision.agreed_value ?? '—'}
           </p>
