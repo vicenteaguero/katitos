@@ -35,34 +35,55 @@ const filters: SegmentOption<Filter>[] = [
   { value: 'done', label: 'Done' },
 ];
 
-function DateCard({ date }: { date: DateWithRatings }) {
+function DateCard({ date, index }: { date: DateWithRatings; index: number }) {
   const status = asDateStatus(date.status);
   const avg = averageStars(date.date_ratings);
   return (
-    <Link to={`/dates/${date.id}`} className="block">
-      <Card className="space-y-2 transition active:bg-surface-2">
-        <div className="flex items-start justify-between gap-3">
-          <h3 className="min-w-0 truncate text-lg font-semibold">
+    <Link
+      to={`/dates/${date.id}`}
+      className="lift-press block"
+      style={{ '--i': index } as React.CSSProperties}
+    >
+      <Card className="relative space-y-3 transition active:bg-surface-2">
+        {/* Suit pip — the deck's signature, struck in Imperial Purple */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute right-4 top-4 select-none font-display text-lg leading-none text-purple/70"
+        >
+          ♦
+        </span>
+        <div className="flex items-start justify-between gap-3 pr-6">
+          <h3 className="min-w-0 truncate font-display text-2xl font-semibold tracking-tight text-fg">
             {date.title}
           </h3>
           <Badge tone={STATUS_TONES[status]} className="shrink-0">
             {STATUS_LABELS[status]}
           </Badge>
         </div>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-sans text-sm text-muted">
           {date.place && (
             <span className="inline-flex items-center gap-1">
-              <MapPin size={14} /> {date.place}
+              <MapPin size={14} className="text-gold" /> {date.place}
             </span>
           )}
           {date.scheduled_at && (
-            <span className="inline-flex items-center gap-1">
-              <CalendarClock size={14} /> {formatDateTime(date.scheduled_at)}
+            <span className="inline-flex items-center gap-1 tabular-nums">
+              <CalendarClock size={14} className="text-gold" />{' '}
+              {formatDateTime(date.scheduled_at)}
             </span>
           )}
-          {date.category && <span>· {date.category}</span>}
+          {date.category && (
+            <span className="font-display italic text-copper">
+              · {date.category}
+            </span>
+          )}
         </div>
-        {avg != null && <StarsDisplay value={avg} />}
+        {avg != null && (
+          <div className="flex items-center gap-3 pt-1">
+            <div className="seam h-px flex-1 opacity-50" aria-hidden />
+            <StarsDisplay value={avg} />
+          </div>
+        )}
       </Card>
     </Link>
   );
@@ -83,10 +104,14 @@ export function DatesListRoute() {
   }, [data, filter]);
 
   return (
-    <div>
-      <PageHeader title="Dates" subtitle="Plan, rate, remember" />
+    <div className="curtain-reveal">
+      <p className="eyebrow mb-3">The Date Deck</p>
+      <PageHeader
+        title="Dates"
+        subtitle="Plan, rate, remember — a deck you play through together"
+      />
 
-      <div className="mb-4">
+      <div className="mb-7 flex justify-center">
         <Segmented options={filters} value={filter} onChange={setFilter} />
       </div>
 
@@ -107,9 +132,9 @@ export function DatesListRoute() {
           }
         />
       ) : (
-        <div className="space-y-3">
-          {visible.map((d) => (
-            <DateCard key={d.id} date={d} />
+        <div className="curtain-stagger space-y-5">
+          {visible.map((d, i) => (
+            <DateCard key={d.id} date={d} index={i} />
           ))}
         </div>
       )}
