@@ -2,9 +2,56 @@ import type { CSSProperties } from 'react';
 import { usePartner } from '@kernel/auth';
 import { Empty } from '@kernel/ui';
 import { cn } from '@kernel/lib';
+import type { DashboardWidget } from '@kernel/registry';
 import { widgetRegistry } from '../widgets.registry';
 
-function WidgetGrid() {
+const FALLBACK_CATEGORY = 'More';
+
+/** Group widgets by category, preserving first-seen order (registry is order-sorted). */
+function groupByCategory(widgets: DashboardWidget[]) {
+  const groups = new Map<string, DashboardWidget[]>();
+  for (const w of widgets) {
+    const key = w.category ?? FALLBACK_CATEGORY;
+    const bucket = groups.get(key);
+    if (bucket) bucket.push(w);
+    else groups.set(key, [w]);
+  }
+  return [...groups.entries()];
+}
+
+function CategorySection({
+  label,
+  widgets,
+  offset,
+}: {
+  label: string;
+  widgets: DashboardWidget[];
+  offset: number;
+}) {
+  return (
+    <section className="space-y-4">
+      <p className="px-0.5 font-sans text-xs font-semibold uppercase tracking-[0.2em] text-muted">
+        {label}
+      </p>
+      <div className="grid grid-cols-2 gap-5">
+        {widgets.map((w, i) => {
+          const Widget = w.Component;
+          return (
+            <div
+              key={w.id}
+              className={cn(w.size === 2 && 'col-span-2')}
+              style={{ '--i': offset + i } as CSSProperties}
+            >
+              <Widget />
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function Dashboard() {
   const widgets = widgetRegistry.all;
   if (widgets.length === 0) {
     return (
@@ -15,19 +62,21 @@ function WidgetGrid() {
       />
     );
   }
+  const groups = groupByCategory(widgets);
+  let offset = 0;
   return (
-    <div className="curtain-stagger grid grid-cols-2 gap-7">
-      {widgets.map((w, i) => {
-        const Widget = w.Component;
-        return (
-          <div
-            key={w.id}
-            className={cn(w.size === 2 && 'col-span-2')}
-            style={{ '--i': i } as CSSProperties}
-          >
-            <Widget />
-          </div>
+    <div className="curtain-stagger space-y-10">
+      {groups.map(([label, items]) => {
+        const section = (
+          <CategorySection
+            key={label}
+            label={label}
+            widgets={items}
+            offset={offset}
+          />
         );
+        offset += items.length;
+        return section;
       })}
     </div>
   );
@@ -60,7 +109,7 @@ export function HomeRoute() {
           )}
         </div>
       </header>
-      <WidgetGrid />
+      <Dashboard />
     </div>
   );
 }
