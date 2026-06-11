@@ -49,7 +49,7 @@ export function PresenceRoute() {
                   online && 'candle-flicker'
                 )}
               >
-                {partner?.emoji ?? '💛'}
+                {partner?.emoji ?? '❤️'}
               </span>
               <div className="min-w-0">
                 <p className="truncate font-display text-2xl font-semibold tracking-tight text-fg">
