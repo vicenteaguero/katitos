@@ -15,20 +15,20 @@ export function BookSpread({
   ctx: AlbumPageContext;
 }) {
   return (
-    <div className="flex h-full w-full">
+    <div className="flex h-full w-full shadow-loge">
       <div className="relative h-full w-1/2 pr-0.5">
         {left ? (
           <AlbumPage page={left} ctx={ctx} />
         ) : (
-          <div className="h-full w-full rounded-lg bg-surface" />
+          <div className="marble h-full w-full" />
         )}
       </div>
-      <div className="book-spine w-px shrink-0 bg-border" />
+      <div className="book-spine w-px shrink-0 bg-border shadow-catch" />
       <div className="relative h-full w-1/2 pl-0.5">
         {right ? (
           <AlbumPage page={right} ctx={ctx} />
         ) : (
-          <div className="h-full w-full rounded-lg bg-surface" />
+          <div className="marble h-full w-full" />
         )}
       </div>
     </div>
