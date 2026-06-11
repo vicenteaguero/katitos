@@ -85,7 +85,7 @@ export function FightTimerRoute() {
           <hr className="seam" aria-hidden="true" />
 
           <section className="space-y-7">
-            <p className="eyebrow">The Reconciliations</p>
+            <p className="font-sans text-sm text-muted">The Reconciliations</p>
             {!history.data || history.data.length === 0 ? (
               <Empty
                 icon="🤝"
