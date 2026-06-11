@@ -26,12 +26,12 @@ export function WaterButton({
 
   if (!ok) {
     return (
-      <div className="space-y-1 text-center">
-        <Button full size="lg" disabled>
+      <div className="space-y-3 text-center">
+        <Button full size="lg" variant="secondary" disabled>
           Waiting for {partnerName ?? 'them'} 🌱
         </Button>
         {health < THIRSTY && (
-          <p className="text-xs text-muted">
+          <p className="font-sans text-xs text-muted">
             The tree is thirsty 🥀 — {partnerName ?? 'they'} can water it
           </p>
         )}
@@ -40,13 +40,19 @@ export function WaterButton({
   }
 
   return (
-    <Button
-      full
-      size="lg"
-      disabled={water.isPending}
-      onClick={() => water.mutate()}
-    >
-      {water.isPending ? 'Watering…' : 'Water 💧'}
-    </Button>
+    <div className="space-y-3 text-center">
+      <Button
+        full
+        size="lg"
+        disabled={water.isPending}
+        onClick={() => water.mutate()}
+        className="font-display text-xl tracking-[0.04em]"
+      >
+        {water.isPending ? 'Watering…' : 'Water our tree 💧'}
+      </Button>
+      <p className="font-sans text-xs uppercase tracking-[0.18em] text-success">
+        Your turn at the ritual
+      </p>
+    </div>
   );
 }
