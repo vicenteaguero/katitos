@@ -19,7 +19,9 @@ export function createFeatureRegistry(
   const enabled = modules.filter((m) => m.enabled !== false);
 
   const navEntries = enabled
-    .flatMap((m) => m.nav ?? [])
+    .flatMap((m) =>
+      (m.nav ?? []).map((e) => ({ ...e, category: e.category ?? m.category }))
+    )
     .sort((a, b) => (a.order ?? 100) - (b.order ?? 100));
 
   const routes: RouteObject[] = enabled.map((m) => ({
