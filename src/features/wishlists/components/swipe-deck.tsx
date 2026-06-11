@@ -71,7 +71,7 @@ export function SwipeDeck({
           {drag !== 0 && (
             <span
               className={cn(
-                'eyebrow absolute top-5 m-0',
+                'absolute top-5 font-sans text-xs font-semibold uppercase tracking-[0.18em]',
                 drag > 0 ? 'right-5 text-success' : 'left-5 text-danger',
                 decided ? 'opacity-100' : 'opacity-50'
               )}
@@ -110,7 +110,7 @@ export function SwipeDeck({
           type="button"
           onClick={() => cast(-1)}
           disabled={vote.isPending}
-          className="lift-press gilt-hairline-flat flex h-14 flex-1 items-center justify-center gap-2 rounded-none bg-surface-2 font-sans text-sm font-semibold uppercase tracking-[0.08em] text-fg transition disabled:opacity-50"
+          className="lift-press flex h-14 flex-1 items-center justify-center gap-2 rounded bg-surface-2 font-sans text-sm font-semibold uppercase tracking-[0.08em] text-fg transition disabled:opacity-50"
         >
           <span aria-hidden>✖</span> Pass
         </button>
@@ -118,7 +118,7 @@ export function SwipeDeck({
           type="button"
           onClick={() => cast(1)}
           disabled={vote.isPending}
-          className="lift-press btn-catchlight gilt-hairline flex h-14 flex-1 items-center justify-center gap-2 rounded-none bg-success font-sans text-sm font-semibold uppercase tracking-[0.08em] text-accent-fg transition disabled:opacity-50"
+          className="lift-press btn-catchlight flex h-14 flex-1 items-center justify-center gap-2 rounded bg-success font-sans text-sm font-semibold uppercase tracking-[0.08em] text-accent-fg transition disabled:opacity-50"
         >
           <span aria-hidden>♥</span> Like
         </button>
