@@ -144,32 +144,38 @@ export function TreeRoute() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="curtain-reveal space-y-12">
       <PageHeader title="Our Tree" subtitle="Grown one drop at a time 🌳" />
 
-      <div className="relative">
-        <TreeCanvas
-          seed={Number(tree.seed)}
-          stage={stageFromPoints(tree.growth_points)}
-          health={liveHealth}
-          milestones={anchors}
-          onTapMilestone={onTapMilestone}
-          className="aspect-[3/4] w-full rounded-2xl bg-gradient-to-b from-sky-100/40 to-emerald-100/30 dark:from-sky-950/40 dark:to-emerald-950/30"
-        />
-        <div className="absolute inset-x-3 top-3">
-          <TreeHud state={tree} health={liveHealth} />
-        </div>
-      </div>
+      <section className="space-y-7">
+        <p className="eyebrow">Our Living Stage</p>
 
-      {selfId && (
-        <WaterButton
-          state={tree}
-          selfId={selfId}
-          selfName={self?.display_name}
-          partnerName={partner?.display_name}
-          health={liveHealth}
-        />
-      )}
+        <div className="relative">
+          {/* The sapling on a lit stage: gilt-hairline framed canvas, velvet
+              house behind, footlight glow rising from the soil within. */}
+          <TreeCanvas
+            seed={Number(tree.seed)}
+            stage={stageFromPoints(tree.growth_points)}
+            health={liveHealth}
+            milestones={anchors}
+            onTapMilestone={onTapMilestone}
+            className="velvet gilt-hairline aspect-[3/4] w-full rounded-none shadow-loge"
+          />
+          <div className="pointer-events-none absolute inset-x-3 top-3">
+            <TreeHud state={tree} health={liveHealth} />
+          </div>
+        </div>
+
+        {selfId && (
+          <WaterButton
+            state={tree}
+            selfId={selfId}
+            selfName={self?.display_name}
+            partnerName={partner?.display_name}
+            health={liveHealth}
+          />
+        )}
+      </section>
 
       <MilestoneSheet milestone={tapped} onClose={() => setTapped(null)} />
     </div>
