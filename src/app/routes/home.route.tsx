@@ -1,7 +1,6 @@
 import type { CSSProperties } from 'react';
 import { usePartner } from '@kernel/auth';
 import { Empty } from '@kernel/ui';
-import { cn } from '@kernel/lib';
 import type { DashboardWidget } from '@kernel/registry';
 import { widgetRegistry } from '../widgets.registry';
 
@@ -19,6 +18,9 @@ function groupByCategory(widgets: DashboardWidget[]) {
   return [...groups.entries()];
 }
 
+// Vertical editorial flow: a small muted label, then full-width stacked rows.
+// No tile grid — each widget owns its own height, so heroes (polaroid, tree,
+// album) breathe while minor ones stay slim single-line rows.
 function CategorySection({
   label,
   widgets,
@@ -33,15 +35,11 @@ function CategorySection({
       <p className="px-0.5 font-sans text-xs font-semibold uppercase tracking-[0.2em] text-muted">
         {label}
       </p>
-      <div className="grid grid-cols-2 gap-5">
+      <div className="space-y-3">
         {widgets.map((w, i) => {
           const Widget = w.Component;
           return (
-            <div
-              key={w.id}
-              className={cn(w.size === 2 && 'col-span-2')}
-              style={{ '--i': offset + i } as CSSProperties}
-            >
+            <div key={w.id} style={{ '--i': offset + i } as CSSProperties}>
               <Widget />
             </div>
           );
@@ -65,7 +63,7 @@ function Dashboard() {
   const groups = groupByCategory(widgets);
   let offset = 0;
   return (
-    <div className="curtain-stagger space-y-10">
+    <div className="curtain-stagger space-y-12">
       {groups.map(([label, items]) => {
         const section = (
           <CategorySection
@@ -90,18 +88,18 @@ export function HomeRoute() {
     day: 'numeric',
   });
   return (
-    <div className="curtain-reveal space-y-12">
-      <header className="space-y-7 pt-2 text-center">
+    <div className="curtain-reveal space-y-10">
+      <header className="space-y-4 pt-2 text-center">
         <p className="eyebrow">{partner ? 'Our place' : occasion}</p>
-        <div className="space-y-3">
-          <h1 className="font-display text-5xl font-semibold leading-[1.1] tracking-tight text-fg">
+        <div className="space-y-2">
+          <h1 className="font-display text-4xl font-semibold leading-[1.1] tracking-tight text-fg">
             Hi {self?.display_name ?? 'love'}{' '}
             <span className="candle-flicker">{self?.emoji ?? '❤️'}</span>
           </h1>
           {partner && (
-            <div className="flex flex-col items-center gap-4 pt-1">
-              <hr className="seam max-w-[12rem]" aria-hidden="true" />
-              <p className="font-display text-2xl font-light italic text-muted">
+            <div className="flex flex-col items-center gap-3 pt-1">
+              <hr className="seam max-w-[10rem]" aria-hidden="true" />
+              <p className="font-display text-xl font-light italic text-muted">
                 with {partner.display_name}{' '}
                 <span className="not-italic">{partner.emoji}</span>
               </p>
