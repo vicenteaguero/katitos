@@ -8,8 +8,8 @@ export function PartnerStatusDot({ className }: { className?: string }) {
     <span
       title={online ? 'online' : 'offline'}
       className={cn(
-        'inline-block h-2.5 w-2.5 rounded-full',
-        online ? 'bg-success' : 'bg-muted',
+        'inline-block h-2 w-2 rounded-none',
+        online ? 'candle-flicker bg-purple' : 'bg-muted',
         className
       )}
     />
