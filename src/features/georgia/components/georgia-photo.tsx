@@ -13,14 +13,17 @@ export function GeorgiaPhoto({
   if (isLoading || !url) {
     return (
       <div
-        className={cn(
-          'flex items-center justify-center bg-surface-2',
-          className
-        )}
+        className={cn('flex items-center justify-center bg-lapis', className)}
       >
         {isLoading && <Spinner />}
       </div>
     );
   }
-  return <img src={url} alt="" className={className} />;
+  return (
+    <img
+      src={url}
+      alt=""
+      className={cn('rounded-none object-cover', className)}
+    />
+  );
 }
