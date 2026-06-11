@@ -8,10 +8,10 @@ export function QuizPlayRoute() {
   if (!deckId) return <Empty icon="❓" title="No quiz selected" />;
 
   return (
-    <div className="space-y-4">
+    <div className="curtain-reveal space-y-7">
       <Link
         to="/quizzes"
-        className="inline-flex items-center gap-1 text-sm text-muted"
+        className="lift-press inline-flex items-center gap-1 font-sans text-xs uppercase tracking-[0.16em] text-muted transition-colors hover:text-copper"
       >
         <ChevronLeft size={16} /> All quizzes
       </Link>
