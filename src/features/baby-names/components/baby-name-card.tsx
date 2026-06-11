@@ -54,7 +54,7 @@ export function BabyNameCard({ name }: { name: BabyNameWithVotes }) {
     <Card className="space-y-5">
       <div className="flex items-start justify-between gap-3">
         {/* The dreamed name on a lit ivory stage — Cormorant, like an engraved nameplate. */}
-        <div className="marble gilt-hairline-flat min-w-0 flex-1 px-5 py-4">
+        <div className="marble min-w-0 flex-1 rounded-lg px-5 py-4">
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-2">
             <h3 className="truncate font-display text-3xl font-semibold leading-tight tracking-tight text-accent">
               {name.name}
@@ -104,10 +104,10 @@ export function BabyNameCard({ name }: { name: BabyNameWithVotes }) {
           onClick={() => castVote(1)}
           disabled={vote.isPending}
           className={cn(
-            'lift-press flex h-12 flex-1 items-center justify-center gap-2 rounded-none font-sans text-sm font-semibold tracking-[0.02em] transition disabled:opacity-50',
+            'lift-press flex h-12 flex-1 items-center justify-center gap-2 rounded font-sans text-sm font-semibold tracking-[0.02em] transition disabled:opacity-50',
             myVote === 1
-              ? 'bg-success gilt-hairline-flat text-accent-fg shadow-catch'
-              : 'velvet-2 gilt-hairline-flat text-fg hover:brightness-110'
+              ? 'bg-success text-accent-fg'
+              : 'bg-surface-2 text-fg hover:brightness-110'
           )}
         >
           <span aria-hidden>💚</span> Like
@@ -117,10 +117,10 @@ export function BabyNameCard({ name }: { name: BabyNameWithVotes }) {
           onClick={() => castVote(-1)}
           disabled={vote.isPending}
           className={cn(
-            'lift-press flex h-12 flex-1 items-center justify-center gap-2 rounded-none font-sans text-sm font-semibold tracking-[0.02em] transition disabled:opacity-50',
+            'lift-press flex h-12 flex-1 items-center justify-center gap-2 rounded font-sans text-sm font-semibold tracking-[0.02em] transition disabled:opacity-50',
             myVote === -1
-              ? 'bg-danger gilt-hairline-flat text-accent-fg shadow-catch'
-              : 'velvet-2 gilt-hairline-flat text-fg hover:brightness-110'
+              ? 'bg-danger text-accent-fg'
+              : 'bg-surface-2 text-fg hover:brightness-110'
           )}
         >
           <span aria-hidden>✖️</span> Pass
