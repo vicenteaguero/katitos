@@ -54,21 +54,24 @@ export function CuteWordForm({ onDone }: { onDone: () => void }) {
   });
 
   return (
-    <form onSubmit={submit} className="space-y-3">
+    <form onSubmit={submit} className="space-y-5">
+      <p className="font-display text-lg italic leading-snug text-muted">
+        Coin a word that only the two of us will ever understand.
+      </p>
       <Field label="Word" error={errors.term?.message}>
         <Input placeholder="katito" {...register('term')} />
       </Field>
-      <Field label="Meaning">
+      <Field label="Meaning" hint="What it means to us">
         <Textarea placeholder="what it means" {...register('meaning')} />
       </Field>
-      <Field label="Example">
+      <Field label="Example" hint="How we use it">
         <Textarea placeholder="how we use it" {...register('example')} />
       </Field>
       <Field label="Say it">
         <AudioRecorder onRecorded={handleRecorded} />
       </Field>
       <Button full type="submit" disabled={isSubmitting}>
-        Add word
+        Add to our dictionary
       </Button>
     </form>
   );
