@@ -21,22 +21,28 @@ export function Matches({ items }: { items: WishlistItemWithVotes[] }) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="curtain-stagger space-y-6">
       {matches.map((item) => (
-        <Card key={item.id} className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <span aria-hidden>💚</span>
-            <h3 className="truncate font-semibold text-fg">{item.title}</h3>
+        <Card key={item.id} className="flex flex-col gap-2">
+          <div className="flex items-baseline gap-3">
+            <span aria-hidden className="candle-flicker text-success">
+              ♥
+            </span>
+            <h3 className="truncate font-display text-2xl font-medium tracking-tight text-fg">
+              {item.title}
+            </h3>
           </div>
           {item.description && (
-            <p className="text-sm text-muted">{item.description}</p>
+            <p className="font-sans text-sm leading-relaxed text-muted">
+              {item.description}
+            </p>
           )}
           {item.link && (
             <a
               href={item.link}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-sm text-accent underline"
+              className="mt-1 inline-flex items-center gap-1.5 font-sans text-sm font-semibold text-copper"
             >
               <ExternalLink className="h-4 w-4" /> Open link
             </a>
