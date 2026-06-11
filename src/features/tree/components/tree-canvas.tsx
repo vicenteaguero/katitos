@@ -29,10 +29,10 @@ function drawn(seg: Segment, stage: number): number {
 }
 
 function leafColor(health: number): string {
-  // Lush green when healthy, wilting toward amber as health drops.
-  if (health > 0.6) return '#4caf50';
-  if (health > 0.3) return '#8bc34a';
-  return '#c0a04a';
+  // Olive Sash growth (Vicente's green), wilting toward gilt amber as health drops.
+  if (health > 0.6) return 'var(--color-success)';
+  if (health > 0.3) return '#8a924f';
+  return 'var(--gilt-deep)';
 }
 
 export function TreeCanvas({
@@ -103,7 +103,7 @@ export function TreeCanvas({
 
   return (
     <div
-      className={className}
+      className={`footlight relative ${className ?? ''}`}
       style={{ touchAction: 'none', overflow: 'hidden' }}
     >
       <div
@@ -122,6 +122,16 @@ export function TreeCanvas({
           height="100%"
           preserveAspectRatio="xMidYMax meet"
         >
+          {/* The lit stage soil — a gilt hairline ground line the sapling rises from. */}
+          <line
+            x1={bounds.minX - pad}
+            y1={2}
+            x2={bounds.maxX + pad}
+            y2={2}
+            stroke="var(--color-border)"
+            strokeWidth={0.75}
+            opacity={0.55}
+          />
           <g style={{ ['--health' as string]: health }}>
             {segments.map((seg) => {
               const f = drawn(seg, stage);
@@ -130,16 +140,22 @@ export function TreeCanvas({
               const y2 = seg.y1 + (seg.y2 - seg.y1) * f;
 
               if (seg.kind === 'flower' || seg.kind === 'fruit') {
+                // Milestone blooms = little candles on the tree: gilt-leaf
+                // flowers, copper fruit, ringed in gold and flickering alive.
                 return (
                   <circle
                     key={seg.id}
                     cx={x2}
                     cy={y2}
                     r={Math.max(3, seg.width + 3)}
-                    fill={seg.kind === 'flower' ? '#f48fb1' : '#e57373'}
-                    stroke="#fff"
-                    strokeWidth={0.5}
-                    className="tree-bloom"
+                    fill={
+                      seg.kind === 'flower'
+                        ? 'var(--gilt-bright)'
+                        : 'var(--color-copper)'
+                    }
+                    stroke="var(--color-border)"
+                    strokeWidth={0.75}
+                    className="tree-bloom candle-flicker"
                     style={{ cursor: 'pointer' }}
                     onPointerDown={(e) => {
                       e.stopPropagation();
@@ -170,7 +186,7 @@ export function TreeCanvas({
                   y1={seg.y1}
                   x2={x2}
                   y2={y2}
-                  stroke="#6b4423"
+                  stroke="var(--color-brown)"
                   strokeWidth={seg.width}
                   strokeLinecap="round"
                   className={isBranch ? 'sway-branch' : undefined}
