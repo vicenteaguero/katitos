@@ -23,19 +23,24 @@ export function WaitingCard({
     today.options.find((o) => o.id === id)?.label ?? '—';
 
   return (
-    <Card className="space-y-4 text-center">
-      <p className="text-lg font-medium">{today.question.prompt}</p>
-      <div className="space-y-1 rounded-lg border border-border bg-surface-2 p-3 text-left text-sm">
+    <Card className="km-candle space-y-7 text-center">
+      <p className="eyebrow">Before the Curtain</p>
+      <p className="font-display text-3xl font-medium leading-tight tracking-tight text-fg">
+        {today.question.prompt}
+      </p>
+      <div className="gilt-hairline-flat velvet-2 space-y-2 rounded-none p-5 text-left font-sans text-sm text-muted shadow-catch">
         <div>
-          You said: <b>{labelOf(ownChoice)}</b>
+          You said:{' '}
+          <b className="font-semibold text-fg">{labelOf(ownChoice)}</b>
         </div>
         <div>
-          Your guess for {partnerName}: <b>{labelOf(guessChoice)}</b>
+          Your guess for {partnerName}:{' '}
+          <b className="font-semibold text-fg">{labelOf(guessChoice)}</b>
         </div>
       </div>
-      <div className="flex items-center justify-center gap-2 text-muted">
+      <div className="flex items-center justify-center gap-3 font-display text-lg italic text-purple">
         <Spinner />
-        <span>
+        <span className="candle-flicker">
           Waiting for {partnerName} {emoji}…
         </span>
       </div>
