@@ -109,7 +109,7 @@ export function RevealCard({
                 />
               ) : (
                 <div className="gilt-hairline-flat velvet-2 flex aspect-square w-full items-center justify-center rounded-none text-3xl text-muted shadow-catch">
-                  {who === 'me' ? '🙂' : (partner?.emoji ?? '💛')}
+                  {who === 'me' ? '🙂' : (partner?.emoji ?? '❤️')}
                 </div>
               )}
               <p className="mt-2 font-sans text-xs uppercase tracking-[0.12em] text-muted">
