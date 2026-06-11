@@ -8,6 +8,13 @@ const statusTone = {
   broken: 'danger',
 } as const;
 
+// The little wax seal that crowns each promise — gilt when sealed, dim otherwise.
+const sealGlyph = {
+  proposed: '🤙',
+  sealed: '🤙',
+  broken: '💔',
+} as const;
+
 export function PunitoCard({
   punito,
   onSeal,
@@ -23,19 +30,38 @@ export function PunitoCard({
 }) {
   const tone =
     statusTone[punito.status as keyof typeof statusTone] ?? 'neutral';
+  const isSealed = punito.status === 'sealed';
+  const isBroken = punito.status === 'broken';
+  const glyph = sealGlyph[punito.status as keyof typeof sealGlyph] ?? '🤙';
 
   return (
-    <Card className="space-y-3">
-      <div className="flex items-start justify-between gap-3">
+    <Card className="space-y-5">
+      <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">🤙</span>
-            <h3 className="truncate font-semibold">{punito.title}</h3>
+          <div className="flex items-center gap-3">
+            {/* The gilt wax seal — shimmers gold once a promise is sealed. */}
+            <span
+              className={
+                isSealed
+                  ? 'gilt-text gold-shimmer text-2xl leading-none'
+                  : isBroken
+                    ? 'text-2xl leading-none opacity-70'
+                    : 'gilt-text candle-flicker text-2xl leading-none'
+              }
+              aria-hidden="true"
+            >
+              {glyph}
+            </span>
+            <h3 className="truncate font-display text-2xl font-semibold tracking-tight text-fg">
+              {punito.title}
+            </h3>
           </div>
           {punito.description && (
-            <p className="mt-1 text-sm text-muted">{punito.description}</p>
+            <p className="mt-2 font-sans text-sm leading-relaxed text-muted">
+              {punito.description}
+            </p>
           )}
-          <div className="mt-2 flex flex-wrap gap-1.5">
+          <div className="mt-4 flex flex-wrap gap-2">
             <Badge tone={punito.level === 'serious' ? 'accent' : 'neutral'}>
               {punito.level}
             </Badge>
@@ -59,7 +85,7 @@ export function PunitoCard({
       )}
       {punito.status === 'sealed' && (
         <Button full variant="ghost" onClick={() => onBreak(punito)}>
-          Broken
+          Mark broken
         </Button>
       )}
     </Card>
