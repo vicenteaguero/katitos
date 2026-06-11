@@ -47,7 +47,10 @@ export function BabyNameForm({ onDone }: { onDone: () => void }) {
   });
 
   return (
-    <form onSubmit={submit} className="space-y-3">
+    <form onSubmit={submit} className="space-y-5">
+      <p className="eyebrow text-purple before:bg-purple after:bg-purple">
+        A name to dream on
+      </p>
       <Field label="Name" error={errors.name?.message}>
         <Input placeholder="Olivia" {...register('name')} />
       </Field>
