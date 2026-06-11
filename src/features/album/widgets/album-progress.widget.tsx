@@ -27,9 +27,9 @@ export function AlbumWidget() {
             <p className="mt-1 text-sm font-semibold text-fg tabular-nums">
               {progress.filled}/{progress.total} stickers
             </p>
-            <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
+            <div className="bg-brown/40 mt-1 h-1.5 w-full overflow-hidden">
               <div
-                className="h-full rounded-full bg-accent"
+                className="bg-gold h-full"
                 style={{ width: `${progress.pct}%` }}
               />
             </div>
@@ -40,7 +40,7 @@ export function AlbumWidget() {
         {newest && (
           <AlbumStickerImage
             path={newest.image_path}
-            className="mt-2 aspect-square w-full rounded object-cover"
+            className="gilt-hairline-flat mt-2 aspect-square w-full object-cover"
           />
         )}
       </Card>
