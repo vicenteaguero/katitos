@@ -6,13 +6,13 @@ import { useTableSync } from '@kernel/realtime';
 import {
   Button,
   Card,
-  CameraCapture,
   Empty,
   Input,
   LoadingScreen,
   PageHeader,
   toast,
 } from '@kernel/ui';
+import { PolaroidCamera } from '../components/polaroid-camera';
 import { usePolaroids, useTodayPolaroid } from '../api/polaroid.queries';
 import {
   useSetPolaroidCaption,
@@ -170,7 +170,7 @@ export function PolaroidRoute() {
       </section>
 
       {camOpen && (
-        <CameraCapture
+        <PolaroidCamera
           facingMode="user"
           onCapture={onCapture}
           onCancel={() => setCamOpen(false)}
