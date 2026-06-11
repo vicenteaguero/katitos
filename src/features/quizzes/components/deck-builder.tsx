@@ -93,7 +93,10 @@ export function DeckBuilder({ onDone }: { onDone: () => void }) {
 
   if (!deckId) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-6">
+        <p className="eyebrow text-copper before:bg-copper after:bg-copper">
+          Stage a New Deck
+        </p>
         <Field label="Type">
           <Select
             value={kindIdx}
@@ -125,10 +128,16 @@ export function DeckBuilder({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-muted">
-        {kind.emoji} {kind.label} · {count} card{count === 1 ? '' : 's'} added
-      </p>
+    <div className="space-y-6">
+      <div className="gilt-hairline-flat flex items-center gap-3 rounded-none bg-surface-2 p-4 shadow-catch">
+        <span className="text-2xl">{kind.emoji}</span>
+        <span className="font-display text-lg font-medium tracking-tight text-fg">
+          {kind.label}
+        </span>
+        <span className="ml-auto font-sans text-xs uppercase tracking-[0.16em] text-copper tabular-nums">
+          {count} card{count === 1 ? '' : 's'}
+        </span>
+      </div>
 
       <Field label="Prompt / question">
         <Textarea
@@ -143,7 +152,7 @@ export function DeckBuilder({ onDone }: { onDone: () => void }) {
           type="file"
           accept="image/*"
           capture="environment"
-          className="text-sm text-muted"
+          className="block w-full font-sans text-sm text-muted file:mr-4 file:rounded-none file:border file:border-border file:bg-surface-2 file:px-4 file:py-2 file:font-sans file:text-xs file:font-semibold file:uppercase file:tracking-[0.12em] file:text-gold"
           onChange={(e) => setImageBlob(e.target.files?.[0] ?? null)}
         />
       </Field>
@@ -152,9 +161,11 @@ export function DeckBuilder({ onDone }: { onDone: () => void }) {
         <AudioRecorder onRecorded={setAudioBlob} />
       </Field>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-muted">Options</span>
+          <span className="font-sans text-xs font-semibold uppercase tracking-[0.18em] text-gold">
+            Options
+          </span>
           <Button
             size="sm"
             variant="secondary"
@@ -166,7 +177,7 @@ export function DeckBuilder({ onDone }: { onDone: () => void }) {
           </Button>
         </div>
         {options.map((o) => (
-          <div key={o.id} className="flex items-center gap-2">
+          <div key={o.id} className="flex items-center gap-3">
             {isQuiz && (
               <input
                 type="radio"
@@ -174,6 +185,7 @@ export function DeckBuilder({ onDone }: { onDone: () => void }) {
                 checked={correctId === o.id}
                 onChange={() => setCorrectId(o.id)}
                 aria-label="Mark correct"
+                className="h-4 w-4 shrink-0 accent-copper"
               />
             )}
             <Input
@@ -193,7 +205,7 @@ export function DeckBuilder({ onDone }: { onDone: () => void }) {
               onClick={() =>
                 setOptions((opts) => opts.filter((x) => x.id !== o.id))
               }
-              className="text-muted"
+              className="lift-press shrink-0 text-muted transition-colors hover:text-danger"
             >
               <X size={16} />
             </button>
