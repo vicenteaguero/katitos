@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { Plus } from 'lucide-react';
 import { useUserId } from '@kernel/auth';
 import { qk } from '@kernel/query';
@@ -111,33 +111,45 @@ export function DecisionsListRoute() {
   };
 
   return (
-    <div>
-      <PageHeader title="Decisions" subtitle="Big stuff we agree on" />
+    <div className="curtain-reveal space-y-12">
+      <PageHeader
+        title="Decisions"
+        subtitle="Big stuff we settle together ⚖️"
+      />
 
-      {isLoading ? (
-        <LoadingScreen />
-      ) : isError ? (
-        <Empty icon="⚠️" title="Couldn't load" hint="Try again in a moment." />
-      ) : !data || data.length === 0 ? (
-        <Empty
-          icon="⚖️"
-          title="No decisions yet"
-          hint="Tap + to log something to agree on."
-        />
-      ) : (
-        <div className="space-y-3">
-          {data.map((d) => (
-            <DecisionCard
-              key={d.id}
-              decision={d}
-              onSetPosition={setPositionFor}
-              onAgree={setAgreeFor}
-              onReopen={handleReopen}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
-      )}
+      <section className="space-y-7">
+        <p className="eyebrow">The Verdict</p>
+
+        {isLoading ? (
+          <LoadingScreen />
+        ) : isError ? (
+          <Empty
+            icon="⚠️"
+            title="Couldn't load"
+            hint="Try again in a moment."
+          />
+        ) : !data || data.length === 0 ? (
+          <Empty
+            icon="⚖️"
+            title="No decisions yet"
+            hint="Tap + to log something to agree on."
+          />
+        ) : (
+          <div className="curtain-stagger space-y-7">
+            {data.map((d, i) => (
+              <div key={d.id} style={{ '--i': i } as CSSProperties}>
+                <DecisionCard
+                  decision={d}
+                  onSetPosition={setPositionFor}
+                  onAgree={setAgreeFor}
+                  onReopen={handleReopen}
+                  onDelete={handleDelete}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       <Fab label="Add decision" onClick={() => setCreating(true)}>
         <Plus />
@@ -158,7 +170,8 @@ export function DecisionsListRoute() {
           positionFor ? `My position: ${positionFor.topic}` : 'My position'
         }
       >
-        <div className="space-y-3">
+        <div className="space-y-5">
+          <p className="eyebrow">Cast Your Vote</p>
           <Field label="Position">
             <Input
               placeholder="e.g. 15"
@@ -188,7 +201,8 @@ export function DecisionsListRoute() {
         onClose={() => setAgreeFor(null)}
         title={agreeFor ? `Agree: ${agreeFor.topic}` : 'Agree'}
       >
-        <div className="space-y-3">
+        <div className="space-y-5">
+          <p className="eyebrow">The Final Word</p>
           <Field label="Agreed value">
             <Input
               placeholder="The number we both accept"
