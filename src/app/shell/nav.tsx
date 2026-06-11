@@ -6,7 +6,6 @@ import {
   MapPin,
   Camera,
   StickyNote,
-  Gamepad2,
   LayoutGrid,
   Settings,
 } from 'lucide-react';
@@ -60,7 +59,7 @@ export function BottomNav() {
 
   return (
     <>
-      <nav className="velvet-2 gilt-hairline-flat fixed inset-x-0 bottom-0 z-30 mx-auto flex max-w-app items-stretch rounded-none border-x-0 border-b-0 border-t pb-[env(safe-area-inset-bottom)] shadow-loge backdrop-blur">
+      <nav className="velvet-2 gilt-hairline-flat relative z-30 flex shrink-0 items-stretch rounded-none border-x-0 border-b-0 border-t pb-[env(safe-area-inset-bottom)]">
         <NavLink to="/" end className="flex flex-1 lift-press">
           {({ isActive }) => (
             <NavTab active={isActive} icon={Home} label="Home" />
@@ -97,12 +96,6 @@ export function BottomNav() {
         <NavLink to="/wall" className="flex flex-1 lift-press">
           {({ isActive }) => (
             <NavTab active={isActive} icon={StickyNote} label="Wall" />
-          )}
-        </NavLink>
-
-        <NavLink to="/games" className="flex flex-1 lift-press">
-          {({ isActive }) => (
-            <NavTab active={isActive} icon={Gamepad2} label="Games" />
           )}
         </NavLink>
 
