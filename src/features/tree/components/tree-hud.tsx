@@ -31,7 +31,7 @@ export function TreeHud({ state, health }: TreeHudProps) {
   const healthPct = Math.round(health * 100);
 
   return (
-    <div className="velvet-2 gilt-hairline pointer-events-none space-y-3 rounded-none p-4 shadow-loge backdrop-blur">
+    <div className="pointer-events-none space-y-3 rounded-lg bg-surface-2 p-4 backdrop-blur">
       <div className="flex items-center justify-around gap-2">
         <Stat label="Height" value={`${height.toFixed(2)} m`} />
         <Stat label="Age" value={`${ageDays}d`} />
@@ -40,7 +40,7 @@ export function TreeHud({ state, health }: TreeHudProps) {
       </div>
       <div className="flex items-center justify-between gap-2.5 font-sans text-[10px] font-medium uppercase tracking-[0.12em] text-muted">
         <span>Health</span>
-        <div className="h-1.5 flex-1 overflow-hidden rounded-none border border-border/40 bg-surface">
+        <div className="h-1.5 flex-1 overflow-hidden rounded bg-surface">
           <div
             className="h-full bg-success transition-all"
             style={{ width: `${healthPct}%` }}
