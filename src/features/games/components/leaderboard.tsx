@@ -30,16 +30,14 @@ export function Leaderboard({ game }: { game: GameModule }) {
             key={e.userId}
             style={{ '--i': i } as React.CSSProperties}
             className={cn(
-              'gilt-hairline relative flex items-center justify-between gap-4 rounded-none px-5 py-4',
-              leader
-                ? 'velvet-2 candle-flicker shadow-loge'
-                : 'velvet gilt-hairline-flat'
+              'relative flex items-center justify-between gap-4 rounded-lg px-5 py-4',
+              leader ? 'bg-surface-2 candle-flicker' : 'bg-surface'
             )}
           >
             {leader && (
               <span
                 aria-hidden="true"
-                className="gold-shimmer pointer-events-none absolute inset-0 rounded-none"
+                className="gold-shimmer pointer-events-none absolute inset-0 rounded-lg"
               />
             )}
             <div className="relative flex min-w-0 items-baseline gap-3">
