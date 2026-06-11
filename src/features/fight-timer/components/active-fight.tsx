@@ -39,29 +39,31 @@ export function ActiveFight({ fight }: { fight: Fight }) {
   };
 
   return (
-    <Card className="border-danger/40 bg-danger/5">
-      <p className="text-xs font-medium uppercase tracking-wide text-danger">
-        Fighting since {DateTime.fromISO(fight.started_at).toFormat('t')}
+    <Card className="space-y-7 text-center">
+      <p className="font-sans text-xs font-semibold uppercase tracking-[0.16em] text-purple">
+        Cooling off since {DateTime.fromISO(fight.started_at).toFormat('t')}
       </p>
-      <p className="mt-2 text-4xl font-bold tabular-nums text-danger">
+      {/* The vigil clock, candle-warm gilt, breathing on a faint flicker — the
+          quarrel kept alive but tender, never alarming. */}
+      <p className="gilt-text candle-flicker font-display text-6xl font-semibold tabular-nums leading-none">
         {elapsedLabel(fight.started_at, now)}
       </p>
       {fight.reason && (
-        <p className="mt-3 text-sm text-fg">
+        <p className="font-sans text-sm leading-relaxed text-fg">
           <span className="text-muted">About: </span>
           {fight.reason}
         </p>
       )}
 
       {ending ? (
-        <div className="mt-4 space-y-2">
+        <div className="space-y-3 text-left">
           <Textarea
             autoFocus
             placeholder="How did we make up? (optional)"
             value={resolution}
             onChange={(e) => setResolution(e.target.value)}
           />
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <Button full onClick={handleEnd} disabled={end.isPending}>
               We made up 💛
             </Button>
@@ -75,13 +77,8 @@ export function ActiveFight({ fight }: { fight: Fight }) {
           </div>
         </div>
       ) : (
-        <Button
-          full
-          variant="danger"
-          className="mt-4"
-          onClick={() => setEnding(true)}
-        >
-          End fight
+        <Button full onClick={() => setEnding(true)}>
+          We made up 💛
         </Button>
       )}
     </Card>
