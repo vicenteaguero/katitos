@@ -65,8 +65,8 @@ export function CountdownForm({
   });
 
   return (
-    <form onSubmit={submit} className="space-y-3">
-      <div className="grid grid-cols-4 gap-2">
+    <form onSubmit={submit} className="curtain-reveal space-y-6">
+      <div className="grid grid-cols-4 gap-3">
         <Field label="Emoji">
           <Input maxLength={8} placeholder="✈️" {...register('emoji')} />
         </Field>
