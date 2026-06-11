@@ -56,8 +56,11 @@ export function KnowMeRoute() {
   const [authoring, setAuthoring] = useState(false);
 
   return (
-    <div className="space-y-4">
-      <PageHeader title="Know Me" subtitle="One question a day 💛" />
+    <div className="curtain-reveal space-y-12">
+      <PageHeader
+        title="Know Me"
+        subtitle="One question a day, by candlelight 💛"
+      />
 
       <Segmented
         value={tab}
@@ -70,24 +73,36 @@ export function KnowMeRoute() {
       />
 
       {tab === 'history' ? (
-        <HistoryArchive />
+        <section className="space-y-7">
+          <p className="eyebrow">The Archive</p>
+          <HistoryArchive />
+        </section>
       ) : (
         <>
-          {isLoading || !today ? (
-            <LoadingScreen />
-          ) : bothSubmitted && revealRows ? (
-            <RevealCard today={today} rows={revealRows} />
-          ) : mine ? (
-            <WaitingCard
-              today={today}
-              ownChoice={mine.own_choice ?? null}
-              guessChoice={mine.guess_choice ?? null}
-            />
-          ) : (
-            <DailyCard today={today} />
-          )}
+          <section className="space-y-7">
+            <p className="eyebrow">Tonight's Question</p>
+            {isLoading || !today ? (
+              <LoadingScreen />
+            ) : bothSubmitted && revealRows ? (
+              <RevealCard today={today} rows={revealRows} />
+            ) : mine ? (
+              <WaitingCard
+                today={today}
+                ownChoice={mine.own_choice ?? null}
+                guessChoice={mine.guess_choice ?? null}
+              />
+            ) : (
+              <DailyCard today={today} />
+            )}
+          </section>
 
-          <LoveMapPanel />
+          {/* The relationship as one gold-stitched line between acts. */}
+          <hr className="seam" aria-hidden="true" />
+
+          <section className="space-y-7">
+            <p className="eyebrow">The Standings</p>
+            <LoveMapPanel />
+          </section>
         </>
       )}
 
