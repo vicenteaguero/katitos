@@ -38,8 +38,8 @@ export function Sheet({
         className="absolute inset-0 bg-black/70"
         onClick={onClose}
       />
-      <div className="curtain-reveal velvet-2 gilt-hairline relative z-10 max-h-[85vh] w-full max-w-app overflow-y-auto rounded-none p-7 pb-[max(1.75rem,env(safe-area-inset-bottom))] shadow-loge">
-        <div className="mx-auto mb-6 h-px w-12 rounded-none bg-border" />
+      <div className="curtain-reveal relative z-10 max-h-[85vh] w-full max-w-app overflow-y-auto rounded-t-xl bg-surface-2 p-7 pb-[max(1.75rem,env(safe-area-inset-bottom))] shadow-loge">
+        <div className="mx-auto mb-6 h-1 w-12 rounded-full bg-fg/15" />
         {title && (
           <h2 className="mb-6 font-display text-3xl font-semibold tracking-tight text-fg">
             {title}
