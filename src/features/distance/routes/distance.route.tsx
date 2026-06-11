@@ -48,7 +48,7 @@ export function DistanceRoute() {
       <section className="relative">
         <span className="footlight" aria-hidden="true" />
         <p className="eyebrow mb-7">As the crow flies</p>
-        <div className="velvet-2 gilt-hairline relative z-[1] px-stage py-10 text-center shadow-loge">
+        <div className="relative z-[1] rounded-lg bg-surface-2 px-stage py-10 text-center">
           <p
             className="gilt-text candle-flicker font-display text-5xl font-semibold leading-none tracking-tight tabular-nums"
             aria-label={`${formatDistance(km)} apart`}
