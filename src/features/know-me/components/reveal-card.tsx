@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Camera } from 'lucide-react';
 import { usePartner } from '@kernel/auth';
+import { cn } from '@kernel/lib';
 import { Button, CameraCapture, Card, toast } from '@kernel/ui';
 import { useAttachReaction } from '../api/know-me.mutations';
 import type { QuestionWithDay, RevealRow } from '../types';
@@ -36,39 +37,67 @@ export function RevealCard({
 
   const tick = (ok: boolean) => (ok ? ' ✓' : ' ✗');
 
-  return (
-    <Card className="space-y-4">
-      <p className="text-lg font-medium">{today.question.prompt}</p>
+  // The single most affirmative moment: both read each other right. Sacred Snow.
+  const bothNailed = iGotIt && theyGotIt;
 
-      <div className="space-y-2 rounded-lg border border-border bg-surface-2 p-3 text-sm">
-        <div>
-          You really are: <b>{labelOf(me?.own_choice ?? null)}</b>
+  return (
+    <Card className="km-reveal km-candle space-y-7">
+      <p className="font-display text-3xl font-medium leading-tight tracking-tight text-fg">
+        {today.question.prompt}
+      </p>
+
+      <div className="gilt-hairline-flat velvet-2 space-y-3 rounded-none p-5 font-sans text-sm shadow-catch">
+        <div className="text-muted">
+          You really are:{' '}
+          <b className="font-semibold text-fg">
+            {labelOf(me?.own_choice ?? null)}
+          </b>
         </div>
-        <div>
-          {partnerName} really is: <b>{labelOf(them?.own_choice ?? null)}</b>
+        <div className="text-muted">
+          {partnerName} really is:{' '}
+          <b className="font-semibold text-fg">
+            {labelOf(them?.own_choice ?? null)}
+          </b>
         </div>
-        <div className="border-t border-border pt-2">
+        <div
+          className="km-verdict-rule h-px w-full bg-border"
+          aria-hidden="true"
+        />
+        <div className="text-muted">
           Your guess for {partnerName}:{' '}
-          <b>{labelOf(me?.guess_choice ?? null)}</b>
-          <span className={iGotIt ? 'text-success' : 'text-warning'}>
+          <b className="font-semibold text-fg">
+            {labelOf(me?.guess_choice ?? null)}
+          </b>
+          <span
+            className={iGotIt ? 'font-semibold text-success' : 'text-muted'}
+          >
             {tick(iGotIt)}
           </span>
         </div>
-        <div>
+        <div className="text-muted">
           {partnerName}'s guess for you:{' '}
-          <b>{labelOf(them?.guess_choice ?? null)}</b>
-          <span className={theyGotIt ? 'text-success' : 'text-warning'}>
+          <b className="font-semibold text-fg">
+            {labelOf(them?.guess_choice ?? null)}
+          </b>
+          <span
+            className={theyGotIt ? 'font-semibold text-success' : 'text-muted'}
+          >
             {tick(theyGotIt)}
           </span>
         </div>
       </div>
 
-      <p className="text-center text-sm text-muted">
-        {iGotIt ? '🎯 You nailed it!' : '😄 Missed this one'} ·{' '}
+      <p
+        className={cn(
+          'text-center font-display text-xl italic',
+          bothNailed ? 'candle-flicker text-accent-fg' : 'text-muted'
+        )}
+      >
+        {iGotIt ? '🎯 You nailed it' : '😄 Missed this one'} ·{' '}
         {theyGotIt ? `${partnerName} got you` : `${partnerName} missed you`}
       </p>
 
-      <div className="flex gap-3">
+      <div className="flex gap-4">
         {(['me', 'them'] as const).map((who) => {
           const row = who === 'me' ? me : them;
           return (
@@ -76,14 +105,14 @@ export function RevealCard({
               {row?.reaction_path ? (
                 <KnowMeImage
                   path={row.reaction_path}
-                  className="aspect-square w-full rounded-lg object-cover"
+                  className="gilt-hairline aspect-square w-full rounded-none object-cover shadow-catch"
                 />
               ) : (
-                <div className="flex aspect-square w-full items-center justify-center rounded-lg border border-dashed border-border text-2xl text-muted">
+                <div className="gilt-hairline-flat velvet-2 flex aspect-square w-full items-center justify-center rounded-none text-3xl text-muted shadow-catch">
                   {who === 'me' ? '🙂' : (partner?.emoji ?? '💛')}
                 </div>
               )}
-              <p className="mt-1 text-xs text-muted">
+              <p className="mt-2 font-sans text-xs uppercase tracking-[0.12em] text-muted">
                 {who === 'me' ? 'You' : partnerName}
               </p>
             </div>
