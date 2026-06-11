@@ -18,7 +18,7 @@ export function BookControls({
   onJumpChapter: (chapterId: string) => void;
 }) {
   return (
-    <div className="velvet gilt-hairline flex items-center justify-between gap-2 p-3">
+    <div className="flex items-center justify-between gap-2 rounded-lg bg-surface-2 p-3">
       <IconButton label="Previous page" onClick={onPrev} disabled={spread <= 0}>
         <ChevronLeft className="h-5 w-5" />
       </IconButton>
