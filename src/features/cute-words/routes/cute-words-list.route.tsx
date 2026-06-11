@@ -32,8 +32,10 @@ export function CuteWordsListRoute() {
   };
 
   return (
-    <div>
-      <PageHeader title="Cute words" subtitle="Our dictionary" />
+    <div className="curtain-reveal">
+      <p className="eyebrow mb-5 text-copper">Our private tongue</p>
+      <PageHeader title="Cute words" subtitle="A dictionary of just us" />
+      <div className="seam mb-12" aria-hidden="true" />
 
       {isLoading ? (
         <LoadingScreen />
@@ -43,10 +45,10 @@ export function CuteWordsListRoute() {
         <Empty
           icon="📖"
           title="No words yet"
-          hint="Tap + to add one of our words."
+          hint="Tap + to coin the first word of our language."
         />
       ) : (
-        <div className="space-y-3">
+        <div className="curtain-stagger space-y-5">
           {data.map((w) => (
             <CuteWordCard key={w.id} word={w} onDelete={handleDelete} />
           ))}
