@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- A1 — Refined negative-space face. Only ears + heart eyes + nose float; head is implied. -->
+  <rect width="512" height="512" rx="112" fill="#6E1423"/>
+  <g fill="#FFFAFA">
+    <!-- upright ears, tips slightly inward (reads cat, not devil) -->
+    <path d="M168 214 Q160 150 196 132 Q214 168 218 206 Z"/>
+    <path d="M344 214 Q352 150 316 132 Q298 168 294 206 Z"/>
+    <!-- heart eyes -->
+    <path d="M214 256 c-15-17-40-6-40 14 c0 18 25 31 40 46 c15-15 40-28 40-46 c0-20-25-31-40-14 Z"/>
+    <path d="M298 256 c-15-17-40-6-40 14 c0 18 25 31 40 46 c15-15 40-28 40-46 c0-20-25-31-40-14 Z"/>
+    <!-- nose -->
+    <path d="M256 338 l11 15 h-22 Z"/>
+  </g>
+</svg>
