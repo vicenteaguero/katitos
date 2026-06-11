@@ -40,9 +40,16 @@ export function ChalkNoteItem({
         color: note.color,
         touchAction: 'none',
       }}
-      className="group absolute max-w-[200px] cursor-grab touch-none whitespace-pre-wrap break-words rounded px-2 py-1 text-lg leading-snug [text-shadow:0_1px_2px_rgba(0,0,0,0.5)] active:cursor-grabbing"
+      className="chalk-note group absolute max-w-[220px] cursor-grab touch-none select-none whitespace-pre-wrap break-words rounded-none px-3 pb-2 pt-4 active:cursor-grabbing"
     >
-      {note.body}
+      {/* The gilt magnet seal pinning the note to the slate */}
+      <span
+        aria-hidden="true"
+        className="absolute left-1/2 top-0 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle_at_35%_30%,var(--gilt-spark),var(--gilt-bright)_45%,var(--gilt-deep))] shadow-[0_1px_3px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,241,201,0.6)]"
+      />
+      <span className="block font-display text-[1.35rem] font-light italic leading-snug [text-shadow:0_0_1px_rgba(255,255,255,0.25),0_1px_1px_rgba(0,0,0,0.45)]">
+        {note.body}
+      </span>
       {canDelete && (
         <button
           type="button"
@@ -52,7 +59,7 @@ export function ChalkNoteItem({
             e.stopPropagation();
             onDelete();
           }}
-          className="absolute -right-2 -top-2 hidden h-5 w-5 items-center justify-center rounded-full bg-black/70 text-xs text-white group-hover:flex"
+          className="lift-press absolute -right-2.5 -top-2.5 hidden h-6 w-6 items-center justify-center rounded-none border border-border bg-surface-2 text-sm leading-none text-gold shadow-catch group-hover:flex"
         >
           ×
         </button>
