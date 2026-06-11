@@ -3,13 +3,7 @@ import { cn } from '../lib/cn';
 
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
-    <div
-      className={cn(
-        'velvet-2 gilt-hairline rounded-none p-7 shadow-loge',
-        className
-      )}
-      {...props}
-    />
+    <div className={cn('rounded-lg bg-surface p-7', className)} {...props} />
   );
 }
 
