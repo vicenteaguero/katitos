@@ -11,7 +11,7 @@ export function AlbumHud({
 }) {
   if (!progress) return null;
   return (
-    <div className="velvet gilt-hairline space-y-2 p-4">
+    <div className="space-y-2 rounded-lg bg-surface-2 p-4">
       <div className="flex items-center justify-between font-sans text-xs">
         <span className="font-semibold text-fg tabular-nums">
           {progress.filled}/{progress.total} stickers{' '}
@@ -26,7 +26,7 @@ export function AlbumHud({
           {maxSpread + 1}
         </span>
       </div>
-      <div className="bg-brown/40 h-1.5 w-full overflow-hidden">
+      <div className="bg-brown/40 h-1.5 w-full overflow-hidden rounded-full">
         <div
           className="gold-shimmer bg-gold h-full transition-all"
           style={{ width: `${progress.pct}%` }}
