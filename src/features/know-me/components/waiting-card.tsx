@@ -18,7 +18,7 @@ export function WaitingCard({
 }) {
   const { partner } = usePartner();
   const partnerName = partner?.display_name ?? 'your love';
-  const emoji = partner?.emoji ?? '💛';
+  const emoji = partner?.emoji ?? '❤️';
   const labelOf = (id: string | null) =>
     today.options.find((o) => o.id === id)?.label ?? '—';
 
