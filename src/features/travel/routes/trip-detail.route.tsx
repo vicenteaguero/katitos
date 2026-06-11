@@ -5,6 +5,7 @@ import {
   Check,
   ChevronLeft,
   ExternalLink,
+  MapPin,
   Plus,
   Trash2,
   Wallet,
@@ -19,7 +20,6 @@ import {
   Fab,
   IconButton,
   LoadingScreen,
-  PageHeader,
   Sheet,
   toast,
 } from '@kernel/ui';
@@ -47,29 +47,44 @@ function dateRange(start: string | null, end: string | null): string | null {
 function TripHeader({ trip }: { trip: Trip }) {
   const range = dateRange(trip.start_date, trip.end_date);
   return (
-    <div className="space-y-2">
-      <PageHeader title={trip.name} subtitle={trip.destination ?? undefined} />
-      <div className="flex flex-wrap gap-2 text-sm text-muted">
-        {range && (
-          <span className="flex items-center gap-1.5">
-            <CalendarDays className="h-4 w-4" /> {range}
-          </span>
+    <div className="space-y-4">
+      <p className="eyebrow">Our Itinerary</p>
+      {/* The lit-stage postcard — a marble panel with wine serif, the folio's
+          one texture moment. */}
+      <div className="marble gilt-hairline relative px-stage py-8 shadow-loge">
+        <h1 className="font-display text-4xl font-semibold leading-tight tracking-tight text-accent">
+          {trip.name}
+        </h1>
+        {trip.destination && (
+          <p className="mt-2 flex items-center gap-1.5 font-display text-xl italic tracking-tight text-brown">
+            <MapPin className="h-4 w-4 shrink-0 text-copper" />
+            {trip.destination}
+          </p>
         )}
-        {trip.budget_amount != null && (
-          <span className="flex items-center gap-1.5 text-accent">
-            <Wallet className="h-4 w-4" />
-            {formatMoney(trip.budget_amount, trip.budget_currency ?? 'USD')}
-          </span>
+        <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 font-sans text-sm font-medium text-brown">
+          {range && (
+            <span className="flex items-center gap-1.5 tabular-nums">
+              <CalendarDays className="h-4 w-4 text-copper" /> {range}
+            </span>
+          )}
+          {trip.budget_amount != null && (
+            <span className="flex items-center gap-1.5 tabular-nums text-accent">
+              <Wallet className="h-4 w-4" />
+              {formatMoney(trip.budget_amount, trip.budget_currency ?? 'USD')}
+            </span>
+          )}
+        </div>
+        {trip.notes && (
+          <p className="mt-4 whitespace-pre-wrap font-sans text-sm leading-relaxed text-brown/90">
+            {trip.notes}
+          </p>
         )}
       </div>
-      {trip.notes && (
-        <p className="whitespace-pre-wrap text-sm text-muted">{trip.notes}</p>
-      )}
     </div>
   );
 }
 
-function TripItemRow({ item }: { item: TripItem }) {
+function TripItemRow({ item, index = 0 }: { item: TripItem; index?: number }) {
   const toggle = useToggleTripItem();
   const del = useDeleteTripItem();
   const meta = tripItemMeta(item.kind);
@@ -98,7 +113,10 @@ function TripItemRow({ item }: { item: TripItem }) {
   };
 
   return (
-    <Card className="flex items-start gap-3">
+    <Card
+      className="flex items-start gap-3"
+      style={{ '--i': index } as React.CSSProperties}
+    >
       <button
         type="button"
         aria-label={done ? 'Mark as open' : 'Mark as done'}
@@ -106,9 +124,9 @@ function TripItemRow({ item }: { item: TripItem }) {
         onClick={handleToggle}
         disabled={toggle.isPending}
         className={cn(
-          'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition',
+          'lift-press mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-none border transition',
           done
-            ? 'border-success bg-success text-white'
+            ? 'border-success bg-success text-accent-fg'
             : 'border-border bg-surface-2 text-transparent'
         )}
       >
@@ -119,18 +137,18 @@ function TripItemRow({ item }: { item: TripItem }) {
         <div className="flex items-center gap-2">
           <p
             className={cn(
-              'truncate font-medium',
+              'truncate font-display text-lg font-medium tracking-tight text-fg',
               done && 'text-muted line-through'
             )}
           >
             {item.title}
           </p>
-          <Badge tone="accent">
+          <Badge tone="accent" className="shrink-0">
             {meta.emoji} {meta.label}
           </Badge>
         </div>
         {item.description && (
-          <p className="mt-0.5 whitespace-pre-wrap text-sm text-muted">
+          <p className="mt-1 whitespace-pre-wrap font-sans text-sm leading-relaxed text-muted">
             {item.description}
           </p>
         )}
@@ -139,7 +157,7 @@ function TripItemRow({ item }: { item: TripItem }) {
             href={item.link}
             target="_blank"
             rel="noreferrer"
-            className="mt-1 inline-flex items-center gap-1 text-sm text-accent"
+            className="mt-2 inline-flex items-center gap-1 font-sans text-sm text-copper"
           >
             <ExternalLink className="h-3.5 w-3.5" />
             <span className="truncate">{item.link}</span>
@@ -204,7 +222,7 @@ export function TripDetailRoute() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="curtain-reveal space-y-act">
       {back}
       <TripHeader trip={trip.data} />
 
@@ -219,9 +237,9 @@ export function TripDetailRoute() {
           hint="Tap + to add ideas, places, or to-dos."
         />
       ) : (
-        <div className="space-y-3">
-          {items.data.map((item) => (
-            <TripItemRow key={item.id} item={item} />
+        <div className="curtain-stagger space-y-5">
+          {items.data.map((item, i) => (
+            <TripItemRow key={item.id} item={item} index={i} />
           ))}
         </div>
       )}
