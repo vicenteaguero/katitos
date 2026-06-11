@@ -15,28 +15,35 @@
  * ════════════════════════════════════════════════════════════════════════════
  */
 :root {
-  /* ── Clean dark stage (names components already consume) ───────────────── */
-  --color-bg: #0c0b0e; /* Night — clean near-black, faint cool */
-  --color-surface: #151417; /* Panel — base card */
-  --color-surface-2: #1f1e23; /* Raised — lifted card/sheet/popover */
-  --color-border: #c9c6be; /* White-Gold Hairline — the one fine metal line */
-  --color-fg: #f6f4f0; /* Warm white — primary text */
-  --color-muted: #9a978f; /* Ash — secondary text/metadata */
-  --color-accent: #7c1626; /* Wine — primary action, the brand red */
+  /* ── THE PALETTE — only their colors ───────────────────────────────────────
+     HER: wine red · brown · glossy green · black · white
+     HIM: sandstorm · military green · charcoal black · snow white
+     METAL: white gold (never yellow). NO PURPLE. ─────────────────────────── */
+  --color-bg: #0f0f0d; /* Charcoal Black — the base (his) */
+  --color-surface: #1a1a17; /* raised charcoal panel */
+  --color-surface-2: #242420; /* lifted card/sheet/popover */
+  --color-border: #cbc9c2; /* White Gold Hairline — the one metal line */
+  --color-fg: #f7f6f2; /* Snow White — primary text */
+  --color-muted: #a6a299; /* warm grey — secondary text */
+  --color-accent: #7a1626; /* Wine Red — her brand red, primary action */
   --color-accent-fg: #ffffff; /* on wine */
-  --color-danger: #c0303a; /* Lacquer Red — destructive */
-  --color-success: #6b7344; /* Olive — his green = "yes" */
-  --color-warning: #e8d9b5; /* Cream — his sandstorm, gentle attention */
+  --color-danger: #b5343d; /* error red — distinct from wine */
+  --color-success: #5f6e3e; /* Military Green — his green = "yes" */
+  --color-warning: #d9c9a3; /* Sandstorm — his sandy cream */
 
-  /* ── Accent layer (her purple/brown + white-gold metal + Chile copper) ─── */
-  --color-purple: #4a2350; /* Imperial Purple — her royal note */
-  --color-brown: #3e2218; /* Cordovan Brown — her warm shadow tone */
-  --color-lapis: #16182e; /* Lapis — cool alt surface for "special" panels */
-  --color-copper: #b5633a; /* Andes Copper — Chile / warm dusk highlight */
-  --gold: #cfccc4; /* WHITE GOLD — the metal (cool, pale, never yellow) */
-  --gilt-bright: #eae8e1; /* bright pole of the white-gold sheen */
-  --gilt-deep: #9a978d; /* deep pole */
-  --gilt-spark: #fbfbf8; /* the specular highlight */
+  /* ── Accent layer (her glossy green + brown; white-gold metal) ──────────── */
+  /* NOTE: --color-purple is REPURPOSED to her GLOSSY GREEN (the name is kept so
+     existing `text-purple`/`bg-purple` usages re-skin from here — there is NO
+     purple in this app). */
+  --color-purple: #2c8a5e; /* Glossy Green — her vivid emerald accent */
+  --color-green: #2c8a5e; /* alias — her glossy green */
+  --color-brown: #4a2e1e; /* Brown — her warm tone */
+  --color-lapis: #15201a; /* deep green-charcoal — alt "special" surface */
+  --color-copper: #9a6a45; /* warm brown highlight (de-orange) */
+  --gold: #cbc9c2; /* WHITE GOLD — cool pale metal, never yellow */
+  --gilt-bright: #e6e5df; /* bright pole (cool, not cream) */
+  --gilt-deep: #95948a; /* deep pole */
+  --gilt-spark: #fdfdfb; /* specular highlight */
 
   /* ── The NOVAT layer — the great Silver Dome of the Novosibirsk theatre. ── */
   --silver: #c4c8cd; /* Dome Silver — the colossal silver-grey cupola */
@@ -53,12 +60,12 @@
     var(--gilt-bright) 55%,
     var(--gilt-deep) 100%
   );
-  /* The stage: a clean, neutral near-black with a faint top light. */
+  /* The stage: charcoal with a faint top light. */
   --grad-house: radial-gradient(
     120% 85% at 50% -8%,
-    #1a1820 0%,
-    #131217 46%,
-    #0c0b0e 100%
+    #1d1d19 0%,
+    #151512 46%,
+    #0f0f0d 100%
   );
   --grad-velvet-sheen: linear-gradient(0deg, transparent, transparent);
   /* Footlight — a faint, cool silver wash (no gold, very subtle). */
@@ -67,14 +74,14 @@
     rgba(201, 198, 190, 0.05) 0%,
     transparent 72%
   );
+  /* The fusion seam — her glossy green & wine flow into his sandstorm & olive. */
   --grad-sash: linear-gradient(
     115deg,
     var(--color-purple) 0%,
-    var(--color-accent) 36%,
-    var(--color-brown) 50%,
-    var(--color-copper) 64%,
-    var(--color-success) 82%,
-    var(--color-warning) 100%
+    var(--color-accent) 32%,
+    var(--color-brown) 52%,
+    var(--color-warning) 76%,
+    var(--color-success) 100%
   );
 
   /* ── Depth (clean, neutral — no colored glows) ─────────────────────────── */
@@ -295,7 +302,7 @@ button {
   background-image: linear-gradient(
     110deg,
     transparent 38%,
-    rgba(255, 241, 201, 0.45) 50%,
+    rgba(255, 255, 255, 0.4) 50%,
     transparent 62%
   );
   background-size: 220% 100%;
@@ -362,7 +369,7 @@ button {
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 241, 201, 0.28),
+    rgba(255, 255, 255, 0.22),
     transparent
   );
   transform: translateX(-160%) skewX(-18deg);
@@ -684,7 +691,7 @@ button {
   z-index: -1;
   background: radial-gradient(
     58% 46% at 50% 86%,
-    rgba(74, 35, 80, 0.5) 0%,
+    rgba(122, 22, 38, 0.42) 0%,
     rgba(110, 20, 35, 0.18) 42%,
     transparent 74%
   );
