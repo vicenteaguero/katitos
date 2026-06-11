@@ -59,7 +59,7 @@ export function KnowMeRoute() {
     <div className="curtain-reveal space-y-12">
       <PageHeader
         title="Know Me"
-        subtitle="One question a day, by candlelight 💛"
+        subtitle="One question a day, by candlelight ❤️"
       />
 
       <Segmented
