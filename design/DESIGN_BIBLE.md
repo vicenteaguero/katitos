@@ -1,5 +1,37 @@
 # Katitos — DESIGN BIBLE
 
+> ## 🔴 MINIMALIST LAW (latest — 2026-06-11, supersedes EVERYTHING below, including the earlier override)
+>
+> The owner's verdict. These six rules WIN over every other line in this file:
+>
+> 1. **NO BORDERS by default.** He HATES borders on everything. Surfaces are
+>    separated by **background tone** (`bg` → `surface` → `surface-2`) and
+>    **spacing** — never by a line. The white-gold hairline (`.gilt-hairline`)
+>    is a **rare accent**: at most **ONE hero element per screen**, often zero.
+>    `.gilt-hairline-flat` is legacy — avoid in new work.
+> 2. **NO GRIDS.** He HATES uniform tile grids. Layouts are a **vertical
+>    editorial flow**: full-width rows, varied sizes, deliberate asymmetry,
+>    generous whitespace. Never a wall of same-sized squares.
+> 3. **MIXED corners — never marry square or round.** The system:
+>    - `rounded-none` (0) → photos, hero panels, full-bleed imagery
+>    - `rounded` (12px, `--radius`) → buttons, chips, inputs, icon buttons
+>    - `rounded-lg` (20px, `--radius-lg`) → cards, toasts
+>    - `rounded-xl` (28px, `--radius-xl`) → sheet tops (`rounded-t-xl`); Fab is `rounded-full`
+>      Mix deliberately on every screen — the contrast IS the style.
+> 4. **NO "plus-tile" add pattern.** Adding something = a real labeled control:
+>    a rounded wine `Button` ("Add …") or the `Fab` — never a dashed/plus square
+>    tile in a grid.
+> 5. **PALETTE (exact, nothing else):** charcoal blacks (bg/surfaces), snow-white
+>    text, **wine red** accent, **white-gold** metal (never yellow), her glossy
+>    green (the `--color-purple` token = emerald `#2c8a5e`), her brown, his
+>    military green (success), his sandstorm (warning). **NO PURPLE anywhere.**
+> 6. **On wine red (`bg-accent`) content is WHITE** (`text-accent-fg`) — never
+>    black or dark.
+>
+> Plus: fast and flawless — light DOM, short snappy GPU animations
+> (`.curtain-reveal` / `.lift-press`), no jank. Cormorant for titles, Manrope
+> for UI, 32rem mobile column. Presentation changes only unless told otherwise.
+
 > ## ⚠️ DIRECTION OVERRIDE (2026-06 — read first, supersedes everything below)
 >
 > The owners corrected the direction. These rules WIN over any "Bolshoi / opera / velvet / gold leaf" language later in this file:
