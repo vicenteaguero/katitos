@@ -14,19 +14,24 @@ export function NextCountdownWidget() {
 
   return (
     <Link to="/countdowns">
-      <Card className="h-full">
+      <Card className="footlight flex h-full flex-col gap-2">
         <CardTitle>Next up</CardTitle>
         {next ? (
           <>
-            <p className="mt-1 truncate text-base font-semibold">
+            <p className="truncate font-display text-xl font-medium italic leading-snug text-copper">
               {next.emoji ?? '⏳'} {next.title}
             </p>
-            <p className="text-2xl font-bold tabular-nums text-accent">
-              {countdownTo(next.target_at, now).days}d
+            <p className="mt-auto flex items-baseline gap-1.5">
+              <span className="gilt-text candle-flicker font-display text-4xl font-semibold leading-none tabular-nums">
+                {countdownTo(next.target_at, now).days}
+              </span>
+              <span className="font-sans text-[0.625rem] uppercase tracking-[0.22em] text-copper">
+                days
+              </span>
             </p>
           </>
         ) : (
-          <p className="mt-2 text-sm text-muted">No countdowns yet</p>
+          <p className="mt-2 font-sans text-sm text-muted">No countdowns yet</p>
         )}
       </Card>
     </Link>
