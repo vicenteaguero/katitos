@@ -55,23 +55,27 @@ export function GoalDetail({ goal }: { goal: GoalWithContribs }) {
     members?.find((m) => m.user_id === userId)?.display_name ?? 'Someone';
 
   return (
-    <div className="space-y-4">
-      <div>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-surface-2">
+    <div className="space-y-7">
+      <div className="marble gilt-hairline space-y-4 p-7 shadow-loge">
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="font-display text-3xl font-semibold tracking-tight text-accent tabular-nums">
+            {formatMoney(saved, goal.currency)}
+          </span>
+          <span className="text-sm font-semibold tabular-nums text-success">
+            {pct}%
+          </span>
+        </div>
+        <div className="h-1.5 w-full overflow-hidden bg-brown gilt-hairline-flat">
           <div
-            className="h-full rounded-full bg-accent transition-[width]"
+            className="gold-shimmer h-full bg-success transition-[width]"
             style={{ width: `${pct}%` }}
           />
         </div>
-        <p className="mt-1.5 text-sm tabular-nums text-muted">
-          <span className="font-semibold text-fg">
-            {formatMoney(saved, goal.currency)}
-          </span>{' '}
-          / {formatMoney(target, goal.currency)}
-          <span className="ml-1 text-accent">({pct}%)</span>
+        <p className="text-sm tabular-nums text-brown">
+          of {formatMoney(target, goal.currency)} target
         </p>
         {goal.notes && (
-          <p className="mt-2 whitespace-pre-wrap text-sm text-muted">
+          <p className="whitespace-pre-wrap font-display text-lg italic leading-snug text-accent">
             {goal.notes}
           </p>
         )}
@@ -100,8 +104,8 @@ export function GoalDetail({ goal }: { goal: GoalWithContribs }) {
         </Button>
       </form>
 
-      <div>
-        <h3 className="mb-2 text-sm font-semibold text-muted">Contributions</h3>
+      <div className="space-y-4">
+        <p className="eyebrow">Contributions</p>
         {isLoading ? (
           <LoadingScreen />
         ) : isError ? (
@@ -117,22 +121,24 @@ export function GoalDetail({ goal }: { goal: GoalWithContribs }) {
             hint="Log the first one above."
           />
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-3">
             {contributions.map((c) => (
               <li
                 key={c.id}
-                className="flex items-start justify-between gap-3 rounded border border-border bg-surface-2 px-3 py-2"
+                className="velvet-2 gilt-hairline-flat flex items-start justify-between gap-3 px-4 py-3 shadow-catch"
               >
                 <div className="min-w-0">
-                  <p className="text-sm font-medium">{memberName(c.user_id)}</p>
+                  <p className="font-display text-base font-semibold tracking-tight text-fg">
+                    {memberName(c.user_id)}
+                  </p>
                   {c.note && (
                     <p className="truncate text-xs text-muted">{c.note}</p>
                   )}
-                  <p className="text-xs text-muted">
+                  <p className="text-xs tabular-nums text-muted">
                     {formatDate(c.contributed_at)}
                   </p>
                 </div>
-                <span className="shrink-0 text-sm font-semibold tabular-nums text-accent">
+                <span className="gilt-text shrink-0 text-sm font-semibold tabular-nums">
                   {formatMoney(c.amount, goal.currency)}
                 </span>
               </li>
