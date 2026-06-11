@@ -32,8 +32,12 @@ export function TripsListRoute() {
   };
 
   return (
-    <div>
-      <PageHeader title="Travel" subtitle="Where to next?" />
+    <div className="curtain-reveal">
+      <p className="eyebrow mb-3">The Travel Folio</p>
+      <PageHeader
+        title="Travel"
+        subtitle="Trips and journeys together — where to next?"
+      />
 
       {isLoading ? (
         <LoadingScreen />
@@ -46,9 +50,14 @@ export function TripsListRoute() {
           hint="Tap + to start planning your next adventure."
         />
       ) : (
-        <div className="space-y-3">
-          {data.map((trip) => (
-            <TripCard key={trip.id} trip={trip} onDelete={handleDelete} />
+        <div className="curtain-stagger space-y-5">
+          {data.map((trip, i) => (
+            <TripCard
+              key={trip.id}
+              trip={trip}
+              index={i}
+              onDelete={handleDelete}
+            />
           ))}
         </div>
       )}
