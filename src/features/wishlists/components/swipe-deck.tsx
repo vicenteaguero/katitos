@@ -58,7 +58,7 @@ export function SwipeDeck({
   const decided = Math.abs(drag) > SWIPE_THRESHOLD;
 
   return (
-    <div className="flex flex-col items-center gap-5">
+    <div className="flex flex-col items-center gap-7">
       <div
         {...bind()}
         style={{
@@ -67,21 +67,25 @@ export function SwipeDeck({
         }}
         className="w-full cursor-grab touch-pan-y select-none active:cursor-grabbing"
       >
-        <Card className="relative flex min-h-[16rem] flex-col gap-3">
+        <Card className="relative flex min-h-[16rem] flex-col gap-4">
           {drag !== 0 && (
             <span
               className={cn(
-                'absolute top-4 rounded px-2 py-1 text-sm font-bold uppercase tracking-wide',
-                drag > 0 ? 'right-4 text-success' : 'left-4 text-danger',
-                decided ? 'opacity-100' : 'opacity-60'
+                'eyebrow absolute top-5 m-0',
+                drag > 0 ? 'right-5 text-success' : 'left-5 text-danger',
+                decided ? 'opacity-100' : 'opacity-50'
               )}
             >
-              {drag > 0 ? '💚 Like' : '✖️ Pass'}
+              {drag > 0 ? 'Like' : 'Pass'}
             </span>
           )}
-          <h2 className="pr-20 text-2xl font-bold text-fg">{current.title}</h2>
+          <h2 className="pr-20 font-display text-4xl font-medium leading-tight tracking-tight text-fg">
+            {current.title}
+          </h2>
           {current.description && (
-            <p className="whitespace-pre-wrap text-fg">{current.description}</p>
+            <p className="whitespace-pre-wrap font-sans leading-relaxed text-muted">
+              {current.description}
+            </p>
           )}
           {current.link && (
             <a
@@ -89,7 +93,7 @@ export function SwipeDeck({
               target="_blank"
               rel="noopener noreferrer"
               onPointerDown={(e) => e.stopPropagation()}
-              className="mt-auto inline-flex items-center gap-1 text-sm text-accent underline"
+              className="mt-auto inline-flex items-center gap-1.5 font-sans text-sm font-semibold text-copper"
             >
               <ExternalLink className="h-4 w-4" /> Open link
             </a>
@@ -97,24 +101,26 @@ export function SwipeDeck({
         </Card>
       </div>
 
-      <p className="text-xs text-muted">{pending.length} left to swipe</p>
+      <p className="font-sans text-xs uppercase tracking-[0.18em] text-muted">
+        {pending.length} left to swipe
+      </p>
 
-      <div className="flex w-full gap-3">
+      <div className="flex w-full gap-4">
         <button
           type="button"
           onClick={() => cast(-1)}
           disabled={vote.isPending}
-          className="flex h-14 flex-1 items-center justify-center gap-2 rounded-lg bg-surface-2 text-lg font-medium text-fg transition active:bg-border disabled:opacity-50"
+          className="lift-press gilt-hairline-flat flex h-14 flex-1 items-center justify-center gap-2 rounded-none bg-surface-2 font-sans text-sm font-semibold uppercase tracking-[0.08em] text-fg transition disabled:opacity-50"
         >
-          <span aria-hidden>✖️</span> Pass
+          <span aria-hidden>✖</span> Pass
         </button>
         <button
           type="button"
           onClick={() => cast(1)}
           disabled={vote.isPending}
-          className="flex h-14 flex-1 items-center justify-center gap-2 rounded-lg bg-success text-lg font-medium text-white transition active:opacity-90 disabled:opacity-50"
+          className="lift-press btn-catchlight gilt-hairline flex h-14 flex-1 items-center justify-center gap-2 rounded-none bg-success font-sans text-sm font-semibold uppercase tracking-[0.08em] text-accent-fg transition disabled:opacity-50"
         >
-          <span aria-hidden>💚</span> Like
+          <span aria-hidden>♥</span> Like
         </button>
       </div>
     </div>
