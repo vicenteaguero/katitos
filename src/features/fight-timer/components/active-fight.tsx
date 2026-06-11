@@ -29,7 +29,7 @@ export function ActiveFight({ fight }: { fight: Fight }) {
       { id: fight.id, resolution: resolution.trim() || undefined },
       {
         onSuccess: () => {
-          toast.success('Made up 💛');
+          toast.success('Made up ❤️');
           setEnding(false);
           setResolution('');
         },
@@ -65,7 +65,7 @@ export function ActiveFight({ fight }: { fight: Fight }) {
           />
           <div className="flex gap-3">
             <Button full onClick={handleEnd} disabled={end.isPending}>
-              We made up 💛
+              We made up ❤️
             </Button>
             <Button
               variant="ghost"
@@ -78,7 +78,7 @@ export function ActiveFight({ fight }: { fight: Fight }) {
         </div>
       ) : (
         <Button full onClick={() => setEnding(true)}>
-          We made up 💛
+          We made up ❤️
         </Button>
       )}
     </Card>
