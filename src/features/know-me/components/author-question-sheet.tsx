@@ -51,7 +51,7 @@ export function AuthorQuestionSheet({
       { prompt: prompt.trim(), category, options, optionImages: images },
       {
         onSuccess: () => {
-          toast.success('Question added — it will be asked soon 💛');
+          toast.success('Question added — it will be asked soon ❤️');
           reset();
           onClose();
         },
