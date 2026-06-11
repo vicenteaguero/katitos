@@ -56,7 +56,9 @@ export function PhraseForm({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-5">
+      <p className="eyebrow">A Word For Each Other</p>
+
       <Field label="Language">
         <Select
           value={language}
@@ -72,6 +74,7 @@ export function PhraseForm({
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder={language === 'ru' ? 'Привет' : 'Hola'}
+          className="font-display text-xl"
         />
       </Field>
 
