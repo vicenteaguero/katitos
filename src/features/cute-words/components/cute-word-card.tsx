@@ -11,18 +11,31 @@ export function CuteWordCard({
   onDelete: (w: CuteWord) => void;
 }) {
   return (
-    <Card className="flex items-start justify-between gap-3">
-      <div className="min-w-0 space-y-1">
-        <h3 className="break-words text-xl font-bold">{word.term}</h3>
-        {word.meaning && <p className="text-sm text-fg">{word.meaning}</p>}
+    <Card className="flex items-start justify-between gap-5">
+      <div className="min-w-0 space-y-3">
+        <div className="space-y-3">
+          <h3 className="break-words font-display text-3xl font-semibold leading-tight tracking-tight text-fg">
+            {word.term}
+          </h3>
+          <div className="h-px w-10 bg-copper opacity-70" aria-hidden="true" />
+        </div>
+        {word.meaning && (
+          <p className="font-sans text-base leading-relaxed text-fg">
+            {word.meaning}
+          </p>
+        )}
         {word.example && (
-          <p className="text-sm italic text-muted">{word.example}</p>
+          <p className="font-display text-lg italic leading-snug text-muted">
+            &ldquo;{word.example}&rdquo;
+          </p>
         )}
         {word.audio_path && (
-          <AudioFromPath
-            bucket={BUCKETS.languageAudio}
-            path={word.audio_path}
-          />
+          <div className="pt-1">
+            <AudioFromPath
+              bucket={BUCKETS.languageAudio}
+              path={word.audio_path}
+            />
+          </div>
         )}
       </div>
       <div className="shrink-0">
