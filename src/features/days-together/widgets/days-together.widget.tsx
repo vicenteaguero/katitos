@@ -8,12 +8,14 @@ export function DaysTogetherWidget() {
   const days = daysTogether(couple?.relationship_start_date);
   return (
     <Link to="/together">
-      <Card className="h-full">
-        <CardTitle>Together</CardTitle>
-        <p className="text-3xl font-bold text-accent">
+      <Card className="lift-press flex h-full flex-col">
+        <CardTitle className="text-xl">Together</CardTitle>
+        <p className="gilt-text gold-shimmer mt-3 font-display text-4xl font-semibold leading-none tabular-nums">
           {days.toLocaleString()}
         </p>
-        <p className="text-xs text-muted">days</p>
+        <p className="mt-2 font-sans text-xs uppercase tracking-[0.28em] text-muted">
+          days
+        </p>
       </Card>
     </Link>
   );
