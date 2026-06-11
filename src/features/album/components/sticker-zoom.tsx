@@ -76,13 +76,13 @@ export function StickerZoom({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-black/90">
-      <div className="flex justify-end p-2">
+    <div className="bg-bg/95 fixed inset-0 z-50 flex flex-col">
+      <div className="flex justify-end p-3">
         <button
           type="button"
           aria-label="Close"
           onClick={onClose}
-          className="rounded-full bg-white/10 p-2 text-white"
+          className="velvet gilt-hairline-flat lift-press p-2 text-gold"
         >
           <X className="h-5 w-5" />
         </button>
@@ -100,7 +100,7 @@ export function StickerZoom({
             {...bindDrag()}
             src={url}
             alt={sticker.caption ?? ''}
-            className="max-h-full max-w-full touch-none select-none"
+            className="gilt-hairline max-h-full max-w-full touch-none select-none shadow-loge"
             style={{ touchAction: 'none' }}
           />
         )}
