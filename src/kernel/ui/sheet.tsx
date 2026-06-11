@@ -35,12 +35,16 @@ export function Sheet({
     >
       <button
         aria-label="Close"
-        className="absolute inset-0 bg-black/60"
+        className="absolute inset-0 bg-black/70"
         onClick={onClose}
       />
-      <div className="relative z-10 max-h-[85vh] w-full max-w-app overflow-y-auto rounded-t-xl border-t border-border bg-surface p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-border" />
-        {title && <h2 className="mb-3 text-lg font-semibold">{title}</h2>}
+      <div className="curtain-reveal velvet-2 gilt-hairline relative z-10 max-h-[85vh] w-full max-w-app overflow-y-auto rounded-none p-7 pb-[max(1.75rem,env(safe-area-inset-bottom))] shadow-loge">
+        <div className="mx-auto mb-6 h-px w-12 rounded-none bg-border" />
+        {title && (
+          <h2 className="mb-6 font-display text-3xl font-semibold tracking-tight text-fg">
+            {title}
+          </h2>
+        )}
         {children}
       </div>
     </div>
