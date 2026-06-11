@@ -58,8 +58,8 @@ export function PresenceRoute() {
                 <p className="mt-2 flex items-center gap-2 font-sans text-sm text-muted">
                   <span
                     className={cn(
-                      'inline-block h-2 w-2 shrink-0 rounded-none',
-                      online ? 'candle-flicker bg-purple' : 'bg-muted'
+                      'inline-block h-2 w-2 shrink-0 rounded-full',
+                      online ? 'candle-flicker bg-success' : 'bg-muted'
                     )}
                     aria-hidden="true"
                   />
@@ -86,7 +86,9 @@ export function PresenceRoute() {
       <hr className="seam" aria-hidden="true" />
 
       <section className="space-y-7">
-        <p className="eyebrow">Recent Arrivals</p>
+        <p className="font-sans text-xs font-semibold uppercase tracking-[0.18em] text-muted">
+          Recent Arrivals
+        </p>
         {!opens || opens.length === 0 ? (
           <Empty icon="👀" title="No one has arrived yet" />
         ) : (
@@ -95,7 +97,7 @@ export function PresenceRoute() {
               <div
                 key={o.id}
                 style={{ '--i': i } as CSSProperties}
-                className="gilt-hairline-flat velvet flex items-center justify-between rounded-none px-5 py-3.5 font-sans text-sm shadow-catch"
+                className="flex items-center justify-between rounded-lg bg-surface-2 px-5 py-3.5 font-sans text-sm"
               >
                 <span className="truncate text-fg">{nameFor(o.user_id)}</span>
                 <span className="shrink-0 font-medium tabular-nums text-muted">
