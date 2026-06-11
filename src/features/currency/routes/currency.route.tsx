@@ -24,7 +24,9 @@ export function CurrencyRoute() {
       />
 
       <section className="space-y-7">
-        <p className="eyebrow">The Reckoning</p>
+        <p className="font-sans text-xs font-semibold uppercase tracking-[0.18em] text-muted">
+          The Reckoning
+        </p>
         <Card className="space-y-7">
           <Field label="Amount">
             <Input
@@ -69,7 +71,7 @@ export function CurrencyRoute() {
 
       <section className="space-y-7">
         <p className="eyebrow">The Total</p>
-        <div className="marble gilt-hairline rounded-none p-7 text-center shadow-loge">
+        <div className="rounded-lg bg-surface-2 p-7 text-center">
           <p className="font-sans text-xs font-semibold uppercase tracking-[0.28em] text-accent/70">
             {formatMoney(n, from)} {from} &rarr; {to}
           </p>
