@@ -9,16 +9,19 @@ export function TimezoneWidget() {
   const now = useNow(1000);
   return (
     <Link to="/timezone">
-      <Card className="h-full">
+      <Card className="bg-lapis h-full">
         <CardTitle>Clocks</CardTitle>
-        <div className="mt-1 space-y-0.5 text-sm tabular-nums">
-          <div className="flex justify-between">
+        <div className="mt-4 space-y-2 font-sans text-sm tabular-nums">
+          <div className="flex items-baseline justify-between">
             <span className="text-muted">{self?.emoji ?? 'you'}</span>
-            <span>{self?.timezone ? timeInZone(self.timezone, now) : '—'}</span>
+            <span className="font-display text-lg text-fg">
+              {self?.timezone ? timeInZone(self.timezone, now) : '—'}
+            </span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted">{partner?.emoji ?? 'them'}</span>
-            <span className="text-accent">
+          <hr className="seam" aria-hidden="true" />
+          <div className="flex items-baseline justify-between">
+            <span className="text-copper">{partner?.emoji ?? 'them'}</span>
+            <span className="candle-flicker font-display text-lg text-gold">
               {partner?.timezone ? timeInZone(partner.timezone, now) : '—'}
             </span>
           </div>
