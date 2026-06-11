@@ -73,7 +73,7 @@ export function FlowersRoute() {
           where the bouquet is set down like a curtain-raise gift. */}
       <section className="flower-stage relative">
         <p className="eyebrow mb-7">On the pedestal</p>
-        <div className="marble gilt-hairline relative z-[1] px-stage py-8 text-center shadow-loge">
+        <div className="marble relative z-[1] rounded-lg px-stage py-8 text-center">
           <span
             className="gilt-text candle-flicker block text-5xl leading-none"
             aria-hidden="true"
@@ -100,7 +100,9 @@ export function FlowersRoute() {
         />
       ) : (
         <section className="space-y-7">
-          <p className="eyebrow">The bouquets</p>
+          <p className="font-sans text-xs font-semibold uppercase tracking-[0.18em] text-muted">
+            The bouquets
+          </p>
           <div className="grid grid-cols-2 gap-stage">
             {flowers.map((f, i) => (
               <Card
@@ -109,7 +111,7 @@ export function FlowersRoute() {
                 style={{ '--i': i } as CSSProperties}
               >
                 {f.image_path && (
-                  <div className="gilt-hairline-flat overflow-hidden bg-bg">
+                  <div className="overflow-hidden rounded-lg bg-surface-2">
                     <FlowerImage
                       path={f.image_path}
                       className="aspect-square w-full object-cover"
