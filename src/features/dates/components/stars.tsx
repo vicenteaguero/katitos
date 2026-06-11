@@ -2,7 +2,7 @@ import { cn } from '@kernel/lib';
 
 const VALUES = [1, 2, 3, 4, 5] as const;
 
-/** Interactive 1–5 star selector. */
+/** Interactive 1–5 star selector — gilt points struck on the card. */
 export function Stars({
   value,
   onChange,
@@ -15,7 +15,7 @@ export function Stars({
   className?: string;
 }) {
   return (
-    <div className={cn('inline-flex gap-1', className)}>
+    <div className={cn('inline-flex gap-1.5', className)}>
       {VALUES.map((n) => {
         const active = value != null && n <= value;
         return (
@@ -27,8 +27,10 @@ export function Stars({
             aria-pressed={value === n}
             onClick={() => onChange(n)}
             className={cn(
-              'text-2xl leading-none transition active:scale-95 disabled:opacity-50',
-              active ? 'text-warning' : 'text-border'
+              'rounded-none text-3xl leading-none outline-none transition active:scale-90 disabled:opacity-50',
+              active
+                ? 'gilt-text candle-flicker drop-shadow-[0_0_6px_rgba(201,162,75,0.35)]'
+                : 'text-border/45 hover:text-border'
             )}
           >
             {active ? '★' : '☆'}
@@ -39,7 +41,7 @@ export function Stars({
   );
 }
 
-/** Read-only star display (supports halves via rounding). */
+/** Read-only star display — the card's struck score, gilt points + a tally. */
 export function StarsDisplay({
   value,
   className,
@@ -50,14 +52,17 @@ export function StarsDisplay({
   const rounded = value == null ? 0 : Math.round(value);
   return (
     <span
-      className={cn('inline-flex items-center gap-1 text-warning', className)}
+      className={cn('inline-flex items-center gap-2', className)}
       aria-label={value == null ? 'No rating' : `${value} of 5 stars`}
     >
-      <span aria-hidden className="text-base leading-none">
+      <span
+        aria-hidden
+        className="gilt-text text-base leading-none tracking-[0.12em]"
+      >
         {VALUES.map((n) => (n <= rounded ? '★' : '☆')).join('')}
       </span>
       {value != null && (
-        <span className="text-xs font-medium text-muted">
+        <span className="font-sans text-xs font-semibold tabular-nums text-muted">
           {value.toFixed(1)}
         </span>
       )}
