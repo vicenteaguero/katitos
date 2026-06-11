@@ -7,18 +7,21 @@ import { PolaroidImage } from '../components/polaroid-image';
 export function TodayPolaroidWidget() {
   const { data } = useTodayPolaroid();
   return (
-    <Link to="/polaroid">
-      <Card className="h-full">
-        <CardTitle>Today</CardTitle>
+    <Link to="/polaroid" className="block h-full">
+      <Card className="lift-press flex h-full flex-col gap-3">
+        <CardTitle className="text-xl">Today</CardTitle>
         {data ? (
-          <PolaroidImage
-            path={data.image_path}
-            className="mt-1 aspect-square w-full rounded object-cover"
-          />
+          // A small instant print pinned to the lobby wall — marble-mounted.
+          <figure className="marble gilt-hairline-flat m-0 p-1.5 pb-2.5 shadow-loge">
+            <PolaroidImage
+              path={data.image_path}
+              className="aspect-square w-full"
+            />
+          </figure>
         ) : (
-          <div className="mt-2 flex flex-col items-center gap-1 py-3 text-muted">
-            <Camera className="h-6 w-6" />
-            <span className="text-xs">Take today's photo</span>
+          <div className="flex flex-col items-center gap-2 py-5 text-center text-muted">
+            <Camera className="h-6 w-6 text-copper" strokeWidth={1.5} />
+            <span className="font-sans text-xs">Take today's photo</span>
           </div>
         )}
       </Card>
