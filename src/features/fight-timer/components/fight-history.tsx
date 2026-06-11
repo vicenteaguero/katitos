@@ -1,6 +1,6 @@
 import { Trash2 } from 'lucide-react';
 import { DateTime, relativeTime } from '@kernel/lib';
-import { Card, IconButton, toast } from '@kernel/ui';
+import { Badge, Card, IconButton, toast } from '@kernel/ui';
 import { useDeleteFight } from '../api/fights.mutations';
 import type { Fight } from '../types';
 
@@ -29,24 +29,26 @@ function HistoryRow({ fight }: { fight: Fight }) {
   };
 
   return (
-    <Card className="flex items-start justify-between gap-3">
-      <div className="min-w-0">
-        <div className="flex items-center gap-2">
-          <h3 className="truncate font-semibold">
+    <Card className="flex items-start justify-between gap-4">
+      <div className="min-w-0 space-y-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <h3 className="truncate font-display text-2xl font-medium tracking-tight text-fg">
             {fight.reason ?? 'A fight'}
           </h3>
           {fight.ended_at && (
-            <span className="shrink-0 text-xs tabular-nums text-muted">
+            <Badge tone="accent" className="shrink-0 tabular-nums">
               {durationLabel(fight.started_at, fight.ended_at)}
-            </span>
+            </Badge>
           )}
         </div>
         {fight.resolution && (
-          <p className="mt-1 text-sm text-fg">{fight.resolution}</p>
+          <p className="font-display text-lg italic leading-relaxed text-fg">
+            “{fight.resolution}”
+          </p>
         )}
         {fight.ended_at && (
-          <p className="mt-1 text-xs text-muted">
-            Made up {relativeTime(fight.ended_at)}
+          <p className="font-sans text-xs font-semibold uppercase tracking-[0.16em] text-purple">
+            Made up {relativeTime(fight.ended_at)} 💛
           </p>
         )}
       </div>
