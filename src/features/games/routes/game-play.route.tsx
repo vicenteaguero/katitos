@@ -42,12 +42,12 @@ export function GamePlayRoute() {
         <span className="seam mx-auto !w-24" aria-hidden="true" />
       </header>
 
-      <section className="velvet-2 gilt-hairline footlight shadow-loge rounded-none p-7">
+      <section className="bg-surface-2 rounded-lg p-7">
         <GameHost game={game} />
       </section>
 
       <section className="space-y-5">
-        <p className="eyebrow">Standings</p>
+        <p className="font-sans text-sm text-muted">Standings</p>
         <Leaderboard game={game} />
       </section>
     </div>
