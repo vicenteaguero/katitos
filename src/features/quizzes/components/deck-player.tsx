@@ -17,30 +17,58 @@ export function DeckPlayer({ deckId }: { deckId: string }) {
     deck.deck.mode === 'quiz'
       ? `${deck.score}/${deck.total} correct`
       : `${deck.score}/${deck.total} matches`;
+  const progress = deck.total > 0 ? (deck.index + 1) / deck.total : 0;
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between text-sm text-muted">
-        <span className="truncate font-medium text-fg">{deck.deck.title}</span>
-        <span className="tabular-nums">
-          {deck.index + 1}/{deck.total}
-        </span>
+    <div className="space-y-7">
+      {/* Playbill header: title + the act count, parted by a drawn gilt rule */}
+      <div className="space-y-3">
+        <div className="flex items-end justify-between gap-3">
+          <span className="truncate font-display text-2xl font-medium tracking-tight text-fg">
+            {deck.deck.title}
+          </span>
+          <span className="shrink-0 font-sans text-sm tabular-nums text-copper">
+            {deck.index + 1}
+            <span className="text-muted"> / {deck.total}</span>
+          </span>
+        </div>
+        {/* a gilt progress hairline — the stage advancing, scene by scene */}
+        <div className="relative h-px w-full overflow-hidden bg-border/25">
+          <div
+            className="absolute inset-y-0 left-0 bg-copper transition-transform duration-500 ease-out"
+            style={{
+              width: '100%',
+              transform: `scaleX(${progress})`,
+              transformOrigin: 'left',
+            }}
+            aria-hidden="true"
+          />
+        </div>
       </div>
 
-      {deck.current && (
-        <DeckCardView
-          card={deck.current}
-          mode={deck.deck.mode as DeckMode}
-          myAnswer={deck.myAnswer}
-          partnerAnswer={deck.partnerAnswer}
-          isAnswered={deck.isAnswered}
-          isRevealed={deck.isRevealed}
-          onAnswer={deck.answer}
-          partnerName={partner?.display_name}
-        />
-      )}
+      {/* The lit stage: a single gilt-framed card over a warm footlight glow.
+          Re-keyed per index so each card flips in on the curtain. */}
+      <div className="footlight">
+        {deck.current && (
+          <Card
+            key={deck.index}
+            className="curtain-reveal relative isolate p-7"
+          >
+            <DeckCardView
+              card={deck.current}
+              mode={deck.deck.mode as DeckMode}
+              myAnswer={deck.myAnswer}
+              partnerAnswer={deck.partnerAnswer}
+              isAnswered={deck.isAnswered}
+              isRevealed={deck.isRevealed}
+              onAnswer={deck.answer}
+              partnerName={partner?.display_name}
+            />
+          </Card>
+        )}
+      </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <Button variant="ghost" onClick={deck.prev} disabled={deck.index === 0}>
           Back
         </Button>
@@ -50,9 +78,13 @@ export function DeckPlayer({ deckId }: { deckId: string }) {
       </div>
 
       {deck.allAnswered && deck.deck.mode !== 'swipe' && (
-        <Card className="text-center">
-          <p className="text-sm text-muted">All answered</p>
-          <p className="text-2xl font-bold text-accent">{scoreLabel}</p>
+        <Card className="curtain-reveal space-y-3 text-center">
+          <p className="eyebrow text-copper before:bg-copper after:bg-copper">
+            Curtain Call
+          </p>
+          <p className="gilt-text gold-shimmer font-display text-5xl font-semibold tracking-tight">
+            {scoreLabel}
+          </p>
         </Card>
       )}
     </div>
