@@ -22,33 +22,51 @@ function dateRange(start: string | null, end: string | null): string | null {
 
 export function TripCard({
   trip,
+  index = 0,
   onDelete,
 }: {
   trip: Trip;
+  index?: number;
   onDelete: (trip: Trip) => void;
 }) {
   const range = dateRange(trip.start_date, trip.end_date);
 
   return (
-    <Card className="flex items-center justify-between gap-3">
-      <Link to={`/travel/${trip.id}`} className="min-w-0 flex-1">
-        <h3 className="truncate font-semibold">{trip.name}</h3>
-        <div className="mt-1 space-y-0.5 text-sm text-muted">
+    <Card
+      className="relative flex items-center justify-between gap-3"
+      style={{ '--i': index } as React.CSSProperties}
+    >
+      {/* Postcard stamp — the folio's signature, struck in Andes Copper */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute right-4 top-4 select-none font-display text-lg leading-none text-copper/70"
+      >
+        ✈
+      </span>
+      <Link
+        to={`/travel/${trip.id}`}
+        className="lift-press min-w-0 flex-1 pr-6"
+      >
+        <h3 className="truncate font-display text-2xl font-semibold tracking-tight text-fg">
+          {trip.name}
+        </h3>
+        <hr className="seam my-3 opacity-60" aria-hidden="true" />
+        <div className="space-y-1 font-sans text-sm text-muted">
           {trip.destination && (
             <p className="flex items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5 shrink-0" />
+              <MapPin className="h-3.5 w-3.5 shrink-0 text-copper" />
               <span className="truncate">{trip.destination}</span>
             </p>
           )}
           {range && (
-            <p className="flex items-center gap-1.5">
-              <CalendarDays className="h-3.5 w-3.5 shrink-0" />
+            <p className="flex items-center gap-1.5 tabular-nums">
+              <CalendarDays className="h-3.5 w-3.5 shrink-0 text-gold" />
               <span className="truncate">{range}</span>
             </p>
           )}
           {trip.budget_amount != null && (
-            <p className="flex items-center gap-1.5 text-accent">
-              <Wallet className="h-3.5 w-3.5 shrink-0" />
+            <p className="flex items-center gap-1.5 tabular-nums text-fg">
+              <Wallet className="h-3.5 w-3.5 shrink-0 text-gold" />
               <span className="truncate">
                 {formatMoney(trip.budget_amount, trip.budget_currency ?? 'USD')}
               </span>
