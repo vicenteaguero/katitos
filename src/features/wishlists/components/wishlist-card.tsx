@@ -17,14 +17,22 @@ export function WishlistCard({ list }: { list: Wishlist }) {
   };
 
   return (
-    <Card className="flex items-center justify-between gap-3">
+    <Card className="lift-press flex items-center justify-between gap-4">
+      <span
+        aria-hidden
+        className="-my-7 -ml-7 mr-1 w-px self-stretch bg-brown"
+      />
       <Link to={`/wishlists/${list.id}`} className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="truncate font-semibold">{list.title}</h3>
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-2">
+          <h3 className="truncate font-display text-2xl font-medium tracking-tight text-fg">
+            {list.title}
+          </h3>
           {list.category && <Badge tone="accent">{list.category}</Badge>}
         </div>
         {list.description && (
-          <p className="mt-1 truncate text-sm text-muted">{list.description}</p>
+          <p className="mt-2 truncate font-sans text-sm leading-relaxed text-muted">
+            {list.description}
+          </p>
         )}
       </Link>
       <IconButton
