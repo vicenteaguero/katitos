@@ -44,32 +44,48 @@ export function FightTimerRoute() {
   const isLoading = active.isLoading || history.isLoading;
 
   return (
-    <div>
-      <PageHeader title="Fights" subtitle="We always make up 💛" />
+    <div className="curtain-reveal space-y-12">
+      {/* A hushed footlight rising behind the title — the house dimmed, the
+          quarrel held tenderly in candle-warmth, never under harsh light. */}
+      <div className="relative isolate">
+        <div
+          className="footlight candle-flicker pointer-events-none absolute inset-x-0 -top-6 -bottom-10 -z-10"
+          aria-hidden="true"
+        />
+        <PageHeader title="Fights" subtitle="We always make up 💛" />
+      </div>
 
       {isLoading ? (
         <LoadingScreen />
       ) : (
-        <div className="space-y-6">
-          {active.data ? (
-            <ActiveFight fight={active.data} />
-          ) : (
-            <Card className="text-center">
-              <CardTitle>No fight right now</CardTitle>
-              <p className="mt-1 text-sm text-muted">All good between us 💛</p>
-              <Button
-                full
-                variant="danger"
-                className="mt-4"
-                onClick={() => setStarting(true)}
-              >
-                Start a fight 😤
-              </Button>
-            </Card>
-          )}
+        <div className="space-y-12">
+          <section className="space-y-7">
+            <p className="eyebrow">On Stage Now</p>
+            {active.data ? (
+              <ActiveFight fight={active.data} />
+            ) : (
+              <Card className="space-y-6 text-center">
+                <CardTitle>No fight right now</CardTitle>
+                <p className="font-sans text-sm leading-relaxed text-muted">
+                  All good between us 💛
+                </p>
+                <Button
+                  full
+                  variant="secondary"
+                  onClick={() => setStarting(true)}
+                >
+                  Start a fight 😤
+                </Button>
+              </Card>
+            )}
+          </section>
 
-          <section>
-            <h2 className="mb-2 text-sm font-semibold text-muted">History</h2>
+          {/* Her wine flowing into his olive — every quarrel resolves on this
+              single gold-stitched line of reconciliation. */}
+          <hr className="seam" aria-hidden="true" />
+
+          <section className="space-y-7">
+            <p className="eyebrow">The Reconciliations</p>
             {!history.data || history.data.length === 0 ? (
               <Empty
                 icon="🤝"
