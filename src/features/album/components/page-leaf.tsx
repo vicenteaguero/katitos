@@ -35,14 +35,14 @@ export const PageLeaf = forwardRef<
         {front ? (
           <AlbumPage page={front} ctx={ctx} />
         ) : (
-          <div className="h-full w-full rounded-lg bg-surface" />
+          <div className="marble h-full w-full" />
         )}
       </div>
       <div className={`book-face book-face--back ${facePad}`}>
         {back ? (
           <AlbumPage page={back} ctx={ctx} />
         ) : (
-          <div className="h-full w-full rounded-lg bg-surface" />
+          <div className="marble h-full w-full" />
         )}
       </div>
     </div>
