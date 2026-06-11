@@ -59,11 +59,11 @@ function Reaction({ onFinish }: GamePlayProps) {
       type="button"
       onClick={tap}
       className={cn(
-        'flex h-64 w-full items-center justify-center rounded-xl text-xl font-bold text-fg transition-colors',
+        'gilt-hairline lift-press shadow-catch flex h-64 w-full items-center justify-center rounded-none px-7 text-center font-display text-3xl font-semibold tracking-tight text-fg transition-colors',
         bg
       )}
     >
-      {text}
+      <span className={cn(phase === 'go' && 'candle-flicker')}>{text}</span>
     </button>
   );
 }
