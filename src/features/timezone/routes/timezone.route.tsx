@@ -23,7 +23,7 @@ export function TimezoneRoute() {
   if (isLoading) return <LoadingScreen />;
   if (!self?.timezone || !partner?.timezone) {
     return (
-      <div>
+      <div className="curtain-reveal">
         <PageHeader title="Time" />
         <Empty
           icon="🕰️"
@@ -53,42 +53,75 @@ export function TimezoneRoute() {
     : null;
 
   return (
-    <div className="space-y-4">
+    <div className="curtain-reveal space-y-12">
       <PageHeader
         title="Time"
         subtitle={`${partner.display_name} is ${offsetText}`}
       />
-      <div className="grid grid-cols-2 gap-3">
-        <Card className="text-center">
-          <CardTitle>{self.display_name}</CardTitle>
-          <p className="text-3xl font-bold tabular-nums">
-            {timeInZone(self.timezone, now)}
-          </p>
-          <p className="text-xs text-muted">{self.city}</p>
-        </Card>
-        <Card className="text-center">
-          <CardTitle>{partner.display_name}</CardTitle>
-          <p className="text-3xl font-bold tabular-nums text-accent">
-            {timeInZone(partner.timezone, now)}
-          </p>
-          <p className="text-xs text-muted">{partner.city}</p>
-        </Card>
-      </div>
-      <Card className="space-y-2">
-        <CardTitle>Convert a time</CardTitle>
-        <Field label={`Your time (${self.city})`}>
-          <Input
-            type="datetime-local"
-            value={when}
-            onChange={(e) => setWhen(e.target.value)}
+
+      <section className="space-y-7">
+        <p className="eyebrow">Two Cities, Two Clocks</p>
+
+        {/* Two gilt loge panels stitched by the gold seam — her time, his time. */}
+        <div className="velvet-2 gilt-hairline relative rounded-none shadow-loge">
+          <div className="grid grid-cols-2 items-stretch">
+            <div className="space-y-2 px-6 py-8 text-center">
+              <p className="font-sans text-[0.6875rem] font-semibold uppercase tracking-[0.22em] text-muted">
+                {self.display_name}
+              </p>
+              <p className="candle-flicker font-display text-5xl font-light tabular-nums text-fg">
+                {timeInZone(self.timezone, now)}
+              </p>
+              <p className="font-sans text-xs tracking-wide text-muted">
+                {self.city}
+              </p>
+            </div>
+
+            <div className="space-y-2 px-6 py-8 text-center">
+              <p className="font-sans text-[0.6875rem] font-semibold uppercase tracking-[0.22em] text-copper">
+                {partner.display_name}
+              </p>
+              <p className="candle-flicker font-display text-5xl font-light tabular-nums text-gold">
+                {timeInZone(partner.timezone, now)}
+              </p>
+              <p className="font-sans text-xs tracking-wide text-muted">
+                {partner.city}
+              </p>
+            </div>
+          </div>
+
+          {/* The relationship as one gold-stitched line between her box and his. */}
+          <div
+            className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-[image:var(--grad-sash)]"
+            aria-hidden="true"
           />
-        </Field>
-        {converted && (
-          <p className="text-sm">
-            = <b>{converted}</b> for {partner.display_name}
-          </p>
-        )}
-      </Card>
+        </div>
+      </section>
+
+      <section className="space-y-7">
+        <p className="eyebrow">Convert a Time</p>
+        <Card className="bg-lapis space-y-5">
+          <CardTitle>From your hours to theirs</CardTitle>
+          <Field label={`Your time (${self.city})`}>
+            <Input
+              type="datetime-local"
+              value={when}
+              onChange={(e) => setWhen(e.target.value)}
+            />
+          </Field>
+          {converted && (
+            <>
+              <hr className="seam" aria-hidden="true" />
+              <p className="font-sans text-sm text-muted">
+                For {partner.display_name}, that is
+              </p>
+              <p className="font-display text-2xl font-medium tabular-nums text-fg">
+                {converted}
+              </p>
+            </>
+          )}
+        </Card>
+      </section>
     </div>
   );
 }
