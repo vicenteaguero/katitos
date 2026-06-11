@@ -54,33 +54,51 @@ export function PunitoListRoute() {
   };
 
   return (
-    <div>
-      <PageHeader title="Puñito" subtitle="Our pinky promises" />
-
-      {isLoading ? (
-        <LoadingScreen />
-      ) : isError ? (
-        <Empty icon="⚠️" title="Couldn't load" hint="Try again in a moment." />
-      ) : !data || data.length === 0 ? (
-        <Empty
-          icon="🤙"
-          title="No puñitos yet"
-          hint="Tap + to make a pinky promise."
+    <div className="curtain-reveal space-y-12">
+      {/* Footlight hero: the ledger of seals under candlelight. */}
+      <div className="relative isolate">
+        <div
+          className="footlight pointer-events-none absolute inset-x-0 -top-8 bottom-0 -z-10"
+          aria-hidden="true"
         />
-      ) : (
-        <div className="space-y-3">
-          {data.map((p) => (
-            <PunitoCard
-              key={p.id}
-              punito={p}
-              onSeal={handleSeal}
-              onBreak={handleBreak}
-              onEdit={setEditing}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
-      )}
+        <PageHeader
+          title="Puñito"
+          subtitle="Our little ledger of pinky promises"
+        />
+      </div>
+
+      <section className="space-y-7">
+        <p className="eyebrow text-copper">The Sealed Promises</p>
+
+        {isLoading ? (
+          <LoadingScreen />
+        ) : isError ? (
+          <Empty
+            icon="⚠️"
+            title="Couldn't load"
+            hint="Try again in a moment."
+          />
+        ) : !data || data.length === 0 ? (
+          <Empty
+            icon="🤙"
+            title="No puñitos yet"
+            hint="Tap + to make a pinky promise."
+          />
+        ) : (
+          <div className="curtain-stagger space-y-5">
+            {data.map((p) => (
+              <PunitoCard
+                key={p.id}
+                punito={p}
+                onSeal={handleSeal}
+                onBreak={handleBreak}
+                onEdit={setEditing}
+                onDelete={handleDelete}
+              />
+            ))}
+          </div>
+        )}
+      </section>
 
       <Fab label="Add puñito" onClick={() => setEditing(null)}>
         <Plus />
