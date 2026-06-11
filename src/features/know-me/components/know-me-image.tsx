@@ -10,6 +10,6 @@ export function KnowMeImage({
   className?: string;
 }) {
   const { data: url } = useSignedUrl(BUCKETS.quizMedia, path);
-  if (!url) return <div className={cn('velvet-2 rounded-none', className)} />;
+  if (!url) return <div className={cn('bg-surface-2 rounded-lg', className)} />;
   return <img src={url} alt="" className={className} />;
 }
