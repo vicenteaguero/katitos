@@ -90,7 +90,7 @@ export function FillSheet({
             <img
               src={previewUrl}
               alt="preview"
-              className="gilt-hairline aspect-square w-full object-cover shadow-loge"
+              className="aspect-square w-full rounded-lg object-cover"
             />
           ) : (
             <div className="flex gap-2">
