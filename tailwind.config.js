@@ -25,7 +25,8 @@ export default {
         gold: 'var(--gold)',
       },
       borderRadius: {
-        // SQUARE corners are mandatory — ornament is the gilt hairline.
+        // Mixed-corner system: none = photos/heroes, DEFAULT (12px) = buttons/
+        // chips/inputs, lg (20px) = cards/toasts, xl (28px) = sheet tops.
         none: '0',
         DEFAULT: 'var(--radius)',
         lg: 'var(--radius-lg)',
