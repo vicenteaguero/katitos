@@ -1,21 +1,58 @@
+import type { CSSProperties } from 'react';
 import { usePartner } from '@kernel/auth';
 import { Badge, Card, CardTitle } from '@kernel/ui';
 import { useLoveMap } from '../api/know-me.queries';
 
 function Dial({ label, pct }: { label: string; pct: number }) {
   return (
-    <div className="flex-1 text-center">
-      <div
-        className="mx-auto grid h-20 w-20 place-items-center rounded-full"
-        style={{
-          background: `conic-gradient(var(--color-accent, #e8a) ${pct}%, var(--color-surface-2, #333) 0)`,
-        }}
-      >
-        <div className="grid h-14 w-14 place-items-center rounded-full bg-surface">
-          <span className="text-lg font-bold tabular-nums">{pct}%</span>
-        </div>
+    <div className="flex-1 space-y-3 text-center">
+      {/* A square gilt-framed tile with a percent and an Imperial-Purple meter
+          that fills from below — her royal note rising like footlight. */}
+      <div className="gilt-hairline velvet-2 relative grid h-24 w-full place-items-center overflow-hidden rounded-none shadow-catch">
+        <div
+          className="absolute inset-x-0 bottom-0 bg-purple/35"
+          style={{ height: `${pct}%` }}
+          aria-hidden="true"
+        />
+        <span className="relative font-display text-3xl font-semibold tabular-nums text-fg">
+          {pct}%
+        </span>
       </div>
-      <p className="mt-1 text-xs text-muted">{label}</p>
+      <p className="font-sans text-xs uppercase tracking-[0.1em] text-muted">
+        {label}
+      </p>
+    </div>
+  );
+}
+
+function Star({
+  value,
+  label,
+  delay,
+  glow = false,
+}: {
+  value: number | string;
+  label: string;
+  delay: number;
+  glow?: boolean;
+}) {
+  return (
+    <div
+      className="km-star text-center"
+      style={{ '--km-star-delay': `${delay}s` } as CSSProperties}
+    >
+      <p
+        className={
+          glow
+            ? 'font-display text-3xl font-semibold tabular-nums text-purple'
+            : 'font-display text-3xl font-semibold tabular-nums text-fg'
+        }
+      >
+        {value}
+      </p>
+      <p className="mt-1 font-sans text-xs uppercase tracking-[0.1em] text-muted">
+        {label}
+      </p>
     </div>
   );
 }
@@ -29,10 +66,10 @@ export function LoveMapPanel() {
   if (!map) return null;
 
   return (
-    <Card className="space-y-4">
+    <Card className="space-y-7">
       <CardTitle>Your love map 💛</CardTitle>
 
-      <div className="flex gap-4">
+      <div className="flex gap-5">
         <Dial
           label={`You know ${partnerName}`}
           pct={map.selfKnowsPartner.pct}
@@ -43,27 +80,17 @@ export function LoveMapPanel() {
         />
       </div>
 
-      <div className="flex justify-around text-center text-sm">
-        <div>
-          <p className="text-xl font-bold text-accent">
-            {map.currentStreak} 🔥
-          </p>
-          <p className="text-xs text-muted">streak</p>
-        </div>
-        <div>
-          <p className="text-xl font-bold">{map.longestStreak}</p>
-          <p className="text-xs text-muted">longest</p>
-        </div>
-        <div>
-          <p className="text-xl font-bold">{map.daysPlayed}</p>
-          <p className="text-xs text-muted">days played</p>
-        </div>
+      {/* The standings as a faint constellation of pulsing points. */}
+      <div className="flex justify-around">
+        <Star value={`${map.currentStreak} 🔥`} label="streak" delay={0} glow />
+        <Star value={map.longestStreak} label="longest" delay={1.2} />
+        <Star value={map.daysPlayed} label="days played" delay={2.4} />
       </div>
 
       {Object.keys(map.categoryCoverage).length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-2">
           {Object.entries(map.categoryCoverage).map(([cat, n]) => (
-            <Badge key={cat}>
+            <Badge key={cat} tone="accent">
               {cat} · {n}
             </Badge>
           ))}
