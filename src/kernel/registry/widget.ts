@@ -12,6 +12,8 @@ export interface DashboardWidget {
   size?: 1 | 2;
   order?: number;
   enabled?: boolean;
+  /** Section grouping on the home dashboard, e.g. 'Us'. Untagged → fallback group. */
+  category?: string;
   /** Owning feature id, for provenance. */
   featureId: string;
 }
