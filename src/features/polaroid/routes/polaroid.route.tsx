@@ -30,8 +30,26 @@ function TodayCard({ onOpenCamera }: { onOpenCamera: () => void }) {
 
   if (!today) {
     return (
-      <Card className="flex flex-col items-center gap-3 py-8 text-center">
-        <p className="text-sm text-muted">No photo for today yet.</p>
+      <Card className="footlight flex flex-col items-center gap-6 py-12 text-center">
+        <span
+          className="polaroid-warmth pointer-events-none absolute inset-0 -z-10"
+          aria-hidden="true"
+          style={{
+            background:
+              'radial-gradient(60% 50% at 50% 40%, rgb(181 99 58 / 0.16), transparent 70%)',
+          }}
+        />
+        <span className="gilt-text candle-flicker text-5xl" aria-hidden="true">
+          <Camera className="mx-auto h-12 w-12" strokeWidth={1.25} />
+        </span>
+        <div className="space-y-2">
+          <p className="font-display text-2xl font-medium tracking-tight text-fg">
+            No portrait developed yet
+          </p>
+          <p className="font-sans text-sm leading-relaxed text-muted">
+            One instant photo a day — taken in the moment, hung on our wall.
+          </p>
+        </div>
         <Button onClick={onOpenCamera}>
           <Camera size={18} /> Take today's photo
         </Button>
@@ -40,22 +58,41 @@ function TodayCard({ onOpenCamera }: { onOpenCamera: () => void }) {
   }
 
   return (
-    <Card className="space-y-3">
-      <div className="overflow-hidden rounded bg-black">
-        <PolaroidImage
-          path={today.image_path}
-          className="aspect-square w-full object-cover"
-        />
-      </div>
-      <Input
-        defaultValue={today.caption ?? ''}
-        placeholder="Add a caption…"
-        onBlur={(e) => {
-          if (e.target.value !== (today.caption ?? '')) {
-            setCaption.mutate({ day, caption: e.target.value });
-          }
+    <Card className="footlight space-y-7">
+      {/* A copper candle-pool warming the portrait from within the loge. */}
+      <span
+        className="polaroid-warmth pointer-events-none absolute inset-0 -z-10"
+        aria-hidden="true"
+        style={{
+          background:
+            'radial-gradient(58% 48% at 50% 42%, rgb(181 99 58 / 0.16), transparent 70%)',
         }}
       />
+
+      {/* The instant photo on its marble plate — gilt-framed, floating in light. */}
+      <figure className="m-0">
+        <div className="marble gilt-hairline shadow-loge p-3 pb-4">
+          <PolaroidImage
+            path={today.image_path}
+            className="aspect-square w-full"
+          />
+        </div>
+      </figure>
+
+      <div className="space-y-3">
+        <span className="eyebrow">In her hand</span>
+        <Input
+          defaultValue={today.caption ?? ''}
+          placeholder="Add a caption…"
+          className="border-0 bg-transparent px-0 py-1 text-center font-display text-xl italic text-fg shadow-none placeholder:italic placeholder:text-muted focus:shadow-none"
+          onBlur={(e) => {
+            if (e.target.value !== (today.caption ?? '')) {
+              setCaption.mutate({ day, caption: e.target.value });
+            }
+          }}
+        />
+      </div>
+
       <Button variant="secondary" full onClick={onOpenCamera}>
         <Camera size={18} /> Retake
       </Button>
@@ -77,18 +114,25 @@ function Gallery() {
     );
   }
   return (
-    <div className="grid grid-cols-2 gap-3">
-      {past.map((p) => (
-        <div key={p.id} className="rounded-lg bg-white p-2 pb-5 shadow">
-          <PolaroidImage
-            path={p.image_path}
-            className="aspect-square w-full rounded-sm object-cover"
-          />
-          <p className="mt-1 text-center text-xs text-neutral-700">
-            {DateTime.fromISO(p.day).toFormat('LLL d')}
-            {p.caption ? ` · ${p.caption}` : ''}
-          </p>
-        </div>
+    <div className="curtain-stagger grid grid-cols-2 gap-5">
+      {past.map((p, i) => (
+        <figure
+          key={p.id}
+          className="marble gilt-hairline lift-press m-0 p-2.5 pb-4 shadow-loge"
+          style={{ '--i': i } as React.CSSProperties}
+        >
+          <PolaroidImage path={p.image_path} className="aspect-square w-full" />
+          <figcaption className="mt-3 text-center">
+            <span className="block font-sans text-[0.6875rem] font-semibold uppercase tracking-[0.22em] text-copper">
+              {DateTime.fromISO(p.day).toFormat('LLL d')}
+            </span>
+            {p.caption && (
+              <span className="mt-1 block font-display text-base italic leading-snug text-brown">
+                {p.caption}
+              </span>
+            )}
+          </figcaption>
+        </figure>
       ))}
     </div>
   );
@@ -112,16 +156,19 @@ export function PolaroidRoute() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="curtain-reveal space-y-12">
       <PageHeader
         title="Polaroid"
         subtitle="One photo a day, taken in the moment"
       />
+
       <TodayCard onOpenCamera={() => setCamOpen(true)} />
-      <div>
-        <h2 className="mb-2 text-sm font-semibold text-muted">Our album</h2>
+
+      <section className="space-y-5">
+        <h2 className="eyebrow">Our album</h2>
         <Gallery />
-      </div>
+      </section>
+
       {camOpen && (
         <CameraCapture
           facingMode="user"
