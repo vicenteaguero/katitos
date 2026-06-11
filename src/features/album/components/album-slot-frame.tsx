@@ -5,8 +5,8 @@ import { AlbumStickerImage } from './album-sticker-image';
 import type { AlbumSlot, AlbumSticker, DuoHalf } from '../types';
 
 const TIER_BADGE: Record<string, string> = {
-  rare: 'bg-blue-500/80 text-white',
-  foil: 'bg-amber-400/90 text-black',
+  rare: 'bg-lapis text-fg',
+  foil: 'bg-gold text-brown',
 };
 
 /** Did this sticker land within the last few seconds? → play the peel anim. */
@@ -27,13 +27,13 @@ function HalfTile({
 }) {
   if (!sticker) {
     return (
-      <div className="flex aspect-square w-full items-center justify-center rounded bg-surface-2 text-center text-[10px] text-muted">
+      <div className="border-brown/30 bg-brown/5 flex aspect-square w-full items-center justify-center border border-dashed p-1 text-center font-display text-[11px] italic leading-tight text-brown">
         {missingLabel ?? '—'}
       </div>
     );
   }
   return (
-    <div className="relative aspect-square w-full overflow-hidden rounded">
+    <div className="gilt-hairline-flat relative aspect-square w-full overflow-hidden">
       <AlbumStickerImage
         path={sticker.image_path}
         className={cn(
@@ -87,17 +87,17 @@ export function AlbumSlotFrame({
       onClick={onTap}
       disabled={locked}
       className={cn(
-        'group relative flex flex-col gap-1 rounded-lg border p-1.5 text-left transition',
+        'group relative flex flex-col gap-1 border p-1.5 text-left transition lift-press',
         locked
-          ? 'border-border bg-surface-2/60 opacity-70'
-          : 'border-dashed border-border hover:border-accent'
+          ? 'border-brown/30 bg-brown/5 opacity-70'
+          : 'border-brown/30 hover:border-accent'
       )}
     >
       {/* Tier badge */}
       {TIER_BADGE[slot.tier] && (
         <span
           className={cn(
-            'absolute right-1 top-1 z-10 rounded px-1 text-[9px] font-bold uppercase',
+            'absolute right-1 top-1 z-10 px-1 font-sans text-[9px] font-bold uppercase tracking-wider',
             TIER_BADGE[slot.tier]
           )}
         >
@@ -106,7 +106,7 @@ export function AlbumSlotFrame({
       )}
       {/* Lock badge */}
       {locked && (
-        <span className="absolute left-1 top-1 z-10 flex items-center gap-0.5 rounded bg-black/60 px-1 text-[9px] text-white">
+        <span className="bg-brown absolute left-1 top-1 z-10 flex items-center gap-0.5 px-1 font-sans text-[9px] text-fg">
           <Lock size={9} /> {slot.gate_label ?? 'Locked'}
         </span>
       )}
@@ -131,17 +131,19 @@ export function AlbumSlotFrame({
       ) : byHalf('solo') ? (
         <HalfTile sticker={byHalf('solo')} foil={foil} />
       ) : (
-        <div className="flex aspect-square w-full items-center justify-center rounded bg-surface-2/40 text-muted">
+        <div className="border-brown/30 bg-brown/5 text-brown flex aspect-square w-full items-center justify-center border border-dashed transition group-hover:text-accent">
           {!locked && <Plus size={20} />}
         </div>
       )}
 
       <div className="min-w-0">
-        <p className="truncate text-[11px] font-semibold text-fg">
+        <p className="truncate font-display text-sm font-semibold leading-tight text-accent">
           {slot.title}
         </p>
         {slot.hint && (
-          <p className="truncate text-[10px] text-muted">{slot.hint}</p>
+          <p className="text-brown truncate font-sans text-[10px]">
+            {slot.hint}
+          </p>
         )}
       </div>
     </button>
