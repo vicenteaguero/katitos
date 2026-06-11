@@ -10,7 +10,7 @@ import { BottomNav } from './nav';
 
 function TopBar() {
   return (
-    <header className="sticky top-0 z-20 bg-surface/95 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur">
+    <header className="z-20 shrink-0 bg-surface/95 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur">
       {/* The marquee: brand mark + gilt wordmark + partner status dot. */}
       <div className="flex items-center justify-between gap-2 px-[1.75rem] py-2.5">
         <Link to="/" className="group flex items-center gap-2.5">
@@ -41,11 +41,14 @@ export function AppShell() {
   if (status === 'loading') return <LoadingScreen label="Loading our place…" />;
   if (status === 'anon') return <LoginScreen />;
 
+  // App-shell: a fixed-height column where ONLY <main> scrolls, so the top bar
+  // and bottom nav are ALWAYS visible (native-PWA feel — no position:fixed nav
+  // that iOS standalone detaches on scroll).
   return (
-    <div className="gilt-hairline velvet mx-auto flex min-h-full max-w-app flex-col">
+    <div className="gilt-hairline velvet mx-auto flex h-[100dvh] max-w-app flex-col overflow-hidden">
       <PresenceTracker />
       <TopBar />
-      <main className="flex-1 px-[1.75rem] pb-24 pt-[1.75rem]">
+      <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-[1.75rem] pb-8 pt-[1.75rem] [-webkit-overflow-scrolling:touch]">
         <Outlet />
       </main>
       <BottomNav />
