@@ -23,26 +23,33 @@ export function FinanceRoute() {
     : null;
 
   return (
-    <div>
-      <PageHeader title="Finance" subtitle="Saving for us" />
+    <div className="curtain-reveal space-y-12">
+      <PageHeader title="Finance" subtitle="A brass ledger, saving for us 🫒" />
 
-      {isLoading ? (
-        <LoadingScreen />
-      ) : isError ? (
-        <Empty icon="⚠️" title="Couldn't load" hint="Try again in a moment." />
-      ) : !data || data.length === 0 ? (
-        <Empty
-          icon="🐷"
-          title="No goals yet"
-          hint="Tap + to start saving for something."
-        />
-      ) : (
-        <div className="space-y-3">
-          {data.map((g) => (
-            <GoalCard key={g.id} goal={g} onOpen={setSelected} />
-          ))}
-        </div>
-      )}
+      <section className="space-y-7">
+        <p className="eyebrow">The Ledger</p>
+        {isLoading ? (
+          <LoadingScreen />
+        ) : isError ? (
+          <Empty
+            icon="⚠️"
+            title="Couldn't load"
+            hint="Try again in a moment."
+          />
+        ) : !data || data.length === 0 ? (
+          <Empty
+            icon="🐷"
+            title="No goals yet"
+            hint="Tap + to start saving for something."
+          />
+        ) : (
+          <div className="curtain-stagger space-y-5">
+            {data.map((g) => (
+              <GoalCard key={g.id} goal={g} onOpen={setSelected} />
+            ))}
+          </div>
+        )}
+      </section>
 
       <Fab label="New goal" onClick={() => setCreating(true)}>
         <Plus />
