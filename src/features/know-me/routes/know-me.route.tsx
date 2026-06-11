@@ -100,7 +100,7 @@ export function KnowMeRoute() {
           <hr className="seam" aria-hidden="true" />
 
           <section className="space-y-7">
-            <p className="eyebrow">The Standings</p>
+            <p className="font-sans text-sm text-muted">The Standings</p>
             <LoveMapPanel />
           </section>
         </>
