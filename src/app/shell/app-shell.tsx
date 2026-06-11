@@ -45,7 +45,7 @@ export function AppShell() {
   // and bottom nav are ALWAYS visible (native-PWA feel — no position:fixed nav
   // that iOS standalone detaches on scroll).
   return (
-    <div className="gilt-hairline velvet mx-auto flex h-[100dvh] max-w-app flex-col overflow-hidden">
+    <div className="mx-auto flex h-[100dvh] max-w-app flex-col overflow-hidden bg-surface">
       <PresenceTracker />
       <TopBar />
       <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-[1.75rem] pb-8 pt-[1.75rem] [-webkit-overflow-scrolling:touch]">
