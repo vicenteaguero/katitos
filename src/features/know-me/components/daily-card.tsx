@@ -26,7 +26,7 @@ export function DailyCard({ today }: { today: QuestionWithDay }) {
     submit.mutate(
       { own, guess },
       {
-        onSuccess: () => toast.success('Locked in 💛'),
+        onSuccess: () => toast.success('Locked in ❤️'),
         onError: (e) => toast.error(e.message),
       }
     );
