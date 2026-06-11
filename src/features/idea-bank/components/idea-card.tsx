@@ -50,7 +50,7 @@ export function IdeaCard({
       <div className="min-w-0 space-y-3">
         <div className="flex items-baseline gap-3">
           <span
-            className="bg-lapis gilt-hairline-flat shrink-0 px-2 py-0.5 text-base leading-none"
+            className="shrink-0 rounded bg-lapis px-2 py-0.5 text-base leading-none"
             aria-hidden="true"
           >
             💡
@@ -75,7 +75,7 @@ export function IdeaCard({
             onClick={cycleStatus}
             disabled={update.isPending}
             aria-label="Cycle status"
-            className="lift-press rounded-none outline-none focus-visible:shadow-candle"
+            className="lift-press rounded outline-none focus-visible:ring-2 focus-visible:ring-gold/30"
           >
             <Badge tone={STATUS_TONE[status]}>{STATUS_LABEL[status]}</Badge>
           </button>
