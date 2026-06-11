@@ -90,10 +90,12 @@
   --ring-candle:
     0 0 0 1px rgba(201, 198, 190, 0.35), 0 0 0 4px rgba(124, 22, 38, 0.22);
 
-  /* ── Geometry: SQUARE. Always. Ornament = the white-gold line, not radius. ─ */
-  --radius: 0px;
-  --radius-lg: 0px;
-  --radius-xl: 0px;
+  /* ── Geometry: MIXED corners, deliberately. Photos/heroes = rounded-none (0);
+     buttons/chips/inputs = rounded (12px); cards/toasts = rounded-lg (20px);
+     sheets = rounded-xl (28px, top). Never marry square or round — mix. ────── */
+  --radius: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
 
   /* ── Typography ────────────────────────────────────────────────────────── */
   --font-display: 'Cormorant Garamond', 'Cormorant', Georgia, serif;
@@ -182,7 +184,9 @@ button {
   background-color: var(--color-surface-2);
 }
 
-/* The signature frame: one square 1px white-gold hairline + top catch-light. */
+/* The white-gold hairline — now a RARE accent. Default surfaces have NO border;
+   separate by tone (bg -> surface -> surface-2) and spacing. Use this class on
+   at most ONE hero element per screen. */
 .gilt-hairline {
   border: 1px solid transparent;
   border-image: var(--grad-gilt) 1;
@@ -542,14 +546,13 @@ button {
 /* ──────────────────────────────────────────────────────────────────────────
  * Polaroid capture frame — dress the kernel CameraCapture (which is `fixed
  * inset-0`) so it lives inside the square instant-photo window WITHOUT touching
- * the shared component. We reflow its fixed root to fill the window, let the
- * live preview/captured shot occupy the window, float the shutter & cancel as
- * floating controls over the photo, and drop the retake/use bar below the chin.
- * Square, flat, white-gold — no theatre floor.
+ * the shared component. The kernel root is re-flowed to fill the window (the
+ * preview/captured shot object-covers it — no letterbox), while the header
+ * (cancel + switch) and the control bar (shutter / retake-use) are pinned to
+ * the REAL viewport edges: the overlay is portaled to <body>, so `fixed` here
+ * means the screen, not the column. No borders — the cream stock against the
+ * black house is the frame.
  * ────────────────────────────────────────────────────────────────────────── */
-.polaroid-frame {
-  border: 1px solid var(--color-border); /* white-gold hairline edge of the stock */
-}
 /* The kernel root: pin it into the square window instead of the viewport. */
 .polaroid-frame > div > .fixed {
   position: absolute;
@@ -557,12 +560,12 @@ button {
   z-index: 1;
   background: transparent;
 }
-/* Header (cancel + switch-camera): float at the top of the photo window. */
+/* Header (cancel + switch-camera): pinned to the top of the viewport. */
 .polaroid-frame > div > .fixed > div:first-child {
-  position: absolute;
+  position: fixed;
   inset: 0 0 auto 0;
   z-index: 3;
-  padding: 0.5rem;
+  padding: max(0.75rem, env(safe-area-inset-top)) 1rem 0.75rem;
 }
 .polaroid-frame > div > .fixed > div:first-child > span {
   display: none; /* hide the "Take a photo" label — the chin says it all */
@@ -573,14 +576,14 @@ button {
   inset: 0;
   z-index: 1;
 }
-/* Control bar (shutter, or retake/use): drop it below the photo onto the chin
-   and the dark scrim so the cream frame stays clean. */
+/* Control bar (shutter, or retake/use): pinned to the bottom of the viewport,
+   clear of the cream frame — the immersive capture controls. */
 .polaroid-frame > div > .fixed > div:last-child {
-  position: absolute;
+  position: fixed;
   inset: auto 0 0 0;
   z-index: 3;
-  transform: translateY(calc(100% + 4rem));
-  padding: 0;
+  padding: 1.25rem;
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
   gap: 1rem;
 }
 
