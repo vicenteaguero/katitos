@@ -6,16 +6,20 @@ import { usePartnerPresence } from '../hooks/use-partner-presence';
 export function PartnerPresenceWidget() {
   const { partner, online } = usePartnerPresence();
   return (
-    <Link to="/connection">
+    <Link to="/connection" className="lift-press block h-full">
       <Card className="h-full">
-        <CardTitle>{partner?.display_name ?? 'Your love'}</CardTitle>
-        <div className="mt-1 flex items-center gap-2">
+        <p className="eyebrow">In The House</p>
+        <CardTitle className="mt-4">
+          {partner?.display_name ?? 'Your love'}
+        </CardTitle>
+        <div className="mt-3 flex items-center gap-2.5">
           <span
-            className={`h-2.5 w-2.5 rounded-full ${online ? 'bg-success' : 'bg-muted'}`}
+            className={`inline-block h-2 w-2 shrink-0 rounded-none ${online ? 'candle-flicker bg-purple' : 'bg-muted'}`}
+            aria-hidden="true"
           />
-          <span className="text-sm">
+          <span className="font-sans text-sm text-muted">
             {online
-              ? 'online now'
+              ? 'here with you now'
               : partner?.last_seen_at
                 ? relativeTime(partner.last_seen_at)
                 : 'offline'}
