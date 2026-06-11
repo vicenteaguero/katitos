@@ -38,8 +38,8 @@ export function AlbumPage({
     case 'divider': {
       const ch = ctx.chapters.find((c) => c.id === page.chapterId);
       return (
-        <div className="marble gilt-hairline-flat relative flex h-full w-full flex-col items-center justify-center gap-3 p-6 text-center">
-          <span className="eyebrow text-accent before:bg-accent after:bg-accent">
+        <div className="marble relative flex h-full w-full flex-col items-center justify-center gap-3 p-6 text-center">
+          <span className="font-sans text-xs font-medium uppercase tracking-wider text-muted">
             Act
           </span>
           <span className="text-4xl">{ch?.emoji ?? '📖'}</span>
@@ -56,7 +56,7 @@ export function AlbumPage({
     }
     case 'grid':
       return (
-        <div className="marble gilt-hairline-flat grid h-full w-full grid-cols-2 grid-rows-3 gap-2 p-2.5">
+        <div className="marble grid h-full w-full grid-cols-2 grid-rows-3 gap-2 p-2.5">
           {page.slotIds.map((slotId) => {
             const slot = ctx.slotsById.get(slotId);
             if (!slot) return <div key={slotId} />;
