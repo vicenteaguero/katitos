@@ -16,13 +16,28 @@ export function FlowerImage({
     return (
       <div
         className={cn(
-          'flex items-center justify-center bg-surface-2',
+          'velvet relative flex items-center justify-center overflow-hidden',
           className
         )}
       >
-        {isLoading && <Spinner />}
+        {isLoading ? (
+          <Spinner />
+        ) : (
+          <span
+            className="gilt-text candle-flicker text-3xl"
+            aria-hidden="true"
+          >
+            ❀
+          </span>
+        )}
       </div>
     );
   }
-  return <img src={url} alt={alt ?? 'bouquet'} className={className} />;
+  return (
+    <img
+      src={url}
+      alt={alt ?? 'bouquet'}
+      className={cn('candle-flicker', className)}
+    />
+  );
 }
