@@ -9,6 +9,7 @@ import {
   Field,
   Input,
   LoadingScreen,
+  PageHeader,
   Select,
   toast,
 } from '@kernel/ui';
@@ -29,25 +30,34 @@ function CoupleCard() {
   if (isLoading) return null;
 
   return (
-    <Card className="space-y-3">
-      <CardTitle>Us</CardTitle>
-      <Field label="Together since">
-        <Input
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-        />
-      </Field>
-      <Field label="Monthsversary day" hint="The day each month you celebrate.">
-        <Input
-          type="number"
-          min={1}
-          max={28}
-          value={day}
-          onChange={(e) => setDay(Number(e.target.value))}
-        />
-      </Field>
+    <Card className="space-y-7">
+      <div className="space-y-3">
+        <p className="eyebrow">The Programme</p>
+        <CardTitle>Us</CardTitle>
+      </div>
+      <div className="space-y-5">
+        <Field label="Together since">
+          <Input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+          />
+        </Field>
+        <Field
+          label="Monthsversary day"
+          hint="The day each month you celebrate."
+        >
+          <Input
+            type="number"
+            min={1}
+            max={28}
+            value={day}
+            onChange={(e) => setDay(Number(e.target.value))}
+          />
+        </Field>
+      </div>
       <Button
+        full
         disabled={update.isPending}
         onClick={() =>
           update.mutate(
@@ -100,81 +110,87 @@ function MeCard() {
     setForm((f) => ({ ...f, [k]: v }));
 
   return (
-    <Card className="space-y-3">
-      <CardTitle>Me</CardTitle>
-      <div className="grid grid-cols-3 gap-2">
-        <Field label="Emoji">
-          <Input
-            value={form.emoji}
-            onChange={(e) => set('emoji', e.target.value)}
-          />
-        </Field>
-        <div className="col-span-2">
-          <Field label="Name">
+    <Card className="space-y-7">
+      <div className="space-y-3">
+        <p className="eyebrow">Dramatis Persona</p>
+        <CardTitle>Me</CardTitle>
+      </div>
+      <div className="space-y-5">
+        <div className="grid grid-cols-3 gap-4">
+          <Field label="Emoji">
             <Input
-              value={form.display_name}
-              onChange={(e) => set('display_name', e.target.value)}
+              value={form.emoji}
+              onChange={(e) => set('emoji', e.target.value)}
+            />
+          </Field>
+          <div className="col-span-2">
+            <Field label="Name">
+              <Input
+                value={form.display_name}
+                onChange={(e) => set('display_name', e.target.value)}
+              />
+            </Field>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="City">
+            <Input
+              value={form.city}
+              onChange={(e) => set('city', e.target.value)}
+            />
+          </Field>
+          <Field label="Country">
+            <Input
+              value={form.country}
+              onChange={(e) => set('country', e.target.value)}
             />
           </Field>
         </div>
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <Field label="City">
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Latitude">
+            <Input
+              type="number"
+              value={form.lat}
+              onChange={(e) => set('lat', e.target.value)}
+            />
+          </Field>
+          <Field label="Longitude">
+            <Input
+              type="number"
+              value={form.lng}
+              onChange={(e) => set('lng', e.target.value)}
+            />
+          </Field>
+        </div>
+        <Field label="Timezone" hint="IANA, e.g. America/Santiago">
           <Input
-            value={form.city}
-            onChange={(e) => set('city', e.target.value)}
+            value={form.timezone}
+            onChange={(e) => set('timezone', e.target.value)}
           />
         </Field>
-        <Field label="Country">
-          <Input
-            value={form.country}
-            onChange={(e) => set('country', e.target.value)}
-          />
-        </Field>
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <Field label="Latitude">
-          <Input
-            type="number"
-            value={form.lat}
-            onChange={(e) => set('lat', e.target.value)}
-          />
-        </Field>
-        <Field label="Longitude">
-          <Input
-            type="number"
-            value={form.lng}
-            onChange={(e) => set('lng', e.target.value)}
-          />
-        </Field>
-      </div>
-      <Field label="Timezone" hint="IANA, e.g. America/Santiago">
-        <Input
-          value={form.timezone}
-          onChange={(e) => set('timezone', e.target.value)}
-        />
-      </Field>
-      <div className="grid grid-cols-2 gap-2">
-        <Field label="I speak">
-          <Select
-            value={form.native_language}
-            onChange={(e) => set('native_language', e.target.value)}
-          >
-            <option value="es">Spanish</option>
-            <option value="ru">Russian</option>
-          </Select>
-        </Field>
-        <Field label="I'm learning">
-          <Select
-            value={form.learning_language}
-            onChange={(e) => set('learning_language', e.target.value)}
-          >
-            <option value="ru">Russian</option>
-            <option value="es">Spanish</option>
-          </Select>
-        </Field>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="I speak">
+            <Select
+              value={form.native_language}
+              onChange={(e) => set('native_language', e.target.value)}
+            >
+              <option value="es">Spanish</option>
+              <option value="ru">Russian</option>
+            </Select>
+          </Field>
+          <Field label="I'm learning">
+            <Select
+              value={form.learning_language}
+              onChange={(e) => set('learning_language', e.target.value)}
+            >
+              <option value="ru">Russian</option>
+              <option value="es">Spanish</option>
+            </Select>
+          </Field>
+        </div>
       </div>
       <Button
+        full
         disabled={update.isPending}
         onClick={() =>
           update.mutate(
@@ -210,12 +226,16 @@ function NotificationsCard() {
           ? 'Permission denied'
           : 'Enable notifications';
   return (
-    <Card className="space-y-2">
-      <CardTitle>Notifications</CardTitle>
-      <p className="text-sm text-muted">
+    <Card className="space-y-7">
+      <div className="space-y-3">
+        <p className="eyebrow">House Notices</p>
+        <CardTitle>Notifications</CardTitle>
+      </div>
+      <p className="font-sans text-sm leading-relaxed text-muted">
         Get a ping when your love opens the app or writes on the wall.
       </p>
       <Button
+        full
         variant="secondary"
         disabled={status === 'subscribed' || status === 'unsupported'}
         onClick={() => void subscribe()}
@@ -232,16 +252,18 @@ export function SettingsRoute() {
   if (isLoading) return <LoadingScreen />;
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-bold">Settings</h1>
-      <CoupleCard />
-      <MeCard />
-      <NotificationsCard />
-      {!isLocal && (
-        <Button variant="ghost" onClick={() => void signOut()}>
-          Sign out
-        </Button>
-      )}
+    <div className="curtain-reveal">
+      <PageHeader title="Settings" subtitle="Tune our little theater." />
+      <div className="curtain-stagger space-y-12">
+        <CoupleCard />
+        <MeCard />
+        <NotificationsCard />
+        {!isLocal && (
+          <Button full variant="ghost" onClick={() => void signOut()}>
+            Sign out
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
