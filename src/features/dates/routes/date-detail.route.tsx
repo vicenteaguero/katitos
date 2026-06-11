@@ -63,15 +63,15 @@ function DetailsCard({ date }: { date: DateWithRatings }) {
 
   return (
     <Card className="footlight space-y-3">
-      {/* The featured card — lit on a marble stage */}
-      <div className="marble gilt-hairline relative -mx-7 -mt-7 mb-2 px-7 py-8 shadow-catch">
+      {/* The featured card — lifted by tone alone */}
+      <div className="relative -mx-7 -mt-7 mb-2 rounded-lg bg-surface-2 px-7 py-8">
         <span
           aria-hidden
-          className="pointer-events-none absolute right-5 top-5 select-none font-display text-2xl leading-none text-purple/60"
+          className="pointer-events-none absolute right-5 top-5 select-none font-display text-2xl leading-none text-muted/60"
         >
           ♦
         </span>
-        <p className="eyebrow mb-3 justify-start text-purple before:hidden">
+        <p className="eyebrow mb-3 justify-start before:hidden">
           Featured Card
         </p>
         <div className="flex items-start justify-between gap-3">
@@ -331,7 +331,7 @@ function PhotoTile({ photo }: { photo: DatePhotoRow }) {
     );
   };
   return (
-    <div className="gilt-hairline-flat relative overflow-hidden rounded-none bg-surface-2 shadow-catch">
+    <div className="relative overflow-hidden rounded-lg bg-surface-2">
       <DatePhoto
         path={photo.image_path}
         alt={photo.caption ?? 'date photo'}
@@ -341,7 +341,7 @@ function PhotoTile({ photo }: { photo: DatePhotoRow }) {
         label="Delete photo"
         onClick={onDelete}
         disabled={del.isPending}
-        className="absolute right-1.5 top-1.5 h-8 w-8 rounded-none bg-bg/70 text-fg active:bg-bg/90"
+        className="absolute right-1.5 top-1.5 h-8 w-8 rounded bg-bg/70 text-fg active:bg-bg/90"
       >
         <Trash2 className="h-4 w-4" />
       </IconButton>
