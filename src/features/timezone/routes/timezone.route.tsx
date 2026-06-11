@@ -62,8 +62,8 @@ export function TimezoneRoute() {
       <section className="space-y-7">
         <p className="eyebrow">Two Cities, Two Clocks</p>
 
-        {/* Two gilt loge panels stitched by the gold seam — her time, his time. */}
-        <div className="velvet-2 gilt-hairline relative rounded-none shadow-loge">
+        {/* Two tonal panels stitched by the gold seam — her time, his time. */}
+        <div className="relative rounded-lg bg-surface-2">
           <div className="grid grid-cols-2 items-stretch">
             <div className="space-y-2 px-6 py-8 text-center">
               <p className="font-sans text-[0.6875rem] font-semibold uppercase tracking-[0.22em] text-muted">
@@ -99,8 +99,10 @@ export function TimezoneRoute() {
       </section>
 
       <section className="space-y-7">
-        <p className="eyebrow">Convert a Time</p>
-        <Card className="bg-lapis space-y-5">
+        <p className="font-sans text-xs font-semibold uppercase tracking-[0.18em] text-muted">
+          Convert a Time
+        </p>
+        <Card className="space-y-5">
           <CardTitle>From your hours to theirs</CardTitle>
           <Field label={`Your time (${self.city})`}>
             <Input
