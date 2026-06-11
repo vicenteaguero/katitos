@@ -5,18 +5,15 @@ type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg';
 
 const variants: Record<Variant, string> = {
-  // Velvet curtain with a gilt-leaf hairline edge; press-lifts and catches the light.
-  primary:
-    'velvet-2 gilt-hairline text-accent-fg shadow-catch lift-press btn-catchlight hover:brightness-110',
-  // Lifted loge panel framed in flat gilt; brightens like leaf under a candle.
-  secondary:
-    'velvet-2 gilt-hairline-flat text-fg shadow-catch lift-press hover:brightness-110',
-  // Bare program copy that warms into a velvet box on touch.
+  // Wine red, WHITE text, no border — the one true action.
+  primary: 'bg-accent text-accent-fg lift-press hover:brightness-110',
+  // Quiet lifted panel — separated by tone, never by a line.
+  secondary: 'bg-surface-2 text-fg lift-press hover:brightness-110',
+  // Bare copy that warms into a panel on touch.
   ghost:
     'bg-transparent text-fg lift-press hover:bg-surface-2 active:bg-surface-2',
-  // Fabergé lacquer red, framed and lifted.
-  danger:
-    'bg-danger gilt-hairline-flat text-accent-fg shadow-catch lift-press btn-catchlight hover:brightness-110',
+  // Error red, white text, no border.
+  danger: 'bg-danger text-accent-fg lift-press hover:brightness-110',
 };
 
 const sizes: Record<Size, string> = {
@@ -48,7 +45,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         type={type}
         className={cn(
-          'relative isolate inline-flex select-none items-center justify-center gap-2 overflow-hidden rounded-none font-sans font-semibold tracking-[0.02em] outline-none transition focus-visible:shadow-candle disabled:pointer-events-none disabled:opacity-50',
+          'relative isolate inline-flex select-none items-center justify-center gap-2 overflow-hidden rounded font-sans font-semibold tracking-[0.02em] outline-none transition focus-visible:ring-2 focus-visible:ring-gold/30 disabled:pointer-events-none disabled:opacity-50',
           variants[variant],
           sizes[size],
           full && 'w-full',
