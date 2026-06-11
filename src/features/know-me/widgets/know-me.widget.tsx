@@ -39,7 +39,7 @@ export function KnowMeWidget() {
   return (
     <Link to="/know-me">
       <Card className="km-candle flex h-full flex-col gap-2">
-        <CardTitle>Know Me 💛</CardTitle>
+        <CardTitle>Know Me ❤️</CardTitle>
         <p className="font-display text-2xl font-medium italic leading-snug text-purple">
           {status}
         </p>
