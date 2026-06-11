@@ -82,7 +82,7 @@ export function StickerZoom({
           type="button"
           aria-label="Close"
           onClick={onClose}
-          className="velvet gilt-hairline-flat lift-press p-2 text-gold"
+          className="bg-surface-2 lift-press rounded p-2 text-gold"
         >
           <X className="h-5 w-5" />
         </button>
