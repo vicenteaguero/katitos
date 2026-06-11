@@ -12,8 +12,10 @@ export function TableOfContents({
   onJump: (chapterId: string) => void;
 }) {
   return (
-    <div className="flex h-full w-full flex-col gap-2 overflow-y-auto rounded-lg bg-surface p-4">
-      <h2 className="mb-1 text-sm font-bold text-muted">Chapters</h2>
+    <div className="marble gilt-hairline-flat flex h-full w-full flex-col gap-2 overflow-y-auto p-5">
+      <span className="eyebrow mb-2 text-accent before:bg-accent after:bg-accent">
+        Contents
+      </span>
       {chapters.map((ch) => {
         const cp = progress?.byChapter[ch.id];
         return (
@@ -21,15 +23,15 @@ export function TableOfContents({
             key={ch.id}
             type="button"
             onClick={() => onJump(ch.id)}
-            className="flex items-center gap-2 rounded px-1 py-1 text-left transition hover:bg-surface-2"
+            className="hover:bg-brown/5 flex items-center gap-2 px-1 py-1 text-left transition"
           >
             <span className="text-lg">{ch.emoji ?? '📄'}</span>
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-semibold text-fg">
+              <span className="block truncate font-display text-base font-semibold leading-tight text-accent">
                 {ch.title}
               </span>
               {cp && (
-                <span className="block h-1 w-full overflow-hidden rounded-full bg-surface-2">
+                <span className="bg-brown/15 mt-0.5 block h-1 w-full overflow-hidden">
                   <span
                     className="block h-full bg-accent"
                     style={{ width: `${cp.pct}%` }}
@@ -38,7 +40,7 @@ export function TableOfContents({
               )}
             </span>
             {cp && (
-              <span className="shrink-0 text-[11px] tabular-nums text-muted">
+              <span className="text-brown shrink-0 font-sans text-[11px] tabular-nums">
                 {cp.filled}/{cp.total}
               </span>
             )}
