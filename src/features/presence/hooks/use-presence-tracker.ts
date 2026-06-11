@@ -33,7 +33,7 @@ export function usePresenceTracker(): void {
     done.current = true;
     log.mutate();
     void notifyPartner({
-      title: 'Katitos 💛',
+      title: 'Katitos ❤️',
       body: `${self.display_name} just opened the app`,
       url: '/',
     });
@@ -46,7 +46,7 @@ export function usePresenceTracker(): void {
       const row = payload.new as AppOpen;
       const p = partnerRef.current;
       if (p && row.user_id === p.user_id) {
-        toast.info(`${p.display_name} just opened Katitos 💛`);
+        toast.info(`${p.display_name} just opened Katitos ❤️`);
         void qc.invalidateQueries({ queryKey: qk.couple.members() });
         void qc.invalidateQueries({ queryKey: qk.presence.appOpens() });
       }
