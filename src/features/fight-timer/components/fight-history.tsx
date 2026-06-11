@@ -48,7 +48,7 @@ function HistoryRow({ fight }: { fight: Fight }) {
         )}
         {fight.ended_at && (
           <p className="font-sans text-xs font-semibold uppercase tracking-[0.16em] text-purple">
-            Made up {relativeTime(fight.ended_at)} 💛
+            Made up {relativeTime(fight.ended_at)} ❤️
           </p>
         )}
       </div>
