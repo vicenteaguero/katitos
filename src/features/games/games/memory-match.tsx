@@ -92,11 +92,9 @@ function MemoryMatch({ onFinish }: GamePlayProps) {
               type="button"
               onClick={() => flip(idx)}
               className={cn(
-                'lift-press flex aspect-square items-center justify-center rounded-none text-2xl transition',
-                show
-                  ? 'velvet-2 gilt-hairline shadow-catch'
-                  : 'velvet gilt-hairline-flat',
-                isMatched && 'candle-flicker'
+                'lift-press flex aspect-square items-center justify-center rounded text-2xl transition',
+                show ? 'bg-surface-2' : 'bg-surface',
+                isMatched && 'bg-gold/15'
               )}
             >
               {show ? t.emoji : ''}
