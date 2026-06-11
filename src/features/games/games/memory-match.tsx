@@ -70,24 +70,33 @@ function MemoryMatch({ onFinish }: GamePlayProps) {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between text-sm text-muted">
-        <span>Moves: {moves}</span>
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <span className="font-sans text-sm tabular-nums text-muted">
+          Moves{' '}
+          <span className="gilt-text font-display text-lg tracking-tight">
+            {moves}
+          </span>
+        </span>
         <Button size="sm" variant="ghost" onClick={reset}>
           Restart
         </Button>
       </div>
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-4 gap-3">
         {deck.map((t, idx) => {
           const show = flipped.includes(idx) || matched.has(idx);
+          const isMatched = matched.has(idx);
           return (
             <button
               key={t.key}
               type="button"
               onClick={() => flip(idx)}
               className={cn(
-                'flex aspect-square items-center justify-center rounded-lg border text-2xl transition',
-                show ? 'border-accent bg-surface-2' : 'border-border bg-surface'
+                'lift-press flex aspect-square items-center justify-center rounded-none text-2xl transition',
+                show
+                  ? 'velvet-2 gilt-hairline shadow-catch'
+                  : 'velvet gilt-hairline-flat',
+                isMatched && 'candle-flicker'
               )}
             >
               {show ? t.emoji : ''}
@@ -96,8 +105,8 @@ function MemoryMatch({ onFinish }: GamePlayProps) {
         })}
       </div>
       {done && (
-        <p className="text-center font-semibold text-success">
-          Done in {moves} moves! 🎉
+        <p className="gilt-text gold-shimmer text-center font-display text-2xl font-semibold tracking-tight">
+          Done in {moves} moves
         </p>
       )}
     </div>
