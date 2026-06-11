@@ -12,8 +12,8 @@ export function TableOfContents({
   onJump: (chapterId: string) => void;
 }) {
   return (
-    <div className="marble gilt-hairline-flat flex h-full w-full flex-col gap-2 overflow-y-auto p-5">
-      <span className="eyebrow mb-2 text-accent before:bg-accent after:bg-accent">
+    <div className="marble flex h-full w-full flex-col gap-2 overflow-y-auto p-5">
+      <span className="mb-2 font-sans text-xs font-medium uppercase tracking-wider text-muted">
         Contents
       </span>
       {chapters.map((ch) => {
@@ -23,7 +23,7 @@ export function TableOfContents({
             key={ch.id}
             type="button"
             onClick={() => onJump(ch.id)}
-            className="hover:bg-brown/5 flex items-center gap-2 px-1 py-1 text-left transition"
+            className="hover:bg-brown/5 flex items-center gap-2 rounded px-1 py-1 text-left transition"
           >
             <span className="text-lg">{ch.emoji ?? '📄'}</span>
             <span className="min-w-0 flex-1">
@@ -31,7 +31,7 @@ export function TableOfContents({
                 {ch.title}
               </span>
               {cp && (
-                <span className="bg-brown/15 mt-0.5 block h-1 w-full overflow-hidden">
+                <span className="bg-brown/15 mt-0.5 block h-1 w-full overflow-hidden rounded-full">
                   <span
                     className="block h-full bg-accent"
                     style={{ width: `${cp.pct}%` }}
