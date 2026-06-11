@@ -17,7 +17,7 @@ export function PracticeRoute() {
   const backLink = (
     <Link
       to="/language"
-      className="inline-flex items-center gap-1 text-sm text-muted"
+      className="inline-flex items-center gap-1 font-sans text-sm text-muted transition-colors hover:text-fg"
     >
       <ChevronLeft size={16} /> Language
     </Link>
@@ -27,7 +27,7 @@ export function PracticeRoute() {
 
   if (isError) {
     return (
-      <div className="space-y-4">
+      <div className="curtain-reveal space-y-7">
         {backLink}
         <Empty icon="⚠️" title="Couldn't load" hint="Try again in a moment." />
       </div>
@@ -38,7 +38,7 @@ export function PracticeRoute() {
 
   if (phrases.length === 0) {
     return (
-      <div className="space-y-4">
+      <div className="curtain-reveal space-y-7">
         {backLink}
         <Empty
           icon="🗣️"
@@ -58,47 +58,65 @@ export function PracticeRoute() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="curtain-reveal space-y-7">
       <div className="flex items-center justify-between">
         {backLink}
-        <span className="text-sm tabular-nums text-muted">
-          {safeIndex + 1}/{phrases.length}
+        <span className="font-sans text-xs tabular-nums uppercase tracking-[0.18em] text-gold">
+          {safeIndex + 1} / {phrases.length}
         </span>
       </div>
 
-      <Card className="min-h-48 space-y-4">
-        <div className="space-y-3 text-center">
-          <p className="text-3xl font-bold">{phrase.text}</p>
-          {phrase.audio_path && (
-            <AudioFromPath
-              bucket={BUCKETS.languageAudio}
-              path={phrase.audio_path}
-            />
-          )}
-        </div>
+      <p className="eyebrow">On Stage</p>
 
-        {revealed ? (
-          <div className="space-y-1 border-t border-border pt-3 text-center">
-            {phrase.transliteration && (
-              <p className="text-sm italic text-muted">
-                {phrase.transliteration}
-              </p>
-            )}
-            {phrase.translation && (
-              <p className="text-lg font-medium">{phrase.translation}</p>
-            )}
-            {phrase.example && (
-              <p className="text-sm text-muted">{phrase.example}</p>
+      {/* The lit stage: a candle-warm footlight rises behind the phrase. */}
+      <div className="relative">
+        <div
+          className="footlight pointer-events-none absolute inset-0"
+          aria-hidden="true"
+        />
+        <Card className="relative min-h-56 space-y-6">
+          <div className="space-y-4 text-center">
+            {/* The foreign tongue, performed — engraved and softly alive. */}
+            <p className="candle-flicker font-display text-5xl font-medium leading-tight tracking-tight text-fg">
+              {phrase.text}
+            </p>
+            {phrase.audio_path && (
+              <div className="flex justify-center">
+                <AudioFromPath
+                  bucket={BUCKETS.languageAudio}
+                  path={phrase.audio_path}
+                />
+              </div>
             )}
           </div>
-        ) : (
-          <Button full variant="secondary" onClick={() => setRevealed(true)}>
-            <Eye size={16} /> Reveal
-          </Button>
-        )}
-      </Card>
 
-      <div className="flex gap-2">
+          {revealed ? (
+            <div className="space-y-2 border-t border-border/50 pt-4 text-center">
+              {phrase.transliteration && (
+                <p className="font-display text-lg italic leading-snug text-copper">
+                  {phrase.transliteration}
+                </p>
+              )}
+              {phrase.translation && (
+                <p className="font-sans text-xl font-medium text-fg">
+                  {phrase.translation}
+                </p>
+              )}
+              {phrase.example && (
+                <p className="font-display text-base italic leading-relaxed text-muted">
+                  {phrase.example}
+                </p>
+              )}
+            </div>
+          ) : (
+            <Button full variant="secondary" onClick={() => setRevealed(true)}>
+              <Eye size={16} /> Reveal
+            </Button>
+          )}
+        </Card>
+      </div>
+
+      <div className="flex gap-3">
         <Button
           full
           variant="secondary"
