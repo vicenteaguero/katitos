@@ -38,11 +38,18 @@ export function KnowMeWidget() {
 
   return (
     <Link to="/know-me">
-      <Card className="h-full">
+      <Card className="km-candle flex h-full flex-col gap-2">
         <CardTitle>Know Me 💛</CardTitle>
-        <p className="text-lg font-bold text-accent">{status}</p>
+        <p className="font-display text-2xl font-medium italic leading-snug text-purple">
+          {status}
+        </p>
         {map && map.currentStreak > 0 && (
-          <p className="text-xs text-muted">{map.currentStreak} 🔥 streak</p>
+          <p className="mt-auto font-sans text-xs uppercase tracking-[0.1em] text-muted">
+            <span className="candle-flicker tabular-nums text-fg">
+              {map.currentStreak} 🔥
+            </span>{' '}
+            streak
+          </p>
         )}
       </Card>
     </Link>
