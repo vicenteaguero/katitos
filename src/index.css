@@ -3,31 +3,105 @@
 @tailwind utilities;
 
 /*
- * Design tokens. Visual design is deliberately deferred — these are sane,
- * neutral placeholders. A future redesign changes ONLY this block.
+ * ════════════════════════════════════════════════════════════════════════════
+ *  KATITOS — "Bolshoi Nocturne"  ·  the Opera House design language
+ *  Single source of truth: design/DESIGN_BIBLE.md
+ *  An imperial opera box: oxblood velvet, candle-warmed gold leaf, snow-marble.
+ *  Her wine-purple royalty + his olive-cream warmth, stitched in gilt.
+ *  SQUARE corners always — ornament is the gilt hairline, never a radius.
+ * ════════════════════════════════════════════════════════════════════════════
  */
 :root {
-  --color-bg: #0f0f12;
-  --color-surface: #18181d;
-  --color-surface-2: #212128;
-  --color-border: #2c2c34;
-  --color-fg: #f4f4f6;
-  --color-muted: #9a9aa6;
-  --color-accent: #e25b7f;
-  --color-accent-fg: #ffffff;
-  --color-danger: #e5484d;
-  --color-success: #46a758;
-  --color-warning: #f5a623;
+  /* ── The Velvet House (names components already consume) ───────────────── */
+  --color-bg: #100408; /* Curtain Dusk — the darkened house */
+  --color-surface: #1b0810; /* Velvet Box — base panel */
+  --color-surface-2: #2a0e18; /* Loge Crimson — lifted card/sheet */
+  --color-border: #c9a24b; /* Gilt Hairline — the only ornament */
+  --color-fg: #fffafa; /* Marble Snow — primary text */
+  --color-muted: #b89a86; /* Candle Ash — secondary/program text */
+  --color-accent: #6e1423; /* Bolshoi Wine — primary romantic action */
+  --color-accent-fg: #fffafa; /* Snow — text on accent (sacred white) */
+  --color-danger: #c0303a; /* Lacquer Red — Fabergé enamel */
+  --color-success: #6b7344; /* Olive Sash — his green = "yes" */
+  --color-warning: #e8d9b5; /* Sandstorm Cream — his cream */
 
-  --radius: 0.625rem;
-  --radius-lg: 0.875rem;
-  --radius-xl: 1.25rem;
+  /* ── Romantic accent layer (her purple/brown + theater gilt + Chile) ───── */
+  --color-purple: #4a2350; /* Imperial Purple — her royal Russian note */
+  --color-brown: #3e2218; /* Cordovan Brown — velvet shadow tone */
+  --color-lapis: #16182e; /* Lapis Box-Seat — imperial blue alt surface */
+  --color-copper: #b5633a; /* Andes Copper — Chile / Pacific dusk */
+  --gold: #c9a24b; /* Gold Leaf (alias of border) */
+  --gilt-bright: #e4c36a;
+  --gilt-deep: #9c7a2e;
+  --gilt-spark: #fff1c9;
 
+  /* ── Gradients (velvet, gilt, footlight, the fusion seam) ──────────────── */
+  --grad-gilt: linear-gradient(
+    135deg,
+    var(--gilt-deep) 0%,
+    var(--gilt-bright) 45%,
+    var(--gilt-spark) 50%,
+    var(--gilt-bright) 55%,
+    var(--gilt-deep) 100%
+  );
+  --grad-house: radial-gradient(
+    120% 90% at 50% -10%,
+    #2a0e18 0%,
+    #1b0810 45%,
+    #100408 100%
+  );
+  --grad-velvet-sheen: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(228, 195, 106, 0.05) 50%,
+    transparent 60%
+  );
+  --grad-footlight: radial-gradient(
+    60% 42% at 50% 100%,
+    rgba(201, 162, 75, 0.1) 0%,
+    rgba(110, 20, 35, 0.05) 38%,
+    transparent 72%
+  );
+  --grad-sash: linear-gradient(
+    115deg,
+    var(--color-purple) 0%,
+    var(--color-accent) 38%,
+    var(--color-brown) 50%,
+    var(--color-copper) 62%,
+    var(--color-success) 80%,
+    var(--color-warning) 100%
+  );
+
+  /* ── Theatrical depth ──────────────────────────────────────────────────── */
+  --shadow-catch: inset 0 1px 0 rgba(228, 195, 106, 0.18);
+  --shadow-loge: 0 24px 60px -20px rgba(0, 0, 0, 0.82);
+  --ring-candle:
+    0 0 0 1px rgba(228, 195, 106, 0.25), 0 0 24px -6px rgba(74, 35, 80, 0.5);
+
+  /* ── Geometry: SQUARE. Always. Ornament = gilt line, not radius. ───────── */
+  --radius: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+
+  /* ── Typography ────────────────────────────────────────────────────────── */
+  --font-display: 'Cormorant Garamond', 'Cormorant', Georgia, serif;
   --font-sans:
-    -apple-system, BlinkMacSystemFont, 'SF Pro', 'Segoe UI', Roboto, system-ui,
+    'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui,
     sans-serif;
+  --tracking-eyebrow: 0.28em;
 
-  --app-max-width: 32rem; /* phone-first column */
+  /* ── Layout: uncramped phone column ────────────────────────────────────── */
+  --app-max-width: 32rem;
+  --space-stage: 1.75rem;
+  --space-act: 3rem;
+
+  /* ── Motion ────────────────────────────────────────────────────────────── */
+  --ease-curtain: cubic-bezier(0.7, 0, 0.2, 1);
+  --ease-settle: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.7, 0, 0.84, 0);
+  --dur-curtain: 700ms;
+  --dur-settle: 520ms;
+  --dur-glint: 220ms;
 
   color-scheme: dark;
 }
@@ -44,14 +118,48 @@ body,
 
 body {
   margin: 0;
-  background: var(--color-bg);
+  /* The darkened house: a candlelit spotlight spilling from above. */
+  background: var(--grad-house) var(--color-bg) fixed;
   color: var(--color-fg);
   font-family: var(--font-sans);
   font-size: 16px;
-  line-height: 1.5;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   /* respect iOS safe areas (notch / home indicator) */
   overscroll-behavior-y: none;
+}
+
+/* Footlight — a warm candle glow rising from the bottom of every screen. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: var(--grad-footlight);
+  animation: candle-flicker 5.5s ease-in-out infinite;
+}
+
+/* Grain — a faint fractal overlay so velvet/marble never band on OLED. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Headings default to the engraved opera serif. */
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+  line-height: 1.1;
 }
 
 /* Hide scrollbars on the phone column but keep scrollability. */
@@ -63,6 +171,244 @@ body {
 
 button {
   font-family: inherit;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+ * OPERA HOUSE TOOLKIT — texture + motion utilities (see design/DESIGN_BIBLE.md).
+ * Texture is pure CSS (no images). Motion is transform/opacity only (GPU).
+ * Everything degrades under prefers-reduced-motion (block at file end).
+ * ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Texture: velvet, marble, gilt ──────────────────────────────────────── */
+
+/* Velvet surface — nap (3px lines) under a faint diagonal sheen, over the box. */
+.velvet,
+.velvet-2 {
+  position: relative;
+  background-color: var(--color-surface);
+  background-image:
+    var(--grad-velvet-sheen),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 2px,
+      rgba(0, 0, 0, 0.18) 2px,
+      rgba(0, 0, 0, 0.18) 3px
+    );
+}
+.velvet-2 {
+  background-color: var(--color-surface-2);
+}
+
+/* The signature frame: one square 1px gold-leaf border + top catch-light. */
+.gilt-hairline {
+  border: 1px solid transparent;
+  border-image: var(--grad-gilt) 1;
+  box-shadow: var(--shadow-catch);
+}
+/* Cheaper flat variant for dense lists. */
+.gilt-hairline-flat {
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-catch);
+}
+
+/* Gilt-filled text — numerals, accents, the logo word. */
+.gilt-text {
+  background: var(--grad-gilt);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Marble — inverted ivory "lit stage" panel; pair with wine serif text. */
+.marble {
+  background-color: var(--color-fg);
+  background-image:
+    radial-gradient(
+      120% 90% at 20% 0%,
+      rgba(184, 154, 134, 0.1) 0%,
+      transparent 45%
+    ),
+    repeating-linear-gradient(
+      62deg,
+      transparent 0,
+      transparent 18px,
+      rgba(184, 154, 134, 0.06) 18px,
+      rgba(184, 154, 134, 0.06) 19px
+    );
+  color: var(--color-accent);
+}
+
+/* Footlight — drop behind a hero for a warm candle pool. */
+.footlight {
+  position: relative;
+}
+.footlight::after {
+  content: '';
+  position: absolute;
+  inset: -20% -10% -40%;
+  pointer-events: none;
+  background: var(--grad-footlight);
+  z-index: -1;
+}
+
+/* The Program Eyebrow — playbill section label with flanking gilt fleuron rules. */
+.eyebrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.eyebrow::before,
+.eyebrow::after {
+  content: '';
+  height: 1px;
+  width: 2rem;
+  background: var(--grad-gilt);
+  opacity: 0.8;
+}
+
+/* The Two-Color Seam — flag-free fusion divider: her colors flow into his. */
+.seam {
+  height: 1px;
+  width: 100%;
+  border: 0;
+  background: var(--grad-sash);
+}
+
+/* ── Motion ─────────────────────────────────────────────────────────────── */
+
+/* Curtain reveal — content fades + rises on mount. The default screen-enter. */
+@keyframes curtain-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.curtain-reveal {
+  animation: curtain-rise var(--dur-settle) var(--ease-settle) both;
+  will-change: transform, opacity;
+}
+/* Staggered children — a list ascends like a stage filling (set --i per child). */
+.curtain-stagger > * {
+  animation: curtain-rise var(--dur-settle) var(--ease-settle) both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+  will-change: transform, opacity;
+}
+
+/* Gold shimmer — light travels across a gilt gradient/border. */
+@keyframes gilt-sweep {
+  0% {
+    background-position: -120% 0;
+  }
+  100% {
+    background-position: 220% 0;
+  }
+}
+.gold-shimmer {
+  background-image: linear-gradient(
+    110deg,
+    transparent 38%,
+    rgba(255, 241, 201, 0.45) 50%,
+    transparent 62%
+  );
+  background-size: 220% 100%;
+  background-repeat: no-repeat;
+  animation: gilt-sweep 4s ease-in-out infinite;
+}
+
+/* Candle flicker — irregular micro opacity pulse for "lit" accents. */
+@keyframes candle-flicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  20% {
+    opacity: 0.94;
+  }
+  44% {
+    opacity: 1;
+  }
+  60% {
+    opacity: 0.92;
+  }
+  80% {
+    opacity: 0.98;
+  }
+}
+.candle-flicker {
+  animation: candle-flicker 5s ease-in-out infinite;
+  will-change: opacity;
+}
+
+/* Lift-press — the button press; deepens + sinks on active. */
+.lift-press {
+  transition:
+    transform 120ms var(--ease-settle),
+    box-shadow 160ms var(--ease-settle),
+    background-color 200ms var(--ease-settle);
+}
+.lift-press:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+/* Button catch-light — a skewed gold highlight sweeps on hover/active. */
+@keyframes catchlight-sweep {
+  from {
+    transform: translateX(-160%) skewX(-18deg);
+  }
+  to {
+    transform: translateX(260%) skewX(-18deg);
+  }
+}
+.btn-catchlight {
+  position: relative;
+  overflow: hidden;
+}
+.btn-catchlight::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 45%;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 241, 201, 0.28),
+    transparent
+  );
+  transform: translateX(-160%) skewX(-18deg);
+}
+.btn-catchlight:hover::after,
+.btn-catchlight:active::after {
+  animation: catchlight-sweep 500ms var(--ease-settle);
+}
+
+/* Draw-rule — a focus hairline draws in from center. */
+@keyframes rule-draw {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.draw-rule {
+  transform-origin: center;
+  animation: rule-draw var(--dur-glint) var(--ease-settle) both;
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -158,13 +504,283 @@ button {
   animation: album-foil-sheen 3.5s linear infinite;
 }
 
+/* ──────────────────────────────────────────────────────────────────────────
+ * Polaroid — the instant photo develops on screen. The emulsion settles from
+ * a blank over-exposed plate into the image: opacity + a faint scale settle,
+ * GPU-only (transform/opacity). One copper warmth breathes behind the plate.
+ * ────────────────────────────────────────────────────────────────────────── */
+@keyframes polaroid-develop {
+  0% {
+    opacity: 0;
+    transform: scale(1.035);
+  }
+  55% {
+    opacity: 0.72;
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.polaroid-develop {
+  animation: polaroid-develop 1100ms var(--ease-settle) both;
+  will-change: transform, opacity;
+}
+/* The over-exposed wash that fades off as the photo "fixes". */
+@keyframes polaroid-fix {
+  0% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.polaroid-fix {
+  animation: polaroid-fix 1100ms var(--ease-settle) both;
+  pointer-events: none;
+  will-change: opacity;
+}
+/* Copper candle pool that breathes behind the developing plate. */
+@keyframes polaroid-warmth {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.04);
+  }
+}
+.polaroid-warmth {
+  animation: polaroid-warmth 6s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * Chalkboard — a chalk note settles onto the slate. The note's own inline
+ * `transform: rotate()` carries its tilt, so the entrance touches OPACITY only
+ * (a gentle chalk-dust bloom) — never the transform — to avoid fighting drag.
+ * ────────────────────────────────────────────────────────────────────────── */
+@keyframes chalk-settle {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+.chalk-note {
+  animation: chalk-settle var(--dur-settle) var(--ease-settle) both;
+  will-change: opacity;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * Flowers — a bouquet blooms onto a lit stage. The signature: each bloom
+ * unfurls with a gentle scale + opacity settle (a petal opening), then breathes
+ * with .candle-flicker like a living thing. Stems lean to Olive Sash + Andes
+ * Copper; the vase rests on a marble pedestal under a footlight pool.
+ * GPU-only (transform/opacity).
+ * ────────────────────────────────────────────────────────────────────────── */
+@keyframes flower-bloom {
+  0% {
+    opacity: 0;
+    transform: scale(0.86) translateY(8px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.012) translateY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+.flower-bloom {
+  animation: flower-bloom var(--dur-settle) var(--ease-settle) both;
+  animation-delay: calc(var(--i, 0) * 90ms);
+  transform-origin: center bottom;
+  will-change: transform, opacity;
+}
+/* The footlight pool washing up over the marble pedestal — a warm copper glow
+   that breathes, so the bouquet always sits in stage light. */
+@keyframes flower-footlight {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scaleY(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scaleY(1.06);
+  }
+}
+.flower-stage::after {
+  content: '';
+  position: absolute;
+  inset: auto -12% -34%;
+  height: 62%;
+  pointer-events: none;
+  transform-origin: center bottom;
+  background: radial-gradient(
+    58% 100% at 50% 100%,
+    rgba(181, 99, 58, 0.22) 0%,
+    rgba(107, 115, 68, 0.1) 42%,
+    transparent 74%
+  );
+  animation: flower-footlight 6s ease-in-out infinite;
+  z-index: 0;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * Know Me — the daily intimate question on a candle-lit stage. Its signature is
+ * the REVEAL: when both have answered the card illuminates — a purple candle
+ * halo swells, the gilt edge catches, and the verdict hairline draws across,
+ * like stage lights coming up on the answer. The single "both nailed it" moment
+ * is the one place Sacred Snow glows. GPU-only (transform/opacity). One
+ * Imperial-Purple accent, one motion (candle-flicker + the reveal illumination).
+ * ────────────────────────────────────────────────────────────────────────── */
+
+/* The candle behind the daily question — a purple-warmed pool that breathes. */
+@keyframes km-candle-pool {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.78;
+    transform: scale(1.05);
+  }
+}
+.km-candle {
+  position: relative;
+}
+.km-candle::before {
+  content: '';
+  position: absolute;
+  inset: -28% -14% -42%;
+  pointer-events: none;
+  z-index: -1;
+  background: radial-gradient(
+    58% 46% at 50% 86%,
+    rgba(74, 35, 80, 0.5) 0%,
+    rgba(110, 20, 35, 0.18) 42%,
+    transparent 74%
+  );
+  animation: km-candle-pool 5.5s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
+/* The reveal illumination — the answer card rises from the dark and settles as
+   the gilt catches. Opacity + a faint lift only. */
+@keyframes km-illuminate {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.km-reveal {
+  animation: km-illuminate 620ms var(--ease-settle) both;
+  will-change: transform, opacity;
+}
+
+/* The verdict hairline draws across as the lights settle. */
+.km-verdict-rule {
+  transform-origin: center;
+  animation: rule-draw 420ms var(--ease-settle) 200ms both;
+}
+
+/* A single constellation point in the love-map standings — a faint pulse. */
+@keyframes km-star {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.km-star {
+  animation: km-star 4.5s ease-in-out infinite;
+  animation-delay: var(--km-star-delay, 0s);
+  will-change: opacity;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  /* Know Me: candle pool, reveal lift, verdict draw, and stars all hold calm. */
+  .km-candle::before,
+  .km-star {
+    animation: none !important;
+  }
+  .km-candle::before {
+    opacity: 0.62 !important;
+    transform: none !important;
+  }
+  .km-reveal {
+    animation: curtain-rise 200ms ease both !important;
+    transform: none !important;
+  }
+  .km-verdict-rule {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Flowers: blooms settle as a calm opacity fade; the footlight holds still. */
+  .flower-bloom {
+    animation: curtain-rise 200ms ease both !important;
+    animation-delay: 0ms !important;
+    transform: none !important;
+  }
+  .flower-stage::after {
+    animation: none !important;
+  }
+  /* The instant photo: the develop fades calmly in; the over-exposed wash
+     simply isn't there, so the image reads clean and still. */
+  .polaroid-develop {
+    animation: curtain-rise 200ms ease both !important;
+    transform: none !important;
+  }
+  .polaroid-fix {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+  /* Looping ambient motion goes static. */
+  body::after,
+  .polaroid-warmth,
+  .gold-shimmer,
+  .candle-flicker,
   .sway-branch,
   .tree-bloom,
   .album-stick,
   .album-foil,
-  .book-leaf.snap {
+  .book-leaf.snap,
+  .chalk-note,
+  .btn-catchlight::after {
     animation: none !important;
     transition: none !important;
+  }
+  /* Entrances collapse to a brief opacity fade — no transform. */
+  .curtain-reveal,
+  .curtain-stagger > *,
+  .draw-rule {
+    animation: curtain-rise 200ms ease both !important;
+    animation-delay: 0ms !important;
+    transform: none !important;
+  }
+  .lift-press {
+    transition: background-color 200ms ease !important;
+  }
+  .lift-press:active {
+    transform: none !important;
   }
 }
