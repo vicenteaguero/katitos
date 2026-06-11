@@ -4,38 +4,47 @@
 
 /*
  * ════════════════════════════════════════════════════════════════════════════
- *  KATITOS — "Bolshoi Nocturne"  ·  the Opera House design language
+ *  KATITOS — "Silver Hall" · a clean, modern love app, NOVAT-inspired
  *  Single source of truth: design/DESIGN_BIBLE.md
- *  An imperial opera box: oxblood velvet, candle-warmed gold leaf, snow-marble.
- *  Her wine-purple royalty + his olive-cream warmth, stitched in gilt.
- *  SQUARE corners always — ornament is the gilt hairline, never a radius.
+ *  Wine red + WHITE GOLD / silver + black & white, with her purple & his olive.
+ *  Inspired by NOVAT (Novosibirsk) — the great silver dome, not gold leaf.
+ *  Flat, fast, square corners. The one metal is a fine white-gold hairline.
+ *  NOTE: legacy class names (.velvet, .gilt-*, .gold-shimmer) are KEPT so the
+ *  whole app re-skins from here — but they now read clean + white-gold, never
+ *  yellow-gold, never a heavy velvet texture.
  * ════════════════════════════════════════════════════════════════════════════
  */
 :root {
-  /* ── The Velvet House (names components already consume) ───────────────── */
-  --color-bg: #100408; /* Curtain Dusk — the darkened house */
-  --color-surface: #1b0810; /* Velvet Box — base panel */
-  --color-surface-2: #2a0e18; /* Loge Crimson — lifted card/sheet */
-  --color-border: #c9a24b; /* Gilt Hairline — the only ornament */
-  --color-fg: #fffafa; /* Marble Snow — primary text */
-  --color-muted: #b89a86; /* Candle Ash — secondary/program text */
-  --color-accent: #6e1423; /* Bolshoi Wine — primary romantic action */
-  --color-accent-fg: #fffafa; /* Snow — text on accent (sacred white) */
-  --color-danger: #c0303a; /* Lacquer Red — Fabergé enamel */
-  --color-success: #6b7344; /* Olive Sash — his green = "yes" */
-  --color-warning: #e8d9b5; /* Sandstorm Cream — his cream */
+  /* ── Clean dark stage (names components already consume) ───────────────── */
+  --color-bg: #0c0b0e; /* Night — clean near-black, faint cool */
+  --color-surface: #151417; /* Panel — base card */
+  --color-surface-2: #1f1e23; /* Raised — lifted card/sheet/popover */
+  --color-border: #c9c6be; /* White-Gold Hairline — the one fine metal line */
+  --color-fg: #f6f4f0; /* Warm white — primary text */
+  --color-muted: #9a978f; /* Ash — secondary text/metadata */
+  --color-accent: #7c1626; /* Wine — primary action, the brand red */
+  --color-accent-fg: #ffffff; /* on wine */
+  --color-danger: #c0303a; /* Lacquer Red — destructive */
+  --color-success: #6b7344; /* Olive — his green = "yes" */
+  --color-warning: #e8d9b5; /* Cream — his sandstorm, gentle attention */
 
-  /* ── Romantic accent layer (her purple/brown + theater gilt + Chile) ───── */
-  --color-purple: #4a2350; /* Imperial Purple — her royal Russian note */
-  --color-brown: #3e2218; /* Cordovan Brown — velvet shadow tone */
-  --color-lapis: #16182e; /* Lapis Box-Seat — imperial blue alt surface */
-  --color-copper: #b5633a; /* Andes Copper — Chile / Pacific dusk */
-  --gold: #c9a24b; /* Gold Leaf (alias of border) */
-  --gilt-bright: #e4c36a;
-  --gilt-deep: #9c7a2e;
-  --gilt-spark: #fff1c9;
+  /* ── Accent layer (her purple/brown + white-gold metal + Chile copper) ─── */
+  --color-purple: #4a2350; /* Imperial Purple — her royal note */
+  --color-brown: #3e2218; /* Cordovan Brown — her warm shadow tone */
+  --color-lapis: #16182e; /* Lapis — cool alt surface for "special" panels */
+  --color-copper: #b5633a; /* Andes Copper — Chile / warm dusk highlight */
+  --gold: #cfccc4; /* WHITE GOLD — the metal (cool, pale, never yellow) */
+  --gilt-bright: #eae8e1; /* bright pole of the white-gold sheen */
+  --gilt-deep: #9a978d; /* deep pole */
+  --gilt-spark: #fbfbf8; /* the specular highlight */
 
-  /* ── Gradients (velvet, gilt, footlight, the fusion seam) ──────────────── */
+  /* ── The NOVAT layer — the great Silver Dome of the Novosibirsk theatre. ── */
+  --silver: #c4c8cd; /* Dome Silver — the colossal silver-grey cupola */
+  --pewter: #7e848c; /* Shadow Pewter — the ribbed/shaded side */
+  --crystal: #eaf2ff; /* Crystal — the chandelier's cool white sparkle */
+
+  /* ── Gradients ─────────────────────────────────────────────────────────── */
+  /* White-gold sheen (for .gilt-text / shimmer / hairline border-image). */
   --grad-gilt: linear-gradient(
     135deg,
     var(--gilt-deep) 0%,
@@ -44,41 +53,37 @@
     var(--gilt-bright) 55%,
     var(--gilt-deep) 100%
   );
+  /* The stage: a clean, neutral near-black with a faint top light. */
   --grad-house: radial-gradient(
-    120% 90% at 50% -10%,
-    #2a0e18 0%,
-    #1b0810 45%,
-    #100408 100%
+    120% 85% at 50% -8%,
+    #1a1820 0%,
+    #131217 46%,
+    #0c0b0e 100%
   );
-  --grad-velvet-sheen: linear-gradient(
-    105deg,
-    transparent 40%,
-    rgba(228, 195, 106, 0.05) 50%,
-    transparent 60%
-  );
+  --grad-velvet-sheen: linear-gradient(0deg, transparent, transparent);
+  /* Footlight — a faint, cool silver wash (no gold, very subtle). */
   --grad-footlight: radial-gradient(
-    60% 42% at 50% 100%,
-    rgba(201, 162, 75, 0.1) 0%,
-    rgba(110, 20, 35, 0.05) 38%,
+    60% 40% at 50% 100%,
+    rgba(201, 198, 190, 0.05) 0%,
     transparent 72%
   );
   --grad-sash: linear-gradient(
     115deg,
     var(--color-purple) 0%,
-    var(--color-accent) 38%,
+    var(--color-accent) 36%,
     var(--color-brown) 50%,
-    var(--color-copper) 62%,
-    var(--color-success) 80%,
+    var(--color-copper) 64%,
+    var(--color-success) 82%,
     var(--color-warning) 100%
   );
 
-  /* ── Theatrical depth ──────────────────────────────────────────────────── */
-  --shadow-catch: inset 0 1px 0 rgba(228, 195, 106, 0.18);
-  --shadow-loge: 0 24px 60px -20px rgba(0, 0, 0, 0.82);
+  /* ── Depth (clean, neutral — no colored glows) ─────────────────────────── */
+  --shadow-catch: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shadow-loge: 0 18px 44px -22px rgba(0, 0, 0, 0.75);
   --ring-candle:
-    0 0 0 1px rgba(228, 195, 106, 0.25), 0 0 24px -6px rgba(74, 35, 80, 0.5);
+    0 0 0 1px rgba(201, 198, 190, 0.35), 0 0 0 4px rgba(124, 22, 38, 0.22);
 
-  /* ── Geometry: SQUARE. Always. Ornament = gilt line, not radius. ───────── */
+  /* ── Geometry: SQUARE. Always. Ornament = the white-gold line, not radius. ─ */
   --radius: 0px;
   --radius-lg: 0px;
   --radius-xl: 0px;
@@ -99,9 +104,9 @@
   --ease-curtain: cubic-bezier(0.7, 0, 0.2, 1);
   --ease-settle: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-exit: cubic-bezier(0.7, 0, 0.84, 0);
-  --dur-curtain: 700ms;
-  --dur-settle: 520ms;
-  --dur-glint: 220ms;
+  --dur-curtain: 440ms;
+  --dur-settle: 320ms;
+  --dur-glint: 180ms;
 
   color-scheme: dark;
 }
@@ -118,7 +123,7 @@ body,
 
 body {
   margin: 0;
-  /* The darkened house: a candlelit spotlight spilling from above. */
+  /* Clean dark stage with a faint top light — no heavy overlays (fast). */
   background: var(--grad-house) var(--color-bg) fixed;
   color: var(--color-fg);
   font-family: var(--font-sans);
@@ -130,29 +135,7 @@ body {
   overscroll-behavior-y: none;
 }
 
-/* Footlight — a warm candle glow rising from the bottom of every screen. */
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background: var(--grad-footlight);
-  animation: candle-flicker 5.5s ease-in-out infinite;
-}
-
-/* Grain — a faint fractal overlay so velvet/marble never band on OLED. */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.025;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
-/* Headings default to the engraved opera serif. */
+/* Headings default to the display serif. */
 h1,
 h2,
 h3,
@@ -181,26 +164,18 @@ button {
 
 /* ── Texture: velvet, marble, gilt ──────────────────────────────────────── */
 
-/* Velvet surface — nap (3px lines) under a faint diagonal sheen, over the box. */
-.velvet,
-.velvet-2 {
+/* Clean flat panel surfaces (formerly "velvet" — kept as class names so the
+   whole app re-skins from here; now simply flat, fast, modern). */
+.velvet {
   position: relative;
   background-color: var(--color-surface);
-  background-image:
-    var(--grad-velvet-sheen),
-    repeating-linear-gradient(
-      90deg,
-      transparent 0,
-      transparent 2px,
-      rgba(0, 0, 0, 0.18) 2px,
-      rgba(0, 0, 0, 0.18) 3px
-    );
 }
 .velvet-2 {
+  position: relative;
   background-color: var(--color-surface-2);
 }
 
-/* The signature frame: one square 1px gold-leaf border + top catch-light. */
+/* The signature frame: one square 1px white-gold hairline + top catch-light. */
 .gilt-hairline {
   border: 1px solid transparent;
   border-image: var(--grad-gilt) 1;
@@ -555,6 +530,51 @@ button {
 .polaroid-warmth {
   animation: polaroid-warmth 6s ease-in-out infinite;
   will-change: opacity, transform;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * Polaroid capture frame — dress the kernel CameraCapture (which is `fixed
+ * inset-0`) so it lives inside the square instant-photo window WITHOUT touching
+ * the shared component. We reflow its fixed root to fill the window, let the
+ * live preview/captured shot occupy the window, float the shutter & cancel as
+ * floating controls over the photo, and drop the retake/use bar below the chin.
+ * Square, flat, white-gold — no theatre floor.
+ * ────────────────────────────────────────────────────────────────────────── */
+.polaroid-frame {
+  border: 1px solid var(--color-border); /* white-gold hairline edge of the stock */
+}
+/* The kernel root: pin it into the square window instead of the viewport. */
+.polaroid-frame > div > .fixed {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: transparent;
+}
+/* Header (cancel + switch-camera): float at the top of the photo window. */
+.polaroid-frame > div > .fixed > div:first-child {
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: 3;
+  padding: 0.5rem;
+}
+.polaroid-frame > div > .fixed > div:first-child > span {
+  display: none; /* hide the "Take a photo" label — the chin says it all */
+}
+/* The live preview / captured shot fills the entire square window. */
+.polaroid-frame > div > .fixed > div:nth-child(2) {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+/* Control bar (shutter, or retake/use): drop it below the photo onto the chin
+   and the dark scrim so the cream frame stays clean. */
+.polaroid-frame > div > .fixed > div:last-child {
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: 3;
+  transform: translateY(calc(100% + 4rem));
+  padding: 0;
+  gap: 1rem;
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
