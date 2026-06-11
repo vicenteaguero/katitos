@@ -62,7 +62,9 @@ export function AuthorQuestionSheet({
 
   return (
     <Sheet open={open} onClose={onClose} title="Write a question">
-      <div className="space-y-3">
+      <div className="space-y-6">
+        <p className="eyebrow">A New Question</p>
+
         <Field label="Prompt">
           <Textarea
             value={prompt}
@@ -85,9 +87,9 @@ export function AuthorQuestionSheet({
           </Select>
         </Field>
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           {OPTION_IDS.map((id) => (
-            <div key={id} className="flex items-center gap-2">
+            <div key={id} className="flex items-center gap-3">
               <Input
                 value={labels[id] ?? ''}
                 onChange={(e) =>
@@ -97,7 +99,9 @@ export function AuthorQuestionSheet({
               />
               <FilePickerButton
                 onPick={(file) => setImages((im) => ({ ...im, [id]: file }))}
-                className={images[id] ? 'border-accent text-accent' : ''}
+                className={
+                  images[id] ? 'gilt-hairline bg-purple/25 text-fg' : ''
+                }
               >
                 <ImagePlus size={18} />
               </FilePickerButton>
