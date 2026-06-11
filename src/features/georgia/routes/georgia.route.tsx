@@ -169,7 +169,7 @@ export function GeorgiaRoute() {
       <section>
         <div className="mb-5 flex items-end justify-between gap-4">
           <div>
-            <span className="eyebrow justify-start text-copper before:hidden after:bg-copper">
+            <span className="font-sans text-xs font-semibold uppercase tracking-[0.18em] text-muted">
               Itinerary
             </span>
             {items_.length > 0 && (
@@ -232,7 +232,7 @@ export function GeorgiaRoute() {
 
       <section>
         <div className="mb-5 flex items-end justify-between gap-4">
-          <span className="eyebrow justify-start text-copper before:hidden after:bg-copper">
+          <span className="font-sans text-xs font-semibold uppercase tracking-[0.18em] text-muted">
             Postcards
           </span>
           <Button size="sm" variant="ghost" onClick={() => setCam(true)}>
@@ -249,7 +249,7 @@ export function GeorgiaRoute() {
                 className="group relative"
                 style={{ '--i': i } as CSSProperties}
               >
-                <div className="gilt-hairline-flat overflow-hidden shadow-loge">
+                <div className="overflow-hidden rounded-lg bg-surface-2">
                   <GeorgiaPhoto
                     path={p.image_path}
                     className="aspect-square w-full"
@@ -262,7 +262,7 @@ export function GeorgiaRoute() {
                     if (confirm('Delete photo?'))
                       delPhoto.mutate({ id: p.id, tripId: trip.id });
                   }}
-                  className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-none bg-bg/70 font-sans text-sm text-fg opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100"
+                  className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded bg-bg/70 font-sans text-sm text-fg opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100"
                 >
                   ×
                 </button>
