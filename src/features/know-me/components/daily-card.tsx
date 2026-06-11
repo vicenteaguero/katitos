@@ -33,7 +33,7 @@ export function DailyCard({ today }: { today: QuestionWithDay }) {
   };
 
   return (
-    <Card className="space-y-4">
+    <Card className="km-candle space-y-7">
       <Segmented
         value={step}
         onChange={setStep}
@@ -45,8 +45,10 @@ export function DailyCard({ today }: { today: QuestionWithDay }) {
       />
 
       {step === 'own' ? (
-        <div className="space-y-3">
-          <p className="text-lg font-medium">{prompt}</p>
+        <div className="space-y-6">
+          <p className="font-display text-3xl font-medium leading-tight tracking-tight text-fg">
+            {prompt}
+          </p>
           <OptionGrid
             options={today.options}
             selected={own}
@@ -57,11 +59,13 @@ export function DailyCard({ today }: { today: QuestionWithDay }) {
           </Button>
         </div>
       ) : (
-        <div className="space-y-3">
-          <p className="text-sm text-muted">
+        <div className="space-y-6">
+          <p className="font-sans text-xs font-semibold uppercase tracking-[0.16em] text-purple">
             What will {partnerName} say about themselves?
           </p>
-          <p className="text-lg font-medium">{prompt}</p>
+          <p className="font-display text-3xl font-medium leading-tight tracking-tight text-fg">
+            {prompt}
+          </p>
           <OptionGrid
             options={today.options}
             selected={guess}
