@@ -15,7 +15,7 @@ export function PageHeader({
         <h1 className="truncate font-display text-4xl font-semibold tracking-tight text-fg">
           {title}
         </h1>
-        <div className="mt-3 h-px w-16 bg-border" aria-hidden="true" />
+        <div className="mt-3 h-px w-16 bg-border/60" aria-hidden="true" />
         {subtitle && (
           <p className="mt-3 font-sans text-sm text-muted">{subtitle}</p>
         )}
