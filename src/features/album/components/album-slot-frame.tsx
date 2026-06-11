@@ -1,4 +1,4 @@
-import { Lock, Plus } from 'lucide-react';
+import { Lock } from 'lucide-react';
 import { cn } from '@kernel/lib';
 import { isGateOpen } from '../lib/progression';
 import { AlbumStickerImage } from './album-sticker-image';
@@ -27,13 +27,13 @@ function HalfTile({
 }) {
   if (!sticker) {
     return (
-      <div className="border-brown/30 bg-brown/5 flex aspect-square w-full items-center justify-center border border-dashed p-1 text-center font-display text-[11px] italic leading-tight text-brown">
+      <div className="bg-brown/5 flex aspect-square w-full items-center justify-center rounded p-1 text-center font-display text-[11px] italic leading-tight text-brown">
         {missingLabel ?? '—'}
       </div>
     );
   }
   return (
-    <div className="gilt-hairline-flat relative aspect-square w-full overflow-hidden">
+    <div className="relative aspect-square w-full overflow-hidden rounded">
       <AlbumStickerImage
         path={sticker.image_path}
         className={cn(
@@ -87,17 +87,15 @@ export function AlbumSlotFrame({
       onClick={onTap}
       disabled={locked}
       className={cn(
-        'group relative flex flex-col gap-1 border p-1.5 text-left transition lift-press',
-        locked
-          ? 'border-brown/30 bg-brown/5 opacity-70'
-          : 'border-brown/30 hover:border-accent'
+        'group relative flex flex-col gap-1 rounded-lg p-1.5 text-left transition lift-press',
+        locked ? 'bg-brown/5 opacity-70' : 'bg-surface-2 hover:bg-surface'
       )}
     >
       {/* Tier badge */}
       {TIER_BADGE[slot.tier] && (
         <span
           className={cn(
-            'absolute right-1 top-1 z-10 px-1 font-sans text-[9px] font-bold uppercase tracking-wider',
+            'absolute right-1 top-1 z-10 rounded px-1 font-sans text-[9px] font-bold uppercase tracking-wider',
             TIER_BADGE[slot.tier]
           )}
         >
@@ -106,7 +104,7 @@ export function AlbumSlotFrame({
       )}
       {/* Lock badge */}
       {locked && (
-        <span className="bg-brown absolute left-1 top-1 z-10 flex items-center gap-0.5 px-1 font-sans text-[9px] text-fg">
+        <span className="bg-brown absolute left-1 top-1 z-10 flex items-center gap-0.5 rounded px-1 font-sans text-[9px] text-fg">
           <Lock size={9} /> {slot.gate_label ?? 'Locked'}
         </span>
       )}
@@ -131,8 +129,12 @@ export function AlbumSlotFrame({
       ) : byHalf('solo') ? (
         <HalfTile sticker={byHalf('solo')} foil={foil} />
       ) : (
-        <div className="border-brown/30 bg-brown/5 text-brown flex aspect-square w-full items-center justify-center border border-dashed transition group-hover:text-accent">
-          {!locked && <Plus size={20} />}
+        <div className="bg-brown/5 flex aspect-square w-full items-center justify-center rounded">
+          {!locked && (
+            <span className="rounded bg-accent px-2.5 py-1 font-sans text-[10px] font-semibold text-accent-fg transition group-hover:opacity-90">
+              Add yours
+            </span>
+          )}
         </div>
       )}
 
