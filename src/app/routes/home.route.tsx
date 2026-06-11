@@ -96,7 +96,7 @@ export function HomeRoute() {
         <div className="space-y-3">
           <h1 className="font-display text-5xl font-semibold leading-[1.1] tracking-tight text-fg">
             Hi {self?.display_name ?? 'love'}{' '}
-            <span className="candle-flicker">{self?.emoji ?? '💛'}</span>
+            <span className="candle-flicker">{self?.emoji ?? '❤️'}</span>
           </h1>
           {partner && (
             <div className="flex flex-col items-center gap-4 pt-1">
