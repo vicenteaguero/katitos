@@ -47,14 +47,14 @@ export function TreeWidget() {
 
   return (
     <Link to="/tree">
-      <Card className="footlight flex h-full flex-col">
+      <Card className="lift-press flex h-full flex-col">
         <CardTitle>Our Tree</CardTitle>
         {bounds && (
           <svg
             viewBox={`${bounds.minX - 20} ${bounds.minY - 20} ${
               bounds.maxX - bounds.minX + 40
             } ${bounds.maxY - bounds.minY + 40}`}
-            className="my-2 h-20 w-full"
+            className="my-3 h-32 w-full"
             preserveAspectRatio="xMidYMax meet"
           >
             <g>
