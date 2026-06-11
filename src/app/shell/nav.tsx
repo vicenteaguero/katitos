@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { NavLink, useLocation } from 'react-router';
 import type { ComponentType } from 'react';
+import { NavLink, useLocation } from 'react-router';
+import type { LucideIcon } from 'lucide-react';
 import {
   Home,
   MapPin,
@@ -8,12 +9,49 @@ import {
   StickyNote,
   LayoutGrid,
   Settings,
+  ChevronRight,
 } from 'lucide-react';
 import { Sheet } from '@kernel/ui';
 import { cn } from '@kernel/lib';
 import { featureRegistry } from '../features.registry';
 
-type NavIcon = ComponentType<{ className?: string }>;
+/** Drawer section order; anything untagged falls into 'More'. */
+const CATEGORY_ORDER = ['Play', 'Memories', 'Us', 'Practical'];
+
+/** Full-width drawer row: icon + name + chevron. No borders, no tiles. */
+function DrawerRow({
+  to,
+  icon: Icon,
+  label,
+  index,
+  onClick,
+}: {
+  to: string;
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  index: number;
+  onClick: () => void;
+}) {
+  return (
+    <NavLink
+      to={to}
+      onClick={onClick}
+      style={{ '--i': index } as React.CSSProperties}
+      className="lift-press flex w-full items-center gap-4 rounded px-3 py-3 transition-colors duration-150 hover:bg-fg/5 active:bg-fg/10"
+    >
+      <Icon className="h-5 w-5 shrink-0 stroke-[1.75] text-gold" />
+      <span className="min-w-0 flex-1 truncate text-left font-sans text-sm font-semibold text-fg">
+        {label}
+      </span>
+      <ChevronRight
+        size={16}
+        strokeWidth={1.75}
+        className="shrink-0 text-muted"
+        aria-hidden="true"
+      />
+    </NavLink>
+  );
+}
 
 function NavTab({
   active,
@@ -21,31 +59,30 @@ function NavTab({
   label,
 }: {
   active: boolean;
-  icon: NavIcon;
+  icon: LucideIcon;
   label: string;
 }) {
   return (
     <span
       className={cn(
         'relative flex flex-1 flex-col items-center justify-center gap-1 px-1 py-2.5',
-        'min-h-[44px] font-sans text-[0.6875rem] font-semibold uppercase tracking-[0.14em]',
-        'transition-colors duration-200',
+        'min-h-[52px] font-sans transition-colors duration-200',
         active ? 'text-gold' : 'text-muted'
       )}
     >
       <Icon
+        size={22}
+        strokeWidth={1.75}
         className={cn(
-          'h-5 w-5 transition-colors duration-200',
+          'transition-colors duration-200',
           active ? 'text-accent' : 'text-muted'
         )}
       />
-      <span className="max-w-16 truncate">{label}</span>
+      {/* Label appears only under the active tab — quiet, uncramped. */}
       {active && (
-        <span
-          aria-hidden="true"
-          className="draw-rule absolute inset-x-3 top-0 h-px"
-          style={{ background: 'var(--grad-gilt)' }}
-        />
+        <span className="curtain-reveal max-w-16 truncate text-[0.625rem] font-semibold uppercase tracking-[0.14em]">
+          {label}
+        </span>
       )}
     </span>
   );
@@ -59,7 +96,10 @@ export function BottomNav() {
 
   return (
     <>
-      <nav className="velvet-2 gilt-hairline-flat relative z-30 flex shrink-0 items-stretch rounded-none border-x-0 border-b-0 border-t pb-[env(safe-area-inset-bottom)]">
+      {/* Borderless bar: tone separation (surface-2) + a soft top shadow.
+          The safe-area inset lives INSIDE the bar's own background, so the
+          bottom of the screen is always filled with nav color — never empty. */}
+      <nav className="relative z-30 flex shrink-0 items-stretch bg-surface-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_28px_-16px_rgba(0,0,0,0.6)]">
         <NavLink to="/" end className="flex flex-1 lift-press">
           {({ isActive }) => (
             <NavTab active={isActive} icon={Home} label="Home" />
@@ -72,24 +112,22 @@ export function BottomNav() {
           )}
         </NavLink>
 
-        {/* Raised central Polaroid camera button */}
+        {/* Raised central Polaroid camera button — wine on white, gently
+            overlapping the bar. */}
         <div className="relative flex w-16 shrink-0 items-stretch justify-center">
           <NavLink
             to="/polaroid"
             aria-label="Polaroid"
-            className="lift-press absolute -top-5 flex h-14 w-14 flex-col items-center justify-center gap-0.5 rounded-none bg-accent text-surface shadow-loge"
+            className={cn(
+              'lift-press absolute -top-5 flex h-14 w-14 flex-col items-center justify-center gap-0.5',
+              'rounded-full bg-accent text-accent-fg shadow-loge transition-shadow duration-200',
+              polaroidActive && 'ring-2 ring-gold/40'
+            )}
           >
-            <Camera className="h-6 w-6" />
+            <Camera size={22} strokeWidth={1.75} />
             <span className="font-sans text-[0.5rem] font-bold uppercase tracking-[0.12em]">
               Photo
             </span>
-            {polaroidActive && (
-              <span
-                aria-hidden="true"
-                className="draw-rule absolute inset-x-2 -bottom-1 h-px"
-                style={{ background: 'var(--grad-gilt)' }}
-              />
-            )}
           </NavLink>
         </div>
 
@@ -113,36 +151,51 @@ export function BottomNav() {
         onClose={() => setMoreOpen(false)}
         title="The Program"
       >
-        <p className="eyebrow mb-7">The Repertoire</p>
-        <div className="curtain-stagger grid grid-cols-3 gap-3.5 pb-2">
-          {entries.map((e, i) => {
-            const Icon = e.icon;
-            return (
-              <NavLink
-                key={e.to}
-                to={e.to}
-                onClick={() => setMoreOpen(false)}
-                style={{ '--i': i } as React.CSSProperties}
-                className="velvet gilt-hairline-flat lift-press flex flex-col items-center gap-2 rounded-none p-4 text-center"
-              >
-                <Icon className="h-6 w-6 text-gold" />
-                <span className="font-sans text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-fg truncate max-w-full">
-                  {e.label}
-                </span>
-              </NavLink>
-            );
-          })}
-          <NavLink
+        {/* Categorized vertical list — no tile grid, no hairlines, no borders.
+            Tone + spacing separate the sections; a running --i staggers rows. */}
+        <div className="curtain-stagger flex flex-col gap-6 pb-2">
+          {(() => {
+            const groups = new Map<string, typeof entries>();
+            for (const e of entries) {
+              const cat = e.category ?? 'More';
+              const g = groups.get(cat);
+              if (g) g.push(e);
+              else groups.set(cat, [e]);
+            }
+            const order = [
+              ...CATEGORY_ORDER,
+              ...[...groups.keys()].filter((c) => !CATEGORY_ORDER.includes(c)),
+            ];
+            let row = 0;
+            return order
+              .filter((cat) => groups.has(cat))
+              .map((cat) => (
+                <section key={cat}>
+                  <p className="mb-1.5 px-3 font-sans text-[0.625rem] font-semibold uppercase tracking-[0.18em] text-muted">
+                    {cat}
+                  </p>
+                  <div className="flex flex-col">
+                    {groups.get(cat)!.map((e) => (
+                      <DrawerRow
+                        key={e.to}
+                        to={e.to}
+                        icon={e.icon}
+                        label={e.label}
+                        index={row++}
+                        onClick={() => setMoreOpen(false)}
+                      />
+                    ))}
+                  </div>
+                </section>
+              ));
+          })()}
+          <DrawerRow
             to="/settings"
+            icon={Settings}
+            label="Settings"
+            index={entries.length}
             onClick={() => setMoreOpen(false)}
-            style={{ '--i': entries.length } as React.CSSProperties}
-            className="velvet gilt-hairline-flat lift-press flex flex-col items-center gap-2 rounded-none p-4 text-center"
-          >
-            <Settings className="h-6 w-6 text-gold" aria-hidden="true" />
-            <span className="font-sans text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-fg">
-              Settings
-            </span>
-          </NavLink>
+          />
         </div>
       </Sheet>
     </>
