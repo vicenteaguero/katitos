@@ -8,7 +8,7 @@ import {
 import { cn } from '../lib/cn';
 
 const base =
-  'w-full rounded-none border border-border bg-surface-2 px-4 py-3 font-sans text-fg shadow-catch placeholder:text-muted transition-colors duration-200 focus:border-gold focus:outline-none focus:shadow-candle';
+  'w-full rounded bg-surface-2 px-4 py-3 font-sans text-fg placeholder:text-muted transition-shadow duration-200 focus:outline-none focus:ring-2 focus:ring-gold/25';
 
 export const Input = forwardRef<
   HTMLInputElement,
@@ -58,7 +58,7 @@ export function Field({
   return (
     <label className="block space-y-2.5">
       {label && (
-        <span className="block font-sans text-xs font-semibold uppercase tracking-[0.18em] text-gold">
+        <span className="block font-sans text-xs font-semibold uppercase tracking-[0.18em] text-muted">
           {label}
         </span>
       )}
