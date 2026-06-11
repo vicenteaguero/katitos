@@ -48,38 +48,48 @@ export function IdeaBankListRoute() {
     filter === 'all' ? data : data?.filter((i) => i.status === filter);
 
   return (
-    <div>
-      <PageHeader title="Idea bank" subtitle="Keep us growing" />
-
-      <Segmented
-        className="mb-3"
-        options={FILTERS}
-        value={filter}
-        onChange={setFilter}
-      />
-
-      {isLoading ? (
-        <LoadingScreen />
-      ) : isError ? (
-        <Empty icon="⚠️" title="Couldn't load" hint="Try again in a moment." />
-      ) : !ideas || ideas.length === 0 ? (
-        <Empty
-          icon="💡"
-          title="No ideas yet"
-          hint="Tap + to bank an idea for us."
+    <div className="curtain-reveal space-y-12">
+      <header className="footlight relative -mx-7 px-7 pb-2 pt-1">
+        <PageHeader
+          title="Idea bank"
+          subtitle="A gilt vault of everything we dream of doing together"
         />
-      ) : (
-        <div className="space-y-3">
-          {ideas.map((i) => (
-            <IdeaCard
-              key={i.id}
-              idea={i}
-              onEdit={setEditing}
-              onDelete={handleDelete}
-            />
-          ))}
+      </header>
+
+      <section className="space-y-7">
+        <p className="eyebrow">The Vault</p>
+
+        <div className="flex justify-center">
+          <Segmented options={FILTERS} value={filter} onChange={setFilter} />
         </div>
-      )}
+
+        {isLoading ? (
+          <LoadingScreen />
+        ) : isError ? (
+          <Empty
+            icon="⚠️"
+            title="Couldn't load"
+            hint="Try again in a moment."
+          />
+        ) : !ideas || ideas.length === 0 ? (
+          <Empty
+            icon="💡"
+            title="No ideas yet"
+            hint="Tap + to bank an idea for us."
+          />
+        ) : (
+          <div className="curtain-stagger space-y-5">
+            {ideas.map((i) => (
+              <IdeaCard
+                key={i.id}
+                idea={i}
+                onEdit={setEditing}
+                onDelete={handleDelete}
+              />
+            ))}
+          </div>
+        )}
+      </section>
 
       <Fab label="Add idea" onClick={() => setEditing(null)}>
         <Plus />
