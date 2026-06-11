@@ -26,10 +26,10 @@ export function OptionGrid({
           disabled={locked}
           onClick={() => onSelect(o.id)}
           className={cn(
-            'lift-press flex flex-col gap-3 rounded-none p-4 text-left shadow-catch outline-none transition focus-visible:shadow-candle disabled:pointer-events-none',
+            'lift-press flex flex-col gap-3 rounded-lg p-4 text-left outline-none transition focus-visible:ring-2 focus-visible:ring-gold/30 disabled:pointer-events-none',
             selected === o.id
-              ? 'gilt-hairline bg-purple/25 text-fg shadow-candle'
-              : 'gilt-hairline-flat velvet-2 text-muted hover:text-fg'
+              ? 'bg-accent text-accent-fg'
+              : 'bg-surface-2 text-muted hover:text-fg'
           )}
         >
           {o.imagePath && (
