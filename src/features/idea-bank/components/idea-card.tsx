@@ -46,22 +46,36 @@ export function IdeaCard({
   };
 
   return (
-    <Card className="flex items-start justify-between gap-3">
-      <div className="min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="text-xl">💡</span>
-          <h3 className="truncate font-semibold">{idea.title}</h3>
+    <Card className="flex items-start justify-between gap-4 space-y-0">
+      <div className="min-w-0 space-y-3">
+        <div className="flex items-baseline gap-3">
+          <span
+            className="bg-lapis gilt-hairline-flat shrink-0 px-2 py-0.5 text-base leading-none"
+            aria-hidden="true"
+          >
+            💡
+          </span>
+          <h3 className="truncate font-display text-2xl font-semibold leading-tight tracking-tight text-fg">
+            {idea.title}
+          </h3>
         </div>
         {idea.description && (
-          <p className="mt-1 text-sm text-muted">{idea.description}</p>
+          <p className="font-sans text-sm leading-relaxed text-muted">
+            {idea.description}
+          </p>
         )}
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          {idea.category && <Badge tone="accent">{idea.category}</Badge>}
+        <div className="flex flex-wrap items-center gap-2">
+          {idea.category && (
+            <span className="font-sans text-[0.6875rem] uppercase tracking-[0.22em] text-copper">
+              {idea.category}
+            </span>
+          )}
           <button
             type="button"
             onClick={cycleStatus}
             disabled={update.isPending}
             aria-label="Cycle status"
+            className="lift-press rounded-none outline-none focus-visible:shadow-candle"
           >
             <Badge tone={STATUS_TONE[status]}>{STATUS_LABEL[status]}</Badge>
           </button>
