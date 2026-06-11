@@ -9,7 +9,7 @@ export function FightTimerWidget() {
   const now = useNow(1000);
 
   let body = (
-    <p className="mt-2 text-base font-semibold text-accent">All good 💛</p>
+    <p className="mt-2 font-display text-lg italic text-muted">All good 💛</p>
   );
   if (active) {
     const dur = now
@@ -18,8 +18,8 @@ export function FightTimerWidget() {
     const hours = Math.max(0, Math.floor(dur.hours));
     const minutes = Math.max(0, Math.floor(dur.minutes));
     body = (
-      <p className="mt-2 text-base font-semibold tabular-nums text-danger">
-        Fighting {hours}h {minutes}m
+      <p className="gilt-text candle-flicker mt-2 font-display text-2xl font-semibold tabular-nums leading-none">
+        Cooling {hours}h {minutes}m
       </p>
     );
   }
