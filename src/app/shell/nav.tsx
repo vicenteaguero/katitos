@@ -1,16 +1,22 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router';
 import type { ComponentType } from 'react';
-import { Home, LayoutGrid, Settings } from 'lucide-react';
+import {
+  Home,
+  MapPin,
+  Camera,
+  StickyNote,
+  Gamepad2,
+  LayoutGrid,
+  Settings,
+} from 'lucide-react';
 import { Sheet } from '@kernel/ui';
 import { cn } from '@kernel/lib';
 import { featureRegistry } from '../features.registry';
 
 type NavIcon = ComponentType<{ className?: string }>;
 
-const PRIMARY_LIMIT = 3;
-
-function NavItem({
+function NavTab({
   active,
   icon: Icon,
   label,
@@ -50,35 +56,62 @@ export function BottomNav() {
   const [moreOpen, setMoreOpen] = useState(false);
   const location = useLocation();
   const entries = featureRegistry.navEntries;
-  const primary = entries
-    .filter((e) => e.placement === 'primary')
-    .slice(0, PRIMARY_LIMIT);
+  const polaroidActive = location.pathname.startsWith('/polaroid');
 
   return (
     <>
       <nav className="velvet-2 gilt-hairline-flat fixed inset-x-0 bottom-0 z-30 mx-auto flex max-w-app items-stretch rounded-none border-x-0 border-b-0 border-t pb-[env(safe-area-inset-bottom)] shadow-loge backdrop-blur">
         <NavLink to="/" end className="flex flex-1 lift-press">
           {({ isActive }) => (
-            <NavItem active={isActive} icon={Home} label="Home" />
+            <NavTab active={isActive} icon={Home} label="Home" />
           )}
         </NavLink>
 
-        {primary.map((e) => {
-          const Icon = e.icon;
-          const active = location.pathname.startsWith(e.to);
-          return (
-            <NavLink key={e.to} to={e.to} className="flex flex-1 lift-press">
-              <NavItem active={active} icon={Icon} label={e.label} />
-            </NavLink>
-          );
-        })}
+        <NavLink to="/georgia" className="flex flex-1 lift-press">
+          {({ isActive }) => (
+            <NavTab active={isActive} icon={MapPin} label="Georgia" />
+          )}
+        </NavLink>
+
+        {/* Raised central Polaroid camera button */}
+        <div className="relative flex w-16 shrink-0 items-stretch justify-center">
+          <NavLink
+            to="/polaroid"
+            aria-label="Polaroid"
+            className="lift-press absolute -top-5 flex h-14 w-14 flex-col items-center justify-center gap-0.5 rounded-none bg-accent text-surface shadow-loge"
+          >
+            <Camera className="h-6 w-6" />
+            <span className="font-sans text-[0.5rem] font-bold uppercase tracking-[0.12em]">
+              Photo
+            </span>
+            {polaroidActive && (
+              <span
+                aria-hidden="true"
+                className="draw-rule absolute inset-x-2 -bottom-1 h-px"
+                style={{ background: 'var(--grad-gilt)' }}
+              />
+            )}
+          </NavLink>
+        </div>
+
+        <NavLink to="/wall" className="flex flex-1 lift-press">
+          {({ isActive }) => (
+            <NavTab active={isActive} icon={StickyNote} label="Wall" />
+          )}
+        </NavLink>
+
+        <NavLink to="/games" className="flex flex-1 lift-press">
+          {({ isActive }) => (
+            <NavTab active={isActive} icon={Gamepad2} label="Games" />
+          )}
+        </NavLink>
 
         <button
           type="button"
           onClick={() => setMoreOpen(true)}
           className="flex flex-1 lift-press"
         >
-          <NavItem active={false} icon={LayoutGrid} label="More" />
+          <NavTab active={false} icon={LayoutGrid} label="More" />
         </button>
       </nav>
 
