@@ -52,7 +52,8 @@ export function DateForm({ onCreated }: { onCreated: (id: string) => void }) {
   });
 
   return (
-    <form onSubmit={submit} className="space-y-3">
+    <form onSubmit={submit} className="space-y-5">
+      <p className="eyebrow text-purple">Add to the Deck</p>
       <Field label="Title" error={errors.title?.message}>
         <Input placeholder="Sunset picnic" {...register('title')} />
       </Field>
