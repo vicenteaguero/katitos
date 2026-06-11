@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useAuth } from '@kernel/auth';
 import { Button, Field, Input } from '@kernel/ui';
+import { KatitosMark } from './katitos-mark';
 
 /** Real Supabase email/password login. Shown in prod mode when signed out. */
 export function LoginScreen() {
@@ -20,34 +21,48 @@ export function LoginScreen() {
   };
 
   return (
-    <div className="mx-auto flex min-h-full max-w-app items-center justify-center p-6">
-      <form onSubmit={submit} className="w-full space-y-4">
-        <div className="mb-6 text-center">
-          <h1 className="text-3xl font-bold text-accent">Katitos</h1>
-          <p className="mt-1 text-sm text-muted">our little place</p>
+    <div className="mx-auto flex min-h-full max-w-app items-center justify-center px-[1.75rem] py-[3rem]">
+      <div className="curtain-reveal w-full">
+        {/* The entrance — a footlight pool rising behind the mark and names. */}
+        <div className="footlight mb-[3rem] flex flex-col items-center text-center">
+          <KatitosMark size={92} className="mb-6" />
+          <h1 className="font-display gilt-text text-5xl font-semibold leading-none tracking-tight">
+            Katitos
+          </h1>
+          <div className="eyebrow mt-5">Anastasia &amp; Vicente</div>
+          <p className="font-display mt-4 text-xl font-light italic text-muted">
+            our little place
+          </p>
         </div>
-        <Field label="Email">
-          <Input
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </Field>
-        <Field label="Password" error={error ?? undefined}>
-          <Input
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </Field>
-        <Button full type="submit" disabled={busy}>
-          {busy ? 'Signing in…' : 'Sign in'}
-        </Button>
-      </form>
+
+        {/* The framed loge where the two of us are admitted. */}
+        <form
+          onSubmit={submit}
+          className="gilt-hairline velvet-2 shadow-loge space-y-6 p-[1.75rem]"
+        >
+          <Field label="Email">
+            <Input
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </Field>
+          <Field label="Password" error={error ?? undefined}>
+            <Input
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </Field>
+          <Button full size="lg" type="submit" disabled={busy}>
+            {busy ? 'Signing in…' : 'Enter'}
+          </Button>
+        </form>
+      </div>
     </div>
   );
 }
