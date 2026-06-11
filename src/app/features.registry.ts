@@ -31,7 +31,43 @@ import { treeFeature } from '@features/tree';
 import { knowMeFeature } from '@features/know-me';
 import { albumFeature } from '@features/album';
 
-export const features: FeatureModule[] = [
+// ── Drawer categories ──────────────────────────────────────────────────────
+// Section each feature appears under in the "More" drawer (id → category).
+const categories: Record<string, string> = {
+  // Play
+  games: 'Play',
+  quizzes: 'Play',
+  'know-me': 'Play',
+  scavenger: 'Play',
+  decisions: 'Play',
+  // Memories
+  album: 'Memories',
+  polaroid: 'Memories',
+  dates: 'Memories',
+  georgia: 'Memories',
+  travel: 'Memories',
+  flowers: 'Memories',
+  // Us
+  tree: 'Us',
+  'days-together': 'Us',
+  distance: 'Us',
+  timezone: 'Us',
+  presence: 'Us',
+  'fight-timer': 'Us',
+  punito: 'Us',
+  'baby-names': 'Us',
+  'cute-words': 'Us',
+  // Practical
+  countdowns: 'Practical',
+  wishlists: 'Practical',
+  'idea-bank': 'Practical',
+  finance: 'Practical',
+  currency: 'Practical',
+  language: 'Practical',
+  chalkboard: 'Practical',
+};
+
+const modules: FeatureModule[] = [
   treeFeature,
   knowMeFeature,
   albumFeature,
@@ -60,5 +96,10 @@ export const features: FeatureModule[] = [
   financeFeature,
   travelFeature,
 ];
+
+export const features: FeatureModule[] = modules.map((m) => ({
+  category: categories[m.id],
+  ...m,
+}));
 
 export const featureRegistry = createFeatureRegistry(features);
