@@ -86,13 +86,17 @@ export function WishlistDetailRoute() {
   const items = data ?? [];
 
   return (
-    <div className="space-y-4">
+    <div className="curtain-reveal space-y-6">
       <Link
         to="/wishlists"
-        className="inline-flex items-center gap-1 text-sm text-muted"
+        className="inline-flex items-center gap-1 font-sans text-sm text-muted"
       >
         <ChevronLeft size={16} /> All wishlists
       </Link>
+
+      <p className="eyebrow">
+        {tab === 'swipe' ? 'The Audition' : 'The Programme'}
+      </p>
 
       <Segmented options={tabs} value={tab} onChange={setTab} />
 
