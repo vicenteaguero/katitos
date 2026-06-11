@@ -67,7 +67,7 @@ export function LoveMapPanel() {
 
   return (
     <Card className="space-y-7">
-      <CardTitle>Your love map 💛</CardTitle>
+      <CardTitle>Your love map ❤️</CardTitle>
 
       <div className="flex gap-5">
         <Dial
