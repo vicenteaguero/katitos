@@ -1,15 +1,15 @@
 import { Link } from 'react-router';
 import { useNow } from '@kernel/hooks';
 import { DateTime } from '@kernel/lib';
-import { Card, CardTitle } from '@kernel/ui';
 import { useActiveFight } from '../api/fights.queries';
 
+// Compact single-line dashboard row — a minor widget in the editorial flow.
 export function FightTimerWidget() {
   const { data: active } = useActiveFight();
   const now = useNow(1000);
 
   let body = (
-    <p className="mt-2 font-display text-lg italic text-muted">All good ❤️</p>
+    <span className="font-display text-lg italic text-muted">All good ❤️</span>
   );
   if (active) {
     const dur = now
@@ -18,18 +18,18 @@ export function FightTimerWidget() {
     const hours = Math.max(0, Math.floor(dur.hours));
     const minutes = Math.max(0, Math.floor(dur.minutes));
     body = (
-      <p className="gilt-text candle-flicker mt-2 font-display text-2xl font-semibold tabular-nums leading-none">
+      <span className="font-display text-lg font-semibold tabular-nums text-fg">
         Cooling {hours}h {minutes}m
-      </p>
+      </span>
     );
   }
 
   return (
-    <Link to="/fights">
-      <Card className="h-full">
-        <CardTitle>Fights</CardTitle>
+    <Link to="/fights" className="lift-press block">
+      <div className="flex items-baseline justify-between gap-3 rounded-lg bg-surface px-6 py-4">
+        <span className="font-sans text-sm text-muted">Fights</span>
         {body}
-      </Card>
+      </div>
     </Link>
   );
 }
