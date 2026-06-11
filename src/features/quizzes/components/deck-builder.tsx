@@ -94,9 +94,7 @@ export function DeckBuilder({ onDone }: { onDone: () => void }) {
   if (!deckId) {
     return (
       <div className="space-y-6">
-        <p className="eyebrow text-copper before:bg-copper after:bg-copper">
-          Stage a New Deck
-        </p>
+        <p className="font-sans text-sm text-muted">Stage a New Deck</p>
         <Field label="Type">
           <Select
             value={kindIdx}
@@ -129,7 +127,7 @@ export function DeckBuilder({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="space-y-6">
-      <div className="gilt-hairline-flat flex items-center gap-3 rounded-none bg-surface-2 p-4 shadow-catch">
+      <div className="flex items-center gap-3 rounded-lg bg-surface-2 p-4">
         <span className="text-2xl">{kind.emoji}</span>
         <span className="font-display text-lg font-medium tracking-tight text-fg">
           {kind.label}
