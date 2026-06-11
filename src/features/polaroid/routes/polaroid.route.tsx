@@ -80,7 +80,6 @@ function TodayCard({ onOpenCamera }: { onOpenCamera: () => void }) {
       </figure>
 
       <div className="space-y-3">
-        <span className="eyebrow">In her hand</span>
         <Input
           defaultValue={today.caption ?? ''}
           placeholder="Add a caption…"
@@ -113,21 +112,26 @@ function Gallery() {
       />
     );
   }
+  // A vertical film-roll: each past day is a full-width polaroid card — square
+  // photo on cream stock inside a rounded frame. No grid, no borders.
   return (
-    <div className="curtain-stagger grid grid-cols-2 gap-5">
+    <div className="curtain-stagger space-y-8">
       {past.map((p, i) => (
         <figure
           key={p.id}
-          className="marble gilt-hairline lift-press m-0 p-2.5 pb-4 shadow-loge"
+          className="marble m-0 w-full rounded-lg p-3 pb-5 shadow-loge"
           style={{ '--i': i } as React.CSSProperties}
         >
-          <PolaroidImage path={p.image_path} className="aspect-square w-full" />
-          <figcaption className="mt-3 text-center">
+          <PolaroidImage
+            path={p.image_path}
+            className="aspect-square w-full rounded-none"
+          />
+          <figcaption className="mt-4 px-1 text-center">
             <span className="block font-sans text-[0.6875rem] font-semibold uppercase tracking-[0.22em] text-copper">
               {DateTime.fromISO(p.day).toFormat('LLL d')}
             </span>
             {p.caption && (
-              <span className="mt-1 block font-display text-base italic leading-snug text-brown">
+              <span className="mt-1 block font-display text-lg italic leading-snug text-brown">
                 {p.caption}
               </span>
             )}
