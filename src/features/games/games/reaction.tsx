@@ -59,7 +59,7 @@ function Reaction({ onFinish }: GamePlayProps) {
       type="button"
       onClick={tap}
       className={cn(
-        'gilt-hairline lift-press shadow-catch flex h-64 w-full items-center justify-center rounded-none px-7 text-center font-display text-3xl font-semibold tracking-tight text-fg transition-colors',
+        'lift-press flex h-64 w-full items-center justify-center rounded-lg px-7 text-center font-display text-3xl font-semibold tracking-tight text-fg transition-colors',
         bg
       )}
     >
