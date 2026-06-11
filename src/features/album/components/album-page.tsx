@@ -38,16 +38,25 @@ export function AlbumPage({
     case 'divider': {
       const ch = ctx.chapters.find((c) => c.id === page.chapterId);
       return (
-        <div className="flex h-full w-full flex-col items-center justify-center gap-2 rounded-lg bg-gradient-to-b from-surface-2 to-surface p-6 text-center">
+        <div className="marble gilt-hairline-flat relative flex h-full w-full flex-col items-center justify-center gap-3 p-6 text-center">
+          <span className="eyebrow text-accent before:bg-accent after:bg-accent">
+            Act
+          </span>
           <span className="text-4xl">{ch?.emoji ?? '📖'}</span>
-          <h2 className="text-xl font-black text-fg">{ch?.title}</h2>
-          {ch?.subtitle && <p className="text-sm text-muted">{ch.subtitle}</p>}
+          <h2 className="font-display text-3xl font-semibold leading-tight text-accent">
+            {ch?.title}
+          </h2>
+          {ch?.subtitle && (
+            <p className="font-display text-base font-light italic text-brown">
+              {ch.subtitle}
+            </p>
+          )}
         </div>
       );
     }
     case 'grid':
       return (
-        <div className="grid h-full w-full grid-cols-2 grid-rows-3 gap-2 rounded-lg bg-surface p-2">
+        <div className="marble gilt-hairline-flat grid h-full w-full grid-cols-2 grid-rows-3 gap-2 p-2.5">
           {page.slotIds.map((slotId) => {
             const slot = ctx.slotsById.get(slotId);
             if (!slot) return <div key={slotId} />;
@@ -67,6 +76,6 @@ export function AlbumPage({
       );
     case 'blank':
     default:
-      return <div className="h-full w-full rounded-lg bg-surface" />;
+      return <div className="marble h-full w-full" />;
   }
 }
