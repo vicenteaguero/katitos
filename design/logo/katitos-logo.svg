@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Katitos — cat head, heart eyes. Traced from Gemini render. -->
+  <rect width="512" height="512" rx="112" fill="#6E1423"/>
+  <!-- white head: round dome, sharp triangular ears, rounded valley -->
+  <path fill="#FFFAFA" d="M156 188 L196 124 Q216 150 234 166 Q256 178 278 166 Q296 150 316 124 L356 188 C382 212 382 244 382 266 C380 312 340 358 256 358 C172 358 132 312 130 266 C130 244 130 212 156 188 Z"/>
+  <!-- heart eyes cut from head (wine) -->
+  <g fill="#6E1423">
+    <path d="M206 237 c-15-17-40-6-40 14 c0 18 25 31 40 46 c15-15 40-28 40-46 c0-20-25-31-40-14 Z"/>
+    <path d="M306 237 c-15-17-40-6-40 14 c0 18 25 31 40 46 c15-15 40-28 40-46 c0-20-25-31-40-14 Z"/>
+  </g>
+</svg>
