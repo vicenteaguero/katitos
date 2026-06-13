@@ -1,5 +1,5 @@
-import { Link, Outlet } from 'react-router';
-import { Settings } from 'lucide-react';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router';
+import { Settings, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@kernel/auth';
 import { IconButton, LoadingScreen } from '@kernel/ui';
 import { PresenceTracker, PartnerStatusDot } from '@features/presence';
@@ -7,19 +7,38 @@ import { LoginScreen } from './login';
 import { DevUserSwitcher } from './dev-switcher';
 import { KatitosMark } from './katitos-mark';
 import { BottomNav } from './nav';
+import { CacheWarmer } from './cache-warmer';
 
 function TopBar() {
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  // "Back" earns its place only off the home tab — on home it'd go nowhere.
+  // Always lands somewhere sane: history if we have it, else home.
+  const atHome = pathname === '/';
+
   return (
     <header className="z-20 shrink-0 bg-surface/95 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur">
-      {/* The marquee: brand mark + gilt wordmark + partner status dot. */}
+      {/* The marquee: (back) + brand mark + gilt wordmark + partner status dot. */}
       <div className="flex items-center justify-between gap-2 px-[1.75rem] py-2.5">
-        <Link to="/" className="group flex items-center gap-2.5">
-          <KatitosMark size={30} />
-          <span className="font-display gilt-text text-2xl font-semibold leading-none tracking-tight">
-            Katitos
-          </span>
-          <PartnerStatusDot className="ml-0.5" />
-        </Link>
+        <div className="flex min-w-0 items-center gap-1.5">
+          {!atHome && (
+            <IconButton
+              label="Back"
+              onClick={() =>
+                window.history.length > 1 ? navigate(-1) : navigate('/')
+              }
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </IconButton>
+          )}
+          <Link to="/" className="group flex min-w-0 items-center gap-2.5">
+            <KatitosMark size={30} />
+            <span className="font-display gilt-text truncate text-2xl font-semibold leading-none tracking-tight">
+              Katitos
+            </span>
+            <PartnerStatusDot className="ml-0.5" />
+          </Link>
+        </div>
         <div className="flex items-center gap-1">
           <DevUserSwitcher />
           <Link to="/settings">
@@ -47,6 +66,7 @@ export function AppShell() {
   return (
     <div className="mx-auto flex h-[100dvh] max-w-app flex-col overflow-hidden bg-surface">
       <PresenceTracker />
+      <CacheWarmer />
       <TopBar />
       <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-[1.75rem] pb-8 pt-[1.75rem] [-webkit-overflow-scrolling:touch]">
         <Outlet />
