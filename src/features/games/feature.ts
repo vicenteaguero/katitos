@@ -1,15 +1,25 @@
 import { Gamepad2 } from 'lucide-react';
 import { defineFeature } from '@kernel/registry';
-import { GamesHubRoute } from './routes/games-hub.route';
-import { GamePlayRoute } from './routes/game-play.route';
 
 export const gamesFeature = defineFeature({
   id: 'games',
   title: 'Games',
   basePath: '/games',
   routes: [
-    { index: true, Component: GamesHubRoute },
-    { path: ':gameId', Component: GamePlayRoute },
+    {
+      index: true,
+      lazy: () =>
+        import('./routes/games-hub.route').then((m) => ({
+          Component: m.GamesHubRoute,
+        })),
+    },
+    {
+      path: ':gameId',
+      lazy: () =>
+        import('./routes/game-play.route').then((m) => ({
+          Component: m.GamePlayRoute,
+        })),
+    },
   ],
   nav: [
     {
