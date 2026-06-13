@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router';
+import { useDrag } from '@use-gesture/react';
 import { Camera, Check } from 'lucide-react';
 import { DateTime } from 'luxon';
 import { qk } from '@kernel/query';
@@ -144,54 +145,103 @@ function Gallery() {
   );
 }
 
-/** Side-by-side "keep which?" before a retake replaces today's photo. The old
- *  one is never deleted — choosing the new shot just stops showing the old. */
-function CompareReplace({
+/**
+ * Replace-stack: today's photo and the new shot held like two physical
+ * polaroids — drag the front one aside (it tilts away in 3D) to reveal the
+ * other behind, swipe to toggle which is on top. "Keep this" commits whichever
+ * is front. The old photo is never deleted (versioned storage paths).
+ */
+function ReplaceStack({
   oldPath,
   newUrl,
-  onKeepNew,
-  onKeepOld,
+  onConfirm,
+  onCancel,
   saving,
 }: {
   oldPath: string;
   newUrl: string;
-  onKeepNew: () => void;
-  onKeepOld: () => void;
+  /** which: 'new' saves the new shot, 'old' keeps the current one. */
+  onConfirm: (which: 'new' | 'old') => void;
+  onCancel: () => void;
   saving: boolean;
 }) {
+  // front === 'new' → the fresh shot is on top.
+  const [front, setFront] = useState<'new' | 'old'>('new');
+  const [dx, setDx] = useState(0);
+
+  const bind = useDrag(({ active, movement: [mx], last }) => {
+    if (last) {
+      if (Math.abs(mx) > 80) setFront((f) => (f === 'new' ? 'old' : 'new'));
+      setDx(0);
+      return;
+    }
+    setDx(active ? mx : 0);
+  });
+
+  const StackCard = ({
+    isFront,
+    children,
+    label,
+  }: {
+    isFront: boolean;
+    children: ReactNode;
+    label: string;
+  }) => (
+    <div
+      className="absolute inset-0 transition-transform duration-300"
+      style={{
+        transform: isFront
+          ? `translateX(${dx}px) rotateY(${dx / -18}deg)`
+          : 'translateX(14px) translateY(14px) scale(0.94) rotateY(8deg)',
+        transformOrigin: 'center',
+        zIndex: isFront ? 2 : 1,
+        opacity: isFront ? 1 : 0.85,
+        touchAction: 'pan-y',
+      }}
+      {...(isFront ? bind() : {})}
+    >
+      <div className="marble gilt-hairline shadow-loge h-full p-3 pb-9">
+        <div className="aspect-square w-full overflow-hidden bg-brown">
+          {children}
+        </div>
+        <span className="mt-2 block text-center font-sans text-[0.625rem] font-semibold uppercase tracking-[0.18em] text-brown/70">
+          {label}
+        </span>
+      </div>
+    </div>
+  );
+
   return (
     <div className="fixed inset-0 z-[80] flex flex-col bg-black/90 p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
       <p className="mt-2 text-center font-display text-2xl italic text-fg">
         Keep which one?
       </p>
-      <div className="mt-6 grid flex-1 grid-cols-2 gap-3">
-        <figure className="m-0 flex flex-col">
-          <span className="mb-2 text-center font-sans text-[0.625rem] font-semibold uppercase tracking-[0.18em] text-muted">
-            On the wall
-          </span>
-          <div className="marble flex-1 p-2">
-            <PolaroidImage path={oldPath} full className="h-full w-full" />
-          </div>
-        </figure>
-        <figure className="m-0 flex flex-col">
-          <span className="mb-2 text-center font-sans text-[0.625rem] font-semibold uppercase tracking-[0.18em] text-gold">
-            New shot
-          </span>
-          <div className="marble flex-1 p-2">
-            <img
-              src={newUrl}
-              alt="New shot"
-              className="h-full w-full object-cover"
-            />
-          </div>
-        </figure>
+      <p className="mt-1 text-center font-sans text-xs text-muted">
+        Swipe to flip between them
+      </p>
+      <div
+        className="relative mx-auto mt-8 w-full max-w-[20rem] flex-1"
+        style={{ perspective: '1200px' }}
+      >
+        {/* Render back card first, front second (front handles the drag). */}
+        <StackCard isFront={front === 'old'} label="On the wall">
+          <PolaroidImage path={oldPath} full className="h-full w-full" />
+        </StackCard>
+        <StackCard isFront={front === 'new'} label="New shot">
+          <img
+            src={newUrl}
+            alt="New shot"
+            className="h-full w-full object-cover"
+          />
+        </StackCard>
       </div>
-      <div className="mt-6 flex items-center justify-center gap-4">
-        <Button variant="secondary" onClick={onKeepOld} disabled={saving}>
-          Keep old
+      <div className="mt-8 flex items-center justify-center gap-4">
+        <Button variant="secondary" onClick={onCancel} disabled={saving}>
+          Cancel
         </Button>
-        <Button onClick={onKeepNew} disabled={saving}>
-          <Check size={18} /> {saving ? 'Saving…' : 'Use new'}
+        <Button onClick={() => onConfirm(front)} disabled={saving}>
+          <Check size={18} />{' '}
+          {saving ? 'Saving…' : front === 'new' ? 'Use new' : 'Keep current'}
         </Button>
       </div>
     </div>
@@ -235,29 +285,31 @@ export function PolaroidRoute() {
     else save(blob);
   };
 
-  const keepNew = () => {
+  const closePending = () => {
+    if (pending) URL.revokeObjectURL(pending.url);
+    setPending(null);
+  };
+
+  const confirmReplace = (which: 'new' | 'old') => {
     if (!pending) return;
+    if (which === 'old') {
+      closePending();
+      return;
+    }
     upsert.mutate(
       { day, blob: pending.blob },
       {
         onSuccess: () => {
           toast.success('Polaroid replaced 📸');
-          URL.revokeObjectURL(pending.url);
-          setPending(null);
+          closePending();
         },
         onError: (e) => toast.error(e.message),
       }
     );
   };
 
-  const keepOld = () => {
-    if (!pending) return;
-    URL.revokeObjectURL(pending.url);
-    setPending(null);
-  };
-
   return (
-    <div className="curtain-reveal space-y-12">
+    <div className="curtain-reveal space-y-8">
       <PageHeader
         title="Polaroid"
         subtitle="One photo a day, taken in the moment"
@@ -279,11 +331,11 @@ export function PolaroidRoute() {
       )}
 
       {pending && today && (
-        <CompareReplace
+        <ReplaceStack
           oldPath={today.image_path}
           newUrl={pending.url}
-          onKeepNew={keepNew}
-          onKeepOld={keepOld}
+          onConfirm={confirmReplace}
+          onCancel={closePending}
           saving={upsert.isPending}
         />
       )}
