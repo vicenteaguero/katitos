@@ -57,7 +57,7 @@ export function DaysTogetherRoute() {
             <p className="font-display text-base font-medium uppercase tracking-[0.28em] text-brown">
               Days Together
             </p>
-            <p className="gilt-text gold-shimmer mt-5 font-display text-7xl font-semibold leading-none tabular-nums">
+            <p className="gilt-text gold-shimmer mt-5 font-display text-7xl font-semibold gilt-figures">
               {days.toLocaleString()}
             </p>
             <div className="seam mx-auto mt-8 h-px w-2/3" aria-hidden="true" />
