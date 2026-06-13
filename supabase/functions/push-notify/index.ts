@@ -50,15 +50,18 @@ Deno.serve(async (req) => {
 
   const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
-  // Resolve target = explicit toUserId or the partner of the caller.
-  let target = payload.toUserId;
-  if (!target) {
-    const { data: members } = await admin
-      .from('couple_members')
-      .select('user_id');
-    target = members?.find((m) => m.user_id !== user.id)?.user_id;
+  // The partner is the ONLY valid recipient (one couple, two members). Resolve
+  // it server-side; an explicit toUserId is honored only if it IS the partner,
+  // so the function can't be used to notify (spam) arbitrary users.
+  const { data: members } = await admin
+    .from('couple_members')
+    .select('user_id');
+  const partner = members?.find((m) => m.user_id !== user.id)?.user_id;
+  if (!partner) return json({ error: 'no partner' }, 400);
+  if (payload.toUserId && payload.toUserId !== partner) {
+    return json({ error: 'forbidden target' }, 403);
   }
-  if (!target) return json({ error: 'no target user' }, 400);
+  const target = partner;
 
   const { data: subs } = await admin
     .from('push_subscriptions')
