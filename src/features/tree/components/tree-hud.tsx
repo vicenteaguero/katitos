@@ -12,7 +12,7 @@ interface TreeHudProps {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="text-center">
-      <p className="gilt-text font-display text-2xl font-semibold leading-none tabular-nums">
+      <p className="gilt-text font-display text-2xl font-semibold gilt-figures">
         {value}
       </p>
       <p className="mt-1.5 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">
