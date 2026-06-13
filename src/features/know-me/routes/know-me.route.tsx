@@ -2,20 +2,18 @@ import { useEffect, useRef, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { usePartner } from '@kernel/auth';
 import { useNow } from '@kernel/hooks';
-import { useTableSync } from '@kernel/realtime';
 import { coupleDay } from '@kernel/lib';
-import { qk } from '@kernel/query';
-import { Fab, LoadingScreen, PageHeader, Segmented } from '@kernel/ui';
 import {
-  useMyAnswer,
-  usePartnerSubmitted,
-  useReveal,
-  useToday,
-} from '../api/know-me.queries';
+  Button,
+  Empty,
+  Fab,
+  LoadingScreen,
+  PageHeader,
+  Segmented,
+} from '@kernel/ui';
+import { useTodayAll } from '../api/know-me.queries';
 import { useEnsureToday } from '../api/know-me.mutations';
-import { DailyCard } from '../components/daily-card';
-import { WaitingCard } from '../components/waiting-card';
-import { RevealCard } from '../components/reveal-card';
+import { QuestionBlock } from '../components/question-block';
 import { LoveMapPanel } from '../components/love-map-panel';
 import { HistoryArchive } from '../components/history-archive';
 import { AuthorQuestionSheet } from '../components/author-question-sheet';
@@ -38,19 +36,12 @@ export function KnowMeRoute() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [day]);
 
-  const { data: today, isLoading } = useToday();
-  const dayId = today?.dayId;
-
-  // Live signal: presence drives both the reveal query and partner-submitted.
-  useTableSync('know_me_presence', qk.knowMe.reveal(dayId ?? 'none'), {
-    filter: dayId ? `day_id=eq.${dayId}` : undefined,
-    enabled: !!dayId,
-  });
-
-  const { data: mine } = useMyAnswer(dayId);
-  const { data: partnerSubmitted } = usePartnerSubmitted(dayId);
-  const bothSubmitted = !!mine && !!partnerSubmitted;
-  const { data: revealRows } = useReveal(dayId, bothSubmitted);
+  const { data: questions, isLoading, isError, refetch } = useTodayAll();
+  const items = questions ?? [];
+  // The day only ever "loads" while genuinely fetching or first creating it —
+  // never an open-ended spinner. Settled-with-nothing gets its own message.
+  const settling = (isLoading || ensure.isPending) && items.length === 0;
+  const failed = (isError || ensure.isError) && items.length === 0;
 
   const [tab, setTab] = useState<'today' | 'history'>('today');
   const [authoring, setAuthoring] = useState(false);
@@ -59,7 +50,7 @@ export function KnowMeRoute() {
     <div className="curtain-reveal space-y-12">
       <PageHeader
         title="Know Me"
-        subtitle="One question a day, by candlelight ❤️"
+        subtitle="Three questions a day, by candlelight ❤️"
       />
 
       <Segmented
@@ -80,19 +71,37 @@ export function KnowMeRoute() {
       ) : (
         <>
           <section className="space-y-7">
-            <p className="eyebrow">Tonight's Question</p>
-            {isLoading || !today ? (
+            <p className="eyebrow">
+              {items.length > 1 ? "Tonight's Questions" : "Tonight's Question"}
+            </p>
+            {settling ? (
               <LoadingScreen />
-            ) : bothSubmitted && revealRows ? (
-              <RevealCard today={today} rows={revealRows} />
-            ) : mine ? (
-              <WaitingCard
-                today={today}
-                ownChoice={mine.own_choice ?? null}
-                guessChoice={mine.guess_choice ?? null}
+            ) : failed ? (
+              <Empty
+                icon="🕯️"
+                title="Couldn't load tonight's questions"
+                hint="Check your connection and try again."
+                action={<Button onClick={() => void refetch()}>Retry</Button>}
+              />
+            ) : items.length === 0 ? (
+              <Empty
+                icon="🌙"
+                title="No questions yet"
+                hint="Tonight's questions are being set — check back in a moment."
               />
             ) : (
-              <DailyCard today={today} />
+              <div className="space-y-10">
+                {items.map((item, i) => (
+                  <div key={item.dayId} className="space-y-3">
+                    {items.length > 1 && (
+                      <p className="font-sans text-[0.625rem] font-semibold uppercase tracking-[0.18em] text-muted">
+                        Question {i + 1} of {items.length}
+                      </p>
+                    )}
+                    <QuestionBlock item={item} />
+                  </div>
+                ))}
+              </div>
             )}
           </section>
 
