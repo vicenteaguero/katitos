@@ -1,16 +1,19 @@
 import { useEffect, type ReactNode } from 'react';
+import { cn } from '@kernel/lib';
 
-/** A bottom sheet modal (phone-friendly). */
+/** A bottom sheet modal (phone-friendly). `size="half"` is short + easy to dismiss. */
 export function Sheet({
   open,
   onClose,
   title,
   children,
+  size = 'full',
 }: {
   open: boolean;
   onClose: () => void;
   title?: string;
   children: ReactNode;
+  size?: 'full' | 'half';
 }) {
   useEffect(() => {
     if (!open) return;
@@ -38,7 +41,12 @@ export function Sheet({
         className="absolute inset-0 bg-black/70"
         onClick={onClose}
       />
-      <div className="curtain-reveal relative z-10 max-h-[85vh] w-full max-w-app overflow-y-auto rounded-t-xl bg-surface-2 p-7 pb-[max(1.75rem,env(safe-area-inset-bottom))] shadow-loge">
+      <div
+        className={cn(
+          'curtain-reveal relative z-10 w-full max-w-app overflow-y-auto rounded-t-xl bg-surface-2 p-7 pb-[max(1.75rem,env(safe-area-inset-bottom))] shadow-loge',
+          size === 'half' ? 'max-h-[52vh]' : 'max-h-[85vh]'
+        )}
+      >
         <div className="mx-auto mb-6 h-1 w-12 rounded-full bg-fg/15" />
         {title && (
           <h2 className="mb-6 font-display text-3xl font-semibold tracking-tight text-fg">
