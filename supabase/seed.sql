@@ -62,7 +62,7 @@ on conflict do nothing;
 
 -- ── The couple + members ──
 insert into public.couple (id, relationship_start_date, anniversary_day)
-values (true, date '2024-08-15', 15)
+values (true, date '2025-06-15', 15)
 on conflict (id) do nothing;
 
 insert into public.couple_members (
@@ -72,7 +72,7 @@ insert into public.couple_members (
 values
   (
     '11111111-1111-1111-1111-111111111111', 'Vicente', 'a', '🧉',
-    'Santiago', 'Chile', -33.4489, -70.6693, 'America/Santiago', 'es', 'ru'
+    'Curicó', 'Chile', -34.9828, -71.2394, 'America/Santiago', 'es', 'ru'
   ),
   (
     '22222222-2222-2222-2222-222222222222', 'Anastasia', 'b', '🌸',
@@ -175,7 +175,7 @@ values
 insert into public.trips (id, slug, name, destination, start_date, end_date, is_special, created_by)
 values (
   '55555555-5555-5555-5555-555555555555', 'georgia-2026', 'Georgia 2026',
-  'Tbilisi, Georgia', date '2026-07-10', date '2026-07-24', true,
+  'Tbilisi, Georgia', date '2026-07-07', date '2026-08-04', true,
   '11111111-1111-1111-1111-111111111111'
 );
 insert into public.scavenger_cards (trip_id, title, description, points, position, created_by)
@@ -209,10 +209,9 @@ values
 -- ── The wall (chalkboard notes) ──
 insert into public.chalkboard_notes (body, color, x, y, rotation, author)
 values
-  ('te amo 🤍', '#f4ece0', 26, 26, -5, '11111111-1111-1111-1111-111111111111'),
-  ('приезжай скорее ✈️', '#e8a9b8', 230, 130, 4, '22222222-2222-2222-2222-222222222222'),
-  ('mate this weekend?', '#cdd6b4', 30, 250, -3, '11111111-1111-1111-1111-111111111111'),
-  ('soon, my love', '#a9c7d6', 220, 360, 6, '22222222-2222-2222-2222-222222222222');
+  ('te amo 🤍', '#f4ece0', 18, 26, -5, '11111111-1111-1111-1111-111111111111'),
+  ('приезжай скорее ✈️', '#e8a9b8', 150, 150, 4, '22222222-2222-2222-2222-222222222222'),
+  ('mate this weekend?', '#cdd6b4', 30, 300, -3, '11111111-1111-1111-1111-111111111111');
 
 -- ── Georgia itinerary ──
 insert into public.trip_items (trip_id, kind, title, status, position, created_by)
