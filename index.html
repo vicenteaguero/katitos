@@ -8,18 +8,17 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
-    <!-- No theme-color meta on purpose: on iOS 15+ it forces an OPAQUE tinted
-         status bar that shrinks the standalone viewport (~47px), fighting
-         apple-mobile-web-app-status-bar-style: black-translucent. Omitting it
-         lets the status bar go translucent so the web view fills the screen. -->
+    <meta name="theme-color" content="#100408" />
     <!-- Fonts are self-hosted via @fontsource (imported in main.tsx) — no
          render-blocking third-party request, and they work offline. -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta
-      name="apple-mobile-web-app-status-bar-style"
-      content="black-translucent"
-    />
+    <!-- "black" (opaque): per Apple's docs the web view renders BELOW the status
+         bar and fills down to the home indicator — deterministic, no empty band.
+         (black-translucent is deprecated + flaky on iOS 16-18 and produced a
+         shorter, mis-placed viewport.) NOTE: iOS snapshots this value at
+         "Add to Home Screen" — changing it needs a delete + re-add to take. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="apple-mobile-web-app-title" content="Katitos" />
     <!-- iOS launch screens — kill the white flash on cold standalone launch. -->
     <link
