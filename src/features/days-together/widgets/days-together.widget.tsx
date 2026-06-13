@@ -10,7 +10,7 @@ export function DaysTogetherWidget() {
     <Link to="/together">
       <Card className="lift-press flex h-full flex-col">
         <CardTitle className="text-xl">Together</CardTitle>
-        <p className="gilt-text gold-shimmer mt-3 font-display text-4xl font-semibold leading-none tabular-nums">
+        <p className="gilt-text gold-shimmer mt-3 font-display text-4xl font-semibold gilt-figures">
           {days.toLocaleString()}
         </p>
         <p className="mt-2 font-sans text-xs uppercase tracking-[0.28em] text-muted">
