@@ -33,7 +33,7 @@ export function DailyCard({ today }: { today: QuestionWithDay }) {
   };
 
   return (
-    <Card className="km-candle space-y-7">
+    <Card className="km-candle space-y-5">
       <Segmented
         value={step}
         onChange={setStep}
@@ -45,7 +45,7 @@ export function DailyCard({ today }: { today: QuestionWithDay }) {
       />
 
       {step === 'own' ? (
-        <div className="space-y-6">
+        <div className="space-y-4">
           <p className="font-display text-3xl font-medium leading-tight tracking-tight text-fg">
             {prompt}
           </p>
@@ -59,7 +59,7 @@ export function DailyCard({ today }: { today: QuestionWithDay }) {
           </Button>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-4">
           <p className="font-sans text-xs font-semibold uppercase tracking-[0.16em] text-purple">
             What will {partnerName} say about themselves?
           </p>
