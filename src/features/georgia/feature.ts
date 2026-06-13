@@ -1,12 +1,19 @@
 import { Mountain } from 'lucide-react';
 import { defineFeature } from '@kernel/registry';
-import { GeorgiaRoute } from './routes/georgia.route';
 
 export const georgiaFeature = defineFeature({
   id: 'georgia',
   title: 'Georgia',
   basePath: '/georgia',
-  routes: [{ index: true, Component: GeorgiaRoute }],
+  routes: [
+    {
+      index: true,
+      lazy: () =>
+        import('./routes/georgia.route').then((m) => ({
+          Component: m.GeorgiaRoute,
+        })),
+    },
+  ],
   nav: [
     {
       label: 'Georgia',
