@@ -209,11 +209,13 @@ function NotificationsCard() {
   const label =
     status === 'subscribed'
       ? 'Notifications on ✓'
-      : status === 'unsupported'
-        ? 'Not supported on this device'
-        : status === 'denied'
-          ? 'Permission denied'
-          : 'Enable notifications';
+      : status === 'needs-install'
+        ? 'Add to Home Screen first'
+        : status === 'unsupported'
+          ? 'Not supported on this device'
+          : status === 'denied'
+            ? 'Permission denied'
+            : 'Enable notifications';
   return (
     <Card className="space-y-7">
       <div className="space-y-3">
@@ -226,7 +228,11 @@ function NotificationsCard() {
       <Button
         full
         variant="secondary"
-        disabled={status === 'subscribed' || status === 'unsupported'}
+        disabled={
+          status === 'subscribed' ||
+          status === 'unsupported' ||
+          status === 'needs-install'
+        }
         onClick={() => void subscribe()}
       >
         {label}
