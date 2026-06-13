@@ -98,9 +98,10 @@ const modules: FeatureModule[] = [
 ];
 
 // ── Demo gate ──────────────────────────────────────────────────────────────
-// First showing: only these five are polished enough to open. Everything else
-// ships but stays locked — visible (greyed) in "More", inert, no route. Flip a
-// feature out of `LOCKED` to open it.
+// Everything is OPEN now — the whole program is on for testing. To re-gate for
+// a partner-facing showing, flip `GATED` to true: only the `OPEN` five stay
+// reachable and the rest go back to greyed "Soon" rows in the More drawer.
+const GATED = false;
 const OPEN = new Set([
   'polaroid',
   'georgia',
@@ -112,7 +113,7 @@ const OPEN = new Set([
 export const features: FeatureModule[] = modules.map((m) => ({
   category: categories[m.id],
   ...m,
-  locked: !OPEN.has(m.id),
+  locked: GATED && !OPEN.has(m.id),
 }));
 
 export const featureRegistry = createFeatureRegistry(features);
