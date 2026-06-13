@@ -19,9 +19,6 @@
      HER: wine red · brown · glossy green · black · white
      HIM: sandstorm · military green · charcoal black · snow white
      METAL: white gold (never yellow). NO PURPLE. ─────────────────────────── */
-  /* Exposed so the diagnostic badge can read the live safe-area insets. */
-  --sat: env(safe-area-inset-top);
-  --sab: env(safe-area-inset-bottom);
   --color-bg: #100408; /* Deep Wine-Black — house lights down */
   --color-surface: #1a0b13; /* raised wine panel */
   --color-surface-2: #241019; /* lifted card/sheet/popover (wine) */
@@ -184,18 +181,16 @@ body,
    If the band turns magenta it's the page background (CSS-fixable); if it stays
    dark it's the install-frozen manifest background_color / iOS chrome. Revert
    to var(--color-surface-2) right after. */
-/* TEMP DEBUG: distinct colors per layer to see the stacking. html=CYAN,
-   body=MAGENTA, #root=LIME, shell=dark(surface). Revert after. */
+/* The bottom nav lives in surface-2; paint the root the same so the iOS
+   home-indicator / rounded-corner strip below the viewport blends in rather
+   than showing a darker band. */
 html {
-  background-color: #00ffff;
-}
-#root {
-  background-color: #00ff00;
+  background-color: var(--color-surface-2);
 }
 
 body {
   margin: 0;
-  background: #ff00ff;
+  background: var(--color-surface-2);
   color: var(--color-fg);
   font-family: var(--font-sans);
   font-size: 16px;
