@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@kernel/supabase';
 import { BUCKETS, storagePaths, useUpload } from '@kernel/storage';
+import { toast } from '@kernel/ui';
 import { deckKeys } from './decks.queries';
 import type { Lang } from '../types';
 
@@ -8,6 +9,7 @@ import type { Lang } from '../types';
 export function useCreateDeck() {
   const qc = useQueryClient();
   return useMutation({
+    onError: (e: Error) => toast.error(e.message),
     mutationFn: async (input: {
       language: Lang;
       title: string;
@@ -37,6 +39,7 @@ export function useAddCard() {
   const qc = useQueryClient();
   const { upload } = useUpload();
   return useMutation({
+    onError: (e: Error) => toast.error(e.message),
     mutationFn: async (input: {
       deckId: string;
       language: Lang;
@@ -83,6 +86,7 @@ export function useAddCard() {
 export function useDeleteCard() {
   const qc = useQueryClient();
   return useMutation({
+    onError: (e: Error) => toast.error(e.message),
     mutationFn: async ({ id }: { id: string; deckId: string }) => {
       const { error } = await supabase.from('phrases').delete().eq('id', id);
       if (error) throw error;
