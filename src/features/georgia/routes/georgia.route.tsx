@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from 'react';
+import { lazy, Suspense, useMemo, useState, type CSSProperties } from 'react';
 import { Camera, Check, MapPin, Plus, Trash2 } from 'lucide-react';
 import { usePartner } from '@kernel/auth';
 import { useNow } from '@kernel/hooks';
@@ -34,8 +34,14 @@ import {
   useToggleGeorgiaItem,
 } from '../api/georgia.mutations';
 import { GeorgiaPhoto } from '../components/georgia-photo';
-import { GeorgiaMap, type MapPin as Pin } from '../components/georgia-map';
+import type { MapPin as Pin } from '../components/georgia-map';
 import { georgiaKeys, type TripItem } from '../types';
+
+// Leaflet (~150KB + its CSS) is pulled into its own async chunk and only loads
+// when the map tab is opened — never in the initial app bundle.
+const GeorgiaMap = lazy(() =>
+  import('../components/georgia-map').then((m) => ({ default: m.GeorgiaMap }))
+);
 
 type Tab = 'map' | 'plan' | 'wishlist' | 'album';
 
@@ -227,10 +233,16 @@ export function GeorgiaRoute() {
 
       {tab === 'map' && (
         <section className="space-y-3">
-          <GeorgiaMap
-            pins={pins}
-            className="h-[420px] w-full overflow-hidden rounded-lg"
-          />
+          <Suspense
+            fallback={
+              <div className="h-[420px] w-full animate-pulse rounded-lg bg-surface-2" />
+            }
+          >
+            <GeorgiaMap
+              pins={pins}
+              className="h-[420px] w-full overflow-hidden rounded-lg"
+            />
+          </Suspense>
           <p className="text-center font-sans text-xs text-muted">
             {pins.filter((p) => p.tone === 'place').length} places pinned · add
             coordinates when you add a place
