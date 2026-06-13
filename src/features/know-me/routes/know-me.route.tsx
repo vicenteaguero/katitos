@@ -3,6 +3,8 @@ import { Plus } from 'lucide-react';
 import { usePartner } from '@kernel/auth';
 import { useNow } from '@kernel/hooks';
 import { coupleDay } from '@kernel/lib';
+import { useTableSync } from '@kernel/realtime';
+import { qk } from '@kernel/query';
 import {
   Button,
   Empty,
@@ -22,6 +24,10 @@ export function KnowMeRoute() {
   const { self, partner } = usePartner();
   const now = useNow(60_000);
   const day = coupleDay(self?.timezone, partner?.timezone, now);
+
+  // One presence channel for the whole day: when the partner submits any of
+  // today's questions, refresh Know-Me (replaces a per-question subscription).
+  useTableSync('know_me_presence', qk.knowMe.all());
 
   // Fire ensure-today once per couple-day (the string only detects rollover —
   // the no-arg RPC computes the authoritative day server-side).
