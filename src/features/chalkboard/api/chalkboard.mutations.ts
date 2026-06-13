@@ -41,6 +41,20 @@ export function useMoveNote() {
   });
 }
 
+export function useRotateNote() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, rotation }: { id: string; rotation: number }) => {
+      const { error } = await supabase
+        .from('chalkboard_notes')
+        .update({ rotation })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.chalkboard.notes() }),
+  });
+}
+
 export function useDeleteNote() {
   const qc = useQueryClient();
   return useMutation({
