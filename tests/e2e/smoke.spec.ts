@@ -42,8 +42,8 @@ test.describe('smoke — every route renders in the authed shell', () => {
 
       await page.goto(route);
 
-      // Local dev auto-signs-in → the authed shell shows the "Katitos" brand.
-      await expect(page.getByRole('link', { name: /Katitos/ })).toBeVisible({
+      // Local dev auto-signs-in → the authed shell renders its bottom nav.
+      await expect(page.getByRole('navigation')).toBeVisible({
         timeout: 20_000,
       });
       await expect(page.locator('main')).toBeVisible();
@@ -58,11 +58,21 @@ test.describe('smoke — every route renders in the authed shell', () => {
 
 test('chalkboard — write a note and see it on the wall', async ({ page }) => {
   await page.goto('/wall');
-  await expect(page.getByRole('link', { name: /Katitos/ })).toBeVisible({
+  await expect(page.getByRole('navigation')).toBeVisible({
     timeout: 20_000,
   });
 
   const text = `e2e ${Date.now()}`;
+  // Adding lives in edit mode now (the header pencil → +), no FAB over the board.
+  await page.getByRole('button', { name: 'Edit wall' }).click();
+
+  // The wall holds max 3 notes — clear my own first to guarantee room to add.
+  const del = page.getByRole('button', { name: 'Delete note' });
+  for (let n = await del.count(); n > 0; n--) {
+    await del.first().click();
+    await expect(del).toHaveCount(n - 1, { timeout: 10_000 });
+  }
+
   await page.getByRole('button', { name: 'Add note' }).click();
   await page.getByPlaceholder('te amo…').fill(text);
   await page.getByRole('button', { name: 'Add to wall' }).click();
