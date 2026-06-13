@@ -7,6 +7,7 @@ export type PushStatus =
   | 'subscribed'
   | 'denied'
   | 'unsupported'
+  | 'needs-install'
   | 'working';
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
@@ -28,6 +29,27 @@ function supported(): boolean {
   );
 }
 
+/** Running as an installed PWA (iOS exposes web push only when standalone). */
+function isStandalone(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    (window.matchMedia?.('(display-mode: standalone)').matches === true ||
+      (navigator as Navigator & { standalone?: boolean }).standalone === true)
+  );
+}
+
+/**
+ * Distinguish "this browser can never do push" from "iOS in a Safari tab, where
+ * push only appears once the PWA is installed to the home screen".
+ */
+function unsupportedReason(): 'unsupported' | 'needs-install' {
+  return !isStandalone() &&
+    typeof navigator !== 'undefined' &&
+    'serviceWorker' in navigator
+    ? 'needs-install'
+    : 'unsupported';
+}
+
 /**
  * Subscribe this device to Web Push and persist the subscription so the partner
  * can notify it. The plumbing is identical locally and in prod; actual delivery
@@ -39,7 +61,7 @@ export function usePushSubscribe() {
 
   useEffect(() => {
     if (!supported()) {
-      setStatus('unsupported');
+      setStatus(unsupportedReason());
       return;
     }
     void navigator.serviceWorker.ready.then(async (reg) => {
@@ -50,7 +72,7 @@ export function usePushSubscribe() {
 
   const subscribe = useCallback(async () => {
     if (!supported()) {
-      setStatus('unsupported');
+      setStatus(unsupportedReason());
       return;
     }
     setStatus('working');
