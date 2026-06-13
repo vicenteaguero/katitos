@@ -10,6 +10,7 @@ import {
   LayoutGrid,
   Settings,
   ChevronRight,
+  Lock,
 } from 'lucide-react';
 import { Sheet } from '@kernel/ui';
 import { cn } from '@kernel/lib';
@@ -24,14 +25,37 @@ function DrawerRow({
   icon: Icon,
   label,
   index,
+  locked = false,
   onClick,
 }: {
   to: string;
   icon: ComponentType<{ className?: string }>;
   label: string;
   index: number;
+  locked?: boolean;
   onClick: () => void;
 }) {
+  // Locked = shipped-but-not-open: a quiet, inert row. No link, no press, just
+  // a padlock and a muted "Soon" so the couple sees what's coming.
+  if (locked) {
+    return (
+      <div
+        style={{ '--i': index } as React.CSSProperties}
+        aria-disabled="true"
+        className="flex w-full items-center gap-4 rounded px-3 py-3 opacity-40"
+      >
+        <Icon className="h-5 w-5 shrink-0 stroke-[1.75] text-muted" />
+        <span className="min-w-0 flex-1 truncate text-left font-sans text-sm font-semibold text-muted">
+          {label}
+        </span>
+        <span className="flex shrink-0 items-center gap-1.5 font-sans text-[0.625rem] font-semibold uppercase tracking-[0.16em] text-muted">
+          Soon
+          <Lock size={13} strokeWidth={1.75} aria-hidden="true" />
+        </span>
+      </div>
+    );
+  }
+
   return (
     <NavLink
       to={to}
@@ -78,12 +102,10 @@ function NavTab({
           active ? 'text-accent' : 'text-muted'
         )}
       />
-      {/* Label appears only under the active tab — quiet, uncramped. */}
-      {active && (
-        <span className="curtain-reveal max-w-16 truncate text-[0.625rem] font-semibold uppercase tracking-[0.14em]">
-          {label}
-        </span>
-      )}
+      {/* Every tab is always named — no guessing which glyph is which. */}
+      <span className="max-w-16 truncate text-[0.625rem] font-semibold uppercase tracking-[0.14em]">
+        {label}
+      </span>
     </span>
   );
 }
@@ -175,16 +197,21 @@ export function BottomNav() {
                     {cat}
                   </p>
                   <div className="flex flex-col">
-                    {groups.get(cat)!.map((e) => (
-                      <DrawerRow
-                        key={e.to}
-                        to={e.to}
-                        icon={e.icon}
-                        label={e.label}
-                        index={row++}
-                        onClick={() => setMoreOpen(false)}
-                      />
-                    ))}
+                    {[...groups.get(cat)!]
+                      // Open features rise to the top of their section; locked
+                      // ("Soon") rows settle beneath them.
+                      .sort((a, b) => Number(a.locked) - Number(b.locked))
+                      .map((e) => (
+                        <DrawerRow
+                          key={e.to}
+                          to={e.to}
+                          icon={e.icon}
+                          label={e.label}
+                          index={row++}
+                          locked={e.locked}
+                          onClick={() => setMoreOpen(false)}
+                        />
+                      ))}
                   </div>
                 </section>
               ));
