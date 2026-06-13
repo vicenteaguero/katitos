@@ -124,6 +124,32 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* This is an app, not a document — nothing selects/long-press-copies, so taps
+   and drags feel native. Real text fields stay selectable. */
+* {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+input,
+textarea,
+[contenteditable='true'] {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* Big gilt numerals use Cormorant's lining figures so 3/4/5/7/9 don't drop a
+   descender below the line box and get clipped by the clipped-gradient text. */
+.gilt-figures {
+  font-feature-settings:
+    'lnum' 1,
+    'tnum' 1;
+  font-variant-numeric: lining-nums tabular-nums;
+  line-height: 1.14;
+  padding-bottom: 0.06em;
+  overflow: visible;
+}
+
 /* Footlight pool that breathes beneath the kept hero. */
 @keyframes kxGlow {
   0%,
@@ -145,6 +171,11 @@ html,
 body,
 #root {
   height: 100%;
+}
+/* The bottom nav lives in surface-2; paint the root the same so the iOS
+   home-indicator strip below the viewport never shows a darker band. */
+html {
+  background-color: var(--color-surface-2);
 }
 
 body {
