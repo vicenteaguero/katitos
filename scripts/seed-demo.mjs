@@ -192,18 +192,13 @@ async function main() {
     await ins('wishlist_votes', votes);
   }
 
-  // ── Chalkboard / Fridge wall ──
+  // ── Chalkboard / Fridge wall (max 3 notes; phone-friendly coords) ──
   {
-    const colors = [C.cream, '#FFFAFA', C.gold, C.copper];
     const notes = [
-      'Te amo, mi vida ❤️', 'Доброе утро, solnyshko ☀️', 'only 29 days ✈️',
-      'you make me brave', 'call me when you wake up', 'я скучаю по тебе',
-      'we are inevitable', 'pastel de choclo soon 🌽',
-    ].map((body, i) => ({
-      body, color: colors[i % colors.length],
-      x: (i % 3) * 150 + 20 + Math.random() * 30, y: Math.floor(i / 3) * 140 + 20 + Math.random() * 20,
-      rotation: Math.random() * 10 - 5, author: i % 2 ? B : A,
-    }));
+      { body: 'Te amo, mi vida ❤️', color: C.cream, x: 18, y: 26, rotation: -5, author: A },
+      { body: 'Доброе утро, solnyshko ☀️', color: '#FFFAFA', x: 150, y: 150, rotation: 4, author: B },
+      { body: 'pastel de choclo soon 🌽', color: C.gold, x: 30, y: 300, rotation: -3, author: A },
+    ];
     await ins('chalkboard_notes', notes);
   }
 
@@ -301,7 +296,8 @@ async function main() {
   // ── Georgia trip: keep/ensure trip, add items + photos ──
   await sb.from('trips').upsert({
     id: GEORGIA, slug: 'georgia-2026', name: 'Georgia 2026', destination: 'Tbilisi, Georgia',
-    start_date: dstr(29), is_special: true, notes: 'Our first trip together. The big one.', created_by: A,
+    start_date: '2026-07-07', end_date: '2026-08-04', is_special: true,
+    notes: 'Our first trip together. The big one.', created_by: A,
   });
   await ins('trip_items', [
     { trip_id: GEORGIA, kind: 'place', title: 'Old Town Tbilisi', description: 'Wander the cobbled streets', status: 'open', position: 0, created_by: A },
