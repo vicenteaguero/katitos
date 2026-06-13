@@ -11,13 +11,17 @@ export interface NotifyPayload {
 
 /**
  * Ask the push-notify Edge Function to deliver a Web Push to the partner.
- * Best-effort — never throws (presence/in-app notifications cover the gap when
- * the device hasn't subscribed, e.g. local dev without an installed PWA).
+ * Best-effort — never throws. Returns whether the request was accepted, so
+ * callers can give honest feedback ("Sent" vs "couldn't send").
  */
-export async function notifyPartner(payload: NotifyPayload): Promise<void> {
+export async function notifyPartner(payload: NotifyPayload): Promise<boolean> {
   try {
-    await supabase.functions.invoke('push-notify', { body: payload });
+    const { error } = await supabase.functions.invoke('push-notify', {
+      body: payload,
+    });
+    return !error;
   } catch {
     /* swallow — push is non-critical */
+    return false;
   }
 }
