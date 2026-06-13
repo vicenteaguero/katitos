@@ -4,12 +4,14 @@ import { usePartner, useUserId } from '@kernel/auth';
 import { notifyPartner } from '@kernel/push';
 import { BUCKETS, storagePaths, useUpload } from '@kernel/storage';
 import { qk } from '@kernel/query';
+import { toast } from '@kernel/ui';
 import type { KnowMeOption } from '../types';
 
 /** Fire the no-arg ensure-today RPC (idempotent). Route guards it per day. */
 export function useEnsureToday() {
   const qc = useQueryClient();
   return useMutation({
+    onError: (e: Error) => toast.error(e.message),
     mutationFn: async () => {
       const { data, error } = await supabase.rpc('know_me_ensure_today');
       if (error) throw error;
@@ -24,6 +26,7 @@ export function useSubmitAnswer(dayId: string | undefined) {
   const qc = useQueryClient();
   const { self } = usePartner();
   return useMutation({
+    onError: (e: Error) => toast.error(e.message),
     mutationFn: async ({ own, guess }: { own: string; guess: string }) => {
       if (!dayId) throw new Error('No question to answer');
       // Target THIS question explicitly — a day now holds several.
@@ -55,6 +58,7 @@ export function useAttachReaction(dayId: string | undefined) {
   const userId = useUserId();
   const { upload } = useUpload();
   return useMutation({
+    onError: (e: Error) => toast.error(e.message),
     mutationFn: async (blob: Blob) => {
       if (!dayId || !userId) throw new Error('Not ready');
       const path = storagePaths.knowMeReaction(dayId, userId);
@@ -91,6 +95,7 @@ export interface NewQuestion {
 export function useAuthorQuestion() {
   const qc = useQueryClient();
   return useMutation({
+    onError: (e: Error) => toast.error(e.message),
     mutationFn: async ({
       prompt,
       category,
