@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { nanoid } from 'nanoid';
 import { supabase } from '@kernel/supabase';
-import { BUCKETS, storagePaths, useUpload } from '@kernel/storage';
+import { BUCKETS, storagePaths, usePhotoUpload } from '@kernel/storage';
 import { qk } from '@kernel/query';
 import { georgiaKeys } from '../types';
 
@@ -59,7 +59,7 @@ export function useDeleteGeorgiaItem() {
 
 export function useAddGeorgiaPhoto() {
   const qc = useQueryClient();
-  const { upload } = useUpload();
+  const { uploadPhoto } = usePhotoUpload();
   return useMutation({
     mutationFn: async (v: {
       tripId: string;
@@ -68,9 +68,7 @@ export function useAddGeorgiaPhoto() {
     }) => {
       const fileId = nanoid(8);
       const path = storagePaths.tripPhoto(v.tripId, fileId);
-      await upload(BUCKETS.georgiaAlbum, path, v.blob, {
-        contentType: 'image/jpeg',
-      });
+      await uploadPhoto(BUCKETS.georgiaAlbum, path, v.blob);
       const { error } = await supabase.from('trip_photos').insert({
         trip_id: v.tripId,
         image_path: path,
