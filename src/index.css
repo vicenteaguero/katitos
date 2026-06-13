@@ -19,6 +19,9 @@
      HER: wine red · brown · glossy green · black · white
      HIM: sandstorm · military green · charcoal black · snow white
      METAL: white gold (never yellow). NO PURPLE. ─────────────────────────── */
+  /* Exposed so the diagnostic badge can read the live safe-area insets. */
+  --sat: env(safe-area-inset-top);
+  --sab: env(safe-area-inset-bottom);
   --color-bg: #100408; /* Deep Wine-Black — house lights down */
   --color-surface: #1a0b13; /* raised wine panel */
   --color-surface-2: #241019; /* lifted card/sheet/popover (wine) */
