@@ -1,17 +1,28 @@
 import { Languages } from 'lucide-react';
 import { defineFeature } from '@kernel/registry';
-import { DecksRoute } from './routes/decks.route';
-import { DeckRoute } from './routes/deck.route';
-import { PlayRoute } from './routes/play.route';
 
 export const languageFeature = defineFeature({
   id: 'language',
   title: 'Language',
   basePath: '/language',
   routes: [
-    { index: true, Component: DecksRoute },
-    { path: 'deck/:deckId', Component: DeckRoute },
-    { path: 'play/:deckId', Component: PlayRoute },
+    {
+      index: true,
+      lazy: () =>
+        import('./routes/decks.route').then((m) => ({
+          Component: m.DecksRoute,
+        })),
+    },
+    {
+      path: 'deck/:deckId',
+      lazy: () =>
+        import('./routes/deck.route').then((m) => ({ Component: m.DeckRoute })),
+    },
+    {
+      path: 'play/:deckId',
+      lazy: () =>
+        import('./routes/play.route').then((m) => ({ Component: m.PlayRoute })),
+    },
   ],
   nav: [
     {
