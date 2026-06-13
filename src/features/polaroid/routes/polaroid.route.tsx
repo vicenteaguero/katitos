@@ -168,8 +168,10 @@ function ReplaceStack({
   // front === 'new' → the fresh shot is on top.
   const [front, setFront] = useState<'new' | 'old'>('new');
   const [dx, setDx] = useState(0);
+  const [dragging, setDragging] = useState(false);
 
   const bind = useDrag(({ active, movement: [mx], last }) => {
+    setDragging(active);
     if (last) {
       if (Math.abs(mx) > 80) setFront((f) => (f === 'new' ? 'old' : 'new'));
       setDx(0);
@@ -188,7 +190,9 @@ function ReplaceStack({
     label: string;
   }) => (
     <div
-      className="absolute inset-0 transition-transform duration-300"
+      className={`absolute inset-0${
+        isFront && dragging ? '' : ' transition-transform duration-300'
+      }`}
       style={{
         transform: isFront
           ? `translateX(${dx}px) rotateY(${dx / -18}deg)`
