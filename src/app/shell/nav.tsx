@@ -121,51 +121,55 @@ export function BottomNav() {
       {/* Borderless bar: tone separation (surface-2) + a soft top shadow.
           The safe-area inset lives INSIDE the bar's own background, so the
           bottom of the screen is always filled with nav color — never empty. */}
-      <nav className="relative z-30 flex shrink-0 items-stretch bg-surface-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_28px_-16px_rgba(0,0,0,0.6)]">
-        <NavLink to="/" end className="flex flex-1 lift-press">
-          {({ isActive }) => (
-            <NavTab active={isActive} icon={Home} label="Home" />
-          )}
-        </NavLink>
-
-        <NavLink to="/georgia" className="flex flex-1 lift-press">
-          {({ isActive }) => (
-            <NavTab active={isActive} icon={MapPin} label="Georgia" />
-          )}
-        </NavLink>
-
-        {/* Raised central Polaroid camera button — wine on white, gently
-            overlapping the bar. */}
-        <div className="relative flex w-16 shrink-0 items-stretch justify-center">
-          <NavLink
-            to="/polaroid?shoot=1"
-            aria-label="Take a photo"
-            className={cn(
-              'lift-press absolute -top-5 flex h-14 w-14 flex-col items-center justify-center gap-0.5',
-              'rounded-full bg-accent text-accent-fg shadow-loge transition-shadow duration-200',
-              polaroidActive && 'ring-2 ring-gold/40'
+      <nav className="relative z-30 shrink-0 bg-surface-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_28px_-16px_rgba(0,0,0,0.6)]">
+        {/* Items in a centered, capped row so they cluster rather than stretch
+            edge-to-edge; the bar's background still spans the full width. */}
+        <div className="mx-auto flex w-full max-w-[21rem] items-stretch">
+          <NavLink to="/" end className="flex flex-1 lift-press">
+            {({ isActive }) => (
+              <NavTab active={isActive} icon={Home} label="Home" />
             )}
-          >
-            <Camera size={22} strokeWidth={1.75} />
-            <span className="font-sans text-[0.5rem] font-bold uppercase tracking-[0.12em]">
-              Photo
-            </span>
           </NavLink>
+
+          <NavLink to="/georgia" className="flex flex-1 lift-press">
+            {({ isActive }) => (
+              <NavTab active={isActive} icon={MapPin} label="Georgia" />
+            )}
+          </NavLink>
+
+          {/* Raised central Polaroid camera button — wine on white, gently
+            overlapping the bar. */}
+          <div className="relative flex w-16 shrink-0 items-stretch justify-center">
+            <NavLink
+              to="/polaroid?shoot=1"
+              aria-label="Take a photo"
+              className={cn(
+                'lift-press absolute -top-5 flex h-14 w-14 flex-col items-center justify-center gap-0.5',
+                'rounded-full bg-accent text-accent-fg shadow-loge transition-shadow duration-200',
+                polaroidActive && 'ring-2 ring-gold/40'
+              )}
+            >
+              <Camera size={22} strokeWidth={1.75} />
+              <span className="font-sans text-[0.5rem] font-bold uppercase tracking-[0.12em]">
+                Photo
+              </span>
+            </NavLink>
+          </div>
+
+          <NavLink to="/wall" className="flex flex-1 lift-press">
+            {({ isActive }) => (
+              <NavTab active={isActive} icon={StickyNote} label="Wall" />
+            )}
+          </NavLink>
+
+          <button
+            type="button"
+            onClick={() => setMoreOpen(true)}
+            className="flex flex-1 lift-press"
+          >
+            <NavTab active={false} icon={LayoutGrid} label="More" />
+          </button>
         </div>
-
-        <NavLink to="/wall" className="flex flex-1 lift-press">
-          {({ isActive }) => (
-            <NavTab active={isActive} icon={StickyNote} label="Wall" />
-          )}
-        </NavLink>
-
-        <button
-          type="button"
-          onClick={() => setMoreOpen(true)}
-          className="flex flex-1 lift-press"
-        >
-          <NavTab active={false} icon={LayoutGrid} label="More" />
-        </button>
       </nav>
 
       <Sheet
