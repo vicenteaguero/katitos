@@ -8,7 +8,7 @@ import type { Countdown } from '../types';
 function Unit({ value, label }: { value: number; label: string }) {
   return (
     <div className="flex flex-col items-center">
-      <span className="gilt-text font-display text-3xl font-semibold leading-none tabular-nums">
+      <span className="gilt-text font-display text-3xl font-semibold gilt-figures">
         {String(value).padStart(2, '0')}
       </span>
       <span className="mt-1.5 font-sans text-[0.625rem] uppercase tracking-[0.22em] text-copper">
