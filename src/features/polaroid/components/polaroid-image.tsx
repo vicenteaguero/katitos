@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BUCKETS, useSignedUrl } from '@kernel/storage';
+import { BUCKETS, useProxiedUrl } from '@kernel/storage';
 import { Spinner } from '@kernel/ui';
 import { cn } from '@kernel/lib';
 
@@ -7,17 +7,28 @@ export function PolaroidImage({
   path,
   alt,
   className,
+  full = false,
 }: {
   path: string;
   alt?: string;
   className?: string;
+  /** Load the full-resolution original (zoom/download); default is the proxy. */
+  full?: boolean;
 }) {
-  const { data: url, isLoading } = useSignedUrl(BUCKETS.polaroids, path);
+  const { proxyUrl, fullUrl, isLoading } = useProxiedUrl(
+    BUCKETS.polaroids,
+    path
+  );
+  // Default to the lightweight proxy; on a full view (or when a legacy photo
+  // has no proxy and the proxy URL errors) we show the original instead.
+  const [forceFull, setForceFull] = useState(false);
+  const src = full || forceFull ? fullUrl : (proxyUrl ?? fullUrl);
+
   // Presentation-only: the emulsion "fixes" once the bytes arrive, driving the
   // develop reveal. No data/behavior change — purely the instant-photo effect.
   const [developed, setDeveloped] = useState(false);
 
-  if (isLoading || !url) {
+  if (!src) {
     return (
       <div
         className={cn(
@@ -42,9 +53,11 @@ export function PolaroidImage({
   return (
     <span className={cn('relative block overflow-hidden bg-brown', className)}>
       <img
-        src={url}
+        src={src}
         alt={alt ?? 'polaroid'}
         onLoad={() => setDeveloped(true)}
+        // Proxy missing (a photo from before proxies) → fall back to the full one.
+        onError={() => !forceFull && !full && setForceFull(true)}
         className={cn(
           'h-full w-full object-cover',
           developed ? 'polaroid-develop' : 'opacity-0'
