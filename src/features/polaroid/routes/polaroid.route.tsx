@@ -74,6 +74,7 @@ function TodayCard({ onOpenCamera }: { onOpenCamera: () => void }) {
         <div className="marble gilt-hairline shadow-loge p-3 pb-4">
           <PolaroidImage
             path={today.image_path}
+            full
             className="aspect-square w-full"
           />
         </div>
