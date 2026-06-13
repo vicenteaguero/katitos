@@ -40,10 +40,14 @@ function svg(label, emoji, c1, c2) {
 </svg>`, 'utf8');
 }
 async function up(bucket, path, label, emoji, c1, c2) {
-  const { error } = await sb.storage.from(bucket).upload(path, svg(label, emoji, c1, c2), {
-    contentType: 'image/svg+xml', upsert: true,
-  });
-  if (error) console.warn(`  upload ${bucket}/${path}: ${error.message}`);
+  const body = svg(label, emoji, c1, c2);
+  const opts = { contentType: 'image/svg+xml', upsert: true };
+  // Original + proxy (thumbs/<path>) so the app's proxy-first images resolve
+  // without a 404→fallback round-trip.
+  const a = await sb.storage.from(bucket).upload(path, body, opts);
+  if (a.error) console.warn(`  upload ${bucket}/${path}: ${a.error.message}`);
+  const t = await sb.storage.from(bucket).upload(`thumbs/${path}`, body, opts);
+  if (t.error) console.warn(`  upload ${bucket}/thumbs/${path}: ${t.error.message}`);
 }
 
 const NIL = '00000000-0000-0000-0000-000000000000';
@@ -239,7 +243,7 @@ async function main() {
   // ── Polaroids (images: polaroids bucket, `${day}.jpg`) ──
   {
     const days = [
-      ['Morning coffee, two cities', '☕'], ['Sunset on a call', '🌇'], ['Her in Moscow snow', '❄️'],
+      ['Morning coffee, two cities', '☕'], ['Sunset on a call', '🌇'], ['Her in Novosibirsk snow', '❄️'],
       ['Him by the Pacific', '🌊'], ['Matching pajamas night', '🌙'], ['Just because', '💛'],
     ];
     const rows = [];
@@ -388,6 +392,28 @@ async function main() {
         ]);
       }
       console.log('  ✓ know_me past days (4)');
+    }
+  }
+
+  // ── Know Me: tonight's THREE open questions (slots 0,1,2), unanswered ──
+  {
+    const { data: qs } = await sb
+      .from('know_me_questions')
+      .select('id')
+      .order('created_at')
+      .limit(3);
+    if (qs?.length === 3) {
+      const day = dstr(0);
+      const rows = qs.map((q, slot) => ({
+        couple_day: day,
+        slot,
+        question_id: q.id,
+      }));
+      const { error } = await sb
+        .from('know_me_days')
+        .upsert(rows, { onConflict: 'couple_day,slot' });
+      if (error) console.warn('  know_me today:', error.message);
+      else console.log('  ✓ know_me tonight (3 questions)');
     }
   }
 
