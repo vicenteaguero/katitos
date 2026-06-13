@@ -1061,12 +1061,43 @@ export type Database = {
         }
         Relationships: []
       }
+      language_decks: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          emoji: string | null
+          id: string
+          language: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          emoji?: string | null
+          id?: string
+          language: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          emoji?: string | null
+          id?: string
+          language?: string
+          title?: string
+        }
+        Relationships: []
+      }
       phrases: {
         Row: {
           added_by: string
           audio_path: string | null
           category: string | null
           created_at: string
+          deck_id: string | null
           example: string | null
           id: string
           language: string
@@ -1079,6 +1110,7 @@ export type Database = {
           audio_path?: string | null
           category?: string | null
           created_at?: string
+          deck_id?: string | null
           example?: string | null
           id?: string
           language: string
@@ -1091,6 +1123,7 @@ export type Database = {
           audio_path?: string | null
           category?: string | null
           created_at?: string
+          deck_id?: string | null
           example?: string | null
           id?: string
           language?: string
@@ -1098,7 +1131,15 @@ export type Database = {
           translation?: string | null
           transliteration?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "phrases_deck_id_fkey"
+            columns: ["deck_id"]
+            isOneToOne: false
+            referencedRelation: "language_decks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       polaroids: {
         Row: {
@@ -1419,10 +1460,13 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string
+          day: string | null
           description: string | null
           id: string
           kind: string
+          lat: number | null
           link: string | null
+          lng: number | null
           position: number
           status: string
           title: string
@@ -1431,10 +1475,13 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string
+          day?: string | null
           description?: string | null
           id?: string
           kind?: string
+          lat?: number | null
           link?: string | null
+          lng?: number | null
           position?: number
           status?: string
           title: string
@@ -1443,10 +1490,13 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string
+          day?: string | null
           description?: string | null
           id?: string
           kind?: string
+          lat?: number | null
           link?: string | null
+          lng?: number | null
           position?: number
           status?: string
           title?: string
