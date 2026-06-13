@@ -138,8 +138,8 @@ export function BottomNav() {
             overlapping the bar. */}
         <div className="relative flex w-16 shrink-0 items-stretch justify-center">
           <NavLink
-            to="/polaroid"
-            aria-label="Polaroid"
+            to="/polaroid?shoot=1"
+            aria-label="Take a photo"
             className={cn(
               'lift-press absolute -top-5 flex h-14 w-14 flex-col items-center justify-center gap-0.5',
               'rounded-full bg-accent text-accent-fg shadow-loge transition-shadow duration-200',
