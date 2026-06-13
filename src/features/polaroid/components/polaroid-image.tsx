@@ -55,6 +55,8 @@ export function PolaroidImage({
       <img
         src={src}
         alt={alt ?? 'polaroid'}
+        decoding="async"
+        loading="lazy"
         onLoad={() => setDeveloped(true)}
         // Proxy missing (a photo from before proxies) → fall back to the full one.
         onError={() => !forceFull && !full && setForceFull(true)}
