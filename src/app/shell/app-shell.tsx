@@ -77,12 +77,17 @@ function DiagBadge() {
   const [m, setM] = useState('…');
   useEffect(() => {
     const tick = () => {
+      const rect = (sel: string) => {
+        const el = document.querySelector(sel);
+        if (!el) return 'na';
+        const r = el.getBoundingClientRect();
+        return `${Math.round(r.top)}-${Math.round(r.bottom)}`;
+      };
       const iH = Math.round(window.innerHeight);
       const scr = window.screen ? Math.round(window.screen.height) : -1;
-      const cs = getComputedStyle(document.documentElement);
-      const sat = cs.getPropertyValue('--sat').trim() || '?';
-      const sab = cs.getPropertyValue('--sab').trim() || '?';
-      setM(`iH${iH} scr${scr} sat${sat} sab${sab}`);
+      setM(
+        `iH${iH} scr${scr} sh${rect('#appshell')} main${rect('main')} nav${rect('nav')}`
+      );
     };
     tick();
     const t = window.setInterval(tick, 500);
@@ -113,7 +118,10 @@ export function AppShell() {
   return (
     <>
       <DiagBadge />
-      <div className="mx-auto flex h-full max-w-app flex-col overflow-hidden bg-surface">
+      <div
+        id="appshell"
+        className="mx-auto flex h-full max-w-app flex-col overflow-hidden bg-surface"
+      >
         <PresenceTracker />
         <CacheWarmer />
         <TopBar />
