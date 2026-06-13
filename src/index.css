@@ -19,19 +19,19 @@
      HER: wine red · brown · glossy green · black · white
      HIM: sandstorm · military green · charcoal black · snow white
      METAL: white gold (never yellow). NO PURPLE. ─────────────────────────── */
-  --color-bg: #0f0f0d; /* Charcoal Black — the base (his) */
-  --color-surface: #1a1a17; /* raised charcoal panel */
-  --color-surface-2: #242420; /* lifted card/sheet/popover */
-  --color-border: #cbc9c2; /* White Gold Hairline — the one metal line */
-  --color-fg: #f7f6f2; /* Snow White — primary text */
-  --color-muted: #a6a299; /* warm grey — secondary text */
-  --color-accent: #7a1626; /* Wine Red — her brand red, primary action */
+  --color-bg: #100408; /* Deep Wine-Black — house lights down */
+  --color-surface: #1a0b13; /* raised wine panel */
+  --color-surface-2: #241019; /* lifted card/sheet/popover (wine) */
+  --color-border: #c9a24b; /* Warm Gilt Hairline — the one metal line */
+  --color-fg: #fbf5f0; /* Warm Snow — primary text */
+  --color-muted: #b89a86; /* warm taupe — secondary text */
+  --color-accent: #6e1423; /* Wine Red — her brand red, primary action */
   --color-accent-fg: #ffffff; /* on wine */
-  --color-danger: #b5343d; /* error red — distinct from wine */
-  --color-success: #5f6e3e; /* Military Green — his green = "yes" */
+  --color-danger: #c14b58; /* error red — distinct from wine */
+  --color-success: #6b7344; /* Military Green — his green = "yes" */
   --color-warning: #d9c9a3; /* Sandstorm — his sandy cream */
 
-  /* ── Accent layer (her glossy green + brown; white-gold metal) ──────────── */
+  /* ── Accent layer (her glossy green + brown; WARM gilt metal) ───────────── */
   /* NOTE: --color-purple is REPURPOSED to her GLOSSY GREEN (the name is kept so
      existing `text-purple`/`bg-purple` usages re-skin from here — there is NO
      purple in this app). */
@@ -39,11 +39,11 @@
   --color-green: #2c8a5e; /* alias — her glossy green */
   --color-brown: #4a2e1e; /* Brown — her warm tone */
   --color-lapis: #15201a; /* deep green-charcoal — alt "special" surface */
-  --color-copper: #9a6a45; /* warm brown highlight (de-orange) */
-  --gold: #cbc9c2; /* WHITE GOLD — cool pale metal, never yellow */
-  --gilt-bright: #e6e5df; /* bright pole (cool, not cream) */
-  --gilt-deep: #95948a; /* deep pole */
-  --gilt-spark: #fdfdfb; /* specular highlight */
+  --color-copper: #b5633a; /* Terracotta copper — the Georgia warmth */
+  --gold: #e4c36a; /* WARM GILT — theatre gold */
+  --gilt-bright: #e4c36a; /* bright pole (warm) */
+  --gilt-deep: #9c7a2e; /* deep pole */
+  --gilt-spark: #fff1c9; /* specular highlight (candlelit cream) */
 
   /* ── The NOVAT layer — the great Silver Dome of the Novosibirsk theatre. ── */
   --silver: #c4c8cd; /* Dome Silver — the colossal silver-grey cupola */
@@ -60,18 +60,18 @@
     var(--gilt-bright) 55%,
     var(--gilt-deep) 100%
   );
-  /* The stage: charcoal with a faint top light. */
+  /* The stage: deep wine with a faint top light. */
   --grad-house: radial-gradient(
     120% 85% at 50% -8%,
-    #1d1d19 0%,
-    #151512 46%,
-    #0f0f0d 100%
+    #240c15 0%,
+    #190711 46%,
+    #100408 100%
   );
   --grad-velvet-sheen: linear-gradient(0deg, transparent, transparent);
-  /* Footlight — a faint, cool silver wash (no gold, very subtle). */
+  /* Footlight — a faint, warm gilt wash rising from below. */
   --grad-footlight: radial-gradient(
     60% 40% at 50% 100%,
-    rgba(201, 198, 190, 0.05) 0%,
+    rgba(201, 162, 75, 0.08) 0%,
     transparent 72%
   );
   /* The fusion seam — her glossy green & wine flow into his sandstorm & olive. */
@@ -86,9 +86,9 @@
 
   /* ── Depth (clean, neutral — no colored glows) ─────────────────────────── */
   --shadow-catch: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  --shadow-loge: 0 18px 44px -22px rgba(0, 0, 0, 0.75);
+  --shadow-loge: 0 26px 56px -26px rgba(0, 0, 0, 0.82);
   --ring-candle:
-    0 0 0 1px rgba(201, 198, 190, 0.35), 0 0 0 4px rgba(124, 22, 38, 0.22);
+    0 0 0 1px rgba(201, 162, 75, 0.4), 0 0 0 4px rgba(110, 20, 35, 0.25);
 
   /* ── Geometry: MIXED corners, deliberately. Photos/heroes = rounded-none (0);
      buttons/chips/inputs = rounded (12px); cards/toasts = rounded-lg (20px);
@@ -122,6 +122,23 @@
 
 * {
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Footlight pool that breathes beneath the kept hero. */
+@keyframes kxGlow {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: translateX(-50%) scale(1.06);
+  }
+}
+.kx-glow {
+  transform: translateX(-50%);
+  animation: kxGlow 6s ease-in-out infinite;
 }
 
 html,
@@ -296,21 +313,36 @@ button {
 /* Gold shimmer — light travels across a gilt gradient/border. */
 @keyframes gilt-sweep {
   0% {
-    background-position: -120% 0;
+    background-position:
+      -120% 0,
+      0 0;
   }
   100% {
-    background-position: 220% 0;
+    background-position:
+      220% 0,
+      0 0;
   }
 }
+/* A moving glint LAYERED OVER the gilt gradient (paired with .gilt-text). The
+   gilt layer stays put so the text is always legible gold; only the highlight
+   sweeps. (Layering matters — a lone shimmer layer would clip the text to just
+   the moving band and flash the rest invisible.) */
 .gold-shimmer {
-  background-image: linear-gradient(
-    110deg,
-    transparent 38%,
-    rgba(255, 255, 255, 0.4) 50%,
-    transparent 62%
-  );
-  background-size: 220% 100%;
+  background-image:
+    linear-gradient(
+      110deg,
+      transparent 38%,
+      rgba(255, 255, 255, 0.45) 50%,
+      transparent 62%
+    ),
+    var(--grad-gilt);
+  background-size:
+    220% 100%,
+    100% 100%;
   background-repeat: no-repeat;
+  background-position:
+    -120% 0,
+    0 0;
   animation: gilt-sweep 4s ease-in-out infinite;
 }
 
