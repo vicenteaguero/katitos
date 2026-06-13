@@ -1,5 +1,3 @@
-import { useTableSync } from '@kernel/realtime';
-import { qk } from '@kernel/query';
 import type { QuestionWithDay } from '../types';
 import {
   useMyAnswer,
@@ -18,14 +16,10 @@ import { RevealCard } from './reveal-card';
 export function QuestionBlock({ item }: { item: QuestionWithDay }) {
   const dayId = item.dayId;
 
-  // Live "partner submitted" signal for THIS question only.
-  useTableSync('know_me_presence', qk.knowMe.reveal(dayId), {
-    filter: `day_id=eq.${dayId}`,
-    enabled: true,
-  });
-
+  // Presence is subscribed once at the route level (a single channel for the
+  // whole day instead of one per question); this block just reads its slice.
   const { data: mine } = useMyAnswer(dayId);
-  const { data: partnerSubmitted } = usePartnerSubmitted(dayId);
+  const { data: partnerSubmitted } = usePartnerSubmitted(dayId, !!mine);
   const bothSubmitted = !!mine && !!partnerSubmitted;
   const { data: revealRows } = useReveal(dayId, bothSubmitted);
 
