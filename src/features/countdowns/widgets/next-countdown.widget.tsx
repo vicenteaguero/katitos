@@ -22,7 +22,7 @@ export function NextCountdownWidget() {
               {next.emoji ?? '⏳'} {next.title}
             </p>
             <p className="mt-auto flex items-baseline gap-1.5">
-              <span className="gilt-text candle-flicker font-display text-4xl font-semibold leading-none tabular-nums">
+              <span className="gilt-text candle-flicker font-display text-4xl font-semibold gilt-figures">
                 {countdownTo(next.target_at, now).days}
               </span>
               <span className="font-sans text-[0.625rem] uppercase tracking-[0.22em] text-copper">
