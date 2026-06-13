@@ -11,5 +11,13 @@ export function KnowMeImage({
 }) {
   const { data: url } = useSignedUrl(BUCKETS.quizMedia, path);
   if (!url) return <div className={cn('bg-surface-2 rounded-lg', className)} />;
-  return <img src={url} alt="" className={className} />;
+  return (
+    <img
+      src={url}
+      alt=""
+      decoding="async"
+      loading="lazy"
+      className={className}
+    />
+  );
 }
