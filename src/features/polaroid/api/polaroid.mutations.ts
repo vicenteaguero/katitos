@@ -1,12 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@kernel/supabase';
-import { BUCKETS, storagePaths, useUpload } from '@kernel/storage';
+import { BUCKETS, storagePaths, usePhotoUpload } from '@kernel/storage';
 import { qk } from '@kernel/query';
 
 /** Capture/replace today's polaroid: upload the blob then upsert the row. */
 export function useUpsertPolaroid() {
   const qc = useQueryClient();
-  const { upload } = useUpload();
+  const { uploadPhoto } = usePhotoUpload();
   return useMutation({
     mutationFn: async ({
       day,
@@ -18,10 +18,7 @@ export function useUpsertPolaroid() {
       caption?: string | null;
     }) => {
       const path = storagePaths.polaroid(day);
-      await upload(BUCKETS.polaroids, path, blob, {
-        upsert: true,
-        contentType: 'image/jpeg',
-      });
+      await uploadPhoto(BUCKETS.polaroids, path, blob);
       const { error } = await supabase
         .from('polaroids')
         .upsert(
