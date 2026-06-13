@@ -43,7 +43,7 @@ export function GeorgiaCountdownWidget() {
         </p>
       ) : (
         <p className="relative mt-2 flex items-baseline justify-center gap-2">
-          <span className="gilt-text font-display text-[3.9rem] font-semibold leading-none tabular-nums">
+          <span className="gilt-text gilt-figures font-display text-[3.9rem] font-semibold">
             {days}
           </span>
           <span className="font-sans text-xs uppercase tracking-[0.2em] text-copper">
