@@ -97,9 +97,22 @@ const modules: FeatureModule[] = [
   travelFeature,
 ];
 
+// ── Demo gate ──────────────────────────────────────────────────────────────
+// First showing: only these five are polished enough to open. Everything else
+// ships but stays locked — visible (greyed) in "More", inert, no route. Flip a
+// feature out of `LOCKED` to open it.
+const OPEN = new Set([
+  'polaroid',
+  'georgia',
+  'language',
+  'chalkboard', // "The wall"
+  'know-me',
+]);
+
 export const features: FeatureModule[] = modules.map((m) => ({
   category: categories[m.id],
   ...m,
+  locked: !OPEN.has(m.id),
 }));
 
 export const featureRegistry = createFeatureRegistry(features);
