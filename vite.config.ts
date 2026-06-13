@@ -23,6 +23,9 @@ export default defineConfig({
         id: '/',
         lang: 'en',
         categories: ['lifestyle', 'social'],
+        // Drives Android's toolbar (NOT the iOS standalone status bar, which
+        // follows apple-mobile-web-app-status-bar-style). The iOS opaque-bar
+        // culprit was the HTML <meta name="theme-color">, now removed.
         theme_color: '#100408',
         background_color: '#100408',
         display: 'standalone',
