@@ -2,21 +2,20 @@ import { useState } from 'react';
 import { ImagePlus } from 'lucide-react';
 import {
   Button,
-  Field,
   FilePickerButton,
   Input,
-  Select,
   Sheet,
   Textarea,
   toast,
 } from '@kernel/ui';
+import { cn } from '@kernel/lib';
 import { useAuthorQuestion } from '../api/know-me.mutations';
 import type { KnowMeOption } from '../types';
 
 const CATEGORIES = ['general', 'love', 'food', 'quirks', 'future'] as const;
 const OPTION_IDS = ['a', 'b', 'c', 'd'] as const;
 
-/** Author a custom question: prompt, category, 4 options (+ optional photos). */
+/** Author a custom question — compact: prompt, category chips, 2×2 options. */
 export function AuthorQuestionSheet({
   open,
   onClose,
@@ -26,15 +25,17 @@ export function AuthorQuestionSheet({
 }) {
   const author = useAuthorQuestion();
   const [prompt, setPrompt] = useState('');
-  const [category, setCategory] = useState<string>('general');
+  const [category, setCategory] = useState<string>('love');
   const [labels, setLabels] = useState<Record<string, string>>({});
   const [images, setImages] = useState<Record<string, Blob>>({});
+  const [withPics, setWithPics] = useState(false);
 
   const reset = () => {
     setPrompt('');
-    setCategory('general');
+    setCategory('love');
     setLabels({});
     setImages({});
+    setWithPics(false);
   };
 
   const valid =
@@ -61,55 +62,77 @@ export function AuthorQuestionSheet({
   };
 
   return (
-    <Sheet open={open} onClose={onClose} title="Write a question">
-      <div className="space-y-6">
-        <p className="eyebrow">A New Question</p>
+    <Sheet open={open} onClose={onClose} title="New question">
+      <div className="space-y-4">
+        <Textarea
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          placeholder="What's my…?"
+          rows={2}
+          className="font-display text-lg"
+        />
 
-        <Field label="Prompt">
-          <Textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="What's my…?"
-            rows={2}
-          />
-        </Field>
+        {/* Category as quiet chips — no dropdown. */}
+        <div className="flex flex-wrap gap-2">
+          {CATEGORIES.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setCategory(c)}
+              className={cn(
+                'lift-press rounded-full px-3 py-1 font-sans text-xs font-semibold capitalize',
+                category === c
+                  ? 'bg-accent text-accent-fg'
+                  : 'bg-surface-2 text-muted'
+              )}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
 
-        <Field label="Category">
-          <Select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-          >
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </Select>
-        </Field>
-
-        <div className="space-y-3">
+        {/* Four answers, 2×2. Images are opt-in to keep it clean. */}
+        <div className="grid grid-cols-2 gap-2">
           {OPTION_IDS.map((id) => (
-            <div key={id} className="flex items-center gap-3">
+            <div key={id} className="flex items-center gap-1.5">
               <Input
                 value={labels[id] ?? ''}
                 onChange={(e) =>
                   setLabels((l) => ({ ...l, [id]: e.target.value }))
                 }
-                placeholder={`Option ${id.toUpperCase()}`}
+                placeholder={`Answer ${id.toUpperCase()}`}
               />
-              <FilePickerButton
-                onPick={(file) => setImages((im) => ({ ...im, [id]: file }))}
-                className={images[id] ? 'bg-purple/25 text-fg' : ''}
-              >
-                <ImagePlus size={18} />
-              </FilePickerButton>
+              {withPics && (
+                <FilePickerButton
+                  onPick={(file) => setImages((im) => ({ ...im, [id]: file }))}
+                  className={cn(
+                    'shrink-0',
+                    images[id] ? 'bg-purple/25 text-fg' : ''
+                  )}
+                >
+                  <ImagePlus size={16} />
+                </FilePickerButton>
+              )}
             </div>
           ))}
         </div>
 
-        <Button full disabled={!valid || author.isPending} onClick={submit}>
-          Add question
-        </Button>
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => setWithPics((v) => !v)}
+            className="font-sans text-xs font-semibold text-gold"
+          >
+            {withPics ? '— text only' : '+ add pictures'}
+          </button>
+          <Button
+            disabled={!valid || author.isPending}
+            onClick={submit}
+            className="px-6"
+          >
+            Add
+          </Button>
+        </div>
       </div>
     </Sheet>
   );
