@@ -1,0 +1,182 @@
+import { useState } from 'react';
+import { Link, useParams } from 'react-router';
+import { Play, Plus, Trash2 } from 'lucide-react';
+import { BUCKETS } from '@kernel/storage';
+import { useTableSync } from '@kernel/realtime';
+import {
+  AudioFromPath,
+  AudioRecorder,
+  Button,
+  Card,
+  Empty,
+  Field,
+  IconButton,
+  Input,
+  LoadingScreen,
+  Sheet,
+  toast,
+} from '@kernel/ui';
+import { useDeck, useDeckCards, deckKeys } from '../api/decks.queries';
+import { useAddCard, useDeleteCard } from '../api/decks.mutations';
+import type { Lang } from '../types';
+
+export function DeckRoute() {
+  const { deckId } = useParams<{ deckId: string }>();
+  const { data: deck, isLoading } = useDeck(deckId);
+  useTableSync('phrases', deckKeys.cards(deckId ?? 'none'));
+  const { data: cards } = useDeckCards(deckId);
+  const addCard = useAddCard();
+  const delCard = useDeleteCard();
+
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({
+    text: '',
+    translation: '',
+    transliteration: '',
+    example: '',
+  });
+  const [audio, setAudio] = useState<Blob | null>(null);
+
+  if (isLoading) return <LoadingScreen />;
+  if (!deck) return <Empty icon="🗂️" title="Deck not found" />;
+
+  const lang = deck.language as Lang;
+  const list = cards ?? [];
+
+  const submit = () => {
+    if (!form.text.trim()) return;
+    addCard.mutate(
+      {
+        deckId: deck.id,
+        language: lang,
+        text: form.text.trim(),
+        translation: form.translation || undefined,
+        transliteration: form.transliteration || undefined,
+        example: form.example || undefined,
+        audioBlob: audio,
+      },
+      {
+        onSuccess: () => {
+          setForm({
+            text: '',
+            translation: '',
+            transliteration: '',
+            example: '',
+          });
+          setAudio(null);
+          setOpen(false);
+        },
+        onError: (e) => toast.error(e.message),
+      }
+    );
+  };
+
+  return (
+    <div className="curtain-reveal space-y-6">
+      <header className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="eyebrow">{deck.description ?? 'A little course'}</p>
+          <h1 className="mt-1 truncate font-display text-3xl font-semibold tracking-tight text-fg">
+            <span className="mr-2">{deck.emoji ?? '🗂️'}</span>
+            {deck.title}
+          </h1>
+        </div>
+      </header>
+
+      <div className="flex gap-2">
+        <Button full variant="secondary" onClick={() => setOpen(true)}>
+          <Plus size={16} /> Add card
+        </Button>
+        {list.length > 0 && (
+          <Link to={`/language/play/${deck.id}`} className="flex-1">
+            <Button full>
+              <Play size={16} /> Practice
+            </Button>
+          </Link>
+        )}
+      </div>
+
+      {list.length === 0 ? (
+        <Empty
+          icon="📝"
+          title="No cards yet"
+          hint="Add the first word or phrase."
+        />
+      ) : (
+        <div className="space-y-3">
+          {list.map((p) => (
+            <Card key={p.id} className="space-y-2 px-5 py-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-display text-2xl text-fg">{p.text}</p>
+                  {p.transliteration && (
+                    <p className="font-display text-sm italic text-copper">
+                      {p.transliteration}
+                    </p>
+                  )}
+                  {p.translation && (
+                    <p className="mt-1 font-sans text-sm text-muted">
+                      {p.translation}
+                    </p>
+                  )}
+                </div>
+                <IconButton
+                  label="Delete"
+                  onClick={() => delCard.mutate({ id: p.id, deckId: deck.id })}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </IconButton>
+              </div>
+              {p.audio_path && (
+                <AudioFromPath
+                  bucket={BUCKETS.languageAudio}
+                  path={p.audio_path}
+                  className="h-9 w-full"
+                />
+              )}
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Sheet open={open} onClose={() => setOpen(false)} title="Add a card">
+        <div className="space-y-3">
+          <Field label={lang === 'ru' ? 'In Russian' : 'In Spanish'}>
+            <Input
+              value={form.text}
+              onChange={(e) => setForm((f) => ({ ...f, text: e.target.value }))}
+              className="font-display text-lg"
+              placeholder={lang === 'ru' ? 'Я тебя люблю' : 'Te amo'}
+            />
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Meaning">
+              <Input
+                value={form.translation}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, translation: e.target.value }))
+                }
+                placeholder="I love you"
+              />
+            </Field>
+            <Field label="Sounds like">
+              <Input
+                value={form.transliteration}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, transliteration: e.target.value }))
+                }
+                placeholder="ya tebya…"
+              />
+            </Field>
+          </div>
+          <Field label="Say it out loud (optional)">
+            <AudioRecorder onRecorded={setAudio} />
+          </Field>
+          <Button full onClick={submit} disabled={addCard.isPending}>
+            Add card
+          </Button>
+        </div>
+      </Sheet>
+    </div>
+  );
+}
