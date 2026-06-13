@@ -30,24 +30,6 @@ window.addEventListener('vite:preloadError', () => {
   }
 });
 
-// iOS standalone mis-measures 100dvh on first paint — a bottom gap that only
-// "snaps right" after a scroll forces a recalc. Pin the shell to the real
-// innerHeight and refresh it at the moments it can legitimately change. We
-// deliberately skip plain `resize` so the soft keyboard doesn't shrink the
-// shell and bounce inputs around.
-const pinAppHeight = () =>
-  document.documentElement.style.setProperty(
-    '--app-height',
-    `${window.innerHeight}px`
-  );
-pinAppHeight();
-requestAnimationFrame(pinAppHeight);
-window.addEventListener('load', pinAppHeight);
-window.addEventListener('pageshow', pinAppHeight);
-window.addEventListener('orientationchange', () =>
-  window.setTimeout(pinAppHeight, 200)
-);
-
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
