@@ -1,15 +1,25 @@
 import { ThumbsUp } from 'lucide-react';
 import { defineFeature } from '@kernel/registry';
-import { WishlistsListRoute } from './routes/wishlists-list.route';
-import { WishlistDetailRoute } from './routes/wishlist-detail.route';
 
 export const wishlistsFeature = defineFeature({
   id: 'wishlists',
   title: 'Wishlists',
   basePath: '/wishlists',
   routes: [
-    { index: true, Component: WishlistsListRoute },
-    { path: ':listId', Component: WishlistDetailRoute },
+    {
+      index: true,
+      lazy: () =>
+        import('./routes/wishlists-list.route').then((m) => ({
+          Component: m.WishlistsListRoute,
+        })),
+    },
+    {
+      path: ':listId',
+      lazy: () =>
+        import('./routes/wishlist-detail.route').then((m) => ({
+          Component: m.WishlistDetailRoute,
+        })),
+    },
   ],
   nav: [{ label: 'Wishlists', icon: ThumbsUp, to: '/wishlists', order: 210 }],
 });
