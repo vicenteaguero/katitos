@@ -17,21 +17,27 @@ function useImagePreload(
   useEffect(() => {
     if (!key) return;
     let cancelled = false;
-    void (async () => {
-      for (const path of key.split('|')) {
-        const { data } = await supabase.storage
-          .from(bucket)
-          .createSignedUrl(proxyPath(path), 3600);
-        if (cancelled) return;
-        if (data?.signedUrl) {
-          // Warm the HTTP cache; a 404 (legacy photo, no proxy) is harmless.
-          const img = new Image();
-          img.src = data.signedUrl;
+    const start = () =>
+      void (async () => {
+        for (const path of key.split('|')) {
+          if (cancelled) return;
+          const { data } = await supabase.storage
+            .from(bucket)
+            .createSignedUrl(proxyPath(path), 3600);
+          if (cancelled) return;
+          if (data?.signedUrl) {
+            // Warm the HTTP cache; a 404 (legacy photo, no proxy) is harmless.
+            const img = new Image();
+            img.src = data.signedUrl;
+          }
         }
-      }
-    })();
+      })();
+    // Defer warming until after first paint — these signed-url round-trips must
+    // not compete with the content the couple actually opened.
+    const t = window.setTimeout(start, 400);
     return () => {
       cancelled = true;
+      clearTimeout(t);
     };
   }, [bucket, key]);
 }
@@ -58,7 +64,10 @@ export function CacheWarmer() {
   useEffect(() => {
     if (fired.current) return;
     fired.current = true;
-    ensure.mutate();
+    // Push the provisioning RPC off the synchronous mount path so it doesn't
+    // contend with the first render.
+    const t = window.setTimeout(() => ensure.mutate(), 0);
+    return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
