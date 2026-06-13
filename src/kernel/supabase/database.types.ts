@@ -973,18 +973,21 @@ export type Database = {
           created_at: string
           id: string
           question_id: string
+          slot: number
         }
         Insert: {
           couple_day: string
           created_at?: string
           id?: string
           question_id: string
+          slot?: number
         }
         Update: {
           couple_day?: string
           created_at?: string
           id?: string
           question_id?: string
+          slot?: number
         }
         Relationships: [
           {
@@ -1712,6 +1715,10 @@ export type Database = {
       }
       know_me_submit: {
         Args: { p_guess: string; p_own: string }
+        Returns: undefined
+      }
+      know_me_submit_day: {
+        Args: { p_day_id: string; p_guess: string; p_own: string }
         Returns: undefined
       }
       partner_id: { Args: never; Returns: string }
