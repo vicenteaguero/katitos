@@ -180,8 +180,11 @@ html {
 
 body {
   margin: 0;
-  /* Clean dark stage with a faint top light — no heavy overlays (fast). */
-  background: var(--grad-house) var(--color-bg) fixed;
+  /* Solid surface-2 — the SAME tone as the bottom nav — so the iOS
+     home-indicator strip below the viewport blends into the nav instead of
+     showing a darker gradient band (the app's own stage sits on the opaque
+     app-shell container above this). */
+  background: var(--color-surface-2);
   color: var(--color-fg);
   font-family: var(--font-sans);
   font-size: 16px;
