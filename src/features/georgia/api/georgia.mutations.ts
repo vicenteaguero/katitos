@@ -3,11 +3,13 @@ import { nanoid } from 'nanoid';
 import { supabase } from '@kernel/supabase';
 import { BUCKETS, storagePaths, usePhotoUpload } from '@kernel/storage';
 import { qk } from '@kernel/query';
+import { toast } from '@kernel/ui';
 import { georgiaKeys } from '../types';
 
 export function useAddGeorgiaItem() {
   const qc = useQueryClient();
   return useMutation({
+    onError: (e: Error) => toast.error(e.message),
     mutationFn: async (input: {
       tripId: string;
       kind: string;
@@ -37,6 +39,7 @@ export function useAddGeorgiaItem() {
 export function useUpdateGeorgiaItem() {
   const qc = useQueryClient();
   return useMutation({
+    onError: (e: Error) => toast.error(e.message),
     mutationFn: async (v: {
       id: string;
       tripId: string;
@@ -61,6 +64,7 @@ export function useUpdateGeorgiaItem() {
 export function useToggleGeorgiaItem() {
   const qc = useQueryClient();
   return useMutation({
+    onError: (e: Error) => toast.error(e.message),
     mutationFn: async (v: { id: string; tripId: string; status: string }) => {
       const { error } = await supabase
         .from('trip_items')
@@ -76,6 +80,7 @@ export function useToggleGeorgiaItem() {
 export function useDeleteGeorgiaItem() {
   const qc = useQueryClient();
   return useMutation({
+    onError: (e: Error) => toast.error(e.message),
     mutationFn: async (v: { id: string; tripId: string }) => {
       const { error } = await supabase
         .from('trip_items')
@@ -92,6 +97,7 @@ export function useAddGeorgiaPhoto() {
   const qc = useQueryClient();
   const { uploadPhoto } = usePhotoUpload();
   return useMutation({
+    onError: (e: Error) => toast.error(e.message),
     mutationFn: async (v: {
       tripId: string;
       blob: Blob;
@@ -115,6 +121,7 @@ export function useAddGeorgiaPhoto() {
 export function useDeleteGeorgiaPhoto() {
   const qc = useQueryClient();
   return useMutation({
+    onError: (e: Error) => toast.error(e.message),
     mutationFn: async (v: { id: string; tripId: string }) => {
       const { error } = await supabase
         .from('trip_photos')
