@@ -105,10 +105,11 @@ function DiagBadge({ id, onCycle }: { id: string; onCycle: () => void }) {
         : -1;
       const scr = window.screen ? Math.round(window.screen.height) : -1;
       const navB = bottom(document.querySelector('nav'));
+      const cs = getComputedStyle(document.documentElement);
+      const sat = cs.getPropertyValue('--sat').trim() || '?';
+      const sab = cs.getPropertyValue('--sab').trim() || '?';
       setM(
-        `iH${iH} vv${vv} scr${scr} shB${bottom(
-          document.getElementById('appshell')
-        )} navB${navB} gap${iH - navB}`
+        `iH${iH} vv${vv} scr${scr} navB${navB} gap${iH - navB} sat${sat} sab${sab}`
       );
     };
     tick();
@@ -120,7 +121,7 @@ function DiagBadge({ id, onCycle }: { id: string; onCycle: () => void }) {
     <button
       type="button"
       onClick={onCycle}
-      className="fixed left-1/2 top-[max(2.5rem,calc(env(safe-area-inset-top)+0.25rem))] z-[999] -translate-x-1/2 whitespace-nowrap rounded-full bg-[#ffd400] px-3 py-1.5 font-sans text-[10px] font-extrabold leading-tight text-black shadow-[0_4px_18px_rgba(0,0,0,0.55)]"
+      className="fixed left-1/2 top-[max(2.5rem,calc(env(safe-area-inset-top)+0.25rem))] z-[999] max-w-[92vw] -translate-x-1/2 rounded-2xl bg-[#ffd400] px-3 py-1.5 text-center font-sans text-[10px] font-extrabold leading-tight text-black shadow-[0_4px_18px_rgba(0,0,0,0.55)]"
     >
       {id} · {m} ⟳
     </button>
