@@ -37,12 +37,18 @@ function Greeting() {
   const where = partner?.city;
   const [sent, setSent] = useState(false);
 
-  const sendLove = () => {
-    void notifyPartner({
+  const sendLove = async () => {
+    if (sent) return; // debounce: ignore taps during the "sent" window
+    setSent(true);
+    const ok = await notifyPartner({
       title: `Your ${myName} loves you so much ❤️`,
       url: '/',
     });
-    setSent(true);
+    if (!ok) {
+      toast.error("Couldn't send — try again");
+      setSent(false);
+      return;
+    }
     toast.success('Sent 💌');
     window.setTimeout(() => setSent(false), 2200);
   };
@@ -77,7 +83,7 @@ function Greeting() {
       </div>
       <button
         type="button"
-        onClick={sendLove}
+        onClick={() => void sendLove()}
         className="lift-press mx-auto inline-flex items-center gap-2 rounded-full bg-accent/90 px-5 py-2 font-sans text-sm font-semibold text-accent-fg shadow-loge transition active:scale-95"
       >
         <Heart
