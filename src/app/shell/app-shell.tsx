@@ -1,6 +1,7 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { Settings, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@kernel/auth';
+import { useEnsurePushSubscription } from '@kernel/push';
 import { IconButton, LoadingScreen } from '@kernel/ui';
 import { PresenceTracker, PartnerStatusDot } from '@features/presence';
 import { LoginScreen } from './login';
@@ -67,6 +68,9 @@ function TopBar() {
 
 export function AppShell() {
   const { status } = useAuth();
+  // Heal this device's push subscription on every launch (no prompt) so loves
+  // keep landing as real notifications even after the browser rotates it.
+  useEnsurePushSubscription();
 
   if (status === 'loading') return <LoadingScreen label="Loading our place…" />;
   if (status === 'anon') return <LoginScreen />;
