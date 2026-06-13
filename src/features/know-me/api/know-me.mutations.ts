@@ -25,7 +25,10 @@ export function useSubmitAnswer(dayId: string | undefined) {
   const { self } = usePartner();
   return useMutation({
     mutationFn: async ({ own, guess }: { own: string; guess: string }) => {
-      const { error } = await supabase.rpc('know_me_submit', {
+      if (!dayId) throw new Error('No question to answer');
+      // Target THIS question explicitly — a day now holds several.
+      const { error } = await supabase.rpc('know_me_submit_day', {
+        p_day_id: dayId,
         p_own: own,
         p_guess: guess,
       });
