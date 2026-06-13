@@ -43,6 +43,101 @@ export function useToday() {
   });
 }
 
+export interface TodayQuestion {
+  dayId: string;
+  prompt: string;
+  answered: boolean;
+}
+
+/**
+ * Today's open questions for the Home dashboard, shaped as a list so the same
+ * surface renders whether the day carries one prompt or several. Each entry
+ * carries whether I've already answered it (mine-only, anti-peek preserved).
+ */
+export function useTodayQuestions() {
+  const userId = useUserId();
+  return useQuery({
+    queryKey: [...qk.knowMe.today(), 'home', userId ?? 'anon'],
+    enabled: !!userId,
+    queryFn: async (): Promise<TodayQuestion[]> => {
+      // Newest couple_day, then every day-row under it (1 today, 3 later).
+      const { data: latest, error: dErr } = await supabase
+        .from('know_me_days')
+        .select('couple_day')
+        .order('couple_day', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (dErr) throw dErr;
+      if (!latest) return [];
+
+      const { data: days, error } = await supabase
+        .from('know_me_days')
+        .select('id, prompt:know_me_questions(prompt)')
+        .eq('couple_day', latest.couple_day);
+      if (error) throw error;
+      const rows = days ?? [];
+      if (rows.length === 0) return [];
+
+      // My answered day-ids in one shot — never reads the partner's choices.
+      const ids = rows.map((r) => r.id);
+      const { data: mine, error: aErr } = await supabase
+        .from('know_me_answers')
+        .select('day_id')
+        .in('day_id', ids)
+        .eq('user_id', userId as string);
+      if (aErr) throw aErr;
+      const answered = new Set((mine ?? []).map((m) => m.day_id));
+
+      return rows.map((r) => ({
+        dayId: r.id,
+        prompt:
+          (r.prompt as { prompt: string } | null)?.prompt ??
+          'Tonight’s question',
+        answered: answered.has(r.id),
+      }));
+    },
+  });
+}
+
+/**
+ * Every question assigned for the latest couple-day (1 legacy, up to 3 now),
+ * ordered by slot. The route renders one block per entry; each is answered and
+ * revealed independently (all already keyed by day_id).
+ */
+export function useTodayAll() {
+  return useQuery({
+    queryKey: [...qk.knowMe.today(), 'all'],
+    queryFn: async (): Promise<QuestionWithDay[]> => {
+      const { data: latest, error: lErr } = await supabase
+        .from('know_me_days')
+        .select('couple_day')
+        .order('couple_day', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (lErr) throw lErr;
+      if (!latest) return [];
+
+      const { data, error } = await supabase
+        .from('know_me_days')
+        .select('*, question:know_me_questions(*)')
+        .eq('couple_day', latest.couple_day)
+        // created_at mirrors slot order (slots inserted 0→2) and never 400s if
+        // the 3-per-day migration hasn't been applied yet.
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return (data ?? []).map((day) => {
+        const question = day.question as KnowMeQuestion;
+        return {
+          dayId: day.id,
+          coupleDay: day.couple_day,
+          question,
+          options: parseOptions(question.options),
+        };
+      });
+    },
+  });
+}
+
 /**
  * My OWN answer row only. Anti-peek: never reads the partner's row — explicit
  * columns, filtered to the current user.
