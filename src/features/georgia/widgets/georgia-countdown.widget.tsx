@@ -2,7 +2,6 @@ import { Link } from 'react-router';
 import { Mountain } from 'lucide-react';
 import { useNow } from '@kernel/hooks';
 import { countdownTo } from '@kernel/lib';
-import { Card } from '@kernel/ui';
 import { useGeorgiaTrip } from '../api/georgia.queries';
 
 /**
@@ -18,27 +17,40 @@ export function GeorgiaCountdownWidget() {
   const { days, isPast } = countdownTo(`${trip.start_date}T00:00:00`, now);
 
   return (
-    <Link to="/georgia" className="block">
-      <Card className="footlight lift-press flex flex-col items-center gap-1.5 py-7 text-center">
-        <span className="flex items-center gap-1.5 font-sans text-[0.625rem] font-semibold uppercase tracking-[0.22em] text-copper">
-          <Mountain className="h-3.5 w-3.5" />
-          {isPast ? 'We made it to Georgia' : 'Our trip to Georgia'}
-        </span>
-        {isPast ? (
-          <p className="font-display text-3xl font-semibold italic text-fg">
-            We’re here ❤️
-          </p>
-        ) : (
-          <p className="flex items-baseline gap-2">
-            <span className="gilt-text candle-flicker font-display text-6xl font-semibold leading-none tabular-nums">
-              {days}
-            </span>
-            <span className="font-sans text-xs uppercase tracking-[0.22em] text-copper">
-              {days === 1 ? 'day' : 'days'}
-            </span>
-          </p>
-        )}
-      </Card>
+    <Link
+      to="/georgia"
+      className="lift-press relative block overflow-hidden rounded px-5 py-6 text-center"
+      style={{
+        border: '1px solid rgba(201,162,75,.26)',
+        background: 'linear-gradient(165deg, #211019, #190b12)',
+      }}
+    >
+      <span
+        className="pointer-events-none absolute bottom-[-30px] left-1/2 h-[70px] w-[180px] -translate-x-1/2"
+        style={{
+          background:
+            'radial-gradient(circle at 50% 100%, rgba(181,99,58,.28), transparent 70%)',
+        }}
+        aria-hidden="true"
+      />
+      <span className="relative inline-flex items-center gap-1.5 font-sans text-[10.5px] font-bold uppercase tracking-[0.25em] text-copper">
+        <Mountain className="h-3.5 w-3.5" strokeWidth={2} />
+        {isPast ? 'We made it to Georgia' : 'Our trip to Georgia'}
+      </span>
+      {isPast ? (
+        <p className="relative mt-2 font-display text-4xl font-semibold italic text-fg">
+          We’re here ❤️
+        </p>
+      ) : (
+        <p className="relative mt-2 flex items-baseline justify-center gap-2">
+          <span className="gilt-text font-display text-[3.9rem] font-semibold leading-none tabular-nums">
+            {days}
+          </span>
+          <span className="font-sans text-xs uppercase tracking-[0.2em] text-copper">
+            {days === 1 ? 'day' : 'days'}
+          </span>
+        </p>
+      )}
     </Link>
   );
 }
