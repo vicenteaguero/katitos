@@ -89,8 +89,8 @@ function NavTab({
   return (
     <span
       className={cn(
-        'relative flex flex-1 flex-col items-center justify-center gap-1 px-1 py-2.5',
-        'min-h-[52px] font-sans transition-colors duration-200',
+        'relative flex flex-1 flex-col items-center justify-center gap-0.5 px-1 py-1.5',
+        'min-h-[44px] font-sans transition-colors duration-200',
         active ? 'text-gold' : 'text-muted'
       )}
     >
@@ -172,10 +172,11 @@ export function BottomNav() {
         open={moreOpen}
         onClose={() => setMoreOpen(false)}
         title="The Program"
+        size="half"
       >
         {/* Categorized vertical list — no tile grid, no hairlines, no borders.
             Tone + spacing separate the sections; a running --i staggers rows. */}
-        <div className="curtain-stagger flex flex-col gap-6 pb-2">
+        <div className="curtain-stagger flex flex-col gap-4 pb-2">
           {(() => {
             const groups = new Map<string, typeof entries>();
             for (const e of entries) {
