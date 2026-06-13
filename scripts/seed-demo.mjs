@@ -68,8 +68,8 @@ async function main() {
     'scavenger_arguments', 'scavenger_claims', 'scavenger_cards',
     'album_stickers', 'know_me_answers', 'know_me_presence', 'know_me_days',
     'polaroids', 'flowers', 'fights', 'punitos', 'cute_words', 'ideas', 'countdowns',
-    'chalkboard_notes', 'phrases', 'deck_responses', 'game_scores', 'app_opens',
-    'tree_waterings', 'tree_milestones',
+    'chalkboard_notes', 'phrases', 'language_decks', 'deck_responses',
+    'game_scores', 'app_opens', 'tree_waterings', 'tree_milestones',
   ]) await wipe(t);
 
   // ── Countdowns ──
@@ -113,16 +113,29 @@ async function main() {
     { reason: 'Timezone mix-up for a call', started_at: tstr(-2), started_by: B, resolution: null },
   ]);
 
-  // ── Phrases (language) ──
-  await ins('phrases', [
-    { language: 'ru', text: 'Я тебя люблю', translation: 'I love you', transliteration: 'Ya tebya lyublyu', category: 'love', added_by: B },
-    { language: 'es', text: 'Te amo', translation: 'I love you', category: 'love', added_by: A },
-    { language: 'ru', text: 'Доброе утро', translation: 'Good morning', transliteration: 'Dobroye utro', category: 'daily', added_by: B },
-    { language: 'es', text: 'Buenos días', translation: 'Good morning', category: 'daily', added_by: A },
-    { language: 'ru', text: 'Скучаю по тебе', translation: 'I miss you', transliteration: 'Skuchayu po tebe', category: 'love', added_by: B },
-    { language: 'es', text: '¿Cómo amaneciste?', translation: 'How did you wake up?', category: 'daily', added_by: A },
-    { language: 'ru', text: 'Спокойной ночи', translation: 'Good night', transliteration: 'Spokoynoy nochi', category: 'daily', added_by: B },
-  ]);
+  // ── Language: decks ("a course your love built for you") + cards ──
+  {
+    const dRuDaily = crypto.randomUUID();
+    const dRuLove = crypto.randomUUID();
+    const dEs = crypto.randomUUID();
+    // Anastasia (B) builds Russian decks for Vicente; Vicente (A) builds Spanish.
+    await ins('language_decks', [
+      { id: dRuDaily, language: 'ru', title: 'Everyday', emoji: '☀️', description: 'The words to start our days', created_by: B },
+      { id: dRuLove, language: 'ru', title: 'Sweet nothings', emoji: '💌', description: 'Say it to me in Russian', created_by: B },
+      { id: dEs, language: 'es', title: 'Lo básico', emoji: '🌶️', description: 'Chilean love, español', created_by: A },
+    ]);
+    await ins('phrases', [
+      { deck_id: dRuLove, language: 'ru', text: 'Я тебя люблю', translation: 'I love you', transliteration: 'Ya tebya lyublyu', category: 'love', added_by: B },
+      { deck_id: dRuLove, language: 'ru', text: 'Скучаю по тебе', translation: 'I miss you', transliteration: 'Skuchayu po tebe', category: 'love', added_by: B },
+      { deck_id: dRuLove, language: 'ru', text: 'Ты моё солнце', translation: 'You are my sun', transliteration: 'Ty moyo solntse', category: 'love', added_by: B },
+      { deck_id: dRuDaily, language: 'ru', text: 'Доброе утро', translation: 'Good morning', transliteration: 'Dobroye utro', category: 'daily', added_by: B },
+      { deck_id: dRuDaily, language: 'ru', text: 'Спокойной ночи', translation: 'Good night', transliteration: 'Spokoynoy nochi', category: 'daily', added_by: B },
+      { deck_id: dRuDaily, language: 'ru', text: 'Как дела?', translation: 'How are you?', transliteration: 'Kak dela', category: 'daily', added_by: B },
+      { deck_id: dEs, language: 'es', text: 'Te amo', translation: 'I love you', example: 'Te amo, mi vida', category: 'love', added_by: A },
+      { deck_id: dEs, language: 'es', text: 'Buenos días', translation: 'Good morning', category: 'daily', added_by: A },
+      { deck_id: dEs, language: 'es', text: '¿Cómo amaneciste?', translation: 'How did you wake up?', category: 'daily', added_by: A },
+    ]);
+  }
 
   // ── Baby names + votes ──
   {
@@ -300,12 +313,17 @@ async function main() {
     notes: 'Our first trip together. The big one.', created_by: A,
   });
   await ins('trip_items', [
-    { trip_id: GEORGIA, kind: 'place', title: 'Old Town Tbilisi', description: 'Wander the cobbled streets', status: 'open', position: 0, created_by: A },
-    { trip_id: GEORGIA, kind: 'place', title: 'Kazbegi & the Caucasus', description: 'Gergeti Trinity Church', status: 'open', position: 1, created_by: B },
-    { trip_id: GEORGIA, kind: 'todo', title: 'Try khinkali', status: 'open', position: 2, created_by: A },
-    { trip_id: GEORGIA, kind: 'todo', title: 'Sulphur baths', status: 'open', position: 3, created_by: B },
-    { trip_id: GEORGIA, kind: 'idea', title: 'Wine region day trip', description: 'Kakheti', status: 'open', position: 4, created_by: A },
-    { trip_id: GEORGIA, kind: 'note', title: 'Pack warm layers for the mountains', status: 'done', position: 5, created_by: B },
+    // Places with real coords + planned days (Jul 7–Aug 4) → show on the map.
+    { trip_id: GEORGIA, kind: 'place', title: 'Old Town Tbilisi', description: 'Wander the cobbled streets', status: 'open', position: 0, day: '2026-07-08', lat: 41.6900, lng: 44.8080, created_by: A },
+    { trip_id: GEORGIA, kind: 'place', title: 'Abanotubani sulphur baths', description: 'The domed bathhouses', status: 'open', position: 1, day: '2026-07-09', lat: 41.6877, lng: 44.8095, created_by: B },
+    { trip_id: GEORGIA, kind: 'place', title: 'Mtskheta & Jvari', description: 'The old capital', status: 'open', position: 2, day: '2026-07-12', lat: 41.8417, lng: 44.7211, created_by: A },
+    { trip_id: GEORGIA, kind: 'place', title: 'Gergeti Trinity, Kazbegi', description: 'The church under the peak', status: 'open', position: 3, day: '2026-07-18', lat: 42.6625, lng: 44.6203, created_by: B },
+    { trip_id: GEORGIA, kind: 'place', title: 'Kakheti wine, Telavi', description: 'Qvevri tasting', status: 'open', position: 4, day: '2026-07-25', lat: 41.9170, lng: 45.4730, created_by: A },
+    { trip_id: GEORGIA, kind: 'todo', title: 'Try khinkali', status: 'done', position: 5, created_by: A },
+    // Wishlist (kind = wish).
+    { trip_id: GEORGIA, kind: 'wish', title: 'A handmade Georgian rug', status: 'open', position: 6, created_by: B },
+    { trip_id: GEORGIA, kind: 'wish', title: 'Churchkhela for the road', status: 'open', position: 7, created_by: A },
+    { trip_id: GEORGIA, kind: 'wish', title: 'A bottle of saperavi', status: 'open', position: 8, created_by: B },
   ]);
   {
     const shots = [['Tbilisi rooftops', '🏘️'], ['Khachapuri feast', '🧀'], ['Caucasus peaks', '⛰️'], ['Wine toast', '🍷'], ['Old town night', '🌃'], ['Us, finally together', '❤️']];
