@@ -9,19 +9,31 @@ export interface NotifyPayload {
   toUserId?: string;
 }
 
+export interface NotifyResult {
+  /** The request reached the function and it accepted it (no transport error). */
+  ok: boolean;
+  /** How many of the partner's devices actually received the push. */
+  delivered: number;
+}
+
 /**
  * Ask the push-notify Edge Function to deliver a Web Push to the partner.
- * Best-effort — never throws. Returns whether the request was accepted, so
- * callers can give honest feedback ("Sent" vs "couldn't send").
+ * Best-effort — never throws. Reports both whether the call succeeded AND how
+ * many devices it actually reached, so callers can tell "couldn't send" from
+ * "your love hasn't turned notifications on yet" (delivered === 0).
  */
-export async function notifyPartner(payload: NotifyPayload): Promise<boolean> {
+export async function notifyPartner(
+  payload: NotifyPayload
+): Promise<NotifyResult> {
   try {
-    const { error } = await supabase.functions.invoke('push-notify', {
-      body: payload,
-    });
-    return !error;
+    const { data, error } = await supabase.functions.invoke<{ sent?: number }>(
+      'push-notify',
+      { body: payload }
+    );
+    if (error) return { ok: false, delivered: 0 };
+    return { ok: true, delivered: data?.sent ?? 0 };
   } catch {
     /* swallow — push is non-critical */
-    return false;
+    return { ok: false, delivered: 0 };
   }
 }
