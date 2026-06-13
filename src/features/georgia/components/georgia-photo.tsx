@@ -33,6 +33,8 @@ export function GeorgiaPhoto({
     <img
       src={src}
       alt=""
+      decoding="async"
+      loading="lazy"
       onError={() => !forceFull && !full && setForceFull(true)}
       className={cn('rounded-none object-cover', className)}
     />
