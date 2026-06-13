@@ -1,27 +1,26 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import type { RefObject } from 'react';
 import { useDrag } from '@use-gesture/react';
-import { RotateCw } from 'lucide-react';
 import type { ChalkNote as Note } from '../types';
 
 export function ChalkNoteItem({
   note,
   boardRef,
+  editing,
   canDelete,
   onMove,
-  onRotate,
   onDelete,
 }: {
   note: Note;
   boardRef: RefObject<HTMLDivElement | null>;
+  /** Only in edit mode can a note be dragged or deleted. */
+  editing: boolean;
   canDelete: boolean;
   onMove: (x: number, y: number) => void;
-  onRotate: (rotation: number) => void;
   onDelete: () => void;
 }) {
   const selfRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ x: note.x, y: note.y });
-  const [rot, setRot] = useState(note.rotation);
 
   // Clamp any position (seeded, synced, or dragged) to the board bounds so a
   // note can never clip outside the blackboard.
@@ -45,33 +44,22 @@ export function ChalkNoteItem({
   useLayoutEffect(() => {
     setPos(clamp(note.x, note.y));
   }, [note.x, note.y, clamp]);
-  useLayoutEffect(() => setRot(note.rotation), [note.rotation]);
 
-  const bind = useDrag(({ first, movement: [mx, my], last, memo }) => {
-    const start = (first ? clamp(note.x, note.y) : memo) as {
-      x: number;
-      y: number;
-    };
-    const next = clamp(start.x + mx, start.y + my);
-    setPos(next);
-    if (last) onMove(Math.round(next.x), Math.round(next.y));
-    return start;
-  });
+  const bind = useDrag(
+    ({ first, movement: [mx, my], last, memo }) => {
+      const start = (first ? clamp(note.x, note.y) : memo) as {
+        x: number;
+        y: number;
+      };
+      const next = clamp(start.x + mx, start.y + my);
+      setPos(next);
+      if (last) onMove(Math.round(next.x), Math.round(next.y));
+      return start;
+    },
+    { enabled: editing }
+  );
 
-  // Drag the corner grip to spin the note to any angle (owner only). Angle is
-  // measured from the note's centre to the pointer, so it follows your finger.
-  const bindRotate = useDrag(({ xy: [px, py], last, event }) => {
-    event.stopPropagation();
-    const el = selfRef.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    const cx = r.left + r.width / 2;
-    const cy = r.top + r.height / 2;
-    // +90 so the grip (bottom-right) sits "under" the finger at rest.
-    const deg = (Math.atan2(py - cy, px - cx) * 180) / Math.PI - 90;
-    setRot(deg);
-    if (last) onRotate(Math.round(deg));
-  });
+  const canDrag = editing;
 
   return (
     <div
@@ -80,11 +68,13 @@ export function ChalkNoteItem({
       style={{
         left: pos.x,
         top: pos.y,
-        transform: `rotate(${rot}deg)`,
+        transform: `rotate(${note.rotation}deg)`,
         color: note.color,
-        touchAction: 'none',
+        touchAction: canDrag ? 'none' : undefined,
       }}
-      className="chalk-note group absolute max-w-[160px] cursor-grab touch-none select-none whitespace-pre-wrap break-words px-3 pb-2 pt-4 active:cursor-grabbing"
+      className={`chalk-note group absolute max-w-[160px] select-none whitespace-pre-wrap break-words px-3 pb-2 pt-4 ${
+        canDrag ? 'cursor-grab touch-none active:cursor-grabbing' : ''
+      } ${editing ? 'ring-1 ring-gold/25' : ''}`}
     >
       {/* The small white-gold magnet pinning the note to the slate */}
       <span
@@ -94,30 +84,19 @@ export function ChalkNoteItem({
       <span className="block font-display text-[1.2rem] font-light italic leading-snug [text-shadow:0_0_2px_rgba(255,253,245,0.35),0_1px_1px_rgba(0,0,0,0.5)]">
         {note.body}
       </span>
-      {canDelete && (
-        <>
-          <button
-            type="button"
-            aria-label="Delete note"
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="lift-press absolute -left-2.5 -top-2.5 flex h-6 w-6 items-center justify-center rounded-full bg-surface-2 text-sm leading-none text-gold shadow-catch"
-          >
-            ×
-          </button>
-          {/* Rotate grip — drag to set the angle. */}
-          <span
-            {...bindRotate()}
-            aria-label="Rotate note"
-            style={{ touchAction: 'none' }}
-            className="lift-press absolute -bottom-2.5 -right-2.5 flex h-6 w-6 cursor-grab touch-none items-center justify-center rounded-full bg-surface-2 text-gold shadow-catch active:cursor-grabbing"
-          >
-            <RotateCw size={13} strokeWidth={2} />
-          </span>
-        </>
+      {editing && canDelete && (
+        <button
+          type="button"
+          aria-label="Delete note"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="lift-press absolute -right-2.5 -top-2.5 flex h-6 w-6 items-center justify-center rounded-full bg-surface-2 text-sm leading-none text-gold shadow-catch"
+        >
+          ×
+        </button>
       )}
     </div>
   );
