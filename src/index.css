@@ -861,6 +861,7 @@ button {
   .album-foil,
   .book-leaf.snap,
   .chalk-note,
+  .kx-glow,
   .btn-catchlight::after {
     animation: none !important;
     transition: none !important;
