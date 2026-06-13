@@ -19,9 +19,6 @@
      HER: wine red · brown · glossy green · black · white
      HIM: sandstorm · military green · charcoal black · snow white
      METAL: white gold (never yellow). NO PURPLE. ─────────────────────────── */
-  /* Real viewport height, pinned by JS (main.tsx) to dodge iOS standalone's
-     first-paint 100dvh mis-measure. Falls back to 100dvh before JS runs. */
-  --app-height: 100dvh;
   --color-bg: #100408; /* Deep Wine-Black — house lights down */
   --color-surface: #1a0b13; /* raised wine panel */
   --color-surface-2: #241019; /* lifted card/sheet/popover (wine) */
@@ -174,6 +171,11 @@ html,
 body,
 #root {
   height: 100%;
+  /* Lock the document — only <main> (the app-shell) scrolls, so the top bar and
+     bottom nav stay put and no iOS rubber-band reveals a gap. The shell sizes
+     off this 100% chain (NOT viewport units), which is the one measurement iOS
+     standalone gets right on first paint. */
+  overflow: hidden;
 }
 /* The bottom nav lives in surface-2; paint the root the same so the iOS
    home-indicator strip below the viewport never shows a darker band. */
