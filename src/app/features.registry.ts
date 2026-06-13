@@ -98,10 +98,9 @@ const modules: FeatureModule[] = [
 ];
 
 // ── Demo gate ──────────────────────────────────────────────────────────────
-// Everything is OPEN now — the whole program is on for testing. To re-gate for
-// a partner-facing showing, flip `GATED` to true: only the `OPEN` five stay
-// reachable and the rest go back to greyed "Soon" rows in the More drawer.
-const GATED = false;
+// Only the OPEN five are reachable; the rest stay greyed "Soon" rows in the
+// More drawer (shipped but not open). Flip `GATED` to false to open everything.
+const GATED = true;
 const OPEN = new Set([
   'polaroid',
   'georgia',
