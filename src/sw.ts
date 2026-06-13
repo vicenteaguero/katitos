@@ -14,7 +14,7 @@ declare const self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: Array<{ url: string; revision: string | null }>;
 };
 
-const CACHE = 'katitos-shell-v1';
+const CACHE = 'katitos-shell-v2';
 const PRECACHE_URLS = [
   '/',
   '/index.html',
