@@ -40,12 +40,20 @@ function Greeting() {
   const sendLove = async () => {
     if (sent) return; // debounce: ignore taps during the "sent" window
     setSent(true);
-    const ok = await notifyPartner({
+    const { ok, delivered } = await notifyPartner({
       title: `Your ${myName} loves you so much ❤️`,
+      body: `${partnerName}, tap to come home 💌`,
       url: '/',
     });
     if (!ok) {
       toast.error("Couldn't send — try again");
+      setSent(false);
+      return;
+    }
+    // The call succeeded but reached no device — the partner hasn't enabled
+    // notifications yet, so be honest instead of claiming it was delivered.
+    if (delivered === 0) {
+      toast.info(`Sent — ask ${partnerName} to turn on notifications 🔔`);
       setSent(false);
       return;
     }
