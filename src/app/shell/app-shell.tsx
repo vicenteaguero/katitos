@@ -8,48 +8,59 @@ import { DevUserSwitcher } from './dev-switcher';
 import { KatitosMark } from './katitos-mark';
 import { BottomNav } from './nav';
 import { CacheWarmer } from './cache-warmer';
+import { featureRegistry } from '../features.registry';
+
+/** The name of the screen we're on — drives the quiet top-bar title. */
+function sectionTitle(pathname: string): string {
+  if (pathname === '/') return '';
+  if (pathname.startsWith('/settings')) return 'Settings';
+  const seg = '/' + (pathname.split('/')[1] ?? '');
+  return featureRegistry.all.find((f) => f.basePath === seg)?.title ?? '';
+}
 
 function TopBar() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   // "Back" earns its place only off the home tab — on home it'd go nowhere.
-  // Always lands somewhere sane: history if we have it, else home.
   const atHome = pathname === '/';
+  const title = sectionTitle(pathname);
 
   return (
     <header className="z-20 shrink-0 bg-surface/95 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur">
-      {/* The marquee: (back) + brand mark + gilt wordmark + partner status dot. */}
-      <div className="flex items-center justify-between gap-2 px-[1.75rem] py-2.5">
-        <div className="flex min-w-0 items-center gap-1.5">
-          {!atHome && (
-            <IconButton
-              label="Back"
-              onClick={() =>
-                window.history.length > 1 ? navigate(-1) : navigate('/')
-              }
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </IconButton>
+      {/* Minimal marquee: (back) · small mark + quiet section name · settings. */}
+      <div className="flex items-center justify-between gap-2 px-[1.5rem] py-2">
+        <div className="flex min-w-0 items-center gap-2">
+          {atHome ? (
+            <Link to="/" aria-label="Home" className="flex items-center gap-2">
+              <KatitosMark size={24} />
+              <PartnerStatusDot />
+            </Link>
+          ) : (
+            <>
+              <IconButton
+                label="Back"
+                className="h-9 w-9"
+                onClick={() =>
+                  window.history.length > 1 ? navigate(-1) : navigate('/')
+                }
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </IconButton>
+              <span className="truncate font-sans text-base font-semibold tracking-tight text-fg">
+                {title}
+              </span>
+            </>
           )}
-          <Link to="/" className="group flex min-w-0 items-center gap-2.5">
-            <KatitosMark size={30} />
-            <span className="font-display gilt-text truncate text-2xl font-semibold leading-none tracking-tight">
-              Katitos
-            </span>
-            <PartnerStatusDot className="ml-0.5" />
-          </Link>
         </div>
         <div className="flex items-center gap-1">
           <DevUserSwitcher />
           <Link to="/settings">
-            <IconButton label="Settings">
+            <IconButton label="Settings" className="h-9 w-9">
               <Settings className="h-5 w-5" />
             </IconButton>
           </Link>
         </div>
       </div>
-      {/* A thin gold-stitched seam under the bar. */}
-      <hr className="seam" />
     </header>
   );
 }
