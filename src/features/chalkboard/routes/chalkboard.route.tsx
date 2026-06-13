@@ -10,9 +10,12 @@ import {
   useAddNote,
   useDeleteNote,
   useMoveNote,
+  useRotateNote,
 } from '../api/chalkboard.mutations';
 import { ChalkNoteItem } from '../components/chalk-note';
 import { CHALK_COLORS } from '../types';
+
+const MAX_NOTES = 3;
 
 export function ChalkboardRoute() {
   useTableSync('chalkboard_notes', qk.chalkboard.notes());
@@ -20,15 +23,31 @@ export function ChalkboardRoute() {
   const { data: notes } = useChalkNotes();
   const add = useAddNote();
   const move = useMoveNote();
+  const rotate = useRotateNote();
   const del = useDeleteNote();
   const boardRef = useRef<HTMLDivElement>(null);
   const [adding, setAdding] = useState(false);
   const [body, setBody] = useState('');
   const [color, setColor] = useState<string>(CHALK_COLORS[0]);
 
+  const count = notes?.length ?? 0;
+  const atMax = count >= MAX_NOTES;
+
+  const openAdd = () => {
+    if (atMax) {
+      toast.error(`The wall holds ${MAX_NOTES} notes — rub one out first.`);
+      return;
+    }
+    setAdding(true);
+  };
+
   const submit = () => {
     const el = boardRef.current;
     if (!el || !body.trim()) return;
+    if (atMax) {
+      toast.error(`The wall holds ${MAX_NOTES} notes — rub one out first.`);
+      return;
+    }
     const x = Math.max(0, Math.round(el.clientWidth / 2 - 80));
     const y = Math.max(0, Math.round(el.clientHeight / 2 - 30));
     const rotation = Math.round(Math.random() * 12 - 6);
@@ -73,6 +92,7 @@ export function ChalkboardRoute() {
             boardRef={boardRef}
             canDelete={n.author === userId}
             onMove={(x, y) => move.mutate({ id: n.id, x, y })}
+            onRotate={(rotation) => rotate.mutate({ id: n.id, rotation })}
             onDelete={() => del.mutate(n.id)}
           />
         ))}
@@ -82,7 +102,7 @@ export function ChalkboardRoute() {
         Held by magnets. The kitchen we share across two countries.
       </p>
 
-      <Fab label="Add note" onClick={() => setAdding(true)}>
+      <Fab label="Add note" onClick={openAdd}>
         <Plus />
       </Fab>
 
