@@ -25,13 +25,15 @@ import { LastPolaroidWidget } from '@features/polaroid';
 function Greeting() {
   const { partner } = usePartner();
   const { online } = usePartnerPresence();
-  const name = partner?.display_name ?? 'love';
+  // Our pet names, by who you're greeting: him (role 'a') is Katito, her
+  // (role 'b') is Katita. So the account decides which name says hi.
+  const petName = partner?.role === 'a' ? 'Katito' : 'Katita';
   const where = partner?.city;
 
   return (
     <header className="pt-1 text-center">
       <h1 className="font-display text-[3rem] font-semibold leading-[1.04] tracking-tight text-fg">
-        {name}{' '}
+        {petName}{' '}
         <span className="candle-flicker inline-block">
           {partner?.emoji ?? '❤️'}
         </span>
@@ -176,7 +178,7 @@ function TogetherHero() {
         <div className="flex items-center justify-between gap-2">
           <Clock
             align="left"
-            label={`${self.display_name} · ${self.city ?? ''}`}
+            label={self.city ?? '—'}
             time={self.timezone ? timeInZone(self.timezone, now) : '—'}
           />
           <div className="text-center">
@@ -208,7 +210,7 @@ function TogetherHero() {
           <Clock
             align="right"
             her
-            label={`${partner.display_name} · ${partner.city ?? ''}`}
+            label={partner.city ?? '—'}
             time={partner.timezone ? timeInZone(partner.timezone, now) : '—'}
           />
         </div>
