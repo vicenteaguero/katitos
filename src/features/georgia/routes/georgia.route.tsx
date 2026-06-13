@@ -1,12 +1,11 @@
-import { useState, type CSSProperties } from 'react';
-import { Link } from 'react-router';
-import { Camera, Plus, Trash2, Trophy } from 'lucide-react';
+import { useMemo, useState, type CSSProperties } from 'react';
+import { Camera, Check, MapPin, Plus, Trash2 } from 'lucide-react';
+import { usePartner } from '@kernel/auth';
 import { useNow } from '@kernel/hooks';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import { countdownTo, DateTime, cn } from '@kernel/lib';
 import {
-  Badge,
   Button,
   CameraCapture,
   Card,
@@ -16,6 +15,7 @@ import {
   Input,
   LoadingScreen,
   PageHeader,
+  Segmented,
   Select,
   Sheet,
   Textarea,
@@ -34,10 +34,25 @@ import {
   useToggleGeorgiaItem,
 } from '../api/georgia.mutations';
 import { GeorgiaPhoto } from '../components/georgia-photo';
-import { georgiaKeys } from '../types';
+import { GeorgiaMap, type MapPin as Pin } from '../components/georgia-map';
+import { georgiaKeys, type TripItem } from '../types';
+
+type Tab = 'map' | 'plan' | 'wishlist' | 'album';
+
+/** All dates from start..end inclusive (the trip's days). */
+function tripDays(start?: string | null, end?: string | null): string[] {
+  if (!start) return [];
+  const a = DateTime.fromISO(start);
+  const b = end ? DateTime.fromISO(end) : a;
+  const out: string[] = [];
+  for (let d = a; d <= b; d = d.plus({ days: 1 }))
+    out.push(d.toFormat('yyyy-MM-dd'));
+  return out;
+}
 
 export function GeorgiaRoute() {
   const { data: trip, isLoading } = useGeorgiaTrip();
+  const { self, partner } = usePartner();
   const tripId = trip?.id;
   useTableSync('trip_items', qk.trips.items(tripId ?? 'none'), {
     enabled: !!tripId,
@@ -52,15 +67,25 @@ export function GeorgiaRoute() {
   const delItem = useDeleteGeorgiaItem();
   const addPhoto = useAddGeorgiaPhoto();
   const delPhoto = useDeleteGeorgiaPhoto();
-  const now = useNow(1000);
+  const now = useNow(60_000);
 
+  const [tab, setTab] = useState<Tab>('plan');
   const [cam, setCam] = useState(false);
-  const [addingItem, setAddingItem] = useState(false);
-  const [itemForm, setItemForm] = useState({
+  const [adding, setAdding] = useState(false);
+  const [wish, setWish] = useState('');
+  const [form, setForm] = useState({
     title: '',
-    kind: 'idea',
+    kind: 'place',
     description: '',
+    day: '',
+    lat: '',
+    lng: '',
   });
+
+  const days = useMemo(
+    () => tripDays(trip?.start_date, trip?.end_date),
+    [trip?.start_date, trip?.end_date]
+  );
 
   if (isLoading) return <LoadingScreen />;
   if (!trip)
@@ -75,6 +100,29 @@ export function GeorgiaRoute() {
   const c = trip.start_date
     ? countdownTo(DateTime.fromISO(trip.start_date), now)
     : null;
+  const all = items ?? [];
+  const planItems = all.filter((it) => it.kind !== 'wish');
+  const wishes = all.filter((it) => it.kind === 'wish');
+  const photos_ = photos ?? [];
+
+  const pins: Pin[] = [
+    ...planItems
+      .filter((it) => it.lat != null && it.lng != null)
+      .map((it) => ({
+        lat: it.lat as number,
+        lng: it.lng as number,
+        title: it.title,
+        tone: 'place' as const,
+      })),
+    ...[self, partner]
+      .filter((m) => m?.lat != null && m?.lng != null)
+      .map((m) => ({
+        lat: m!.lat as number,
+        lng: m!.lng as number,
+        title: `${m!.display_name} · ${m!.city ?? ''}`,
+        tone: 'home' as const,
+      })),
+  ];
 
   const onCapture = (blob: Blob) => {
     setCam(false);
@@ -88,29 +136,44 @@ export function GeorgiaRoute() {
   };
 
   const submitItem = () => {
-    if (!itemForm.title.trim()) return;
+    if (!form.title.trim()) return;
     addItem.mutate(
       {
         tripId: trip.id,
-        kind: itemForm.kind,
-        title: itemForm.title.trim(),
-        description: itemForm.description || null,
+        kind: form.kind,
+        title: form.title.trim(),
+        description: form.description || null,
+        day: form.day || null,
+        lat: form.lat ? Number(form.lat) : null,
+        lng: form.lng ? Number(form.lng) : null,
       },
       {
         onSuccess: () => {
-          setAddingItem(false);
-          setItemForm({ title: '', kind: 'idea', description: '' });
+          setAdding(false);
+          setForm({
+            title: '',
+            kind: 'place',
+            description: '',
+            day: '',
+            lat: '',
+            lng: '',
+          });
         },
+        onError: (e) => toast.error(e.message),
       }
     );
   };
 
-  const items_ = items ?? [];
-  const photos_ = photos ?? [];
-  const doneCount = items_.filter((it) => it.status === 'done').length;
+  const addWish = () => {
+    if (!wish.trim()) return;
+    addItem.mutate(
+      { tripId: trip.id, kind: 'wish', title: wish.trim() },
+      { onSuccess: () => setWish(''), onError: (e) => toast.error(e.message) }
+    );
+  };
 
   return (
-    <div className="curtain-reveal space-y-12">
+    <div className="curtain-reveal space-y-6">
       <PageHeader
         title={trip.name}
         subtitle={
@@ -121,156 +184,185 @@ export function GeorgiaRoute() {
         }
       />
 
-      {/* The passport postcard — a marble "lit stage" hero stamped like a travel page. */}
-      <section className="footlight">
-        <div className="gilt-hairline relative overflow-hidden shadow-loge">
-          {/* Lapis inner mat behind the marble — the imperial-blue voyage. */}
-          <div className="bg-lapis p-2">
-            <div className="marble relative px-8 py-10 text-center">
-              <span className="eyebrow mb-5 text-accent before:bg-accent after:bg-accent">
-                {c?.isPast ? 'The Voyage' : 'Departure'}
+      {/* Departure countdown — the kept hero of the trip. */}
+      {c && (
+        <section className="footlight">
+          <div className="gilt-hairline bg-lapis overflow-hidden p-2 shadow-loge">
+            <div className="marble px-6 py-7 text-center">
+              <span className="eyebrow mb-3 text-accent before:bg-accent after:bg-accent">
+                {c.isPast ? 'The Voyage' : 'Departure'}
               </span>
-              <p className="font-display text-2xl italic leading-snug text-accent/90">
-                {c?.isPast
-                  ? 'We are there.'
-                  : 'Counting the leagues to the Caucasus.'}
+              <p className="font-display gilt-figures text-5xl font-semibold text-accent">
+                {c.isPast ? '🇬🇪' : c.days}
+                {!c.isPast && (
+                  <span className="ml-2 align-baseline text-xl font-medium not-italic text-accent/60">
+                    days
+                  </span>
+                )}
               </p>
-              {c && (
-                <p className="mt-6 font-display text-6xl font-semibold tabular-nums tracking-tight text-accent">
-                  {c.isPast ? '🇬🇪' : `${c.days}`}
-                  {!c.isPast && (
-                    <span className="ml-2 align-baseline text-2xl font-medium not-italic text-accent/60">
-                      days · {c.hours}h
-                    </span>
-                  )}
-                </p>
-              )}
               {trip.start_date && (
-                <p className="mt-5 font-sans text-xs font-semibold uppercase tracking-[0.22em] text-accent/70">
+                <p className="mt-3 font-sans text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-accent/70">
                   {DateTime.fromISO(trip.start_date).toFormat('LLL d')}
                   {trip.end_date
                     ? ` — ${DateTime.fromISO(trip.end_date).toFormat('LLL d, yyyy')}`
                     : ''}
                 </p>
               )}
-              {/* Two-color seam: her velvet flowing into his warmth, the journey as one stitched line. */}
-              <hr className="seam mt-8" />
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      <Link to="/scavenger" className="block">
-        <Button full variant="secondary">
-          <Trophy size={16} /> Play the date cards
-        </Button>
-      </Link>
+      <Segmented
+        value={tab}
+        onChange={setTab}
+        className="w-full"
+        options={[
+          { value: 'map', label: 'Map' },
+          { value: 'plan', label: 'Plan' },
+          { value: 'wishlist', label: 'Wishlist' },
+          { value: 'album', label: 'Album' },
+        ]}
+      />
 
-      <section>
-        <div className="mb-5 flex items-end justify-between gap-4">
-          <div>
-            <span className="font-sans text-xs font-semibold uppercase tracking-[0.18em] text-muted">
-              Itinerary
-            </span>
-            {items_.length > 0 && (
-              <p className="mt-2 font-sans text-xs font-medium tabular-nums text-muted">
-                {doneCount} of {items_.length} marked
-              </p>
-            )}
+      {tab === 'map' && (
+        <section className="space-y-3">
+          <GeorgiaMap
+            pins={pins}
+            className="h-[420px] w-full overflow-hidden rounded-lg"
+          />
+          <p className="text-center font-sans text-xs text-muted">
+            {pins.filter((p) => p.tone === 'place').length} places pinned · add
+            coordinates when you add a place
+          </p>
+        </section>
+      )}
+
+      {tab === 'plan' && (
+        <section className="space-y-5">
+          <div className="flex items-center justify-end">
+            <Button size="sm" variant="ghost" onClick={() => setAdding(true)}>
+              <Plus size={16} /> Add place
+            </Button>
           </div>
-          <Button size="sm" variant="ghost" onClick={() => setAddingItem(true)}>
-            <Plus size={16} /> Add
-          </Button>
-        </div>
-        {items_.length === 0 ? (
-          <Empty icon="🗺️" title="The itinerary is blank" />
-        ) : (
-          <div className="space-y-3">
-            {items_.map((it) => (
-              <Card key={it.id} className="flex items-center gap-3 px-5 py-4">
-                <button
-                  type="button"
-                  aria-label="Toggle done"
-                  onClick={() =>
-                    toggleItem.mutate({
-                      id: it.id,
-                      tripId: trip.id,
-                      status: it.status === 'done' ? 'open' : 'done',
-                    })
-                  }
-                  className="shrink-0 text-lg"
-                >
-                  {it.status === 'done' ? '✅' : '⬜'}
-                </button>
-                <div className="min-w-0 flex-1">
-                  <p
+          {planItems.length === 0 ? (
+            <Empty
+              icon="🗺️"
+              title="The plan is blank"
+              hint="Add your first stop."
+            />
+          ) : (
+            <DayPlan
+              days={days}
+              items={planItems}
+              onToggle={(it) =>
+                toggleItem.mutate({
+                  id: it.id,
+                  tripId: trip.id,
+                  status: it.status === 'done' ? 'open' : 'done',
+                })
+              }
+              onDelete={(it) => delItem.mutate({ id: it.id, tripId: trip.id })}
+            />
+          )}
+        </section>
+      )}
+
+      {tab === 'wishlist' && (
+        <section className="space-y-4">
+          <div className="flex gap-2">
+            <Input
+              value={wish}
+              onChange={(e) => setWish(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && addWish()}
+              placeholder="Khinkali, wine, a rug…"
+            />
+            <Button onClick={addWish} className="shrink-0 px-5">
+              <Plus size={16} />
+            </Button>
+          </div>
+          {wishes.length === 0 ? (
+            <Empty icon="🛍️" title="Nothing on the wishlist yet" />
+          ) : (
+            <div className="space-y-2">
+              {wishes.map((it) => (
+                <Card key={it.id} className="flex items-center gap-3 px-4 py-3">
+                  <button
+                    type="button"
+                    aria-label="Toggle"
+                    onClick={() =>
+                      toggleItem.mutate({
+                        id: it.id,
+                        tripId: trip.id,
+                        status: it.status === 'done' ? 'open' : 'done',
+                      })
+                    }
+                    className="shrink-0 text-lg"
+                  >
+                    {it.status === 'done' ? '✅' : '⬜'}
+                  </button>
+                  <span
                     className={cn(
-                      'truncate font-display text-lg tracking-tight text-fg',
+                      'min-w-0 flex-1 truncate font-display text-lg text-fg',
                       it.status === 'done' && 'text-muted line-through'
                     )}
                   >
                     {it.title}
-                  </p>
-                  {it.description && (
-                    <p className="truncate font-sans text-xs leading-relaxed text-muted">
-                      {it.description}
-                    </p>
-                  )}
-                </div>
-                <Badge tone="neutral">{it.kind}</Badge>
-                <IconButton
-                  label="Delete"
-                  onClick={() => delItem.mutate({ id: it.id, tripId: trip.id })}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </IconButton>
-              </Card>
-            ))}
-          </div>
-        )}
-      </section>
+                  </span>
+                  <IconButton
+                    label="Delete"
+                    onClick={() =>
+                      delItem.mutate({ id: it.id, tripId: trip.id })
+                    }
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </IconButton>
+                </Card>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
-      <section>
-        <div className="mb-5 flex items-end justify-between gap-4">
-          <span className="font-sans text-xs font-semibold uppercase tracking-[0.18em] text-muted">
-            Postcards
-          </span>
-          <Button size="sm" variant="ghost" onClick={() => setCam(true)}>
-            <Camera size={16} /> Photo
-          </Button>
-        </div>
-        {photos_.length === 0 ? (
-          <Empty icon="📸" title="No postcards sent yet" />
-        ) : (
-          <div className="curtain-stagger grid grid-cols-3 gap-2.5">
-            {photos_.map((p, i) => (
-              <div
-                key={p.id}
-                className="group relative"
-                style={{ '--i': i } as CSSProperties}
-              >
-                <div className="overflow-hidden rounded-lg bg-surface-2">
-                  <GeorgiaPhoto
-                    path={p.image_path}
-                    className="aspect-square w-full"
-                  />
-                </div>
-                <button
-                  type="button"
-                  aria-label="Delete photo"
-                  onClick={() => {
-                    if (confirm('Delete photo?'))
-                      delPhoto.mutate({ id: p.id, tripId: trip.id });
-                  }}
-                  className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded bg-bg/70 font-sans text-sm text-fg opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
+      {tab === 'album' && (
+        <section className="space-y-4">
+          <div className="flex items-center justify-end">
+            <Button size="sm" variant="ghost" onClick={() => setCam(true)}>
+              <Camera size={16} /> Photo
+            </Button>
           </div>
-        )}
-      </section>
+          {photos_.length === 0 ? (
+            <Empty icon="📸" title="No postcards yet" />
+          ) : (
+            <div className="curtain-stagger grid grid-cols-3 gap-2.5">
+              {photos_.map((p, i) => (
+                <div
+                  key={p.id}
+                  className="group relative"
+                  style={{ '--i': i } as CSSProperties}
+                >
+                  <div className="overflow-hidden rounded-lg bg-surface-2">
+                    <GeorgiaPhoto
+                      path={p.image_path}
+                      className="aspect-square w-full"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    aria-label="Delete photo"
+                    onClick={() =>
+                      delPhoto.mutate({ id: p.id, tripId: trip.id })
+                    }
+                    className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded bg-bg/70 font-sans text-sm text-fg"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       {cam && (
         <CameraCapture
@@ -280,47 +372,161 @@ export function GeorgiaRoute() {
         />
       )}
 
-      <Sheet
-        open={addingItem}
-        onClose={() => setAddingItem(false)}
-        title="Add to planner"
-      >
+      <Sheet open={adding} onClose={() => setAdding(false)} title="Add a place">
         <div className="space-y-3">
           <Field label="What">
             <Input
-              value={itemForm.title}
+              value={form.title}
               onChange={(e) =>
-                setItemForm((f) => ({ ...f, title: e.target.value }))
+                setForm((f) => ({ ...f, title: e.target.value }))
               }
+              placeholder="Gergeti Trinity Church"
             />
           </Field>
-          <Field label="Type">
-            <Select
-              value={itemForm.kind}
-              onChange={(e) =>
-                setItemForm((f) => ({ ...f, kind: e.target.value }))
-              }
-            >
-              <option value="idea">Idea</option>
-              <option value="place">Place</option>
-              <option value="todo">To-do</option>
-              <option value="game">Game</option>
-              <option value="tracker">Tracker</option>
-            </Select>
-          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Type">
+              <Select
+                value={form.kind}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, kind: e.target.value }))
+                }
+              >
+                <option value="place">Place</option>
+                <option value="todo">To-do</option>
+                <option value="idea">Idea</option>
+              </Select>
+            </Field>
+            <Field label="Day">
+              <Select
+                value={form.day}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, day: e.target.value }))
+                }
+              >
+                <option value="">Unscheduled</option>
+                {days.map((d) => (
+                  <option key={d} value={d}>
+                    {DateTime.fromISO(d).toFormat('EEE, LLL d')}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Lat (map)">
+              <Input
+                inputMode="decimal"
+                value={form.lat}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, lat: e.target.value }))
+                }
+                placeholder="42.66"
+              />
+            </Field>
+            <Field label="Lng (map)">
+              <Input
+                inputMode="decimal"
+                value={form.lng}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, lng: e.target.value }))
+                }
+                placeholder="44.62"
+              />
+            </Field>
+          </div>
           <Field label="Notes">
             <Textarea
-              value={itemForm.description}
+              value={form.description}
               onChange={(e) =>
-                setItemForm((f) => ({ ...f, description: e.target.value }))
+                setForm((f) => ({ ...f, description: e.target.value }))
               }
+              rows={2}
             />
           </Field>
-          <Button full onClick={submitItem}>
-            Add
+          <Button full onClick={submitItem} disabled={addItem.isPending}>
+            Add to plan
           </Button>
         </div>
       </Sheet>
+    </div>
+  );
+}
+
+/** Items grouped by day (scheduled days first, then unscheduled). */
+function DayPlan({
+  days,
+  items,
+  onToggle,
+  onDelete,
+}: {
+  days: string[];
+  items: TripItem[];
+  onToggle: (it: TripItem) => void;
+  onDelete: (it: TripItem) => void;
+}) {
+  const list = items;
+  const byDay = new Map<string, TripItem[]>();
+  for (const it of list) {
+    const key = it.day ?? '';
+    const arr = byDay.get(key) ?? [];
+    arr.push(it);
+    byDay.set(key, arr);
+  }
+  const scheduledDays = days.filter((d) => byDay.has(d));
+  const sections = [
+    ...scheduledDays.map((d) => ({
+      key: d,
+      label: DateTime.fromISO(d).toFormat('EEEE, LLL d'),
+    })),
+    ...(byDay.has('') ? [{ key: '', label: 'Unscheduled' }] : []),
+  ];
+
+  return (
+    <div className="space-y-6">
+      {sections.map((s) => (
+        <div key={s.key || 'none'} className="space-y-2">
+          <p className="eyebrow flex items-center gap-2">
+            {s.key && <MapPin className="h-3 w-3 text-copper" />}
+            {s.label}
+          </p>
+          {(byDay.get(s.key) ?? []).map((it) => (
+            <Card key={it.id} className="flex items-center gap-3 px-4 py-3">
+              <button
+                type="button"
+                aria-label="Toggle done"
+                onClick={() => onToggle(it)}
+                className="shrink-0 text-lg"
+              >
+                {it.status === 'done' ? '✅' : '⬜'}
+              </button>
+              <div className="min-w-0 flex-1">
+                <p
+                  className={cn(
+                    'truncate font-display text-lg text-fg',
+                    it.status === 'done' && 'text-muted line-through'
+                  )}
+                >
+                  {it.title}
+                </p>
+                {it.description && (
+                  <p className="truncate font-sans text-xs text-muted">
+                    {it.description}
+                  </p>
+                )}
+              </div>
+              {it.lat != null && (
+                <Check
+                  className="h-3.5 w-3.5 shrink-0 text-copper"
+                  aria-label="on map"
+                />
+              )}
+              <IconButton label="Delete" onClick={() => onDelete(it)}>
+                <Trash2 className="h-4 w-4" />
+              </IconButton>
+            </Card>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }
