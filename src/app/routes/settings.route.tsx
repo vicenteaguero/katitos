@@ -18,44 +18,29 @@ function CoupleCard() {
   const { data: couple, isLoading } = useCouple();
   const update = useUpdateCouple();
   const [startDate, setStartDate] = useState('');
-  const [day, setDay] = useState(15);
 
   useEffect(() => {
-    if (couple) {
-      setStartDate(couple.relationship_start_date ?? '');
-      setDay(couple.anniversary_day ?? 15);
-    }
+    if (couple) setStartDate(couple.relationship_start_date ?? '');
   }, [couple]);
 
   if (isLoading) return null;
 
   return (
-    <Card className="space-y-7">
-      <div className="space-y-3">
+    <Card className="space-y-6">
+      <div className="space-y-2">
         <p className="eyebrow">The Programme</p>
         <CardTitle>Us</CardTitle>
       </div>
-      <div className="space-y-5">
-        <Field label="Together since">
-          <Input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-        </Field>
-        <Field
-          label="Monthsversary day"
-          hint="The day each month you celebrate."
-        >
-          <Input
-            type="number"
-            min={1}
-            max={28}
-            value={day}
-            onChange={(e) => setDay(Number(e.target.value))}
-          />
-        </Field>
-      </div>
+      <Field
+        label="Together since"
+        hint="Every month, this day is our little anniversary."
+      >
+        <Input
+          type="date"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+        />
+      </Field>
       <Button
         full
         disabled={update.isPending}
@@ -63,7 +48,11 @@ function CoupleCard() {
           update.mutate(
             {
               relationship_start_date: startDate || null,
-              anniversary_day: day,
+              // Monthsversary day is just the day-of-month of when we started —
+              // no separate, confusing field needed.
+              anniversary_day: startDate
+                ? new Date(`${startDate}T00:00:00`).getDate()
+                : 15,
             },
             { onSuccess: () => toast.success('Saved') }
           )
