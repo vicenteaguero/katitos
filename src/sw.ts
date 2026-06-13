@@ -21,13 +21,20 @@ const PRECACHE_URLS = [
   ...self.__WB_MANIFEST.map((entry) => entry.url),
 ];
 
+// Last-resort offline page when the cached shell itself is gone (iOS purges
+// SW caches after ~7 days of non-use) — a visible message beats a dead tab.
+const OFFLINE_HTML = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Katitos</title><style>html,body{height:100%;margin:0;background:#100408;color:#f3e9ec;font-family:-apple-system,system-ui,sans-serif;display:flex;align-items:center;justify-content:center}div{text-align:center;padding:2rem}h1{font-weight:600;letter-spacing:.02em}p{opacity:.65;font-size:.9rem}</style></head><body><div><h1>Katitos</h1><p>You're offline. We'll be here when you're back.</p></div></body></html>`;
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches
-      .open(CACHE)
-      .then((cache) => cache.addAll(PRECACHE_URLS))
-      .then(() => self.skipWaiting())
-      .catch(() => self.skipWaiting())
+    (async () => {
+      const cache = await caches.open(CACHE);
+      // Resilient precache: cache.addAll is atomic, so a single missing asset
+      // would abort the whole shell. Cache each entry independently instead —
+      // partial precache still launches; never activate with an empty cache.
+      await Promise.allSettled(PRECACHE_URLS.map((url) => cache.add(url)));
+      await self.skipWaiting();
+    })()
   );
 });
 
@@ -48,12 +55,19 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
 
-  // App-shell navigation: network-first, fall back to cached index.html.
+  // App-shell navigation: network-first, fall back to cached index.html, then
+  // to a hand-written offline page if even the shell is gone.
   if (req.mode === 'navigate') {
     event.respondWith(
-      fetch(req).catch(() =>
-        caches.match('/index.html').then((r) => r ?? Response.error())
-      )
+      fetch(req).catch(async () => {
+        const cached = await caches.match('/index.html');
+        return (
+          cached ??
+          new Response(OFFLINE_HTML, {
+            headers: { 'Content-Type': 'text/html; charset=utf-8' },
+          })
+        );
+      })
     );
     return;
   }
