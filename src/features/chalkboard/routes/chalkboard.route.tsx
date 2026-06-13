@@ -1,16 +1,15 @@
 import { useRef, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Check, Pencil, Plus } from 'lucide-react';
 import { useUserId } from '@kernel/auth';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import { cn } from '@kernel/lib';
-import { Button, Fab, Sheet, Textarea, toast } from '@kernel/ui';
+import { Button, IconButton, Sheet, Textarea, toast } from '@kernel/ui';
 import { useChalkNotes } from '../api/chalkboard.queries';
 import {
   useAddNote,
   useDeleteNote,
   useMoveNote,
-  useRotateNote,
 } from '../api/chalkboard.mutations';
 import { ChalkNoteItem } from '../components/chalk-note';
 import { CHALK_COLORS } from '../types';
@@ -23,9 +22,9 @@ export function ChalkboardRoute() {
   const { data: notes } = useChalkNotes();
   const add = useAddNote();
   const move = useMoveNote();
-  const rotate = useRotateNote();
   const del = useDeleteNote();
   const boardRef = useRef<HTMLDivElement>(null);
+  const [editing, setEditing] = useState(false);
   const [adding, setAdding] = useState(false);
   const [body, setBody] = useState('');
   const [color, setColor] = useState<string>(CHALK_COLORS[0]);
@@ -65,20 +64,44 @@ export function ChalkboardRoute() {
   };
 
   // One fixed blackboard: this route never scrolls. Compact header on top,
-  // the matte-slate board takes all remaining height, notes drag within it.
+  // the matte-slate board takes all remaining height. Move/delete only in edit
+  // mode; the add + edit controls live in the header so nothing covers the slate.
   return (
     <div className="curtain-reveal flex h-full min-h-0 flex-col">
-      <header className="mb-5 shrink-0">
-        <p className="eyebrow">Our wall</p>
-        <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight text-fg">
-          The blackboard
-        </h1>
+      <header className="mb-4 flex shrink-0 items-end justify-between gap-3">
+        <div>
+          <p className="eyebrow">Our wall</p>
+          <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight text-fg">
+            The blackboard
+          </h1>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {editing && (
+            <IconButton label="Add note" onClick={openAdd}>
+              <Plus className="h-5 w-5" />
+            </IconButton>
+          )}
+          <IconButton
+            label={editing ? 'Done' : 'Edit wall'}
+            onClick={() => setEditing((e) => !e)}
+            className={editing ? 'bg-accent text-accent-fg' : ''}
+          >
+            {editing ? (
+              <Check className="h-5 w-5" />
+            ) : (
+              <Pencil className="h-5 w-5" />
+            )}
+          </IconButton>
+        </div>
       </header>
 
       {/* Matte-slate board — separated by tone and spacing, not by a line. */}
       <div
         ref={boardRef}
-        className="relative min-h-0 flex-1 overflow-hidden rounded-lg"
+        className={cn(
+          'relative min-h-0 flex-1 overflow-hidden rounded-lg transition-shadow',
+          editing && 'ring-1 ring-gold/30'
+        )}
         style={{
           backgroundColor: '#23272a',
           backgroundImage:
@@ -90,21 +113,19 @@ export function ChalkboardRoute() {
             key={n.id}
             note={n}
             boardRef={boardRef}
+            editing={editing}
             canDelete={n.author === userId}
             onMove={(x, y) => move.mutate({ id: n.id, x, y })}
-            onRotate={(rotation) => rotate.mutate({ id: n.id, rotation })}
             onDelete={() => del.mutate(n.id)}
           />
         ))}
       </div>
 
       <p className="mt-3 shrink-0 text-center font-sans text-xs italic text-muted">
-        Held by magnets. The kitchen we share across two countries.
+        {editing
+          ? 'Drag to move · tap × to rub out · max 3 notes'
+          : 'Held by magnets. The kitchen we share across two countries.'}
       </p>
-
-      <Fab label="Add note" onClick={openAdd}>
-        <Plus />
-      </Fab>
 
       <Sheet
         open={adding}
