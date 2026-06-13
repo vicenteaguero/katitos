@@ -20,6 +20,9 @@ export default defineConfig({
         name: 'Katitos',
         short_name: 'Katitos',
         description: 'A private space for two.',
+        id: '/',
+        lang: 'en',
+        categories: ['lifestyle', 'social'],
         theme_color: '#100408',
         background_color: '#100408',
         display: 'standalone',
@@ -27,8 +30,24 @@ export default defineConfig({
         start_url: '/',
         scope: '/',
         icons: [
-          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+          {
+            src: '/icons/icon-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any',
+          },
+          {
+            src: '/icons/icon-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any',
+          },
+          {
+            src: '/icons/icon-maskable-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
           {
             src: '/icons/icon-maskable-512.png',
             sizes: '512x512',
@@ -39,6 +58,9 @@ export default defineConfig({
       },
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // iOS reads launch images directly at startup — no need to precache the
+        // large splash PNGs into the runtime cache.
+        globIgnores: ['**/icons/splash/**'],
       },
       devOptions: {
         enabled: true,
