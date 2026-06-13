@@ -13,13 +13,44 @@ export function useAddGeorgiaItem() {
       kind: string;
       title: string;
       description?: string | null;
+      day?: string | null;
+      lat?: number | null;
+      lng?: number | null;
     }) => {
       const { error } = await supabase.from('trip_items').insert({
         trip_id: input.tripId,
         kind: input.kind,
         title: input.title,
         description: input.description ?? null,
+        day: input.day ?? null,
+        lat: input.lat ?? null,
+        lng: input.lng ?? null,
       });
+      if (error) throw error;
+    },
+    onSuccess: (_d, v) =>
+      qc.invalidateQueries({ queryKey: qk.trips.items(v.tripId) }),
+  });
+}
+
+/** Patch any field on an item (assign a day, drop a pin, edit). */
+export function useUpdateGeorgiaItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: {
+      id: string;
+      tripId: string;
+      patch: {
+        day?: string | null;
+        lat?: number | null;
+        lng?: number | null;
+        status?: string;
+      };
+    }) => {
+      const { error } = await supabase
+        .from('trip_items')
+        .update(v.patch)
+        .eq('id', v.id);
       if (error) throw error;
     },
     onSuccess: (_d, v) =>
