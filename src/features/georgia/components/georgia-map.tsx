@@ -9,6 +9,23 @@ export interface MapPin {
   tone?: 'place' | 'home';
 }
 
+/** Escape a user-authored place name before it goes into popup HTML. */
+function esc(s: string): string {
+  return s.replace(
+    /[&<>"']/g,
+    (c) =>
+      (
+        ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;',
+        }) as Record<string, string>
+      )[c]!
+  );
+}
+
 /** A Leaflet/OSM map of the trip — vanilla Leaflet in a ref'd div (no
  *  react-leaflet), with styled HTML pins so no marker image assets are needed. */
 export function GeorgiaMap({
@@ -29,6 +46,10 @@ export function GeorgiaMap({
       zoomControl: false,
       attributionControl: false,
       scrollWheelZoom: false,
+      // On touch, a one-finger pan would hijack page scroll inside this small
+      // embedded map — disable dragging there (auto-fit frames the trip; zoom
+      // buttons remain). Desktop keeps drag.
+      dragging: !L.Browser.mobile,
     }).setView([42.0, 43.5], 6); // Georgia, the Caucasus
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 18,
@@ -63,7 +84,7 @@ export function GeorgiaMap({
       });
       L.marker([p.lat, p.lng], { icon })
         .addTo(layer)
-        .bindPopup(`<b>${p.title}</b>`);
+        .bindPopup(`<b>${esc(p.title)}</b>`);
     }
     // Frame the TRIP (the place pins) — not the far-apart home cities, which
     // would zoom the map out to the whole globe.
