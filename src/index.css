@@ -184,8 +184,13 @@ body,
    If the band turns magenta it's the page background (CSS-fixable); if it stays
    dark it's the install-frozen manifest background_color / iOS chrome. Revert
    to var(--color-surface-2) right after. */
+/* TEMP DEBUG: distinct colors per layer to see the stacking. html=CYAN,
+   body=MAGENTA, #root=LIME, shell=dark(surface). Revert after. */
 html {
-  background-color: #ff00ff;
+  background-color: #00ffff;
+}
+#root {
+  background-color: #00ff00;
 }
 
 body {
