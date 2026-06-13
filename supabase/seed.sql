@@ -76,9 +76,13 @@ values
   ),
   (
     '22222222-2222-2222-2222-222222222222', 'Anastasia', 'b', '🌸',
-    'Moscow', 'Russia', 55.7558, 37.6173, 'Europe/Moscow', 'ru', 'es'
+    'Novosibirsk', 'Russia', 55.0084, 82.9357, 'Asia/Novosibirsk', 'ru', 'es'
   )
 on conflict (user_id) do nothing;
+
+-- A recent last-seen so the offline state reads "last here 2 hours ago"
+-- (rather than a bare "offline") before live presence kicks in.
+update public.couple_members set last_seen_at = now() - interval '2 hours';
 
 -- ── Currency rates ──
 insert into public.currency_rates (base, quote, rate)
@@ -187,9 +191,53 @@ values
    '22222222-2222-2222-2222-222222222222');
 
 -- Language phrases.
-insert into public.phrases (language, text, translation, transliteration, added_by)
+insert into public.phrases (language, text, translation, transliteration, example, added_by)
 values
-  ('ru', 'Я тебя люблю', 'I love you', 'Ya tebya lyublyu',
+  ('ru', 'Я тебя люблю', 'I love you', 'Ya tebya lyublyu', 'Я тебя люблю, котёнок',
    '22222222-2222-2222-2222-222222222222'),
-  ('es', 'Te amo', 'I love you', null,
+  ('ru', 'Спасибо большое', 'Thank you very much', 'Spasibo bolshoye', null,
+   '22222222-2222-2222-2222-222222222222'),
+  ('ru', 'Доброе утро', 'Good morning', 'Dobroye utro', null,
+   '22222222-2222-2222-2222-222222222222'),
+  ('ru', 'Скучаю по тебе', 'I miss you', 'Skuchayu po tebe', null,
+   '22222222-2222-2222-2222-222222222222'),
+  ('es', 'Te amo', 'I love you', null, 'Te amo, mi vida',
+   '11111111-1111-1111-1111-111111111111'),
+  ('es', 'Buenos días', 'Good morning', null, null,
    '11111111-1111-1111-1111-111111111111');
+
+-- ── The wall (chalkboard notes) ──
+insert into public.chalkboard_notes (body, color, x, y, rotation, author)
+values
+  ('te amo 🤍', '#f4ece0', 26, 26, -5, '11111111-1111-1111-1111-111111111111'),
+  ('приезжай скорее ✈️', '#e8a9b8', 230, 130, 4, '22222222-2222-2222-2222-222222222222'),
+  ('mate this weekend?', '#cdd6b4', 30, 250, -3, '11111111-1111-1111-1111-111111111111'),
+  ('soon, my love', '#a9c7d6', 220, 360, 6, '22222222-2222-2222-2222-222222222222');
+
+-- ── Georgia itinerary ──
+insert into public.trip_items (trip_id, kind, title, status, position, created_by)
+values
+  ('55555555-5555-5555-5555-555555555555', 'place', 'Wander Tbilisi old town', 'open', 0, '11111111-1111-1111-1111-111111111111'),
+  ('55555555-5555-5555-5555-555555555555', 'todo', 'Book the sulphur baths', 'done', 1, '11111111-1111-1111-1111-111111111111'),
+  ('55555555-5555-5555-5555-555555555555', 'idea', 'Wine tasting in Kakheti', 'open', 2, '22222222-2222-2222-2222-222222222222'),
+  ('55555555-5555-5555-5555-555555555555', 'place', 'Kazbegi day trip', 'open', 3, '11111111-1111-1111-1111-111111111111');
+
+-- ── Tonight's three Know-Me questions (slots 0,1,2 for the current couple-day) ──
+-- Picks three distinct active questions; idempotent on (couple_day, slot).
+do $$
+declare
+  v_date date := current_date;
+  v_ids uuid[];
+begin
+  select array_agg(id) into v_ids from (
+    select id from public.know_me_questions where active order by created_at limit 3
+  ) q;
+  if v_ids is not null and array_length(v_ids, 1) = 3 then
+    insert into public.know_me_days (couple_day, slot, question_id)
+    values
+      (v_date, 0, v_ids[1]),
+      (v_date, 1, v_ids[2]),
+      (v_date, 2, v_ids[3])
+    on conflict (couple_day, slot) do nothing;
+  end if;
+end $$;
