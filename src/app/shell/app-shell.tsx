@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { Settings, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@kernel/auth';
@@ -67,40 +66,6 @@ function TopBar() {
   );
 }
 
-/**
- * TEMP readout — confirms the standalone viewport after the status-bar fix +
- * re-install. With status-bar-style "black" the web view renders below an
- * opaque status strip, so iH stays ~797 but the bottom band is gone. Remove
- * this badge once verified on device.
- */
-function DiagBadge() {
-  const [m, setM] = useState('…');
-  useEffect(() => {
-    const tick = () => {
-      const rect = (sel: string) => {
-        const el = document.querySelector(sel);
-        if (!el) return 'na';
-        const r = el.getBoundingClientRect();
-        return `${Math.round(r.top)}-${Math.round(r.bottom)}`;
-      };
-      const iH = Math.round(window.innerHeight);
-      const scr = window.screen ? Math.round(window.screen.height) : -1;
-      setM(
-        `iH${iH} scr${scr} sh${rect('#appshell')} main${rect('main')} nav${rect('nav')}`
-      );
-    };
-    tick();
-    const t = window.setInterval(tick, 500);
-    return () => window.clearInterval(t);
-  }, []);
-
-  return (
-    <div className="fixed left-1/2 top-[max(2.5rem,env(safe-area-inset-top))] z-[999] max-w-[92vw] -translate-x-1/2 rounded-full bg-[#ffd400] px-3 py-1 text-center font-sans text-[10px] font-extrabold text-black shadow-[0_4px_18px_rgba(0,0,0,0.55)]">
-      {m}
-    </div>
-  );
-}
-
 export function AppShell() {
   const { status } = useAuth();
   // Heal this device's push subscription on every launch (no prompt) so loves
@@ -116,20 +81,14 @@ export function AppShell() {
   // this same pattern; viewport units and JS height-pinning were both unreliable
   // here — the real fix was the opaque status bar, see index.html.)
   return (
-    <>
-      <DiagBadge />
-      <div
-        id="appshell"
-        className="mx-auto flex h-full max-w-app flex-col overflow-hidden bg-surface"
-      >
-        <PresenceTracker />
-        <CacheWarmer />
-        <TopBar />
-        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-[1.75rem] pb-8 pt-[1.75rem] [-webkit-overflow-scrolling:touch]">
-          <Outlet />
-        </main>
-        <BottomNav />
-      </div>
-    </>
+    <div className="mx-auto flex h-full max-w-app flex-col overflow-hidden bg-surface">
+      <PresenceTracker />
+      <CacheWarmer />
+      <TopBar />
+      <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-[1.75rem] pb-8 pt-[1.75rem] [-webkit-overflow-scrolling:touch]">
+        <Outlet />
+      </main>
+      <BottomNav />
+    </div>
   );
 }
