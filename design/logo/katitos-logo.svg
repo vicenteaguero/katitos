@@ -1,6 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
   <!-- Katitos — cat head w/ heart eyes. Vector traced from source render. -->
   <rect width="1024" height="1024" rx="224" fill="#6E1423"/>
+  <g transform="translate(0.5,31)">
   <g transform="translate(0.000000,1024.000000) scale(0.100000,-0.100000)"
 fill="#FFFAFA" stroke="none">
 <path d="M3114 7595 c-30 -46 -102 -296 -120 -416 -20 -139 -15 -362 12 -521
@@ -21,4 +22,5 @@ fill="#FFFAFA" stroke="none">
 -74 -206 -190 -275 -257 l-125 -122 -160 157 c-88 86 -231 220 -319 297 -169
 149 -252 239 -290 313 -96 190 -66 409 76 555 100 101 231 143 369 117z"/>
 </g>
+  </g>
 </svg>
