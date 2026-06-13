@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { Settings, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@kernel/auth';
@@ -92,6 +92,41 @@ const SHELL_MODES: ShellMode[] = [
   { id: 'E', label: 'height 100% chain', cls: 'h-full' },
 ];
 
+/** TEMP diagnostic badge — live device numbers + tap to cycle the layout mode. */
+function DiagBadge({ id, onCycle }: { id: string; onCycle: () => void }) {
+  const [m, setM] = useState('…');
+  useEffect(() => {
+    const tick = () => {
+      const bottom = (el: Element | null) =>
+        el ? Math.round(el.getBoundingClientRect().bottom) : -1;
+      const iH = Math.round(window.innerHeight);
+      const vv = window.visualViewport
+        ? Math.round(window.visualViewport.height)
+        : -1;
+      const scr = window.screen ? Math.round(window.screen.height) : -1;
+      const navB = bottom(document.querySelector('nav'));
+      setM(
+        `iH${iH} vv${vv} scr${scr} shB${bottom(
+          document.getElementById('appshell')
+        )} navB${navB} gap${iH - navB}`
+      );
+    };
+    tick();
+    const t = window.setInterval(tick, 400);
+    return () => window.clearInterval(t);
+  }, []);
+
+  return (
+    <button
+      type="button"
+      onClick={onCycle}
+      className="fixed left-1/2 top-[max(2.5rem,calc(env(safe-area-inset-top)+0.25rem))] z-[999] -translate-x-1/2 whitespace-nowrap rounded-full bg-[#ffd400] px-3 py-1.5 font-sans text-[10px] font-extrabold leading-tight text-black shadow-[0_4px_18px_rgba(0,0,0,0.55)]"
+    >
+      {id} · {m} ⟳
+    </button>
+  );
+}
+
 export function AppShell() {
   const { status } = useAuth();
   // Heal this device's push subscription on every launch (no prompt) so loves
@@ -125,14 +160,9 @@ export function AppShell() {
   // and bottom nav are ALWAYS visible (native-PWA feel).
   return (
     <>
-      <button
-        type="button"
-        onClick={cycle}
-        className="fixed left-1/2 top-[max(2.75rem,calc(env(safe-area-inset-top)+0.25rem))] z-[999] -translate-x-1/2 whitespace-nowrap rounded-full bg-[#ffd400] px-4 py-2 font-sans text-xs font-extrabold text-black shadow-[0_4px_18px_rgba(0,0,0,0.55)]"
-      >
-        Layout {mode.id}: {mode.label} ⟳
-      </button>
+      <DiagBadge id={mode.id} onCycle={cycle} />
       <div
+        id="appshell"
         className={`${mode.cls} mx-auto flex max-w-app flex-col overflow-hidden bg-surface`}
         style={mode.style}
       >
