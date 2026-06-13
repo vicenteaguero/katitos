@@ -1,9 +1,16 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { nanoid } from 'nanoid';
 import { supabase } from '@kernel/supabase';
-import { BUCKETS, storagePaths, usePhotoUpload } from '@kernel/storage';
+import { BUCKETS, usePhotoUpload } from '@kernel/storage';
 import { qk } from '@kernel/query';
 
-/** Capture/replace today's polaroid: upload the blob then upsert the row. */
+/**
+ * Capture/replace today's polaroid. Each shot lands at a UNIQUE versioned path
+ * (`${day}/${id}.jpg`) — we never overwrite, so a replaced photo is never
+ * deleted: it just stops being the row's `image_path`. The old bytes stay in
+ * storage, unreferenced by any screen, so neither of us sees the retake's
+ * predecessor — but it's never lost.
+ */
 export function useUpsertPolaroid() {
   const qc = useQueryClient();
   const { uploadPhoto } = usePhotoUpload();
@@ -17,7 +24,7 @@ export function useUpsertPolaroid() {
       blob: Blob;
       caption?: string | null;
     }) => {
-      const path = storagePaths.polaroid(day);
+      const path = `${day}/${nanoid(10)}.jpg`;
       await uploadPhoto(BUCKETS.polaroids, path, blob);
       const { error } = await supabase
         .from('polaroids')
