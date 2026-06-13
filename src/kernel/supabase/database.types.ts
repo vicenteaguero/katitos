@@ -1695,12 +1695,13 @@ export type Database = {
           created_at: string
           id: string
           question_id: string
-        }
+          slot: number
+        }[]
         SetofOptions: {
           from: "*"
           to: "know_me_days"
-          isOneToOne: true
-          isSetofReturn: false
+          isOneToOne: false
+          isSetofReturn: true
         }
       }
       know_me_reveal: {
