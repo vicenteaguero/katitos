@@ -16,8 +16,20 @@ export default defineConfig({
   use: {
     baseURL: 'http://127.0.0.1:5173',
     trace: 'on-first-retry',
-    ...devices['iPhone 13'],
   },
+  projects: [
+    { name: 'iPhone 13', use: { ...devices['iPhone 13'] } },
+    {
+      // No built-in device entry yet — model the larger Pro Max viewport
+      // (~440×956 @3x, Dynamic Island) on the iPhone 13 WebKit profile.
+      name: 'iPhone 17 Pro Max',
+      use: {
+        ...devices['iPhone 13'],
+        viewport: { width: 440, height: 956 },
+        deviceScaleFactor: 3,
+      },
+    },
+  ],
   webServer: {
     command: 'npm run dev',
     url: 'http://127.0.0.1:5173',
