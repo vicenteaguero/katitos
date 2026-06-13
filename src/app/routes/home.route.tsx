@@ -1,4 +1,5 @@
-import type { CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
+import { Heart } from 'lucide-react';
 import { usePartner } from '@kernel/auth';
 import { useCouple } from '@kernel/couple';
 import { useNow } from '@kernel/hooks';
@@ -9,36 +10,52 @@ import {
   relativeTime,
   timeInZone,
 } from '@kernel/lib';
+import { notifyPartner } from '@kernel/push';
+import { toast } from '@kernel/ui';
 import { usePartnerPresence } from '@features/presence';
 import { GeorgiaCountdownWidget } from '@features/georgia';
 import { TodayQuestionsWidget } from '@features/know-me';
 import { LastPolaroidWidget } from '@features/polaroid';
 
+/** Our pet names by role: him (a) is Katito, her (b) is Katita. */
+function petNameOf(role: string | null | undefined): 'Katito' | 'Katita' {
+  return role === 'a' ? 'Katito' : 'Katita';
+}
+
 /**
- * Home — the "Bolshoi Nocturne" overture. Four movements: who your love is and
- * whether they're here, the kept hero (how long you've been together, crowned
- * by the silver dome, with both clocks and the leagues between), the countdown
- * to Georgia, tonight's questions, and the last photo you took.
+ * Home — the "Bolshoi Nocturne" overture. Whether your love is here, the kept
+ * hero (days together, both clocks, the leagues between), the Georgia
+ * countdown, tonight's questions, and the last photo you took.
  */
 
-/** The greeting — your love's name, big, with a live here/last-seen line. */
+/** The greeting — about your love's presence, with a "loves you" pulse. */
 function Greeting() {
-  const { partner } = usePartner();
+  const { self, partner } = usePartner();
   const { online } = usePartnerPresence();
-  // Our pet names, by who you're greeting: him (role 'a') is Katito, her
-  // (role 'b') is Katita. So the account decides which name says hi.
-  const petName = partner?.role === 'a' ? 'Katito' : 'Katita';
+  const partnerName = petNameOf(partner?.role);
+  const myName = petNameOf(self?.role);
   const where = partner?.city;
+  const [sent, setSent] = useState(false);
+
+  const sendLove = () => {
+    void notifyPartner({
+      title: `Your ${myName} loves you so much ❤️`,
+      url: '/',
+    });
+    setSent(true);
+    toast.success('Sent 💌');
+    window.setTimeout(() => setSent(false), 2200);
+  };
 
   return (
-    <header className="pt-1 text-center">
-      <h1 className="font-display text-[3rem] font-semibold leading-[1.04] tracking-tight text-fg">
-        {petName}{' '}
-        <span className="candle-flicker inline-block">
+    <header className="space-y-3 pt-1 text-center">
+      <p className="font-display text-[1.75rem] font-medium italic leading-tight text-fg">
+        Your {partnerName}{' '}
+        <span className="candle-flicker not-italic">
           {partner?.emoji ?? '❤️'}
         </span>
-      </h1>
-      <div className="mt-3 flex items-center justify-center gap-2">
+      </p>
+      <div className="flex items-center justify-center gap-2">
         <span
           className={`inline-block h-[7px] w-[7px] shrink-0 rounded-full ${
             online ? 'candle-flicker bg-purple' : 'bg-muted'
@@ -52,12 +69,23 @@ function Greeting() {
         />
         <span className="font-sans text-[0.84rem] text-muted">
           {online
-            ? `here with you now${where ? ` · ${where}` : ''}`
+            ? `is here with you now${where ? ` · ${where}` : ''}`
             : partner?.last_seen_at
-              ? `last here ${relativeTime(partner.last_seen_at)}`
-              : 'offline'}
+              ? `was here ${relativeTime(partner.last_seen_at)}`
+              : 'is away'}
         </span>
       </div>
+      <button
+        type="button"
+        onClick={sendLove}
+        className="lift-press mx-auto inline-flex items-center gap-2 rounded-full bg-accent/90 px-5 py-2 font-sans text-sm font-semibold text-accent-fg shadow-loge transition active:scale-95"
+      >
+        <Heart
+          size={16}
+          className={sent ? 'candle-flicker fill-current' : 'fill-current'}
+        />
+        {sent ? 'Sent 💌' : `Send ${partnerName} love`}
+      </button>
     </header>
   );
 }
@@ -160,7 +188,7 @@ function TogetherHero() {
         <p className="m-0 mt-4 text-[10.5px] font-bold uppercase tracking-[0.3em] text-[#c89aa6]">
           Together for
         </p>
-        <p className="gilt-text gold-shimmer m-0 mt-1 font-display text-[5.6rem] font-semibold leading-[0.9] tabular-nums tracking-tight">
+        <p className="gilt-text gold-shimmer gilt-figures m-0 mt-1 font-display text-[5.6rem] font-semibold tracking-tight">
           {days.toLocaleString()}
         </p>
         <p className="m-0 mt-1 font-display text-[17px] italic text-[#dcbcc3]">
