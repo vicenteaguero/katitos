@@ -47,7 +47,7 @@ export function KnowMeRoute() {
   const [authoring, setAuthoring] = useState(false);
 
   return (
-    <div className="curtain-reveal space-y-12">
+    <div className="curtain-reveal space-y-7">
       <PageHeader
         title="Know Me"
         subtitle="Three questions a day, by candlelight ❤️"
@@ -64,13 +64,13 @@ export function KnowMeRoute() {
       />
 
       {tab === 'history' ? (
-        <section className="space-y-7">
+        <section className="space-y-5">
           <p className="eyebrow">The Archive</p>
           <HistoryArchive />
         </section>
       ) : (
         <>
-          <section className="space-y-7">
+          <section className="space-y-5">
             <p className="eyebrow">
               {items.length > 1 ? "Tonight's Questions" : "Tonight's Question"}
             </p>
@@ -90,7 +90,7 @@ export function KnowMeRoute() {
                 hint="Tonight's questions are being set — check back in a moment."
               />
             ) : (
-              <div className="space-y-10">
+              <div className="space-y-7">
                 {items.map((item, i) => (
                   <div key={item.dayId} className="space-y-3">
                     {items.length > 1 && (
@@ -108,7 +108,7 @@ export function KnowMeRoute() {
           {/* The relationship as one gold-stitched line between acts. */}
           <hr className="seam" aria-hidden="true" />
 
-          <section className="space-y-7">
+          <section className="space-y-5">
             <p className="font-sans text-sm text-muted">The Standings</p>
             <LoveMapPanel />
           </section>
