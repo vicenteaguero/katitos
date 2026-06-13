@@ -63,6 +63,10 @@ export function CameraCapture({
     return stop;
   }, [start, stop, preview]);
 
+  // Front camera = a mirror: flip the live preview AND bake the flip into the
+  // saved photo, so the picture matches what you saw (not the reversed world).
+  const mirror = facing === 'user';
+
   const capture = useCallback(() => {
     const video = videoRef.current;
     if (!video || !video.videoWidth) return;
@@ -71,6 +75,10 @@ export function CameraCapture({
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    if (mirror) {
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+    }
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     canvas.toBlob(
       (blob) => {
@@ -82,7 +90,7 @@ export function CameraCapture({
       'image/jpeg',
       quality
     );
-  }, [stop, quality]);
+  }, [stop, quality, mirror]);
 
   const confirm = () => {
     if (!preview) return;
@@ -133,6 +141,7 @@ export function CameraCapture({
             playsInline
             muted
             className="h-full w-full object-cover"
+            style={mirror ? { transform: 'scaleX(-1)' } : undefined}
           />
         )}
         {error && (
