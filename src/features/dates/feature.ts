@@ -1,15 +1,25 @@
 import { CalendarDays } from 'lucide-react';
 import { defineFeature } from '@kernel/registry';
-import { DatesListRoute } from './routes/dates-list.route';
-import { DateDetailRoute } from './routes/date-detail.route';
 
 export const datesFeature = defineFeature({
   id: 'dates',
   title: 'Dates',
   basePath: '/dates',
   routes: [
-    { index: true, Component: DatesListRoute },
-    { path: ':dateId', Component: DateDetailRoute },
+    {
+      index: true,
+      lazy: () =>
+        import('./routes/dates-list.route').then((m) => ({
+          Component: m.DatesListRoute,
+        })),
+    },
+    {
+      path: ':dateId',
+      lazy: () =>
+        import('./routes/date-detail.route').then((m) => ({
+          Component: m.DateDetailRoute,
+        })),
+    },
   ],
   nav: [
     {
