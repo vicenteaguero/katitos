@@ -22,7 +22,7 @@ export function FlowersWidget() {
           </span>
         </div>
         <div className="relative z-[1]">
-          <p className="gilt-text font-display text-4xl font-semibold leading-none tabular-nums">
+          <p className="gilt-text font-display text-4xl font-semibold gilt-figures">
             {c.days}
             <span className="ml-1 align-baseline text-xl">d</span>
           </p>
