@@ -15,7 +15,7 @@ export function GamePlayRoute() {
   if (!game) return <Empty icon="🎭" title="Game not found" />;
 
   return (
-    <div className="curtain-reveal space-y-10">
+    <div className="curtain-reveal space-y-8">
       <Link
         to="/games"
         className="lift-press inline-flex items-center gap-1 font-sans text-sm tracking-[0.02em] text-muted"
