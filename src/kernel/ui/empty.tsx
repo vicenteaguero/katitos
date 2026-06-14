@@ -12,7 +12,7 @@ export function Empty({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-5 px-7 py-16 text-center">
+    <div className="flex flex-col items-center justify-center gap-5 px-7 py-12 text-center">
       {icon && <div className="text-5xl text-gold/70">{icon}</div>}
       <p className="font-display text-2xl font-medium tracking-tight text-fg">
         {title}
