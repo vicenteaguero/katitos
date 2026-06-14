@@ -107,6 +107,7 @@ const OPEN = new Set([
   'language',
   'chalkboard', // "The wall"
   'know-me',
+  'currency',
 ]);
 
 export const features: FeatureModule[] = modules.map((m) => ({
