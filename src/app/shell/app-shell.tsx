@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
-import { Settings, ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ArrowLeftRight } from 'lucide-react';
 import { useAuth } from '@kernel/auth';
 import { useEnsurePushSubscription } from '@kernel/push';
 import { IconButton, LoadingScreen } from '@kernel/ui';
@@ -55,11 +55,15 @@ function TopBar() {
         </div>
         <div className="flex items-center gap-1">
           <DevUserSwitcher />
-          <Link to="/settings">
-            <IconButton label="Settings" className="h-9 w-9">
-              <Settings className="h-5 w-5" />
-            </IconButton>
-          </Link>
+          {/* Home corner = the fast lane to the currency converter. Settings
+              lives only in the More drawer now. */}
+          {atHome && (
+            <Link to="/currency">
+              <IconButton label="Currency" className="h-9 w-9">
+                <ArrowLeftRight className="h-5 w-5" />
+              </IconButton>
+            </Link>
+          )}
         </div>
       </div>
     </header>
