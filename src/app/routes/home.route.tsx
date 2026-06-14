@@ -42,32 +42,33 @@ function loveNotes(name: string, g: 'm' | 'f'): string[] {
     g === 'f'
       ? ['bonita', 'guapa', 'hermosa', 'preciosa', 'linda']
       : ['bonito', 'guapo', 'hermoso', 'precioso', 'lindo'];
-  const liubi = g === 'f' ? 'Liubimaya' : 'Liubimy'; // любим-ая / -ый
+  const beloved = g === 'f' ? 'любимая' : 'любимый'; // Cyrillic "beloved"
   return [
-    // — our words —
+    // — our words, kept in their own tongue —
     'Liubimonkey 🐵❤️',
-    'Liubiminki 🤍',
+    'любиминки 🤍',
     'Liubimonkeykaya 🥰',
     'Liubimonkeykayita 💞',
-    `${liubi} 🤍`,
+    `${beloved} 🤍`,
     'My sunshine ☀️',
     `Mi ${pol} ${adj[0]} ❤️`,
     `${name} ${adj[1]} 🌙`,
     `Mi ${pol} ${adj[2]} 🌹`,
     `${name} ${adj[3]} ✨`,
     `Mi ${name} ${adj[4]} 😍`,
-    // — sweet nothings —
-    `Te amo, ${name} 💕`,
-    'Eres el amor de mi vida 💖',
-    `Pienso en ti, ${name} 💭`,
-    'Mi amor, ven a casa 💌',
-    'No dejo de pensar en ti 🤍',
-    'Cada día te amo más 💞',
-    'Te mando un besito 😘',
-    'Te necesito cerquita 🫶',
-    `Eres mi hogar, ${name} 🏡`,
+    // — everything else in English, the way we actually talk —
+    `I love you, ${name} 💕`,
+    'You’re the love of my life 💖',
+    'Thinking of you 💭',
+    'Miss you across the miles 🌍',
+    'Counting down to you 📆',
+    'Can’t stop thinking about you 🤍',
+    'Close even when you’re far 🩵',
+    'I love you more every day 💞',
+    'Sending you a kiss 😘',
+    `You’re my home, ${name} 🏡`,
     `My love, my ${name} 💝`,
-    `${name}, eres todo para mí 🌟`,
+    `${name}, you’re my everything 🌟`,
   ];
 }
 
@@ -132,7 +133,7 @@ function Greeting() {
     const note = notes[Math.floor(Math.random() * notes.length)];
     const { ok, delivered } = await notifyPartner({
       title: note,
-      body: 'Toca para venir a casa 💌',
+      body: 'A little love from me 🤍',
       url: '/',
     });
     if (!ok) {
