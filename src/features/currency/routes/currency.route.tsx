@@ -151,6 +151,7 @@ export function CurrencyRoute() {
             I have · {meta(from).flag} {from}
           </p>
           <p className="font-display text-5xl tabular-nums tracking-tight text-muted">
+            <span className="text-3xl text-muted/70">{from} </span>
             {shown}
           </p>
         </div>
