@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { ArrowLeftRight, Delete, History, Trash2 } from 'lucide-react';
 import { convert, formatMoney, indexRates } from '@kernel/lib';
 import { Empty, Sheet } from '@kernel/ui';
@@ -36,32 +36,16 @@ export function CurrencyRoute() {
   const [editing, setEditing] = useState<'from' | 'to' | null>(null);
   const [history, setHistory] = useState<Entry[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [saved, setSaved] = useState(false);
   const nextId = useRef(1);
 
   const n = Number(amount) || 0;
   const result = convert(n, from, to, index);
   const shown = amount === '' ? '0' : amount;
 
-  // Auto-save: once you stop typing on a real amount, the conversion settles
-  // into history on its own — no button, no thinking about it.
-  useEffect(() => {
-    if (result == null || n === 0) return;
-    const id = window.setTimeout(() => {
-      setHistory((h) => {
-        const top = h[0];
-        if (top && top.amount === n && top.from === from && top.to === to)
-          return h;
-        return [
-          { id: nextId.current++, amount: n, from, to, result },
-          ...h,
-        ].slice(0, 30);
-      });
-    }, 800);
-    return () => window.clearTimeout(id);
-  }, [n, from, to, result]);
-
   // ── numpad ──
   const tap = (key: string) => {
+    setSaved(false);
     setAmount((a) => {
       if (key === '⌫') return a.slice(0, -1);
       if (key === '.') return a.includes('.') ? a : a === '' ? '0.' : a + '.';
@@ -87,17 +71,26 @@ export function CurrencyRoute() {
     setEditing(null);
   };
 
+  const save = () => {
+    if (result == null || n === 0) return;
+    setHistory((h) =>
+      [{ id: nextId.current++, amount: n, from, to, result }, ...h].slice(0, 30)
+    );
+    setSaved(true);
+  };
+
   const restore = (e: Entry) => {
     setAmount(String(e.amount));
     setFrom(e.from);
     setTo(e.to);
+    setSaved(false);
     setShowHistory(false);
   };
 
   return (
-    <div className="curtain-reveal flex flex-col gap-6">
+    <div className="flex h-full flex-col">
       {/* Currency selector + history shortcut. */}
-      <div className="relative flex items-center justify-center gap-3">
+      <div className="relative flex shrink-0 items-center justify-center gap-3">
         <CurrencyChip
           code={from}
           open={editing === 'from'}
@@ -128,7 +121,7 @@ export function CurrencyRoute() {
 
       {/* Inline 4-flag picker — one tap, no menus. */}
       {editing && (
-        <div className="curtain-reveal -mt-2 flex justify-center gap-2">
+        <div className="curtain-reveal mt-4 flex shrink-0 justify-center gap-2">
           {CURRENCIES.map((c) => {
             const active = (editing === 'from' ? from : to) === c.code;
             return (
@@ -150,51 +143,65 @@ export function CurrencyRoute() {
         </div>
       )}
 
-      {/* The reading: amount → gold total. No box, no bar — just the figures. */}
-      <div className="py-2 text-center">
-        <p className="font-display text-4xl tabular-nums tracking-tight text-muted">
+      {/* The reading fills the open space — amount above, gold total below. */}
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 py-4">
+        <p className="font-display text-5xl tabular-nums tracking-tight text-muted">
           {shown}
         </p>
-        <p className="gilt-text gilt-figures gold-shimmer mt-2 font-display text-[3.25rem] font-semibold tracking-tight">
+        <p className="gilt-text gilt-figures gold-shimmer font-display text-[3.75rem] font-semibold leading-none tracking-tight">
           {result != null ? formatMoney(result, to) : '—'}
         </p>
       </div>
 
       {/* Minimal numpad — bare figures, generous targets. */}
-      <div className="grid grid-cols-3 gap-x-2 gap-y-1">
+      <div className="grid shrink-0 grid-cols-3 gap-x-3 gap-y-2">
         {['7', '8', '9', '4', '5', '6', '1', '2', '3', '.', '0', '⌫'].map(
           (k) => (
             <button
               key={k}
               type="button"
               onClick={() => tap(k)}
-              className="lift-press flex h-14 items-center justify-center rounded-lg font-display text-[1.75rem] tabular-nums text-fg transition-colors active:bg-fg/10"
+              className="lift-press flex h-[4.5rem] items-center justify-center rounded-lg font-display text-3xl tabular-nums text-fg transition-colors active:bg-fg/10"
             >
-              {k === '⌫' ? <Delete className="h-6 w-6 text-muted" /> : k}
+              {k === '⌫' ? <Delete className="h-7 w-7 text-muted" /> : k}
             </button>
           )
         )}
       </div>
 
-      <button
-        type="button"
-        onClick={() => setAmount('')}
-        className="lift-press mx-auto font-sans text-xs font-semibold uppercase tracking-[0.2em] text-muted active:text-accent"
-      >
-        Clear
-      </button>
+      {/* Actions — clear + save (manual, deliberate). */}
+      <div className="mt-4 flex shrink-0 items-stretch gap-3">
+        <button
+          type="button"
+          onClick={() => {
+            setAmount('');
+            setSaved(false);
+          }}
+          className="lift-press flex-1 rounded-lg bg-surface py-4 font-sans text-sm font-semibold uppercase tracking-[0.16em] text-muted active:bg-fg/10"
+        >
+          Clear
+        </button>
+        <button
+          type="button"
+          onClick={save}
+          disabled={result == null || n === 0}
+          className="lift-press flex-[2] rounded-lg bg-accent py-4 font-sans text-sm font-semibold uppercase tracking-[0.16em] text-accent-fg shadow-loge transition active:scale-[0.98] disabled:opacity-40"
+        >
+          {saved ? 'Saved ✓' : 'Save to history'}
+        </button>
+      </div>
 
       {/* Session history — no database, gone on reload. */}
       <Sheet
         open={showHistory}
         onClose={() => setShowHistory(false)}
         title="This session"
-        size="half"
+        size="full"
       >
         {history.length === 0 ? (
-          <Empty title="Nothing yet" hint="Conversions land here as you go." />
+          <Empty title="Nothing saved yet" hint="Hit Save and it lands here." />
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="flex justify-end">
               <button
                 type="button"
@@ -204,18 +211,18 @@ export function CurrencyRoute() {
                 <Trash2 className="h-3.5 w-3.5" /> Clear all
               </button>
             </div>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-2">
               {history.map((e) => (
                 <button
                   key={e.id}
                   type="button"
                   onClick={() => restore(e)}
-                  className="lift-press flex items-center justify-between gap-3 rounded-lg bg-surface px-4 py-3 text-left active:bg-fg/5"
+                  className="lift-press flex items-center justify-between gap-3 rounded-lg bg-surface px-5 py-4 text-left active:bg-fg/5"
                 >
-                  <span className="font-sans text-sm tabular-nums text-muted">
+                  <span className="font-sans text-base tabular-nums text-muted">
                     {meta(e.from).flag} {formatMoney(e.amount, e.from)}
                   </span>
-                  <span className="font-display text-base font-semibold tabular-nums text-fg">
+                  <span className="font-display text-lg font-semibold tabular-nums text-fg">
                     {formatMoney(e.result, e.to)} {meta(e.to).flag}
                   </span>
                 </button>
