@@ -54,7 +54,7 @@ export function PunitoListRoute() {
   };
 
   return (
-    <div className="curtain-reveal space-y-12">
+    <div className="curtain-reveal space-y-8">
       {/* Footlight hero: the ledger of seals under candlelight. */}
       <div className="relative isolate">
         <div
