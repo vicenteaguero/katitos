@@ -1,4 +1,4 @@
-export type CurrencyCode = 'USD' | 'CLP' | 'RUB' | string;
+export type CurrencyCode = 'USD' | 'CLP' | 'RUB' | 'GEL' | string;
 
 export interface Rate {
   base: string;
