@@ -175,15 +175,20 @@ export function BottomNav() {
       <Sheet
         open={moreOpen}
         onClose={() => setMoreOpen(false)}
-        title="The Program"
+        title="More"
         size="half"
       >
-        {/* Categorized vertical list — no tile grid, no hairlines, no borders.
-            Tone + spacing separate the sections; a running --i staggers rows. */}
+        {/* Open features all sit together at the top — the live app, one tap
+            away. The "Soon" rows keep their categories beneath. No tiles, no
+            borders; tone + spacing separate, a running --i staggers rows. */}
         <div className="curtain-stagger flex flex-col gap-4 pb-2">
           {(() => {
+            const open = entries.filter((e) => !e.locked);
+            const locked = entries.filter((e) => e.locked);
+
+            // Locked rows grouped by category (categories exist only here now).
             const groups = new Map<string, typeof entries>();
-            for (const e of entries) {
+            for (const e of locked) {
               const cat = e.category ?? 'More';
               const g = groups.get(cat);
               if (g) g.push(e);
@@ -194,32 +199,51 @@ export function BottomNav() {
               ...[...groups.keys()].filter((c) => !CATEGORY_ORDER.includes(c)),
             ];
             let row = 0;
-            return order
-              .filter((cat) => groups.has(cat))
-              .map((cat) => (
-                <section key={cat}>
-                  <p className="mb-1.5 px-3 font-sans text-[0.625rem] font-semibold uppercase tracking-[0.18em] text-muted">
-                    {cat}
-                  </p>
-                  <div className="flex flex-col">
-                    {[...groups.get(cat)!]
-                      // Open features rise to the top of their section; locked
-                      // ("Soon") rows settle beneath them.
-                      .sort((a, b) => Number(a.locked) - Number(b.locked))
-                      .map((e) => (
+            return (
+              <>
+                {open.length > 0 && (
+                  <section>
+                    <p className="mb-1.5 px-3 font-sans text-[0.625rem] font-semibold uppercase tracking-[0.18em] text-gold/80">
+                      Open
+                    </p>
+                    <div className="flex flex-col">
+                      {open.map((e) => (
                         <DrawerRow
                           key={e.to}
                           to={e.to}
                           icon={e.icon}
                           label={e.label}
                           index={row++}
-                          locked={e.locked}
                           onClick={() => setMoreOpen(false)}
                         />
                       ))}
-                  </div>
-                </section>
-              ));
+                    </div>
+                  </section>
+                )}
+                {order
+                  .filter((cat) => groups.has(cat))
+                  .map((cat) => (
+                    <section key={cat}>
+                      <p className="mb-1.5 px-3 font-sans text-[0.625rem] font-semibold uppercase tracking-[0.18em] text-muted">
+                        {cat}
+                      </p>
+                      <div className="flex flex-col">
+                        {groups.get(cat)!.map((e) => (
+                          <DrawerRow
+                            key={e.to}
+                            to={e.to}
+                            icon={e.icon}
+                            label={e.label}
+                            index={row++}
+                            locked
+                            onClick={() => setMoreOpen(false)}
+                          />
+                        ))}
+                      </div>
+                    </section>
+                  ))}
+              </>
+            );
           })()}
           <DrawerRow
             to="/settings"
