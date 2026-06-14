@@ -32,7 +32,7 @@ function TodayCard({ onOpenCamera }: { onOpenCamera: () => void }) {
 
   if (!today) {
     return (
-      <Card className="footlight flex flex-col items-center gap-6 py-12 text-center">
+      <Card className="footlight flex flex-col items-center gap-6 py-9 text-center">
         <span
           className="polaroid-warmth pointer-events-none absolute inset-0 -z-10"
           aria-hidden="true"
