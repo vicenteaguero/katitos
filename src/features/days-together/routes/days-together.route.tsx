@@ -46,14 +46,14 @@ export function DaysTogetherRoute() {
   const c = countdownTo(next, now);
 
   return (
-    <div className="curtain-reveal space-y-12">
+    <div className="curtain-reveal space-y-8">
       <PageHeader title="Together" subtitle={`since ${start}`} />
 
       {/* The running tally — a lit tonal stage, the grand gilt numeral. */}
       <section className="space-y-7">
         <p className="eyebrow">Our Running Tally</p>
         <div className="footlight">
-          <div className="relative overflow-hidden rounded-lg bg-surface-2 px-7 py-12 text-center">
+          <div className="relative overflow-hidden rounded-lg bg-surface-2 px-7 py-9 text-center">
             <p className="font-display text-base font-medium uppercase tracking-[0.28em] text-brown">
               Days Together
             </p>
