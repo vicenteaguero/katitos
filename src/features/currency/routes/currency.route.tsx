@@ -143,14 +143,37 @@ export function CurrencyRoute() {
         </div>
       )}
 
-      {/* The reading fills the open space — amount above, gold total below. */}
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 py-4">
-        <p className="font-display text-5xl tabular-nums tracking-tight text-muted">
-          {shown}
-        </p>
-        <p className="gilt-text gilt-figures gold-shimmer font-display text-[3.75rem] font-semibold leading-none tracking-tight">
-          {result != null ? formatMoney(result, to) : '—'}
-        </p>
+      {/* The reading — clearly MINE (top, plain) vs WHAT I WANT (the gold,
+          haloed in soft wine light so the answer reads at a glance). */}
+      <div className="flex flex-1 flex-col items-center justify-center gap-9 py-4">
+        <div className="text-center">
+          <p className="mb-2 font-sans text-[0.625rem] font-semibold uppercase tracking-[0.28em] text-muted">
+            I have · {meta(from).flag} {from}
+          </p>
+          <p className="font-display text-5xl tabular-nums tracking-tight text-muted">
+            {shown}
+          </p>
+        </div>
+
+        <div className="relative w-full text-center">
+          {/* The soft red/pink light zone — the answer's halo. */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute left-1/2 top-1/2 h-[170%] w-[116%] -translate-x-1/2 -translate-y-1/2"
+            style={{
+              background:
+                'radial-gradient(50% 50% at 50% 50%, rgba(196,72,98,0.22), rgba(110,20,35,0.08) 55%, transparent 76%)',
+            }}
+          />
+          <div className="relative">
+            <p className="mb-3 font-sans text-[0.625rem] font-semibold uppercase tracking-[0.28em] text-accent/80">
+              I want · {meta(to).flag} {to}
+            </p>
+            <p className="gilt-text gilt-figures gold-shimmer font-display text-[3.75rem] font-semibold leading-none tracking-tight">
+              {result != null ? formatMoney(result, to) : '—'}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Minimal numpad — bare figures, generous targets. */}
