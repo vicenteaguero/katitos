@@ -9,7 +9,7 @@ export function useScavengerCards() {
     queryFn: async (): Promise<ScavengerCardFull[]> => {
       const { data, error } = await supabase
         .from('scavenger_cards')
-        .select('*, scavenger_claims(*), scavenger_arguments(*)')
+        .select('*, scavenger_claims(*)')
         .order('position', { ascending: true });
       if (error) throw error;
       return (data ?? []) as ScavengerCardFull[];
