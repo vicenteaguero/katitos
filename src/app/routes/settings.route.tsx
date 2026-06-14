@@ -249,7 +249,7 @@ export function SettingsRoute() {
   return (
     <div className="curtain-reveal">
       <PageHeader title="Settings" subtitle="Tune our little theater." />
-      <div className="curtain-stagger space-y-12">
+      <div className="curtain-stagger space-y-8">
         <CoupleCard />
         <MeCard />
         <NotificationsCard />
