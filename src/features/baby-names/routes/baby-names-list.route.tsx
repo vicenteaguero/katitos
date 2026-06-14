@@ -39,7 +39,7 @@ export function BabyNamesListRoute() {
   }, [data, filter]);
 
   return (
-    <div className="curtain-reveal space-y-12">
+    <div className="curtain-reveal space-y-8">
       <PageHeader
         title="Baby names"
         subtitle="Dreaming up our little ones — like or pass, together 💜"
