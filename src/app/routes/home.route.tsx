@@ -91,7 +91,8 @@ const TOGETHER_LINES = [
 
 /** "2 years · 3 months · 1 week · 4 days", trimming leading zero units. */
 function fmtBreakdown(b: DurationParts): string {
-  const plural = (n: number, unit: string) => `${n} ${unit}${n === 1 ? '' : 's'}`;
+  const plural = (n: number, unit: string) =>
+    `${n} ${unit}${n === 1 ? '' : 's'}`;
   const parts: string[] = [];
   if (b.years) parts.push(plural(b.years, 'year'));
   if (b.months) parts.push(plural(b.months, 'month'));
@@ -157,7 +158,9 @@ function Greeting() {
             online ? 'candle-flicker bg-purple' : 'bg-muted'
           )}
           style={
-            online ? { boxShadow: '0 0 8px 1px rgba(44,138,94,0.6)' } : undefined
+            online
+              ? { boxShadow: '0 0 8px 1px rgba(44,138,94,0.6)' }
+              : undefined
           }
           aria-hidden="true"
         />
@@ -240,6 +243,8 @@ function TogetherHero() {
 
   if (!self || !partner) return null;
   const days = daysTogether(couple?.relationship_start_date);
+  const breakdown = durationBreakdown(couple?.relationship_start_date);
+  const line = TOGETHER_LINES[days % TOGETHER_LINES.length];
 
   const km =
     self.lat != null &&
@@ -288,7 +293,11 @@ function TogetherHero() {
           {days.toLocaleString()}
         </p>
         <p className="m-0 mt-1 font-display text-[17px] italic text-[#dcbcc3]">
-          days — and every one a gift
+          {line}
+        </p>
+        {/* The same span, decomposed — calendar years / months / weeks / days. */}
+        <p className="m-0 mt-2.5 font-sans text-[10.5px] uppercase tracking-[0.16em] text-[#b08e95]">
+          {fmtBreakdown(breakdown)}
         </p>
 
         <div className="my-5 flex items-center justify-center gap-3">
