@@ -16,7 +16,6 @@ import {
 import { notifyPartner } from '@kernel/push';
 import { toast } from '@kernel/ui';
 import { usePartnerPresence } from '@features/presence';
-import { CurrencyWidget } from '@features/currency';
 import { GeorgiaCountdownWidget } from '@features/georgia';
 import { TodayQuestionsWidget } from '@features/know-me';
 import { LastPolaroidWidget } from '@features/polaroid';
@@ -370,7 +369,6 @@ export function HomeRoute() {
       style={{ '--i': 0 } as CSSProperties}
     >
       <Greeting />
-      <CurrencyWidget />
       <TogetherHero />
       <GeorgiaCountdownWidget />
       <TodayQuestionsWidget />
