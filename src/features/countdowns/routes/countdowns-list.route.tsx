@@ -47,7 +47,7 @@ export function CountdownsListRoute() {
   };
 
   return (
-    <div className="curtain-reveal space-y-12">
+    <div className="curtain-reveal space-y-8">
       <PageHeader
         title="Countdowns"
         subtitle="Counting down to the next time we're in the same room ✈️"
