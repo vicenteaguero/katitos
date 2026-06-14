@@ -98,7 +98,7 @@ const modules: FeatureModule[] = [
 ];
 
 // ── Demo gate ──────────────────────────────────────────────────────────────
-// Only the OPEN five are reachable; the rest stay greyed "Soon" rows in the
+// Only the OPEN set is reachable; the rest stay greyed "Soon" rows in the
 // More drawer (shipped but not open). Flip `GATED` to false to open everything.
 const GATED = true;
 const OPEN = new Set([
@@ -108,6 +108,7 @@ const OPEN = new Set([
   'chalkboard', // "The wall"
   'know-me',
   'currency',
+  'scavenger', // "Date cards" — the Georgia envelope deck
 ]);
 
 export const features: FeatureModule[] = modules.map((m) => ({
