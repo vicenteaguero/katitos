@@ -29,6 +29,7 @@ import {
 import {
   useAddGeorgiaItem,
   useAddGeorgiaPhoto,
+  useCreateGeorgiaTrip,
   useDeleteGeorgiaItem,
   useDeleteGeorgiaPhoto,
   useToggleGeorgiaItem,
@@ -73,6 +74,7 @@ export function GeorgiaRoute() {
   const delItem = useDeleteGeorgiaItem();
   const addPhoto = useAddGeorgiaPhoto();
   const delPhoto = useDeleteGeorgiaPhoto();
+  const createTrip = useCreateGeorgiaTrip();
   const now = useNow(60_000);
 
   const [tab, setTab] = useState<Tab>('plan');
@@ -99,7 +101,15 @@ export function GeorgiaRoute() {
       <Empty
         icon="🇬🇪"
         title="No Georgia trip yet"
-        hint="The journal is still being bound."
+        hint="Open the planner — countdown, map, day-by-day plan, wishlist & album — and start filling it in together."
+        action={
+          <Button
+            onClick={() => createTrip.mutate()}
+            disabled={createTrip.isPending}
+          >
+            {createTrip.isPending ? 'Opening…' : 'Start our Georgia trip'}
+          </Button>
+        }
       />
     );
 
