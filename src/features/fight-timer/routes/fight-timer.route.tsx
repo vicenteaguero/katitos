@@ -44,7 +44,7 @@ export function FightTimerRoute() {
   const isLoading = active.isLoading || history.isLoading;
 
   return (
-    <div className="curtain-reveal space-y-12">
+    <div className="curtain-reveal space-y-8">
       {/* A hushed footlight rising behind the title — the house dimmed, the
           quarrel held tenderly in candle-warmth, never under harsh light. */}
       <div className="relative isolate">
@@ -58,7 +58,7 @@ export function FightTimerRoute() {
       {isLoading ? (
         <LoadingScreen />
       ) : (
-        <div className="space-y-12">
+        <div className="space-y-8">
           <section className="space-y-7">
             <p className="eyebrow">On Stage Now</p>
             {active.data ? (
