@@ -4,15 +4,19 @@ import { usePartner } from '@kernel/auth';
 import { useCouple } from '@kernel/couple';
 import { useNow } from '@kernel/hooks';
 import {
+  cn,
   daysTogether,
+  durationBreakdown,
   formatDistance,
   haversineKm,
   relativeTime,
   timeInZone,
+  type DurationParts,
 } from '@kernel/lib';
 import { notifyPartner } from '@kernel/push';
 import { toast } from '@kernel/ui';
 import { usePartnerPresence } from '@features/presence';
+import { CurrencyWidget } from '@features/currency';
 import { GeorgiaCountdownWidget } from '@features/georgia';
 import { TodayQuestionsWidget } from '@features/know-me';
 import { LastPolaroidWidget } from '@features/polaroid';
@@ -20,6 +24,80 @@ import { LastPolaroidWidget } from '@features/polaroid';
 /** Our pet names by role: him (a) is Katito, her (b) is Katita. */
 function petNameOf(role: string | null | undefined): 'Katito' | 'Katita' {
   return role === 'a' ? 'Katito' : 'Katita';
+}
+
+/** Grammatical gender of a role for endearments (him → m, her → f). */
+function genderOf(role: string | null | undefined): 'm' | 'f' {
+  return role === 'a' ? 'm' : 'f';
+}
+
+/**
+ * Twenty sweet-nothings, agreement-matched to the partner's gender. One is
+ * picked at random each time you send love, so the ping is never the same twice.
+ */
+function loveNotes(name: string, g: 'm' | 'f'): string[] {
+  const o = g === 'f' ? 'a' : 'o'; // adjective ending: hermosa/hermoso…
+  return [
+    `Te amo, ${name} 💕`,
+    `Mi ${g === 'f' ? 'polola' : 'pololo'} hermos${o} ❤️`,
+    `Eres el amor de mi vida 💖`,
+    `${name} bonit${o}, te extraño 🌙`,
+    `Mi cuteti${g === 'f' ? 'ta' : 'to'} lind${o} 🥰`,
+    `Pienso en ti, ${name} 💭`,
+    `Te mando un besito 😘`,
+    `Mi amor, ven a casa 💌`,
+    `No dejo de pensar en ti 🤍`,
+    `Eres mi personita favorita ✨`,
+    `Te amo más que ayer ❤️‍🔥`,
+    `Mi ${name} precios${o} 🌹`,
+    `Cada día te amo más 💞`,
+    `Te necesito cerquita 🫶`,
+    `My love, my ${name} 💝`,
+    `Eres mi hogar, ${name} 🏡`,
+    `Mi ${g === 'f' ? 'reina' : 'rey'} 👑`,
+    `Te adoro, ${name} 😍`,
+    `Mi corazón es tuyo 🤎`,
+    `${name}, eres todo para mí 🌟`,
+  ];
+}
+
+/**
+ * Twenty closing lines for the "together for N days" hero — the bit after the
+ * grand numeral. Rotates by day count, so it's stable through the day and turns
+ * a new phrase each morning (no flicker on the 30s clock re-render).
+ */
+const TOGETHER_LINES = [
+  'days — and every one a gift',
+  'days, and I’d choose you in all of them',
+  'days of you and me',
+  'days woven into us',
+  'days, still my favourite story',
+  'days and counting, my love',
+  'days that made us, us',
+  'days I would live again',
+  'days of coming home to you',
+  'days, and the best is now',
+  'days under the same sky',
+  'days, never enough of you',
+  'days the heart kept',
+  'days, and I still pick you',
+  'days against the distance',
+  'days, every dawn yours',
+  'days written in gold',
+  'days, and forever to go',
+  'days — luckiest of my life',
+  'days, my whole heart',
+];
+
+/** "2 years · 3 months · 1 week · 4 days", trimming leading zero units. */
+function fmtBreakdown(b: DurationParts): string {
+  const plural = (n: number, unit: string) => `${n} ${unit}${n === 1 ? '' : 's'}`;
+  const parts: string[] = [];
+  if (b.years) parts.push(plural(b.years, 'year'));
+  if (b.months) parts.push(plural(b.months, 'month'));
+  if (b.weeks) parts.push(plural(b.weeks, 'week'));
+  parts.push(plural(b.days, 'day'));
+  return parts.join(' · ');
 }
 
 /**
@@ -30,19 +108,20 @@ function petNameOf(role: string | null | undefined): 'Katito' | 'Katita' {
 
 /** The greeting — about your love's presence, with a "loves you" pulse. */
 function Greeting() {
-  const { self, partner } = usePartner();
+  const { partner } = usePartner();
   const { online } = usePartnerPresence();
   const partnerName = petNameOf(partner?.role);
-  const myName = petNameOf(self?.role);
   const where = partner?.city;
   const [sent, setSent] = useState(false);
 
   const sendLove = async () => {
     if (sent) return; // debounce: ignore taps during the "sent" window
     setSent(true);
+    const notes = loveNotes(partnerName, genderOf(partner?.role));
+    const note = notes[Math.floor(Math.random() * notes.length)];
     const { ok, delivered } = await notifyPartner({
-      title: `Your ${myName} loves you so much ❤️`,
-      body: `${partnerName}, tap to come home 💌`,
+      title: note,
+      body: 'Toca para venir a casa 💌',
       url: '/',
     });
     if (!ok) {
@@ -62,43 +141,46 @@ function Greeting() {
   };
 
   return (
-    <header className="space-y-3 pt-1 text-center">
-      <p className="font-display text-[1.75rem] font-medium italic leading-tight text-fg">
-        Your {partnerName}{' '}
-        <span className="candle-flicker not-italic">
-          {partner?.emoji ?? '❤️'}
-        </span>
+    <header className="flex flex-col items-center pt-1 text-center">
+      {/* Eyebrow frames the name as the PARTNER's — never read as your own. */}
+      <p className="font-sans text-[0.6rem] font-semibold uppercase tracking-[0.34em] text-gold/75">
+        Your love
       </p>
-      <div className="flex items-center justify-center gap-2">
+      <p className="mt-1.5 font-display text-[2.05rem] font-medium leading-none text-fg">
+        {partnerName}{' '}
+        <span className="candle-flicker">{partner?.emoji ?? '❤️'}</span>
+      </p>
+      <div className="mt-2.5 flex items-center justify-center gap-2">
         <span
-          className={`inline-block h-[7px] w-[7px] shrink-0 rounded-full ${
+          className={cn(
+            'inline-block h-[7px] w-[7px] shrink-0 rounded-full',
             online ? 'candle-flicker bg-purple' : 'bg-muted'
-          }`}
+          )}
           style={
-            online
-              ? { boxShadow: '0 0 8px 1px rgba(44,138,94,0.6)' }
-              : undefined
+            online ? { boxShadow: '0 0 8px 1px rgba(44,138,94,0.6)' } : undefined
           }
           aria-hidden="true"
         />
         <span className="font-sans text-[0.84rem] text-muted">
           {online
-            ? `is here with you now${where ? ` · ${where}` : ''}`
+            ? `here with you now${where ? ` · ${where}` : ''}`
             : partner?.last_seen_at
-              ? `was here ${relativeTime(partner.last_seen_at)}`
-              : 'is away'}
+              ? `last here ${relativeTime(partner.last_seen_at)}`
+              : 'away right now'}
         </span>
       </div>
       <button
         type="button"
         onClick={() => void sendLove()}
-        className="lift-press mx-auto inline-flex items-center gap-2 rounded-full bg-accent/90 px-5 py-2 font-sans text-sm font-semibold text-accent-fg shadow-loge transition active:scale-95"
+        disabled={sent}
+        className="btn-catchlight lift-press mt-4 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-2.5 font-sans text-[0.9rem] font-semibold text-accent-fg shadow-loge disabled:opacity-100"
+        style={{ border: '1px solid rgba(201,162,75,.42)' }}
       >
         <Heart
-          size={16}
-          className={sent ? 'candle-flicker fill-current' : 'fill-current'}
+          size={15}
+          className={cn(sent ? 'candle-flicker fill-current' : 'fill-current')}
         />
-        {sent ? 'Sent 💌' : `Send ${partnerName} love`}
+        {sent ? 'Love sent 💌' : 'Send love'}
       </button>
     </header>
   );
@@ -268,6 +350,7 @@ export function HomeRoute() {
       style={{ '--i': 0 } as CSSProperties}
     >
       <Greeting />
+      <CurrencyWidget />
       <TogetherHero />
       <GeorgiaCountdownWidget />
       <TodayQuestionsWidget />
