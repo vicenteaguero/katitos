@@ -18,6 +18,16 @@ type Code = (typeof CURRENCIES)[number]['code'];
 const meta = (code: string) =>
   CURRENCIES.find((c) => c.code === code) ?? CURRENCIES[0];
 
+// Shrink the figure as it grows so it never wraps or clips — tool, not poster.
+const fit = (s: string) =>
+  s.length > 14
+    ? 'text-3xl'
+    : s.length > 11
+      ? 'text-4xl'
+      : s.length > 8
+        ? 'text-5xl'
+        : 'text-6xl';
+
 interface Entry {
   id: number;
   amount: number;
@@ -42,6 +52,7 @@ export function CurrencyRoute() {
   const n = Number(amount) || 0;
   const result = convert(n, from, to, index);
   const shown = amount === '' ? '0' : amount;
+  const resultText = result != null ? formatMoney(result, to) : '—';
 
   // ── numpad ──
   const tap = (key: string) => {
@@ -88,9 +99,9 @@ export function CurrencyRoute() {
   };
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Currency selector + history shortcut. */}
-      <div className="relative flex shrink-0 items-center justify-center gap-3">
+    <div className="flex h-full flex-col gap-3">
+      {/* Exchange bar — from 🇷🇺 ⇄ 🇨🇱 to, history on the right. */}
+      <div className="relative flex shrink-0 items-center justify-center gap-1">
         <CurrencyChip
           code={from}
           open={editing === 'from'}
@@ -100,9 +111,9 @@ export function CurrencyRoute() {
           type="button"
           onClick={swap}
           aria-label="Swap currencies"
-          className="lift-press flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-accent active:scale-90"
+          className="lift-press flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-accent active:scale-90"
         >
-          <ArrowLeftRight className="h-5 w-5" />
+          <ArrowLeftRight className="h-4 w-4" />
         </button>
         <CurrencyChip
           code={to}
@@ -113,15 +124,15 @@ export function CurrencyRoute() {
           type="button"
           onClick={() => setShowHistory(true)}
           aria-label="History"
-          className="lift-press absolute right-0 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-muted active:text-accent"
+          className="lift-press absolute right-0 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-muted active:text-accent"
         >
-          <History className="h-5 w-5" />
+          <History className="h-4 w-4" />
         </button>
       </div>
 
       {/* Inline 4-flag picker — one tap, no menus. */}
       {editing && (
-        <div className="curtain-reveal mt-4 flex shrink-0 justify-center gap-2">
+        <div className="curtain-reveal flex shrink-0 justify-center gap-2">
           {CURRENCIES.map((c) => {
             const active = (editing === 'from' ? from : to) === c.code;
             return (
@@ -129,12 +140,12 @@ export function CurrencyRoute() {
                 key={c.code}
                 type="button"
                 onClick={() => pick(c.code)}
-                className={`lift-press flex flex-col items-center gap-0.5 rounded-lg px-4 py-2 transition-colors ${
+                className={`lift-press flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition-colors ${
                   active ? 'bg-accent/15 text-accent' : 'text-fg'
                 }`}
               >
-                <span className="text-2xl leading-none">{c.flag}</span>
-                <span className="font-sans text-[0.625rem] font-semibold uppercase tracking-[0.12em]">
+                <span className="text-lg leading-none">{c.flag}</span>
+                <span className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em]">
                   {c.code}
                 </span>
               </button>
@@ -143,115 +154,79 @@ export function CurrencyRoute() {
         </div>
       )}
 
-      {/* The reading — clearly MINE (top, plain) vs WHAT I WANT (the gold,
-          haloed in soft wine light so the answer reads at a glance). */}
-      <div className="flex flex-1 flex-col items-center justify-center gap-9 py-4">
-        <div className="text-center">
-          <p className="mb-2 font-sans text-[0.625rem] font-semibold uppercase tracking-[0.28em] text-muted">
-            I have · {meta(from).flag} {from}
-          </p>
-          <p className="font-display text-5xl tabular-nums tracking-tight text-muted">
-            <span className="text-3xl text-muted/70">{from} </span>
-            {shown}
-          </p>
-        </div>
-
-        <div className="relative w-full text-center">
-          {/* The soft red/pink light zone — the answer's halo. */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute left-1/2 top-1/2 h-[170%] w-[116%] -translate-x-1/2 -translate-y-1/2"
-            style={{
-              background:
-                'radial-gradient(50% 50% at 50% 50%, rgba(196,72,98,0.22), rgba(110,20,35,0.08) 55%, transparent 76%)',
-            }}
-          />
-          <div className="relative">
-            <p className="mb-3 font-sans text-[0.625rem] font-semibold uppercase tracking-[0.28em] text-accent/80">
-              I want · {meta(to).flag} {to}
-            </p>
-            <p className="gilt-text gilt-figures gold-shimmer font-display text-[3.75rem] font-semibold leading-none tracking-tight">
-              {result != null ? formatMoney(result, to) : '—'}
-            </p>
-          </div>
-        </div>
+      {/* The reading — what I have, what I get. Plain figures, big, fluid. */}
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4">
+        <p className="font-display text-2xl tabular-nums text-muted">
+          {meta(from).flag} {shown}{' '}
+          <span className="text-base text-muted/70">{from}</span>
+        </p>
+        <p
+          className={`font-display ${fit(resultText)} font-semibold leading-none tabular-nums text-fg`}
+        >
+          {resultText} <span className="text-2xl text-accent">{to}</span>
+        </p>
       </div>
 
-      {/* Minimal numpad — bare figures, generous targets. */}
-      <div className="grid shrink-0 grid-cols-3 gap-x-3 gap-y-2">
+      {/* Numpad — bare figures, generous targets. */}
+      <div className="grid shrink-0 grid-cols-3 gap-2">
         {['7', '8', '9', '4', '5', '6', '1', '2', '3', '.', '0', '⌫'].map(
           (k) => (
             <button
               key={k}
               type="button"
               onClick={() => tap(k)}
-              className="lift-press flex h-[4.5rem] items-center justify-center rounded-lg font-display text-3xl tabular-nums text-fg transition-colors active:bg-fg/10"
+              className="lift-press flex h-14 items-center justify-center rounded-lg font-display text-3xl tabular-nums text-fg transition-colors active:bg-fg/10"
             >
-              {k === '⌫' ? <Delete className="h-7 w-7 text-muted" /> : k}
+              {k === '⌫' ? <Delete className="h-6 w-6 text-muted" /> : k}
             </button>
           )
         )}
       </div>
 
-      {/* Actions — clear + save (manual, deliberate). */}
-      <div className="mt-4 flex shrink-0 items-stretch gap-3">
-        <button
-          type="button"
-          onClick={() => {
-            setAmount('');
-            setSaved(false);
-          }}
-          className="lift-press flex-1 rounded-lg bg-surface py-4 font-sans text-sm font-semibold uppercase tracking-[0.16em] text-muted active:bg-fg/10"
-        >
-          Clear
-        </button>
-        <button
-          type="button"
-          onClick={save}
-          disabled={result == null || n === 0}
-          className="lift-press flex-[2] rounded-lg bg-accent py-4 font-sans text-sm font-semibold uppercase tracking-[0.16em] text-accent-fg shadow-loge transition active:scale-[0.98] disabled:opacity-40"
-        >
-          {saved ? 'Saved ✓' : 'Save to history'}
-        </button>
-      </div>
+      {/* One action — save. */}
+      <button
+        type="button"
+        onClick={save}
+        disabled={result == null || n === 0}
+        className="lift-press shrink-0 rounded-lg bg-accent py-3.5 font-sans text-sm font-semibold uppercase tracking-[0.16em] text-accent-fg transition active:scale-[0.98] disabled:opacity-40"
+      >
+        {saved ? 'Saved ✓' : 'Save'}
+      </button>
 
       {/* Session history — no database, gone on reload. */}
       <Sheet
         open={showHistory}
         onClose={() => setShowHistory(false)}
-        title="This session"
+        title="History"
         size="full"
       >
         {history.length === 0 ? (
           <Empty title="Nothing saved yet" hint="Hit Save and it lands here." />
         ) : (
-          <div className="space-y-4">
-            <div className="flex justify-end">
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => setHistory([])}
+              className="lift-press mb-1 flex items-center gap-1 self-end font-sans text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-muted active:text-danger"
+            >
+              <Trash2 className="h-3.5 w-3.5" /> Clear all
+            </button>
+            {history.map((e) => (
               <button
+                key={e.id}
                 type="button"
-                onClick={() => setHistory([])}
-                className="lift-press flex items-center gap-1 font-sans text-[0.625rem] font-semibold uppercase tracking-[0.16em] text-muted active:text-danger"
+                onClick={() => restore(e)}
+                className="lift-press flex items-center justify-between gap-2 rounded-lg bg-surface px-4 py-3 text-left font-sans text-base tabular-nums active:bg-fg/5"
               >
-                <Trash2 className="h-3.5 w-3.5" /> Clear all
+                <span className="text-muted">
+                  {meta(e.from).flag} {formatMoney(e.amount, e.from)}
+                </span>
+                <span className="text-muted/50">→</span>
+                <span className="font-semibold text-fg">
+                  {meta(e.to).flag} {formatMoney(e.result, e.to)}
+                </span>
               </button>
-            </div>
-            <div className="flex flex-col gap-2">
-              {history.map((e) => (
-                <button
-                  key={e.id}
-                  type="button"
-                  onClick={() => restore(e)}
-                  className="lift-press flex items-center justify-between gap-3 rounded-lg bg-surface px-5 py-4 text-left active:bg-fg/5"
-                >
-                  <span className="font-sans text-base tabular-nums text-muted">
-                    {meta(e.from).flag} {formatMoney(e.amount, e.from)}
-                  </span>
-                  <span className="font-display text-lg font-semibold tabular-nums text-fg">
-                    {formatMoney(e.result, e.to)} {meta(e.to).flag}
-                  </span>
-                </button>
-              ))}
-            </div>
+            ))}
           </div>
         )}
       </Sheet>
@@ -259,7 +234,7 @@ export function CurrencyRoute() {
   );
 }
 
-/** A tappable from/to chip — the big beautiful flag + code. */
+/** A tappable from/to chip — flag + code, nothing more. */
 function CurrencyChip({
   code,
   open,
@@ -274,18 +249,13 @@ function CurrencyChip({
     <button
       type="button"
       onClick={onClick}
-      className={`lift-press flex items-center gap-2.5 rounded-lg px-3 py-2 transition-colors ${
+      className={`lift-press flex items-center gap-2 rounded-lg px-3 py-1.5 transition-colors ${
         open ? 'bg-accent/15' : ''
       }`}
     >
-      <span className="text-[1.75rem] leading-none">{c.flag}</span>
-      <span className="text-left">
-        <span className="block font-display text-lg font-semibold leading-none text-fg">
-          {c.code}
-        </span>
-        <span className="block font-sans text-[0.625rem] uppercase tracking-[0.14em] text-muted">
-          {c.name}
-        </span>
+      <span className="text-2xl leading-none">{c.flag}</span>
+      <span className="font-display text-lg font-semibold leading-none text-fg">
+        {c.code}
       </span>
     </button>
   );
