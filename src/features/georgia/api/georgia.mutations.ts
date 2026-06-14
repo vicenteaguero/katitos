@@ -6,6 +6,35 @@ import { qk } from '@kernel/query';
 import { toast } from '@kernel/ui';
 import { georgiaKeys } from '../types';
 
+/**
+ * Create the one special Georgia trip when none exists. Seeds only run on a DB
+ * reset, so a fresh/cloud database has no trip row — this lets the couple open
+ * the planner straight from the app instead of staring at an empty shell.
+ */
+export function useCreateGeorgiaTrip() {
+  const qc = useQueryClient();
+  return useMutation({
+    onError: (e: Error) => toast.error(e.message),
+    mutationFn: async () => {
+      const { data, error } = await supabase
+        .from('trips')
+        .insert({
+          slug: 'georgia-2026',
+          name: 'Georgia 2026',
+          destination: 'Tbilisi, Georgia',
+          start_date: '2026-07-07',
+          end_date: '2026-08-04',
+          is_special: true,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: georgiaKeys.trip() }),
+  });
+}
+
 export function useAddGeorgiaItem() {
   const qc = useQueryClient();
   return useMutation({
