@@ -23,7 +23,7 @@ export function FinanceRoute() {
     : null;
 
   return (
-    <div className="curtain-reveal space-y-12">
+    <div className="curtain-reveal space-y-8">
       <PageHeader title="Finance" subtitle="A brass ledger, saving for us 🫒" />
 
       <section className="space-y-7">
