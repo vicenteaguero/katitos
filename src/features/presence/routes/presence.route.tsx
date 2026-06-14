@@ -29,7 +29,7 @@ export function PresenceRoute() {
   };
 
   return (
-    <div className="curtain-reveal space-y-12">
+    <div className="curtain-reveal space-y-8">
       <PageHeader title="Connection" subtitle="Are you here, right now?" />
 
       <section className="space-y-7">
