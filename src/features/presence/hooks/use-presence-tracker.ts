@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { usePartner } from '@kernel/auth';
 import { usePresence, useRealtimeSubscription } from '@kernel/realtime';
-import { notifyPartner } from '@kernel/push';
 import { toast } from '@kernel/ui';
 import { qk } from '@kernel/query';
 import { useLogAppOpen } from '../api/presence.mutations';
@@ -11,7 +10,8 @@ import { usePresenceStore } from '../store';
 
 /**
  * Side-effects that run once the app is open: log the open + refresh last-seen,
- * push-notify the partner, and toast when the partner opens the app live.
+ * and toast when the partner opens the app live. We deliberately do NOT
+ * push-notify the partner on every open — that was notification spam.
  */
 export function usePresenceTracker(): void {
   const { self, partner } = usePartner();
@@ -32,11 +32,6 @@ export function usePresenceTracker(): void {
     if (!self || done.current) return;
     done.current = true;
     log.mutate();
-    void notifyPartner({
-      title: 'Katitos ❤️',
-      body: `${self.display_name} just opened the app`,
-      url: '/',
-    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [self]);
 
