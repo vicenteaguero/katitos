@@ -37,6 +37,36 @@ export function countdownTo(
   };
 }
 
+export interface DurationParts {
+  years: number;
+  months: number;
+  weeks: number;
+  days: number;
+}
+
+/**
+ * Decompose the span since a start date into calendar years / months / weeks /
+ * days (each unit the whole remainder of the larger ones). For the "together
+ * for N days" hero — the big number stays total days; this is the breakdown.
+ */
+export function durationBreakdown(
+  startDate: string | Date | null | undefined,
+  now: DateTime = DateTime.now()
+): DurationParts {
+  if (!startDate) return { years: 0, months: 0, weeks: 0, days: 0 };
+  const start = DateTime.fromJSDate(new Date(startDate)).startOf('day');
+  const diff = now
+    .startOf('day')
+    .diff(start, ['years', 'months', 'weeks', 'days'])
+    .toObject();
+  return {
+    years: Math.max(0, Math.floor(diff.years ?? 0)),
+    months: Math.max(0, Math.floor(diff.months ?? 0)),
+    weeks: Math.max(0, Math.floor(diff.weeks ?? 0)),
+    days: Math.max(0, Math.floor(diff.days ?? 0)),
+  };
+}
+
 /** Whole days between two dates (date-only, ignores time). */
 export function daysBetween(
   start: string | Date,
