@@ -4,7 +4,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders, json } from '../_shared/cors.ts';
 
-const CURRENCIES = ['USD', 'CLP', 'RUB'];
+const CURRENCIES = ['USD', 'CLP', 'RUB', 'GEL'];
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
