@@ -36,27 +36,37 @@ function genderOf(role: string | null | undefined): 'm' | 'f' {
  * picked at random each time you send love, so the ping is never the same twice.
  */
 function loveNotes(name: string, g: 'm' | 'f'): string[] {
-  const o = g === 'f' ? 'a' : 'o'; // adjective ending: hermosa/hermoso…
+  const pol = g === 'f' ? 'polola' : 'pololo';
+  // his line for her: polola/katita + bonita/guapa/hermosa/preciosa/linda
+  const adj =
+    g === 'f'
+      ? ['bonita', 'guapa', 'hermosa', 'preciosa', 'linda']
+      : ['bonito', 'guapo', 'hermoso', 'precioso', 'lindo'];
+  const liubi = g === 'f' ? 'Liubimaya' : 'Liubimy'; // любим-ая / -ый
   return [
+    // — our words —
+    'Liubimonkey 🐵❤️',
+    'Liubiminki 🤍',
+    'Liubimonkeykaya 🥰',
+    'Liubimonkeykayita 💞',
+    `${liubi} 🤍`,
+    'My sunshine ☀️',
+    `Mi ${pol} ${adj[0]} ❤️`,
+    `${name} ${adj[1]} 🌙`,
+    `Mi ${pol} ${adj[2]} 🌹`,
+    `${name} ${adj[3]} ✨`,
+    `Mi ${name} ${adj[4]} 😍`,
+    // — sweet nothings —
     `Te amo, ${name} 💕`,
-    `Mi ${g === 'f' ? 'polola' : 'pololo'} hermos${o} ❤️`,
-    `Eres el amor de mi vida 💖`,
-    `${name} bonit${o}, te extraño 🌙`,
-    `Mi cuteti${g === 'f' ? 'ta' : 'to'} lind${o} 🥰`,
+    'Eres el amor de mi vida 💖',
     `Pienso en ti, ${name} 💭`,
-    `Te mando un besito 😘`,
-    `Mi amor, ven a casa 💌`,
-    `No dejo de pensar en ti 🤍`,
-    `Eres mi personita favorita ✨`,
-    `Te amo más que ayer ❤️‍🔥`,
-    `Mi ${name} precios${o} 🌹`,
-    `Cada día te amo más 💞`,
-    `Te necesito cerquita 🫶`,
-    `My love, my ${name} 💝`,
+    'Mi amor, ven a casa 💌',
+    'No dejo de pensar en ti 🤍',
+    'Cada día te amo más 💞',
+    'Te mando un besito 😘',
+    'Te necesito cerquita 🫶',
     `Eres mi hogar, ${name} 🏡`,
-    `Mi ${g === 'f' ? 'reina' : 'rey'} 👑`,
-    `Te adoro, ${name} 😍`,
-    `Mi corazón es tuyo 🤎`,
+    `My love, my ${name} 💝`,
     `${name}, eres todo para mí 🌟`,
   ];
 }
