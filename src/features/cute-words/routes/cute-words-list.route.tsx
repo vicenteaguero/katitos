@@ -35,7 +35,7 @@ export function CuteWordsListRoute() {
     <div className="curtain-reveal">
       <p className="eyebrow mb-5 text-copper">Our private tongue</p>
       <PageHeader title="Cute words" subtitle="A dictionary of just us" />
-      <div className="seam mb-12" aria-hidden="true" />
+      <div className="seam mb-8" aria-hidden="true" />
 
       {isLoading ? (
         <LoadingScreen />
