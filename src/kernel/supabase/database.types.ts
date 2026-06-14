@@ -1268,6 +1268,7 @@ export type Database = {
       }
       scavenger_cards: {
         Row: {
+          card_image_path: string | null
           created_at: string
           created_by: string
           description: string | null
@@ -1278,6 +1279,7 @@ export type Database = {
           trip_id: string | null
         }
         Insert: {
+          card_image_path?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
@@ -1288,6 +1290,7 @@ export type Database = {
           trip_id?: string | null
         }
         Update: {
+          card_image_path?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
@@ -1309,25 +1312,37 @@ export type Database = {
       }
       scavenger_claims: {
         Row: {
+          accepted: boolean
           card_id: string
           claimed_at: string
           claimed_by: string
           image_path: string | null
           note: string | null
+          rated_at: string | null
+          rated_by: string | null
+          stars: number | null
         }
         Insert: {
+          accepted?: boolean
           card_id: string
           claimed_at?: string
           claimed_by?: string
           image_path?: string | null
           note?: string | null
+          rated_at?: string | null
+          rated_by?: string | null
+          stars?: number | null
         }
         Update: {
+          accepted?: boolean
           card_id?: string
           claimed_at?: string
           claimed_by?: string
           image_path?: string | null
           note?: string | null
+          rated_at?: string | null
+          rated_by?: string | null
+          stars?: number | null
         }
         Relationships: [
           {
