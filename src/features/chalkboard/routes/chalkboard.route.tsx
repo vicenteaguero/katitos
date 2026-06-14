@@ -1,6 +1,5 @@
 import { useRef, useState } from 'react';
 import { Check, Pencil, Plus } from 'lucide-react';
-import { useUserId } from '@kernel/auth';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import { cn } from '@kernel/lib';
@@ -18,7 +17,6 @@ const MAX_NOTES = 3;
 
 export function ChalkboardRoute() {
   useTableSync('chalkboard_notes', qk.chalkboard.notes());
-  const userId = useUserId();
   const { data: notes } = useChalkNotes();
   const add = useAddNote();
   const move = useMoveNote();
@@ -114,7 +112,7 @@ export function ChalkboardRoute() {
             note={n}
             boardRef={boardRef}
             editing={editing}
-            canDelete={n.author === userId}
+            canDelete
             onMove={(x, y) => move.mutate({ id: n.id, x, y })}
             onDelete={() => del.mutate(n.id)}
           />
