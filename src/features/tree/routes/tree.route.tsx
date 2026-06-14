@@ -144,7 +144,7 @@ export function TreeRoute() {
   };
 
   return (
-    <div className="curtain-reveal space-y-12">
+    <div className="curtain-reveal space-y-8">
       <PageHeader title="Our Tree" subtitle="Grown one drop at a time 🌳" />
 
       <section className="space-y-7">
