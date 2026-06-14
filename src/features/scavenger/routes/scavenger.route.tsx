@@ -96,7 +96,7 @@ export function ScavengerRoute() {
   };
 
   return (
-    <div className="curtain-reveal space-y-12">
+    <div className="curtain-reveal space-y-8">
       <div className="relative">
         {/* A single candle glow behind the quest's title — the treasure map lit. */}
         <div
