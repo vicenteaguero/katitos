@@ -111,7 +111,7 @@ export function DecisionsListRoute() {
   };
 
   return (
-    <div className="curtain-reveal space-y-12">
+    <div className="curtain-reveal space-y-8">
       <PageHeader
         title="Decisions"
         subtitle="Big stuff we settle together ⚖️"
