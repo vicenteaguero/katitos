@@ -1,4 +1,12 @@
-import { lazy, Suspense, useMemo, useState, type CSSProperties } from 'react';
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react';
 import { Camera, Check, MapPin, Plus, Trash2 } from 'lucide-react';
 import { usePartner } from '@kernel/auth';
 import { useNow } from '@kernel/hooks';
@@ -95,19 +103,32 @@ export function GeorgiaRoute() {
     [trip?.start_date, trip?.end_date]
   );
 
-  if (isLoading) return <LoadingScreen />;
+  // There is exactly one Georgia trip, forever — so it just exists. If the DB
+  // has no row yet (fresh/cloud env, seeds don't run there), materialize it
+  // once, silently. No "start your trip" button — you never created it, it's
+  // always been ours.
+  const triedCreate = useRef(false);
+  useEffect(() => {
+    if (!isLoading && !trip && !triedCreate.current) {
+      triedCreate.current = true;
+      createTrip.mutate();
+    }
+  }, [isLoading, trip, createTrip]);
+
+  // Loading, or the one-frame window before the silent create kicks in.
+  if (isLoading || (!trip && !createTrip.isError)) return <LoadingScreen />;
   if (!trip)
     return (
       <Empty
         icon="🇬🇪"
-        title="No Georgia trip yet"
-        hint="Open the planner — countdown, map, day-by-day plan, wishlist & album — and start filling it in together."
+        title="Georgia is taking a moment"
+        hint={createTrip.error?.message ?? 'Tap to retry.'}
         action={
           <Button
             onClick={() => createTrip.mutate()}
             disabled={createTrip.isPending}
           >
-            {createTrip.isPending ? 'Opening…' : 'Start our Georgia trip'}
+            Retry
           </Button>
         }
       />
