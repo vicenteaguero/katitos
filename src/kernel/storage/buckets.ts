@@ -22,6 +22,8 @@ export const storagePaths = {
   quizAudio: (deckId: string, cardId: string) => `${deckId}/${cardId}.webm`,
   languageAudio: (phraseId: string) => `${phraseId}.webm`,
   scavengerProof: (cardId: string) => `${cardId}.jpg`,
+  /** Photo of the physical date-card (same bucket, distinct prefix). */
+  scavengerCardImage: (cardId: string) => `card/${cardId}.jpg`,
   datePhoto: (dateId: string, fileId: string) => `${dateId}/${fileId}.jpg`,
   tripPhoto: (tripId: string, fileId: string) => `${tripId}/${fileId}.jpg`,
   avatar: (userId: string) => `${userId}.jpg`,
