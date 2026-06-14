@@ -48,7 +48,7 @@ export function IdeaBankListRoute() {
     filter === 'all' ? data : data?.filter((i) => i.status === filter);
 
   return (
-    <div className="curtain-reveal space-y-12">
+    <div className="curtain-reveal space-y-8">
       <header className="footlight relative -mx-7 px-7 pb-2 pt-1">
         <PageHeader
           title="Idea bank"
