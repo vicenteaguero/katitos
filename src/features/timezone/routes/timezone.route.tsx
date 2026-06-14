@@ -53,7 +53,7 @@ export function TimezoneRoute() {
     : null;
 
   return (
-    <div className="curtain-reveal space-y-12">
+    <div className="curtain-reveal space-y-8">
       <PageHeader
         title="Time"
         subtitle={`${partner.display_name} is ${offsetText}`}
