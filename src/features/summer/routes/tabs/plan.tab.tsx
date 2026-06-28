@@ -18,6 +18,7 @@ import {
   Field,
   IconButton,
   Input,
+  SectionHeader,
   Select,
   Sheet,
   Textarea,
@@ -127,16 +128,18 @@ export function PlanTab({
 
   return (
     <section className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="eyebrow">Itinerary</p>
-        <Button size="sm" onClick={() => setAdding(true)}>
-          <Plus size={15} /> Add stop
-        </Button>
-      </div>
+      <SectionHeader
+        label="Itinerary"
+        action={
+          <Button size="sm" onClick={() => setAdding(true)}>
+            <Plus size={15} /> Add stop
+          </Button>
+        }
+      />
 
       {planItems.length === 0 ? (
         <Empty
-          icon="🗺️"
+          icon={<MapPin className="h-11 w-11" strokeWidth={1.25} />}
           title="The plan is blank"
           hint="Add your first stop."
         />
@@ -157,8 +160,8 @@ export function PlanTab({
       )}
 
       {/* Wishlist — buy / eat / bring. */}
-      <div className="space-y-2 pt-2">
-        <p className="eyebrow">Wishlist</p>
+      <div className="space-y-2 pt-3">
+        <SectionHeader label="Wishlist" className="mb-2" />
         <div className="flex gap-2">
           <Input
             value={wish}
