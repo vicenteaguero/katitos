@@ -108,9 +108,16 @@ export function useBookFlip({
         commit(dir);
         return;
       }
-      requestAnimationFrame(() => setLeaf(target, true));
+      // Flush the CURRENT angle as the transition's start by forcing a reflow,
+      // THEN add `.pb-snap` and rotate to the target. (A plain RAF sometimes let
+      // the browser coalesce start+target into one paint — so a forward turn
+      // jumped instantly while a backward one happened to animate.) Reflow makes
+      // both directions animate, every time.
+      const el = leafRef.current;
+      if (el) void el.offsetHeight;
+      setLeaf(target, true);
     },
-    [commit, setLeaf]
+    [commit, setLeaf, leafRef]
   );
 
   const springBack = useCallback(
@@ -134,7 +141,9 @@ export function useBookFlip({
     setLeaf(turning.dir === 'next' ? 0 : -180, false);
     if (autoRef.current) {
       autoRef.current = false;
-      requestAnimationFrame(() => animateTo(turning.dir));
+      // Paint the start angle, then transition — the reflow inside animateTo
+      // guarantees the browser sees the start before the snap.
+      animateTo(turning.dir);
     }
   }, [turning, setLeaf, animateTo]);
 
