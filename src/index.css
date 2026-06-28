@@ -245,9 +245,25 @@ button {
    separate by tone (bg -> surface -> surface-2) and spacing. Use this class on
    at most ONE hero element per screen. */
 .gilt-hairline {
-  border: 1px solid transparent;
-  border-image: var(--grad-gilt) 1;
+  position: relative;
   box-shadow: var(--shadow-catch);
+}
+/* A 1px gilt gradient frame drawn as a masked pseudo-element so the gold edge
+   FOLLOWS the corner radius (border-image ignores border-radius and squares the
+   corners — this keeps them smooth). */
+.gilt-hairline::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--grad-gilt);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
 }
 /* Cheaper flat variant for dense lists. */
 .gilt-hairline-flat {
