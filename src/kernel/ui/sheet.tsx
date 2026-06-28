@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { cn } from '@kernel/lib';
 
 /** A bottom sheet modal (phone-friendly). `size="half"` is short + easy to dismiss. */
@@ -30,7 +31,10 @@ export function Sheet({
 
   if (!open) return null;
 
-  return (
+  // Portal to <body> so the sheet is a true full-screen overlay, even when the
+  // open trigger lives inside a transformed ancestor (a `.curtain-reveal` route
+  // would otherwise confine this fixed layer to the content box).
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-end justify-center"
       role="dialog"
@@ -55,6 +59,7 @@ export function Sheet({
         )}
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
