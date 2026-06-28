@@ -15,6 +15,9 @@ declare const self: ServiceWorkerGlobalScope & {
 };
 
 const CACHE = 'katitos-shell-v3';
+// Photos from Supabase storage (signed URLs). Cached token-agnostically so a
+// warmed photo keeps loading offline even after its signed URL rotates.
+const IMG_CACHE = 'katitos-img-v1';
 const PRECACHE_URLS = [
   '/',
   '/index.html',
@@ -44,7 +47,9 @@ self.addEventListener('activate', (event) => {
       .keys()
       .then((keys) =>
         Promise.all(
-          keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))
+          keys
+            .filter((k) => k !== CACHE && k !== IMG_CACHE)
+            .map((k) => caches.delete(k))
         )
       )
       .then(() => self.clients.claim())
@@ -72,8 +77,29 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Same-origin static assets: cache-first.
   const url = new URL(req.url);
+
+  // Supabase storage photos: cache-first, token-agnostic (the signed-URL token
+  // lives in the query string, so match ignoring search → a warmed photo keeps
+  // loading offline and across token rotations). Revalidate in the background.
+  if (/\/storage\/v1\/(object|render\/image)\//.test(url.pathname)) {
+    event.respondWith(
+      (async () => {
+        const cache = await caches.open(IMG_CACHE);
+        const cached = await cache.match(req, { ignoreSearch: true });
+        const network = fetch(req)
+          .then((resp) => {
+            if (resp.ok) void cache.put(req, resp.clone());
+            return resp;
+          })
+          .catch(() => undefined);
+        return cached ?? (await network) ?? Response.error();
+      })()
+    );
+    return;
+  }
+
+  // Same-origin static assets: cache-first.
   if (url.origin === self.location.origin) {
     event.respondWith(caches.match(req).then((cached) => cached ?? fetch(req)));
   }
