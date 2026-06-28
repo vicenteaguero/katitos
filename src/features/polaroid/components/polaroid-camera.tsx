@@ -37,7 +37,7 @@ export function PolaroidCamera(props: CameraCaptureProps) {
       {/* The instant-photo body: cream stock, square window, taller chin. */}
       <figure className="polaroid-frame relative m-0 flex w-full max-w-sm flex-col bg-fg p-3 pb-16 shadow-loge">
         {/* Square photo window — the kernel camera reflows to fill this. */}
-        <div className="relative aspect-square w-full overflow-hidden rounded-none bg-black">
+        <div className="relative aspect-square w-full overflow-hidden rounded-md bg-black">
           <CameraCapture {...props} />
         </div>
         {/* The chin — where a real polaroid leaves room for a caption. */}
