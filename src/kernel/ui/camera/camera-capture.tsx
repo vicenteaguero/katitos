@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Check, RefreshCw, RotateCcw, X } from 'lucide-react';
 import { Button } from '../button';
 import { IconButton } from '../icon-button';
@@ -129,9 +130,12 @@ export function CameraCapture({
     onCancel();
   };
 
-  return (
-    <div className="fixed inset-0 z-[70] flex flex-col bg-black">
-      <div className="flex items-center justify-between p-3 text-white">
+  // Portal to <body> so the full-screen overlay escapes any transformed
+  // ancestor (e.g. a `.curtain-reveal` route), which would otherwise trap a
+  // position:fixed child into a small box instead of the whole viewport.
+  return createPortal(
+    <div className="fixed inset-0 z-[80] flex flex-col bg-black">
+      <div className="flex items-center justify-between p-3 pt-[max(0.75rem,env(safe-area-inset-top))] text-white">
         <IconButton label="Cancel" onClick={cancel} className="text-white">
           <X />
         </IconButton>
@@ -191,6 +195,7 @@ export function CameraCapture({
           />
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
