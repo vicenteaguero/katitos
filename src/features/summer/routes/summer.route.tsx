@@ -84,26 +84,39 @@ export function SummerRoute() {
     <div className="curtain-reveal space-y-4">
       <CountrySwitch value={country} onChange={setCountry} />
 
-      {/* Dense, scrollable icon tab strip. */}
-      <div className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none]">
-        {TABS.map((t) => {
-          const active = t.id === tab;
-          const Icon = t.icon;
-          return (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setTab(t.id)}
-              className={cn(
-                'flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 font-sans text-[0.8rem] font-semibold transition-colors',
-                active ? 'bg-accent text-accent-fg' : 'bg-surface-2 text-muted'
-              )}
-            >
-              <Icon className="h-3.5 w-3.5" />
-              {t.label}
-            </button>
-          );
-        })}
+      {/* Dense, scrollable icon tab strip, with a soft right-edge fade so the
+          overflow reads as "scroll for more" rather than a cut-off. */}
+      <div className="relative -mx-1">
+        <div className="flex gap-1.5 overflow-x-auto px-1 pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {TABS.map((t) => {
+            const active = t.id === tab;
+            const Icon = t.icon;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTab(t.id)}
+                className={cn(
+                  'lift-press flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 font-sans text-[0.8rem] font-semibold transition-colors',
+                  active
+                    ? 'bg-accent text-accent-fg shadow-loge'
+                    : 'bg-surface-2 text-muted'
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+        <div
+          className="pointer-events-none absolute inset-y-0 right-0 w-10"
+          style={{
+            background:
+              'linear-gradient(to left, var(--color-surface), transparent)',
+          }}
+          aria-hidden="true"
+        />
       </div>
 
       <SummerTab tab={tab} trip={trip} country={country} />
