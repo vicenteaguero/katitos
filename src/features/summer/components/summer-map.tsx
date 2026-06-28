@@ -77,9 +77,11 @@ export function SummerMap({
       attributionControl: false,
       scrollWheelZoom: false,
     }).setView([41.4, 38.0], 6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 18,
-    }).addTo(map);
+    // CARTO Voyager — warm, refined, well-labelled (free, no key).
+    L.tileLayer(
+      'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+      { maxZoom: 20, subdomains: 'abcd' }
+    ).addTo(map);
     L.control.zoom({ position: 'bottomright' }).addTo(map);
     layerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
