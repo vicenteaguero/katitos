@@ -4,7 +4,7 @@ import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import { usePartner } from '@kernel/auth';
 import { DateTime, cn } from '@kernel/lib';
-import { Button, Card, Field, IconButton, Input, Sheet } from '@kernel/ui';
+import { Button, Field, IconButton, Input, Sheet } from '@kernel/ui';
 import { useWorkBlocks } from '../../api/summer.queries';
 import {
   useAddWorkBlock,
@@ -108,41 +108,62 @@ export function WorkTab() {
         ))}
       </div>
 
-      <div className="space-y-2">
-        {days.map((d) => {
+      <div className="overflow-hidden rounded-lg bg-surface-2">
+        {days.map((d, i) => {
           const iso = d.toFormat('yyyy-MM-dd');
           const dayBlocks = (blocks ?? []).filter((b) => b.day === iso);
           const isToday = iso === DateTime.now().toFormat('yyyy-MM-dd');
+          const openAdd = () =>
+            setForm({
+              open: true,
+              day: iso,
+              start: '09:00',
+              end: '17:00',
+              title: '',
+            });
           return (
-            <Card key={iso} className="p-3">
-              <div className="mb-1.5 flex items-center justify-between">
-                <p
-                  className={cn(
-                    'font-sans text-sm font-semibold',
-                    isToday ? 'text-accent' : 'text-fg'
+            <div
+              key={iso}
+              className={cn(
+                'px-4 py-2.5',
+                i > 0 && 'border-t border-[rgba(255,255,255,0.05)]'
+              )}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-baseline gap-2.5">
+                  <span
+                    className={cn(
+                      'w-9 font-sans text-sm font-semibold',
+                      isToday ? 'text-accent' : 'text-fg'
+                    )}
+                  >
+                    {d.toFormat('ccc')}
+                  </span>
+                  <span className="font-sans text-xs text-muted">
+                    {d.toFormat('LLL d')}
+                  </span>
+                  {isToday && (
+                    <span className="rounded-full bg-accent px-1.5 py-0.5 font-sans text-[0.55rem] font-bold uppercase tracking-wider text-accent-fg">
+                      now
+                    </span>
                   )}
-                >
-                  {d.toFormat('EEE, LLL d')}
-                </p>
-                <IconButton
-                  label="Add work"
-                  onClick={() =>
-                    setForm({
-                      open: true,
-                      day: iso,
-                      start: '09:00',
-                      end: '17:00',
-                      title: '',
-                    })
-                  }
-                >
-                  <Plus className="h-4 w-4" />
-                </IconButton>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  {dayBlocks.length === 0 && (
+                    <span className="font-sans text-xs text-muted">Free</span>
+                  )}
+                  <button
+                    type="button"
+                    aria-label="Add work"
+                    onClick={openAdd}
+                    className="lift-press text-muted"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
-              {dayBlocks.length === 0 ? (
-                <p className="font-sans text-xs text-muted">Free</p>
-              ) : (
-                <div className="space-y-1.5">
+              {dayBlocks.length > 0 && (
+                <div className="mt-2 space-y-1.5">
                   {dayBlocks.map((b) => {
                     const tone = ROLE_TONE[roleOf(b.user_id) ?? 'a'];
                     return (
@@ -181,7 +202,7 @@ export function WorkTab() {
                   })}
                 </div>
               )}
-            </Card>
+            </div>
           );
         })}
       </div>
