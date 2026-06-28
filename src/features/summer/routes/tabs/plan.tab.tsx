@@ -15,13 +15,9 @@ import {
   CameraCapture,
   Card,
   Empty,
-  Field,
   IconButton,
   Input,
   SectionHeader,
-  Select,
-  Sheet,
-  Textarea,
   toast,
 } from '@kernel/ui';
 import { useSummerItems } from '../../api/summer.queries';
@@ -31,13 +27,8 @@ import {
   useDeleteItem,
   useToggleItem,
 } from '../../api/summer.mutations';
-import { CitySearch } from '../../components/city-search';
-import {
-  COUNTRIES,
-  type CountryFilter,
-  type Trip,
-  type TripItem,
-} from '../../types';
+import { StopSheet } from '../../components/stop-sheet';
+import { type CountryFilter, type Trip, type TripItem } from '../../types';
 
 function tripDays(start?: string | null, end?: string | null): string[] {
   if (!start) return [];
@@ -48,17 +39,6 @@ function tripDays(start?: string | null, end?: string | null): string[] {
     out.push(d.toFormat('yyyy-MM-dd'));
   return out;
 }
-
-const EMPTY = {
-  title: '',
-  kind: 'place',
-  country: '',
-  description: '',
-  link: '',
-  day: '',
-  lat: '',
-  lng: '',
-};
 
 export function PlanTab({
   trip,
@@ -77,7 +57,6 @@ export function PlanTab({
   const [adding, setAdding] = useState(false);
   const [wish, setWish] = useState('');
   const [camFor, setCamFor] = useState<string | null>(null);
-  const [form, setForm] = useState({ ...EMPTY });
 
   const days = useMemo(
     () => tripDays(trip.start_date, trip.end_date),
@@ -89,29 +68,6 @@ export function PlanTab({
   );
   const planItems = all.filter((it) => it.kind !== 'wish');
   const wishes = all.filter((it) => it.kind === 'wish');
-
-  const submitItem = () => {
-    if (!form.title.trim()) return;
-    addItem.mutate(
-      {
-        tripId: trip.id,
-        kind: form.kind,
-        title: form.title.trim(),
-        description: form.description || null,
-        link: form.link || null,
-        country: form.country || (country === 'all' ? null : country),
-        day: form.day || null,
-        lat: form.lat ? Number(form.lat) : null,
-        lng: form.lng ? Number(form.lng) : null,
-      },
-      {
-        onSuccess: () => {
-          setAdding(false);
-          setForm({ ...EMPTY });
-        },
-      }
-    );
-  };
 
   const addWish = () => {
     if (!wish.trim()) return;
@@ -130,6 +86,7 @@ export function PlanTab({
     <section className="space-y-4">
       <SectionHeader
         label="Itinerary"
+        hint="Day-by-day stops · shown on the map"
         action={
           <Button size="sm" onClick={() => setAdding(true)}>
             <Plus size={15} /> Add stop
@@ -161,7 +118,11 @@ export function PlanTab({
 
       {/* Wishlist — buy / eat / bring. */}
       <div className="space-y-2 pt-3">
-        <SectionHeader label="Wishlist" className="mb-2" />
+        <SectionHeader
+          label="Wishlist"
+          hint="To do, eat, buy — no date"
+          className="mb-2"
+        />
         <div className="flex gap-2">
           <Input
             value={wish}
@@ -222,111 +183,12 @@ export function PlanTab({
         />
       )}
 
-      <Sheet open={adding} onClose={() => setAdding(false)} title="Add a stop">
-        <div className="space-y-3">
-          <Field label="What is it">
-            <Input
-              value={form.title}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, title: e.target.value }))
-              }
-              placeholder="Gergeti Trinity Church"
-            />
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Type">
-              <Select
-                value={form.kind}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, kind: e.target.value }))
-                }
-              >
-                <option value="place">Place</option>
-                <option value="todo">To-do</option>
-                <option value="idea">Idea</option>
-              </Select>
-            </Field>
-            <Field label="Country">
-              <Select
-                value={form.country}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, country: e.target.value }))
-                }
-              >
-                <option value="">—</option>
-                {COUNTRIES.map((co) => (
-                  <option key={co.code} value={co.code}>
-                    {co.flag} {co.label}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-          </div>
-          <Field label="Day">
-            <Select
-              value={form.day}
-              onChange={(e) => setForm((f) => ({ ...f, day: e.target.value }))}
-            >
-              <option value="">Unscheduled</option>
-              {days.map((d) => (
-                <option key={d} value={d}>
-                  {DateTime.fromISO(d).toFormat('EEE, LLL d')}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <Field label="Link (optional)">
-            <Input
-              inputMode="url"
-              value={form.link}
-              onChange={(e) => setForm((f) => ({ ...f, link: e.target.value }))}
-              placeholder="maps / booking / article"
-            />
-          </Field>
-          <Field
-            label="Put it on the map"
-            hint="Search a city or sight — it drops the pin for you."
-          >
-            <CitySearch
-              onPick={(h) =>
-                setForm((f) => ({
-                  ...f,
-                  title: f.title || h.name,
-                  lat: String(h.lat),
-                  lng: String(h.lng),
-                  country: h.country || f.country,
-                }))
-              }
-            />
-          </Field>
-          {form.lat && form.lng && (
-            <p className="flex items-center gap-2 font-sans text-xs text-copper">
-              <MapPin className="h-3.5 w-3.5" />
-              Pinned · {Number(form.lat).toFixed(3)},{' '}
-              {Number(form.lng).toFixed(3)}
-              <button
-                type="button"
-                onClick={() => setForm((f) => ({ ...f, lat: '', lng: '' }))}
-                className="underline"
-              >
-                clear
-              </button>
-            </p>
-          )}
-          <Field label="Notes">
-            <Textarea
-              value={form.description}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, description: e.target.value }))
-              }
-              rows={2}
-            />
-          </Field>
-          <Button full onClick={submitItem} disabled={addItem.isPending}>
-            Add to plan
-          </Button>
-        </div>
-      </Sheet>
+      <StopSheet
+        open={adding}
+        onClose={() => setAdding(false)}
+        trip={trip}
+        country={country}
+      />
     </section>
   );
 }
