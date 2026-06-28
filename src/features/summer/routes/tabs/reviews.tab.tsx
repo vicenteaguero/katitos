@@ -8,13 +8,10 @@ import {
   CameraCapture,
   Card,
   Empty,
-  Field,
   IconButton,
   Input,
   SectionHeader,
-  Select,
   Sheet,
-  Textarea,
 } from '@kernel/ui';
 import { useSummerReviews } from '../../api/summer.queries';
 import { useAddReview, useDeleteReview } from '../../api/summer.mutations';
@@ -61,8 +58,6 @@ const EMPTY = {
   name: '',
   country: '',
   stars: 0,
-  notes: '',
-  link: '',
 };
 
 function catMeta(value: string) {
@@ -101,8 +96,8 @@ export function ReviewsTab({
         name: form.name.trim(),
         country: form.country || (country === 'all' ? null : country),
         stars: form.stars || null,
-        notes: form.notes || null,
-        link: form.link || null,
+        notes: null,
+        link: null,
         blob,
       },
       {
@@ -206,69 +201,69 @@ export function ReviewsTab({
         title="Add a review"
       >
         <div className="space-y-3">
-          <Field label="Name">
-            <Input
-              value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              placeholder="Café Littera"
-            />
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Category">
-              <Select
-                value={form.category}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, category: e.target.value }))
-                }
-              >
-                {REVIEW_CATEGORIES.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.emoji} {c.label}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Field label="Country">
-              <Select
-                value={form.country}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, country: e.target.value }))
-                }
-              >
-                <option value="">—</option>
-                {COUNTRIES.map((co) => (
-                  <option key={co.code} value={co.code}>
-                    {co.flag} {co.label}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-          </div>
-          <Field label="Rating">
+          <Input
+            value={form.name}
+            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+            placeholder="Name — e.g. Café Littera"
+            autoFocus
+          />
+
+          {/* Stars, unlabelled and centred. */}
+          <div className="flex justify-center py-0.5">
             <Stars
               value={form.stars}
               onChange={(v) => setForm((f) => ({ ...f, stars: v }))}
-              size={28}
+              size={32}
             />
-          </Field>
-          <Field label="Notes">
-            <Textarea
-              value={form.notes}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, notes: e.target.value }))
-              }
-              rows={2}
-              placeholder="What made it special?"
-            />
-          </Field>
-          <Field label="Link (optional)">
-            <Input
-              inputMode="url"
-              value={form.link}
-              onChange={(e) => setForm((f) => ({ ...f, link: e.target.value }))}
-              placeholder="maps / menu / listing"
-            />
-          </Field>
+          </div>
+
+          {/* Category — a quick pill row, no menu. */}
+          <div className="flex flex-wrap gap-1.5">
+            {REVIEW_CATEGORIES.map((c) => {
+              const active = form.category === c.value;
+              return (
+                <button
+                  key={c.value}
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, category: c.value }))}
+                  className={cn(
+                    'lift-press rounded-full px-3 py-1.5 font-sans text-xs font-semibold',
+                    active
+                      ? 'bg-accent text-accent-fg'
+                      : 'bg-surface-2 text-muted'
+                  )}
+                >
+                  {c.emoji} {c.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Country — two flags, tap to set. */}
+          <div className="flex gap-2">
+            {COUNTRIES.map((co) => {
+              const active = form.country === co.code;
+              return (
+                <button
+                  key={co.code}
+                  type="button"
+                  onClick={() =>
+                    setForm((f) => ({ ...f, country: active ? '' : co.code }))
+                  }
+                  className={cn(
+                    'lift-press flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2.5 font-sans text-sm font-semibold',
+                    active
+                      ? 'bg-accent text-accent-fg'
+                      : 'bg-surface-2 text-muted'
+                  )}
+                >
+                  <span className="text-lg leading-none">{co.flag}</span>
+                  {co.label}
+                </button>
+              );
+            })}
+          </div>
+
           <Button variant="secondary" full onClick={() => setCam(true)}>
             <Camera size={16} /> {blob ? 'Photo added ✓' : 'Add a photo'}
           </Button>
