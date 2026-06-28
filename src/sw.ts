@@ -14,7 +14,7 @@ declare const self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: Array<{ url: string; revision: string | null }>;
 };
 
-const CACHE = 'katitos-shell-v3';
+const CACHE = 'katitos-shell-v4';
 // Photos from Supabase storage (signed URLs). Cached token-agnostically so a
 // warmed photo keeps loading offline even after its signed URL rotates.
 const IMG_CACHE = 'katitos-img-v1';
@@ -36,7 +36,10 @@ self.addEventListener('install', (event) => {
       // would abort the whole shell. Cache each entry independently instead —
       // partial precache still launches; never activate with an empty cache.
       await Promise.allSettled(PRECACHE_URLS.map((url) => cache.add(url)));
-      await self.skipWaiting();
+      // NO skipWaiting: a new version installs and WAITS, then activates on the
+      // next clean launch (when no tab is open). This avoids swapping the app
+      // out from under a running session — which caused the "it shows 3
+      // different versions" flashing as each rapid deploy force-took-over.
     })()
   );
 });
