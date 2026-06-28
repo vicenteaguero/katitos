@@ -13,6 +13,7 @@ import {
   Field,
   IconButton,
   Input,
+  SectionHeader,
   Select,
   Sheet,
 } from '@kernel/ui';
@@ -130,15 +131,17 @@ export function BudgetTab({ trip }: { trip: Trip }) {
 
   return (
     <section className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="eyebrow">Money · by sprint</p>
-        <Button
-          size="sm"
-          onClick={() => setSprintForm({ open: true, name: '', anchor: '' })}
-        >
-          <Plus size={15} /> Sprint
-        </Button>
-      </div>
+      <SectionHeader
+        label="Money · by sprint"
+        action={
+          <Button
+            size="sm"
+            onClick={() => setSprintForm({ open: true, name: '', anchor: '' })}
+          >
+            <Plus size={15} /> Sprint
+          </Button>
+        }
+      />
 
       {(sprints ?? []).length === 0 ? (
         <Empty
