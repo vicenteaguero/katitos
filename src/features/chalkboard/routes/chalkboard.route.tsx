@@ -3,7 +3,14 @@ import { Check, Pencil, Plus } from 'lucide-react';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import { cn } from '@kernel/lib';
-import { Button, IconButton, Sheet, Textarea, toast } from '@kernel/ui';
+import {
+  Button,
+  IconButton,
+  Sheet,
+  Textarea,
+  toast,
+  useTopBarAction,
+} from '@kernel/ui';
 import { useChalkNotes } from '../api/chalkboard.queries';
 import {
   useAddNote,
@@ -65,38 +72,34 @@ export function ChalkboardRoute() {
     );
   };
 
-  // One fixed blackboard: this route never scrolls. Compact header on top,
-  // the matte-slate board takes all remaining height. Move/delete only in edit
-  // mode; the add + edit controls live in the header so nothing covers the slate.
+  // Edit + add live in the TOP BAR (no in-content title, per the one-title rule)
+  // so the matte slate gets the whole height below the bar.
+  useTopBarAction(
+    <div className="flex items-center gap-1">
+      {editing && (
+        <IconButton label="Add note" onClick={openAdd} className="h-9 w-9">
+          <Plus className="h-5 w-5" />
+        </IconButton>
+      )}
+      <IconButton
+        label={editing ? 'Done' : 'Edit wall'}
+        onClick={() => setEditing((e) => !e)}
+        className={cn('h-9 w-9', editing && 'bg-accent text-accent-fg')}
+      >
+        {editing ? (
+          <Check className="h-5 w-5" />
+        ) : (
+          <Pencil className="h-5 w-5" />
+        )}
+      </IconButton>
+    </div>,
+    [editing, atMax]
+  );
+
+  // One fixed blackboard: this route never scrolls. The matte-slate board takes
+  // all remaining height.
   return (
     <div className="curtain-reveal flex h-full min-h-0 flex-col">
-      <header className="mb-4 flex shrink-0 items-end justify-between gap-3">
-        <div>
-          <p className="eyebrow">Our wall</p>
-          <p className="mt-1 font-sans text-sm text-muted">
-            Drag, rotate, pinch — magnets hold it all.
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          {editing && (
-            <IconButton label="Add note" onClick={openAdd}>
-              <Plus className="h-5 w-5" />
-            </IconButton>
-          )}
-          <IconButton
-            label={editing ? 'Done' : 'Edit wall'}
-            onClick={() => setEditing((e) => !e)}
-            className={editing ? 'bg-accent text-accent-fg' : ''}
-          >
-            {editing ? (
-              <Check className="h-5 w-5" />
-            ) : (
-              <Pencil className="h-5 w-5" />
-            )}
-          </IconButton>
-        </div>
-      </header>
-
       {/* Matte-slate board — separated by tone and spacing, not by a line. */}
       <div
         ref={boardRef}
@@ -126,12 +129,6 @@ export function ChalkboardRoute() {
           />
         ))}
       </div>
-
-      <p className="mt-3 shrink-0 text-center font-sans text-xs italic text-muted">
-        {editing
-          ? 'Drag to move · pinch to size & spin · tap × to rub out'
-          : 'Held by magnets. The kitchen we share across two countries.'}
-      </p>
 
       <Sheet
         open={adding}
