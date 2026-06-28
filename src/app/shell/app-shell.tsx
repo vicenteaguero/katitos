@@ -97,31 +97,9 @@ export function AppShell() {
           <PresenceTracker />
           <CacheWarmer />
           <TopBar />
-          {/* Soft blur fade just under the top bar — content diffuses in. */}
-          <div
-            className="pointer-events-none relative z-10 -mb-4 h-4 shrink-0"
-            style={{
-              background:
-                'linear-gradient(to bottom, var(--color-surface), transparent)',
-              backdropFilter: 'blur(3px)',
-              WebkitBackdropFilter: 'blur(3px)',
-            }}
-            aria-hidden="true"
-          />
           <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-[1.75rem] pb-8 pt-[1.75rem] [-webkit-overflow-scrolling:touch]">
             <Outlet />
           </main>
-          {/* Soft blur fade just above the bottom nav. */}
-          <div
-            className="pointer-events-none relative z-10 -mt-4 h-4 shrink-0"
-            style={{
-              background:
-                'linear-gradient(to top, var(--color-surface-2), transparent)',
-              backdropFilter: 'blur(3px)',
-              WebkitBackdropFilter: 'blur(3px)',
-            }}
-            aria-hidden="true"
-          />
           <BottomNav />
           <LoveBurst />
         </div>
