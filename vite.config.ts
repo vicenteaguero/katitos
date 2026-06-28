@@ -9,7 +9,10 @@ export default defineConfig({
     react(),
     tsconfigPaths(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt' (not 'autoUpdate') + no skipWaiting in sw.ts → a new version
+      // installs quietly and applies on the NEXT launch, instead of force-
+      // reloading mid-session (which flashed multiple versions on boot).
+      registerType: 'prompt',
       // Use our own service worker so we can handle web-push, extending the
       // Workbox-generated precache via injectManifest.
       strategies: 'injectManifest',
