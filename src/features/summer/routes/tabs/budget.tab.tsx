@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { Pencil, Plus, Trash2, Wallet } from 'lucide-react';
 import { supabase } from '@kernel/supabase';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
@@ -145,7 +145,7 @@ export function BudgetTab({ trip }: { trip: Trip }) {
 
       {(sprints ?? []).length === 0 ? (
         <Empty
-          icon="💸"
+          icon={<Wallet className="h-11 w-11" strokeWidth={1.25} />}
           title="No sprints yet"
           hint="Group money by period — e.g. “Before Jul 26”."
         />
