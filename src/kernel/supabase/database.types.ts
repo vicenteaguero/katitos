@@ -7,33 +7,48 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
+      album_books: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          scope: string
+          title: string
+          trip_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          scope?: string
+          title?: string
+          trip_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          scope?: string
+          title?: string
+          trip_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "album_books_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       album_chapters: {
         Row: {
           created_at: string
@@ -66,6 +81,76 @@ export type Database = {
           title?: string
         }
         Relationships: []
+      }
+      album_pages: {
+        Row: {
+          book_id: string
+          created_at: string
+          id: string
+          position: number
+        }
+        Insert: {
+          book_id: string
+          created_at?: string
+          id?: string
+          position?: number
+        }
+        Update: {
+          book_id?: string
+          created_at?: string
+          id?: string
+          position?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "album_pages_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "album_books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      album_photos: {
+        Row: {
+          caption: string | null
+          created_at: string
+          created_by: string
+          id: string
+          image_path: string | null
+          page_id: string
+          slot: number
+          source: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          image_path?: string | null
+          page_id: string
+          slot: number
+          source?: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          image_path?: string | null
+          page_id?: string
+          slot?: number
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "album_photos_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "album_pages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       album_slots: {
         Row: {
@@ -247,6 +332,85 @@ export type Database = {
         }
         Relationships: []
       }
+      budget_lines: {
+        Row: {
+          created_at: string
+          currency: string
+          id: string
+          label: string | null
+          planned_amount: number
+          position: number
+          spent_amount: number
+          sprint_id: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          id?: string
+          label?: string | null
+          planned_amount?: number
+          position?: number
+          spent_amount?: number
+          sprint_id: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          id?: string
+          label?: string | null
+          planned_amount?: number
+          position?: number
+          spent_amount?: number
+          sprint_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_lines_sprint_id_fkey"
+            columns: ["sprint_id"]
+            isOneToOne: false
+            referencedRelation: "budget_sprints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_sprints: {
+        Row: {
+          anchor_date: string | null
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+          position: number
+          trip_id: string
+        }
+        Insert: {
+          anchor_date?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          name: string
+          position?: number
+          trip_id: string
+        }
+        Update: {
+          anchor_date?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
+          position?: number
+          trip_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_sprints_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chalkboard_notes: {
         Row: {
           author: string
@@ -255,6 +419,8 @@ export type Database = {
           created_at: string
           id: string
           rotation: number
+          scale: number
+          width: number | null
           x: number
           y: number
         }
@@ -265,6 +431,8 @@ export type Database = {
           created_at?: string
           id?: string
           rotation?: number
+          scale?: number
+          width?: number | null
           x?: number
           y?: number
         }
@@ -275,6 +443,8 @@ export type Database = {
           created_at?: string
           id?: string
           rotation?: number
+          scale?: number
+          width?: number | null
           x?: number
           y?: number
         }
@@ -349,6 +519,7 @@ export type Database = {
           learning_language: string | null
           lng: number | null
           native_language: string | null
+          preferred_currency: string | null
           role: string | null
           timezone: string | null
           updated_at: string
@@ -365,6 +536,7 @@ export type Database = {
           learning_language?: string | null
           lng?: number | null
           native_language?: string | null
+          preferred_currency?: string | null
           role?: string | null
           timezone?: string | null
           updated_at?: string
@@ -381,6 +553,7 @@ export type Database = {
           learning_language?: string | null
           lng?: number | null
           native_language?: string | null
+          preferred_currency?: string | null
           role?: string | null
           timezone?: string | null
           updated_at?: string
@@ -1091,6 +1264,50 @@ export type Database = {
         }
         Relationships: []
       }
+      packing_items: {
+        Row: {
+          assigned_to: string | null
+          category: string | null
+          created_at: string
+          created_by: string
+          id: string
+          label: string
+          packed: boolean
+          position: number
+          trip_id: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          category?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          label: string
+          packed?: boolean
+          position?: number
+          trip_id: string
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          label?: string
+          packed?: boolean
+          position?: number
+          trip_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "packing_items_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       phrases: {
         Row: {
           added_by: string
@@ -1316,6 +1533,7 @@ export type Database = {
           card_id: string
           claimed_at: string
           claimed_by: string
+          dismissed: boolean
           image_path: string | null
           note: string | null
           rated_at: string | null
@@ -1327,6 +1545,7 @@ export type Database = {
           card_id: string
           claimed_at?: string
           claimed_by?: string
+          dismissed?: boolean
           image_path?: string | null
           note?: string | null
           rated_at?: string | null
@@ -1338,6 +1557,7 @@ export type Database = {
           card_id?: string
           claimed_at?: string
           claimed_by?: string
+          dismissed?: boolean
           image_path?: string | null
           note?: string | null
           rated_at?: string | null
@@ -1473,11 +1693,13 @@ export type Database = {
       }
       trip_items: {
         Row: {
+          country: string | null
           created_at: string
           created_by: string
           day: string | null
           description: string | null
           id: string
+          image_path: string | null
           kind: string
           lat: number | null
           link: string | null
@@ -1488,11 +1710,13 @@ export type Database = {
           trip_id: string
         }
         Insert: {
+          country?: string | null
           created_at?: string
           created_by?: string
           day?: string | null
           description?: string | null
           id?: string
+          image_path?: string | null
           kind?: string
           lat?: number | null
           link?: string | null
@@ -1503,11 +1727,13 @@ export type Database = {
           trip_id: string
         }
         Update: {
+          country?: string | null
           created_at?: string
           created_by?: string
           day?: string | null
           description?: string | null
           id?: string
+          image_path?: string | null
           kind?: string
           lat?: number | null
           link?: string | null
@@ -1527,9 +1753,72 @@ export type Database = {
           },
         ]
       }
+      trip_legs: {
+        Row: {
+          country: string | null
+          created_at: string
+          created_by: string
+          depart_date: string | null
+          from_label: string
+          from_lat: number | null
+          from_lng: number | null
+          id: string
+          mode: string
+          note: string | null
+          position: number
+          to_label: string
+          to_lat: number | null
+          to_lng: number | null
+          trip_id: string
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          created_by?: string
+          depart_date?: string | null
+          from_label: string
+          from_lat?: number | null
+          from_lng?: number | null
+          id?: string
+          mode?: string
+          note?: string | null
+          position?: number
+          to_label: string
+          to_lat?: number | null
+          to_lng?: number | null
+          trip_id: string
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          created_by?: string
+          depart_date?: string | null
+          from_label?: string
+          from_lat?: number | null
+          from_lng?: number | null
+          id?: string
+          mode?: string
+          note?: string | null
+          position?: number
+          to_label?: string
+          to_lat?: number | null
+          to_lng?: number | null
+          trip_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_legs_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trip_photos: {
         Row: {
           caption: string | null
+          country: string | null
           created_at: string
           created_by: string
           id: string
@@ -1538,6 +1827,7 @@ export type Database = {
         }
         Insert: {
           caption?: string | null
+          country?: string | null
           created_at?: string
           created_by?: string
           id?: string
@@ -1546,6 +1836,7 @@ export type Database = {
         }
         Update: {
           caption?: string | null
+          country?: string | null
           created_at?: string
           created_by?: string
           id?: string
@@ -1555,6 +1846,65 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "trip_photos_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trip_reviews: {
+        Row: {
+          category: string
+          country: string | null
+          created_at: string
+          created_by: string
+          id: string
+          image_path: string | null
+          lat: number | null
+          link: string | null
+          lng: number | null
+          name: string
+          notes: string | null
+          stars: number | null
+          trip_id: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          country?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          image_path?: string | null
+          lat?: number | null
+          link?: string | null
+          lng?: number | null
+          name: string
+          notes?: string | null
+          stars?: number | null
+          trip_id: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          country?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          image_path?: string | null
+          lat?: number | null
+          link?: string | null
+          lng?: number | null
+          name?: string
+          notes?: string | null
+          stars?: number | null
+          trip_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_reviews_trip_id_fkey"
             columns: ["trip_id"]
             isOneToOne: false
             referencedRelation: "trips"
@@ -1707,6 +2057,39 @@ export type Database = {
           description?: string | null
           id?: string
           title?: string
+        }
+        Relationships: []
+      }
+      work_blocks: {
+        Row: {
+          created_at: string
+          day: string
+          end_min: number
+          id: string
+          note: string | null
+          start_min: number
+          title: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          day: string
+          end_min: number
+          id?: string
+          note?: string | null
+          start_min: number
+          title?: string | null
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          day?: string
+          end_min?: number
+          id?: string
+          note?: string | null
+          start_min?: number
+          title?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -1939,11 +2322,7 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },
 } as const
-
