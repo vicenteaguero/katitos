@@ -2,7 +2,7 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@kernel/auth';
 import { useEnsurePushSubscription } from '@kernel/push';
-import { IconButton } from '@kernel/ui';
+import { IconButton, TopBarSlotProvider, useTopBarSlot } from '@kernel/ui';
 import { PresenceTracker, PartnerStatusDot } from '@features/presence';
 import { ExchangeIcon } from '@features/currency';
 import { LoginScreen } from './login';
@@ -12,7 +12,6 @@ import { BottomNav } from './nav';
 import { CacheWarmer } from './cache-warmer';
 import { SplashScreen } from './splash-screen';
 import { LoveBurst } from './love-burst';
-import { TopBarSlotProvider, useTopBarSlot } from './top-bar-slot';
 import { featureRegistry } from '../features.registry';
 
 /** The name of the screen we're on — drives the quiet top-bar title. */
