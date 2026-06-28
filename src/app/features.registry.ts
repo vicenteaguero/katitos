@@ -23,7 +23,7 @@ import { flowersFeature } from '@features/flowers';
 import { financeFeature } from '@features/finance';
 import { travelFeature } from '@features/travel';
 import { datesFeature } from '@features/dates';
-import { georgiaFeature } from '@features/georgia';
+import { summerFeature } from '@features/summer';
 import { scavengerFeature } from '@features/scavenger';
 import { wishlistsFeature } from '@features/wishlists';
 import { languageFeature } from '@features/language';
@@ -44,7 +44,7 @@ const categories: Record<string, string> = {
   album: 'Memories',
   polaroid: 'Memories',
   dates: 'Memories',
-  georgia: 'Memories',
+  summer: 'Memories',
   travel: 'Memories',
   flowers: 'Memories',
   // Us
@@ -75,7 +75,7 @@ const modules: FeatureModule[] = [
   countdownsFeature,
   quizzesFeature,
   datesFeature,
-  georgiaFeature,
+  summerFeature,
   chalkboardFeature,
   presenceFeature,
   gamesFeature,
@@ -103,7 +103,8 @@ const modules: FeatureModule[] = [
 const GATED = true;
 const OPEN = new Set([
   'polaroid',
-  'georgia',
+  'summer', // Summer Travel — Türkiye → Georgia
+  'album', // Pololini — the life photo-book
   'language',
   'chalkboard', // "The wall"
   'know-me',
