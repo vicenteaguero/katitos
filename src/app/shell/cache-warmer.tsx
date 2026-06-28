@@ -1,12 +1,15 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '@kernel/supabase';
 import { BUCKETS, proxyPath } from '@kernel/storage';
-import { useGeorgiaTrip, useGeorgiaPhotos } from '@features/georgia';
+import { useSummerTrip, useSummerPhotos } from '@features/summer';
 import { usePolaroids } from '@features/polaroid';
 import { useChalkNotes } from '@features/chalkboard';
 import { useTodayQuestions, useEnsureToday } from '@features/know-me';
 
-const PRELOAD = 8;
+// Warm enough recent photos that travel + polaroid feel instant on flaky
+// internet. The service worker (sw.ts) caches each fetched image under a
+// token-agnostic key, so warmed photos also survive a cold boot offline.
+const PRELOAD = 24;
 
 /** Sign each path's proxy and pull it into the browser image cache. */
 function useImagePreload(
@@ -51,9 +54,9 @@ function useImagePreload(
  * persister, the next cold boot too).
  */
 export function CacheWarmer() {
-  const { data: trip } = useGeorgiaTrip();
+  const { data: trip } = useSummerTrip();
   const { data: polaroids } = usePolaroids();
-  const { data: tripPhotos } = useGeorgiaPhotos(trip?.id);
+  const { data: tripPhotos } = useSummerPhotos(trip?.id);
   useChalkNotes();
   useTodayQuestions();
 
