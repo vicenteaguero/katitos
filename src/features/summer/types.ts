@@ -22,12 +22,10 @@ export const COUNTRIES = [
 export const REVIEW_CATEGORIES = [
   { value: 'restaurant', label: 'Restaurant', emoji: '🍽️' },
   { value: 'food', label: 'Food', emoji: '🥘' },
-  { value: 'airbnb', label: 'Stay', emoji: '🛏️' },
-  { value: 'car', label: 'Car rental', emoji: '🚗' },
-  { value: 'museum', label: 'Museum', emoji: '🏛️' },
-  { value: 'view', label: 'View', emoji: '🌄' },
-  { value: 'shop', label: 'Shop', emoji: '🛍️' },
-  { value: 'other', label: 'Other', emoji: '✦' },
+  { value: 'stay', label: 'Stay', emoji: '🛏️' },
+  { value: 'car', label: 'Car', emoji: '🚗' },
+  { value: 'place', label: 'Place', emoji: '📍' },
+  { value: 'activity', label: 'Activity', emoji: '🎟️' },
 ] as const;
 
 export const summerKeys = {
