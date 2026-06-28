@@ -2,7 +2,7 @@ import { useState, type CSSProperties } from 'react';
 import { Camera } from 'lucide-react';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
-import { Button, CameraCapture, Empty, toast } from '@kernel/ui';
+import { Button, CameraCapture, Empty, SectionHeader, toast } from '@kernel/ui';
 import { useSummerPhotos } from '../../api/summer.queries';
 import { useAddPhoto, useDeletePhoto } from '../../api/summer.mutations';
 import { SummerPhoto } from '../../components/summer-photo';
@@ -27,15 +27,21 @@ export function AlbumTab({
 
   return (
     <section className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="eyebrow">Postcards</p>
-        <Button size="sm" onClick={() => setCam(true)}>
-          <Camera size={15} /> Photo
-        </Button>
-      </div>
+      <SectionHeader
+        label="Postcards"
+        action={
+          <Button size="sm" onClick={() => setCam(true)}>
+            <Camera size={15} /> Photo
+          </Button>
+        }
+      />
 
       {list.length === 0 ? (
-        <Empty icon="📸" title="No postcards yet" />
+        <Empty
+          icon={<Camera className="h-11 w-11" strokeWidth={1.25} />}
+          title="No postcards yet"
+          hint="Snap a moment from the trip."
+        />
       ) : (
         <div className="curtain-stagger grid grid-cols-3 gap-2">
           {list.map((p, i) => (
