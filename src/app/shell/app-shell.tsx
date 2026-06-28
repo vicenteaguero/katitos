@@ -2,7 +2,7 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@kernel/auth';
 import { useEnsurePushSubscription } from '@kernel/push';
-import { IconButton, LoadingScreen } from '@kernel/ui';
+import { IconButton } from '@kernel/ui';
 import { PresenceTracker, PartnerStatusDot } from '@features/presence';
 import { ExchangeIcon } from '@features/currency';
 import { LoginScreen } from './login';
@@ -10,6 +10,8 @@ import { DevUserSwitcher } from './dev-switcher';
 import { KatitosMark } from './katitos-mark';
 import { BottomNav } from './nav';
 import { CacheWarmer } from './cache-warmer';
+import { SplashScreen } from './splash-screen';
+import { LoveBurst } from './love-burst';
 import { featureRegistry } from '../features.registry';
 
 /** The name of the screen we're on — drives the quiet top-bar title. */
@@ -59,10 +61,13 @@ function TopBar() {
           {/* Home corner = the fast lane to the currency converter. Settings
               lives only in the More drawer now. */}
           {atHome && (
-            <Link to="/currency">
-              <IconButton label="Currency" className="h-9 w-9">
-                <ExchangeIcon size={20} />
-              </IconButton>
+            <Link
+              to="/currency"
+              aria-label="Currency"
+              className="lift-press flex h-9 w-9 items-center justify-center rounded-full bg-accent text-accent-fg shadow-loge"
+              style={{ border: '1px solid rgba(228,195,106,.4)' }}
+            >
+              <ExchangeIcon size={18} />
             </Link>
           )}
         </div>
@@ -77,8 +82,7 @@ export function AppShell() {
   // keep landing as real notifications even after the browser rotates it.
   useEnsurePushSubscription();
 
-  if (status === 'loading') return <LoadingScreen label="Loading our place…" />;
-  if (status === 'anon') return <LoginScreen />;
+  const loading = status === 'loading';
 
   // App-shell: full-height flex column (sized off the html/body/#root height:100%
   // chain — the one measurement iOS standalone resolves reliably) where ONLY
@@ -86,14 +90,43 @@ export function AppShell() {
   // this same pattern; viewport units and JS height-pinning were both unreliable
   // here — the real fix was the opaque status bar, see index.html.)
   return (
-    <div className="mx-auto flex h-full max-w-app flex-col overflow-hidden bg-surface">
-      <PresenceTracker />
-      <CacheWarmer />
-      <TopBar />
-      <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-[1.75rem] pb-8 pt-[1.75rem] [-webkit-overflow-scrolling:touch]">
-        <Outlet />
-      </main>
-      <BottomNav />
-    </div>
+    <>
+      {status === 'anon' && <LoginScreen />}
+      {status === 'authed' && (
+        <div className="mx-auto flex h-full max-w-app flex-col overflow-hidden bg-surface">
+          <PresenceTracker />
+          <CacheWarmer />
+          <TopBar />
+          {/* Soft blur fade just under the top bar — content diffuses in. */}
+          <div
+            className="pointer-events-none relative z-10 -mb-4 h-4 shrink-0"
+            style={{
+              background:
+                'linear-gradient(to bottom, var(--color-surface), transparent)',
+              backdropFilter: 'blur(3px)',
+              WebkitBackdropFilter: 'blur(3px)',
+            }}
+            aria-hidden="true"
+          />
+          <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-[1.75rem] pb-8 pt-[1.75rem] [-webkit-overflow-scrolling:touch]">
+            <Outlet />
+          </main>
+          {/* Soft blur fade just above the bottom nav. */}
+          <div
+            className="pointer-events-none relative z-10 -mt-4 h-4 shrink-0"
+            style={{
+              background:
+                'linear-gradient(to top, var(--color-surface-2), transparent)',
+              backdropFilter: 'blur(3px)',
+              WebkitBackdropFilter: 'blur(3px)',
+            }}
+            aria-hidden="true"
+          />
+          <BottomNav />
+          <LoveBurst />
+        </div>
+      )}
+      <SplashScreen active={loading} />
+    </>
   );
 }
