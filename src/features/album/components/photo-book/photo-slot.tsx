@@ -29,7 +29,6 @@ export function PhotoSlot({
             path={photo.image_path}
             alt={photo.caption ?? 'Album photo'}
           />
-          <span className="pb-mounts" aria-hidden="true" />
           {photo.caption && <span className="pb-caption">{photo.caption}</span>}
         </>
       ) : (
