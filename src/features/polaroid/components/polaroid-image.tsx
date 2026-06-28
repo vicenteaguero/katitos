@@ -34,7 +34,7 @@ export function PolaroidImage({
       <div
         className={cn(
           // A blank, over-exposed plate waiting in the developing tray.
-          'relative flex items-center justify-center overflow-hidden bg-surface-2 marble',
+          'relative flex items-center justify-center overflow-hidden rounded-md bg-surface-2 marble',
           className
         )}
       >
@@ -52,7 +52,12 @@ export function PolaroidImage({
   }
 
   return (
-    <span className={cn('relative block overflow-hidden bg-brown', className)}>
+    <span
+      className={cn(
+        'relative block overflow-hidden rounded-md bg-brown',
+        className
+      )}
+    >
       <img
         src={src}
         alt={alt ?? 'polaroid'}
@@ -62,7 +67,7 @@ export function PolaroidImage({
         // Proxy missing (a photo from before proxies) → fall back to the full one.
         onError={() => !forceFull && !full && setForceFull(true)}
         className={cn(
-          'h-full w-full object-cover',
+          'h-full w-full rounded-md object-cover',
           developed ? 'polaroid-develop' : 'opacity-0'
         )}
       />
