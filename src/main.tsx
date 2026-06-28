@@ -36,7 +36,8 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>
 );
 
-// The splash component removes #boot the instant it has painted over it (no
-// gap). This is only a safety net for paths that never show the splash (e.g.
-// straight to the login screen) — keep #boot up a beat, then clear it.
-window.setTimeout(() => document.getElementById('boot')?.remove(), 2500);
+// The splash controller (SplashScreen) removes #boot once auth has resolved +
+// a minimum time. This is ONLY a last-resort safety net for the case where the
+// JS never boots at all (so React can't clear it) — long enough to never
+// preempt a slow auth check.
+window.setTimeout(() => document.getElementById('boot')?.remove(), 8000);
