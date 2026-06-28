@@ -17,7 +17,6 @@ import {
   Empty,
   IconButton,
   Input,
-  SectionHeader,
   toast,
 } from '@kernel/ui';
 import { useSummerItems } from '../../api/summer.queries';
@@ -84,15 +83,11 @@ export function PlanTab({
 
   return (
     <section className="space-y-4">
-      <SectionHeader
-        label="Itinerary"
-        hint="Day-by-day stops · shown on the map"
-        action={
-          <Button size="sm" onClick={() => setAdding(true)}>
-            <Plus size={15} /> Add stop
-          </Button>
-        }
-      />
+      <div className="flex justify-end">
+        <Button size="sm" onClick={() => setAdding(true)}>
+          <Plus size={15} /> Add stop
+        </Button>
+      </div>
 
       {planItems.length === 0 ? (
         <Empty
@@ -116,13 +111,8 @@ export function PlanTab({
         />
       )}
 
-      {/* Wishlist — buy / eat / bring. */}
-      <div className="space-y-2 pt-3">
-        <SectionHeader
-          label="Wishlist"
-          hint="To do, eat, buy — no date"
-          className="mb-2"
-        />
+      {/* Wishlist — buy / eat / bring. No header; the placeholder says it. */}
+      <div className="space-y-2 pt-4">
         <div className="flex gap-2">
           <Input
             value={wish}
