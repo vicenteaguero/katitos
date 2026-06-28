@@ -71,6 +71,17 @@ export const qk = {
     list: () => ['trips', 'list'] as const,
     one: (slugOrId: string) => ['trips', slugOrId] as const,
     items: (tripId: string) => ['trips', tripId, 'items'] as const,
+    photos: (tripId: string) => ['trips', tripId, 'photos'] as const,
+    legs: (tripId: string) => ['trips', tripId, 'legs'] as const,
+    reviews: (tripId: string) => ['trips', tripId, 'reviews'] as const,
+    sprints: (tripId: string) => ['trips', tripId, 'sprints'] as const,
+    lines: (sprintId: string) =>
+      ['trips', 'sprint', sprintId, 'lines'] as const,
+    packing: (tripId: string) => ['trips', tripId, 'packing'] as const,
+  },
+  work: {
+    all: () => ['work'] as const,
+    week: (weekStart: string) => ['work', 'week', weekStart] as const,
   },
   dates: {
     all: () => ['dates'] as const,
@@ -112,5 +123,8 @@ export const qk = {
     chapters: () => ['album', 'chapters'] as const,
     slots: () => ['album', 'slots'] as const,
     stickers: () => ['album', 'stickers'] as const,
+    book: (scope: string, key: string) =>
+      ['album', 'book', scope, key] as const,
+    pages: (bookId: string) => ['album', 'book', bookId, 'pages'] as const,
   },
 } as const;
