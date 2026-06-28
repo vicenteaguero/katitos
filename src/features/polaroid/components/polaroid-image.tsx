@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { BUCKETS, useProxiedUrl } from '@kernel/storage';
 import { Spinner } from '@kernel/ui';
 import { cn } from '@kernel/lib';
+import '../polaroid.css';
 
 export function PolaroidImage({
   path,
@@ -73,6 +74,18 @@ export function PolaroidImage({
           style={{
             background:
               'radial-gradient(80% 70% at 50% 40%, rgb(232 217 181 / 0.55), rgb(181 99 58 / 0.18) 60%, transparent 85%)',
+            mixBlendMode: 'screen',
+          }}
+        />
+      )}
+      {/* A single chemical sheen glides across as the hero plate fixes. */}
+      {developed && full && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 polaroid-sheen"
+          style={{
+            background:
+              'linear-gradient(105deg, transparent 38%, rgb(255 241 201 / 0.5) 50%, transparent 62%)',
             mixBlendMode: 'screen',
           }}
         />
