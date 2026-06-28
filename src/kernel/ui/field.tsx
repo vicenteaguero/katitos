@@ -7,8 +7,15 @@ import {
 } from 'react';
 import { cn } from '../lib/cn';
 
+// A clearly-recessed field: a light hairline border + a darker inset fill so
+// inputs stand out on BOTH the page (surface) and inside sheets/cards
+// (surface-2) — they used to share surface-2 and vanish.
 const base =
-  'w-full rounded bg-surface-2 px-4 py-3 font-sans text-fg placeholder:text-muted transition-shadow duration-200 focus:outline-none focus:ring-2 focus:ring-gold/25';
+  'w-full rounded-lg border border-[rgba(251,245,240,0.18)] bg-[rgba(0,0,0,0.28)] px-4 py-3 font-sans text-fg placeholder:text-muted shadow-[inset_0_1px_2px_rgba(0,0,0,0.35)] transition-colors duration-150 focus:border-[rgba(228,195,106,0.7)] focus:outline-none focus:ring-2 focus:ring-[rgba(228,195,106,0.28)]';
+
+// Chevron so a <select> reads as a dropdown (appearance-none hides the native one).
+const SELECT_CHEVRON =
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23c9a24b' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")";
 
 export const Input = forwardRef<
   HTMLInputElement,
@@ -34,11 +41,16 @@ export const Textarea = forwardRef<
 export const Select = forwardRef<
   HTMLSelectElement,
   SelectHTMLAttributes<HTMLSelectElement>
->(function Select({ className, ...props }, ref) {
+>(function Select({ className, style, ...props }, ref) {
   return (
     <select
       ref={ref}
-      className={cn(base, 'appearance-none', className)}
+      className={cn(base, 'appearance-none bg-no-repeat pr-10', className)}
+      style={{
+        backgroundImage: SELECT_CHEVRON,
+        backgroundPosition: 'right 1rem center',
+        ...style,
+      }}
       {...props}
     />
   );
