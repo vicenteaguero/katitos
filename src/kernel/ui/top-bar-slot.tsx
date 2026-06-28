@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components -- a tiny context module:
-   the Provider lives beside its hooks on purpose so routes have one import. */
+   the Provider lives beside its hooks on purpose so callers have one import. */
 import {
   createContext,
   useContext,
