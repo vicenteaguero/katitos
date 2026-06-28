@@ -114,12 +114,6 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
 
   return (
     <div className="pb-wine curtain-reveal">
-      {title && (
-        <p className="mb-4 text-center font-display text-3xl font-semibold">
-          <span className="pb-title">{title}</span>
-        </p>
-      )}
-
       <div className="pb-stage">
         <div className="pb-case">
           <div
