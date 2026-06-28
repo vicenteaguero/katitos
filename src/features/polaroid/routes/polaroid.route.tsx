@@ -169,7 +169,7 @@ function Gallery({ onOpen }: { onOpen: (day: string) => void }) {
                 >
                   <PolaroidImage
                     path={p.image_path}
-                    className="aspect-square w-full rounded-none"
+                    className="aspect-square w-full"
                   />
                   <figcaption className="mt-4 px-1 text-center">
                     <span className="block font-sans text-[0.6875rem] font-semibold uppercase tracking-[0.22em] text-copper">
