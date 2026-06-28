@@ -11,6 +11,11 @@ export { Segmented } from './segmented';
 export type { SegmentOption } from './segmented';
 export { PageHeader } from './page-header';
 export { SectionHeader } from './section-header';
+export {
+  TopBarSlotProvider,
+  useTopBarSlot,
+  useTopBarAction,
+} from './top-bar-slot';
 export { Fab } from './fab';
 export { FilePickerButton } from './file-picker-button';
 export type { FilePickerButtonProps } from './file-picker-button';
