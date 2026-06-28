@@ -38,7 +38,7 @@ export function LastPolaroidWidget() {
         >
           <PolaroidImage
             path={last.image_path}
-            className="aspect-square w-full rounded-none"
+            className="aspect-square w-full"
           />
           {last.caption && (
             <p className="m-0 mt-3 text-center font-display text-[19px] italic text-[#6E1423]">
