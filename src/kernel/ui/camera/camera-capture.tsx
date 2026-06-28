@@ -36,32 +36,54 @@ export function CameraCapture({
     streamRef.current = null;
   }, []);
 
+  const attach = useCallback(async () => {
+    if (videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+      await videoRef.current.play().catch(() => {});
+    }
+  }, []);
+
   const start = useCallback(async () => {
-    stop();
     setError(null);
     if (!navigator.mediaDevices?.getUserMedia) {
       setError('Camera not supported on this device.');
       return;
     }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: facing },
-        audio: false,
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play().catch(() => {});
+      // Reuse the live stream if we already have one. iOS PWAs re-prompt on
+      // every fresh getUserMedia, so we acquire ONCE and keep it alive across
+      // capture/retake — only switching cameras (facing) gets a new stream.
+      if (!streamRef.current) {
+        streamRef.current = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: facing },
+          audio: false,
+        });
       }
+      await attach();
     } catch {
       setError('Camera unavailable — check permissions.');
     }
-  }, [facing, stop]);
+  }, [facing, attach]);
 
+  // Acquire on mount and whenever the camera (facing) changes; release for good
+  // on unmount. Crucially NOT tied to `preview`, so a retake reuses the stream.
   useEffect(() => {
-    if (!preview) void start();
-    return stop;
-  }, [start, stop, preview]);
+    let active = true;
+    void (async () => {
+      stop();
+      if (active) await start();
+    })();
+    return () => {
+      active = false;
+    };
+  }, [facing, start, stop]);
+
+  useEffect(() => stop, [stop]);
+
+  // After a retake the <video> remounts; re-point it at the still-live stream.
+  useEffect(() => {
+    if (!preview) void attach();
+  }, [preview, attach]);
 
   // Front camera = a mirror: flip the live preview AND bake the flip into the
   // saved photo, so the picture matches what you saw (not the reversed world).
@@ -82,15 +104,13 @@ export function CameraCapture({
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     canvas.toBlob(
       (blob) => {
-        if (blob) {
-          stop();
-          setPreview({ url: URL.createObjectURL(blob), blob });
-        }
+        // Keep the stream LIVE (no stop here) so retake doesn't re-prompt.
+        if (blob) setPreview({ url: URL.createObjectURL(blob), blob });
       },
       'image/jpeg',
       quality
     );
-  }, [stop, quality, mirror]);
+  }, [quality, mirror]);
 
   const confirm = () => {
     if (!preview) return;
