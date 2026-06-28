@@ -56,13 +56,11 @@ export function SummerRoute() {
   // Slide the active tab into view when it changes (so taps near the edge
   // don't leave the active pill half-hidden).
   useEffect(() => {
-    stripRef.current
-      ?.querySelector('[data-active="true"]')
-      ?.scrollIntoView({
-        behavior: 'smooth',
-        inline: 'center',
-        block: 'nearest',
-      });
+    stripRef.current?.querySelector('[data-active="true"]')?.scrollIntoView({
+      behavior: 'smooth',
+      inline: 'center',
+      block: 'nearest',
+    });
   }, [tab]);
 
   // The one Summer trip just exists. If the DB has no row (fresh/cloud, seeds
@@ -94,7 +92,7 @@ export function SummerRoute() {
     );
 
   return (
-    <div className="curtain-reveal space-y-4">
+    <div className="curtain-reveal -mt-2 space-y-4">
       <CountrySwitch value={country} onChange={setCountry} />
 
       {/* Dense, scrollable icon tab strip, with a soft right-edge fade so the
