@@ -12,6 +12,7 @@ import { BottomNav } from './nav';
 import { CacheWarmer } from './cache-warmer';
 import { SplashScreen } from './splash-screen';
 import { LoveBurst } from './love-burst';
+import { TopBarSlotProvider, useTopBarSlot } from './top-bar-slot';
 import { featureRegistry } from '../features.registry';
 
 /** The name of the screen we're on — drives the quiet top-bar title. */
@@ -28,6 +29,8 @@ function TopBar() {
   // "Back" earns its place only off the home tab — on home it'd go nowhere.
   const atHome = pathname === '/';
   const title = sectionTitle(pathname);
+  // A control the active route can inject (wall's edit pen, currency freshness…).
+  const action = useTopBarSlot();
 
   return (
     <header className="z-20 shrink-0 bg-surface/95 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur">
@@ -57,6 +60,7 @@ function TopBar() {
           )}
         </div>
         <div className="flex items-center gap-1">
+          {action}
           <DevUserSwitcher />
           {/* Home corner = the fast lane to the currency converter. Settings
               lives only in the More drawer now. */}
@@ -93,16 +97,18 @@ export function AppShell() {
     <>
       {status === 'anon' && <LoginScreen />}
       {status === 'authed' && (
-        <div className="mx-auto flex h-full max-w-app flex-col overflow-hidden bg-surface">
-          <PresenceTracker />
-          <CacheWarmer />
-          <TopBar />
-          <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-[1.75rem] pb-8 pt-[1.75rem] [-webkit-overflow-scrolling:touch]">
-            <Outlet />
-          </main>
-          <BottomNav />
-          <LoveBurst />
-        </div>
+        <TopBarSlotProvider>
+          <div className="mx-auto flex h-full max-w-app flex-col overflow-hidden bg-surface">
+            <PresenceTracker />
+            <CacheWarmer />
+            <TopBar />
+            <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-[1.75rem] pb-8 pt-[1.75rem] [-webkit-overflow-scrolling:touch]">
+              <Outlet />
+            </main>
+            <BottomNav />
+            <LoveBurst />
+          </div>
+        </TopBarSlotProvider>
       )}
       <SplashScreen active={loading} />
     </>
