@@ -10,8 +10,7 @@ import {
   Wallet,
   type LucideIcon,
 } from 'lucide-react';
-import { useNow } from '@kernel/hooks';
-import { countdownTo, DateTime, cn } from '@kernel/lib';
+import { cn } from '@kernel/lib';
 import { Button, Empty, LoadingScreen } from '@kernel/ui';
 import { useSummerTrip } from '../api/summer.queries';
 import { useCreateSummerTrip } from '../api/summer.mutations';
@@ -50,7 +49,6 @@ const TABS: { id: Tab; label: string; icon: LucideIcon }[] = [
 export function SummerRoute() {
   const { data: trip, isLoading } = useSummerTrip();
   const createTrip = useCreateSummerTrip();
-  const now = useNow(60_000);
   const [tab, setTab] = useState<Tab>('plan');
   const [country, setCountry] = useState<CountryFilter>('all');
 
@@ -82,41 +80,8 @@ export function SummerRoute() {
       />
     );
 
-  const c = trip.start_date
-    ? countdownTo(DateTime.fromISO(trip.start_date), now)
-    : null;
-
   return (
     <div className="curtain-reveal space-y-4">
-      {/* Slim hero: dates + countdown on one row (no big duplicate title). */}
-      <div className="flex items-center justify-between gap-3 rounded-lg bg-surface-2 px-4 py-3">
-        <div className="min-w-0">
-          <p className="truncate font-display text-lg font-semibold text-fg">
-            {trip.name}
-          </p>
-          {trip.start_date && (
-            <p className="font-sans text-[0.7rem] uppercase tracking-[0.18em] text-muted">
-              {DateTime.fromISO(trip.start_date).toFormat('LLL d')}
-              {trip.end_date
-                ? ` – ${DateTime.fromISO(trip.end_date).toFormat('LLL d')}`
-                : ''}
-            </p>
-          )}
-        </div>
-        {c && (
-          <div className="shrink-0 text-right">
-            <span className="gilt-text gilt-figures font-display text-3xl font-semibold leading-none">
-              {c.isPast ? '✦' : c.days}
-            </span>
-            {!c.isPast && (
-              <span className="ml-1 font-sans text-[0.65rem] uppercase tracking-[0.18em] text-copper">
-                days
-              </span>
-            )}
-          </div>
-        )}
-      </div>
-
       <CountrySwitch value={country} onChange={setCountry} />
 
       {/* Dense, scrollable icon tab strip. */}
