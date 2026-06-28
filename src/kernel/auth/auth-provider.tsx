@@ -44,9 +44,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLocalAuth ? getDevSlot() : null
   );
   const bootstrapped = useRef(false);
+  const initialized = useRef(false);
 
   useEffect(() => {
+    // getSession is the authoritative FIRST status. The change-listener is
+    // ignored until that resolves, otherwise its INITIAL_SESSION event can flip
+    // status (loading → anon → authed) and flash the home/login on boot.
     const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
+      if (!initialized.current) return;
       setSession(next);
       setStatus(next ? 'authed' : 'anon');
     });
@@ -59,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (existing) {
         setSession(existing);
         setStatus('authed');
+        initialized.current = true;
         return;
       }
 
@@ -67,15 +73,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         bootstrapped.current = true;
         const slot = getDevSlot();
         const { email, password } = devUsers[slot];
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
-        if (error) setStatus('anon');
+        initialized.current = true;
+        if (error) {
+          setStatus('anon');
+        } else {
+          setSession(data.session);
+          setStatus(data.session ? 'authed' : 'anon');
+        }
         return;
       }
 
       setStatus('anon');
+      initialized.current = true;
     })();
 
     return () => sub.subscription.unsubscribe();
