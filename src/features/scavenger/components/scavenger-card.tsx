@@ -1,4 +1,4 @@
-import { Camera, Check, Lock, Star, Trash2 } from 'lucide-react';
+import { Check, Lock, Sparkles, Star, Trash2, X } from 'lucide-react';
 import { Button, Card, IconButton } from '@kernel/ui';
 import { cn } from '@kernel/lib';
 import { ScavengerProofImage } from './scavenger-proof-image';
@@ -7,14 +7,18 @@ import type { ScavengerCardFull } from '../types';
 interface Props {
   card: ScavengerCardFull;
   ownerRole: 'a' | 'b' | null;
+  /** Display name of the card's creator. */
+  ownerName: string;
+  /** Display name of the OTHER person — the one who scores this card. */
   raterName: string;
   viewerIsOwner: boolean;
   /** Stars still available to spend on THIS card (pot left + its own stars). */
   maxStars: number;
-  onMarkDone: (c: ScavengerCardFull) => void;
+  onClaim: (c: ScavengerCardFull) => void;
+  onUnclaim: (c: ScavengerCardFull) => void;
   onRate: (c: ScavengerCardFull, stars: number) => void;
+  onDismiss: (c: ScavengerCardFull) => void;
   onAccept: (c: ScavengerCardFull) => void;
-  onUndo: (c: ScavengerCardFull) => void;
   onDelete: (c: ScavengerCardFull) => void;
 }
 
@@ -66,23 +70,32 @@ function Stars({
 export function DateCardItem({
   card,
   ownerRole,
+  ownerName,
   raterName,
   viewerIsOwner,
   maxStars,
-  onMarkDone,
+  onClaim,
+  onUnclaim,
   onRate,
+  onDismiss,
   onAccept,
-  onUndo,
   onDelete,
 }: Props) {
   const claim = card.scavenger_claims;
-  const done = !!claim;
+  const dismissed = !!claim?.dismissed;
+  const accepted = !!claim?.accepted;
   const stars = claim?.stars ?? 0;
   const rated = stars > 0;
-  const accepted = !!claim?.accepted;
   const tone = ownerRole
     ? TONE[ownerRole]
     : { label: 'Deck', color: '#c9a24b' };
+
+  const proof = claim?.image_path ? (
+    <ScavengerProofImage
+      path={claim.image_path}
+      className="aspect-video w-full rounded-lg object-cover"
+    />
+  ) : null;
 
   return (
     <Card className="overflow-hidden p-0">
@@ -129,81 +142,136 @@ export function DateCardItem({
           )}
         </div>
 
-        {/* ── State machine ──────────────────────────────────────────── */}
-        {!done ? (
-          <Button full onClick={() => onMarkDone(card)}>
-            <Camera size={16} /> We did it — add the photo
-          </Button>
-        ) : (
+        {/* ── State machine ──────────────────────────────────────────────
+            Owner: private → claim → (waiting | rated → accept). Partner only
+            ever sees a claimed, un-cancelled card: score it or cancel review. */}
+        {accepted ? (
+          // Locked, final — visible to both.
           <div className="space-y-3">
-            <ScavengerProofImage
-              path={claim.image_path ?? ''}
-              className="aspect-video w-full rounded-lg object-cover"
-            />
-
-            {accepted ? (
-              // Locked, final.
+            {proof}
+            <div className="flex items-center justify-between">
+              <Stars value={stars} />
+              <span className="inline-flex items-center gap-1.5 font-sans text-xs font-semibold uppercase tracking-[0.12em] text-success">
+                <Lock size={12} /> Accepted
+              </span>
+            </div>
+          </div>
+        ) : viewerIsOwner ? (
+          !claim ? (
+            // Private to me — nobody else can see it until I claim it.
+            <div className="space-y-3">
+              <p className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 px-3 py-1 font-sans text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted">
+                <Lock size={11} /> Only you can see this
+              </p>
+              <Button full onClick={() => onClaim(card)}>
+                <Sparkles size={16} /> Claim this date
+              </Button>
+            </div>
+          ) : dismissed ? (
+            // Partner sent it back — claim it again to re-reveal.
+            <div className="space-y-3">
+              <p className="font-sans text-sm text-muted">
+                {raterName} sent this back — claim it again when you are ready.
+              </p>
+              <div className="flex items-center gap-3">
+                <Button full onClick={() => onClaim(card)}>
+                  <Sparkles size={16} /> Claim again
+                </Button>
+                <button
+                  type="button"
+                  onClick={() => onUnclaim(card)}
+                  className="shrink-0 px-1 font-sans text-xs uppercase tracking-[0.12em] text-muted lift-press"
+                >
+                  unclaim
+                </button>
+              </div>
+            </div>
+          ) : rated ? (
+            // Revealed + scored — accept to lock it in, or pull it back.
+            <div className="space-y-3">
+              {proof}
               <div className="flex items-center justify-between">
                 <Stars value={stars} />
-                <span className="inline-flex items-center gap-1.5 font-sans text-xs font-semibold uppercase tracking-[0.12em] text-success">
-                  <Lock size={12} /> Accepted
-                </span>
+                <button
+                  type="button"
+                  onClick={() => onUnclaim(card)}
+                  className="font-sans text-xs uppercase tracking-[0.12em] text-muted lift-press"
+                >
+                  unclaim
+                </button>
               </div>
-            ) : !rated ? (
-              // Done, awaiting the partner's stars.
-              viewerIsOwner ? (
-                <p className="text-center font-sans text-sm text-muted">
-                  Waiting for {raterName} to score this date…
+              <Button full onClick={() => onAccept(card)}>
+                <Check size={16} /> Accept {stars}★ — lock it in
+              </Button>
+            </div>
+          ) : (
+            // Revealed — waiting for the partner's stars.
+            <div className="space-y-3">
+              {proof}
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-sans text-sm text-muted">
+                  Revealed to {raterName} · waiting for their stars…
                 </p>
-              ) : (
-                <div className="space-y-2 text-center">
-                  <p className="eyebrow justify-center">How good was it?</p>
-                  <div className="flex justify-center">
-                    <Stars
-                      value={0}
-                      limit={maxStars}
-                      onPick={(n) => onRate(card, n)}
-                    />
-                  </div>
-                  {maxStars < 3 && (
-                    <p className="font-sans text-xs text-muted">
-                      {maxStars === 0
-                        ? 'Pot empty — no stars left to give'
-                        : `${maxStars} left in the pot`}
-                    </p>
-                  )}
-                </div>
-              )
-            ) : (
-              // Rated but not yet accepted.
+                <button
+                  type="button"
+                  onClick={() => onUnclaim(card)}
+                  className="shrink-0 font-sans text-xs uppercase tracking-[0.12em] text-muted lift-press"
+                >
+                  unclaim
+                </button>
+              </div>
+            </div>
+          )
+        ) : (
+          // Partner view — only reached when claimed & not cancelled.
+          <div className="space-y-3">
+            {proof}
+            {rated ? (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  {viewerIsOwner ? (
-                    <Stars value={stars} />
-                  ) : (
-                    <Stars
-                      value={stars}
-                      limit={maxStars}
-                      onPick={(n) => onRate(card, n)}
-                    />
-                  )}
+                  <Stars
+                    value={stars}
+                    limit={maxStars}
+                    onPick={(n) => onRate(card, n)}
+                  />
                   <button
                     type="button"
-                    onClick={() => onUndo(card)}
-                    className="font-sans text-xs uppercase tracking-[0.12em] text-muted lift-press"
+                    onClick={() => onDismiss(card)}
+                    className="inline-flex items-center gap-1 font-sans text-xs uppercase tracking-[0.12em] text-muted lift-press"
                   >
-                    undo
+                    <X size={12} /> cancel
                   </button>
                 </div>
-                {viewerIsOwner ? (
-                  <Button full onClick={() => onAccept(card)}>
-                    <Check size={16} /> Accept {stars}★ — lock it in
-                  </Button>
-                ) : (
-                  <p className="text-center font-sans text-xs text-muted">
-                    Tap a star to adjust · waiting for them to accept
+                <p className="font-sans text-xs text-muted">
+                  Tap a star to adjust · waiting for {ownerName} to accept
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2 text-center">
+                <p className="eyebrow justify-center">
+                  {ownerName} claimed this — how good was it?
+                </p>
+                <div className="flex justify-center">
+                  <Stars
+                    value={0}
+                    limit={maxStars}
+                    onPick={(n) => onRate(card, n)}
+                  />
+                </div>
+                {maxStars < 3 && (
+                  <p className="font-sans text-xs text-muted">
+                    {maxStars === 0
+                      ? 'Pot empty — no stars left to give'
+                      : `${maxStars} left in the pot`}
                   </p>
                 )}
+                <button
+                  type="button"
+                  onClick={() => onDismiss(card)}
+                  className="inline-flex items-center gap-1 font-sans text-xs uppercase tracking-[0.12em] text-muted lift-press"
+                >
+                  <X size={12} /> cancel review
+                </button>
               </div>
             )}
           </div>
