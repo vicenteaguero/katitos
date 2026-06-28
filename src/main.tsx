@@ -36,15 +36,7 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>
 );
 
-// Hand the instant boot splash (#boot in index.html) off to React's identical
-// splash once it has painted, then remove it — so launch never flashes black
-// or a bare home before the real splash appears.
-const boot = document.getElementById('boot');
-if (boot) {
-  requestAnimationFrame(() =>
-    requestAnimationFrame(() => {
-      boot.style.opacity = '0';
-      window.setTimeout(() => boot.remove(), 400);
-    })
-  );
-}
+// The splash component removes #boot the instant it has painted over it (no
+// gap). This is only a safety net for paths that never show the splash (e.g.
+// straight to the login screen) — keep #boot up a beat, then clear it.
+window.setTimeout(() => document.getElementById('boot')?.remove(), 2500);
