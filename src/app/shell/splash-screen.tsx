@@ -47,6 +47,13 @@ export function SplashScreen({ active }: { active: boolean }) {
   const mountedAt = useRef(Date.now());
   const [phase, setPhase] = useState<'in' | 'out' | 'gone'>('in');
 
+  // This splash now covers — so drop the instant index.html boot splash. Doing
+  // it HERE (not on a timer in main.tsx) guarantees no gap: #boot stays up until
+  // this animated splash has actually painted over it.
+  useEffect(() => {
+    document.getElementById('boot')?.remove();
+  }, []);
+
   // Once loading is done AND we've shown it long enough, start the fade.
   useEffect(() => {
     if (active) {
