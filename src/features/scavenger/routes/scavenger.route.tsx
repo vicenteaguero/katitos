@@ -241,7 +241,7 @@ export function ScavengerRoute({
       <Segmented
         value={deck}
         onChange={setDeck}
-        className="w-full"
+        full
         options={[
           { value: 'a', label: `${nameOf('a')} 💙` },
           { value: 'b', label: `${nameOf('b')} 💗` },
