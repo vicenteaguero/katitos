@@ -298,13 +298,13 @@ export function CurrencyRoute() {
 
       {/* The reading — what I have, what I get. Each figure sits in its own
           quiet tinted chip; no dead air between them. */}
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-1.5">
-        <p className="rounded-xl bg-surface/50 px-4 py-1.5 font-display text-2xl tabular-nums text-muted">
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2">
+        <p className="rounded-xl bg-surface-2 px-4 py-2 font-display text-2xl tabular-nums text-muted">
           {meta(from).flag} {shown}{' '}
           <span className="text-base text-muted/70">{from}</span>
         </p>
         <p
-          className={`rounded-2xl bg-surface/70 px-5 py-2 font-display ${fit(resultText)} font-semibold leading-none tabular-nums text-fg`}
+          className={`rounded-2xl bg-surface-2 px-5 py-3 font-display ring-1 ring-[rgba(228,195,106,0.16)] ${fit(resultText)} font-semibold leading-none tabular-nums text-fg`}
         >
           {resultText} <span className="text-2xl text-accent">{to}</span>
         </p>
