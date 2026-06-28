@@ -26,6 +26,13 @@ export const storagePaths = {
   scavengerCardImage: (cardId: string) => `card/${cardId}.jpg`,
   datePhoto: (dateId: string, fileId: string) => `${dateId}/${fileId}.jpg`,
   tripPhoto: (tripId: string, fileId: string) => `${tripId}/${fileId}.jpg`,
+  /** A place review's single photo (same georgia-album bucket, reviews/ prefix). */
+  tripReview: (reviewId: string) => `reviews/${reviewId}.jpg`,
+  /** An itinerary item's single photo. */
+  tripItemPhoto: (itemId: string) => `items/${itemId}.jpg`,
+  /** A photo placed in a 3D album book page slot. */
+  albumPhoto: (bookId: string, photoId: string) =>
+    `book/${bookId}/${photoId}.jpg`,
   avatar: (userId: string) => `${userId}.jpg`,
   /** One sticker photo per slot half (solo|a|b) — swap overwrites in place. */
   albumSticker: (chapterId: string, slotId: string, half: string) =>
