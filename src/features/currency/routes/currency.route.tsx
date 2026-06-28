@@ -1,11 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeftRight, Delete, History, Plus, Trash2, X } from 'lucide-react';
+import {
+  ArrowLeftRight,
+  Check,
+  Delete,
+  History,
+  Pencil,
+  Trash2,
+} from 'lucide-react';
 import { convert, formatMoney, indexRates } from '@kernel/lib';
 import { usePartner } from '@kernel/auth';
-import { Empty, Sheet } from '@kernel/ui';
+import { Empty, Sheet, useTopBarAction } from '@kernel/ui';
 import { useRates } from '../api/currency.queries';
 import { CURRENCIES, isCode, meta, type Code } from '../currencies';
-import '../currency.css';
 
 // Shrink the figure as it grows so it never wraps or clips — tool, not poster.
 const fit = (s: string) =>
@@ -18,18 +24,37 @@ const fit = (s: string) =>
         : 'text-6xl';
 
 interface Entry {
-  id: number;
+  id: string;
   amount: number;
   from: Code;
   to: Code;
   result: number;
+  // A named entry is "kept" — it persists across reloads (in localStorage)
+  // until deleted. Un-named entries are session-only ("saved in the moment").
+  name?: string;
 }
 
 // Last pair survives reloads; the preferred currency only seeds the very first
 // visit (afterwards their own last choice wins).
 const PAIR_KEY = 'currency:pair';
+const SAVED_KEY = 'katitos:currency:saved';
 const DEFAULT_FROM: Code = 'RUB';
 const DEFAULT_TO: Code = 'CLP';
+
+function loadSaved(): Entry[] {
+  try {
+    const raw = localStorage.getItem(SAVED_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    if (Array.isArray(arr))
+      return arr.filter(
+        (e) => isCode(e?.from) && isCode(e?.to) && typeof e?.result === 'number'
+      );
+  } catch {
+    /* ignore malformed storage */
+  }
+  return [];
+}
 
 function loadPair(): { from: Code; to: Code } | null {
   try {
@@ -63,13 +88,11 @@ export function CurrencyRoute() {
   const [from, setFrom] = useState<Code>(initialPair?.from ?? DEFAULT_FROM);
   const [to, setTo] = useState<Code>(initialPair?.to ?? DEFAULT_TO);
   const [editing, setEditing] = useState<'from' | 'to' | null>(null);
-  const [history, setHistory] = useState<Entry[]>([]);
+  const [history, setHistory] = useState<Entry[]>([]); // session-only
+  const [saved, setSaved] = useState<Entry[]>(loadSaved); // named → kept
   const [showHistory, setShowHistory] = useState(false);
-
-  // Running tally — the shopping basket. Lives in the current `to`; count drives
-  // the bump animation. Session-only, like history.
-  const [tally, setTally] = useState(0);
-  const [tallyCount, setTallyCount] = useState(0);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameText, setRenameText] = useState('');
   const nextId = useRef(1);
 
   const n = Number(amount) || 0;
@@ -86,6 +109,29 @@ export function CurrencyRoute() {
     return max || null;
   }, [rates]);
   const fresh = freshness(updatedAt);
+
+  // Freshness lives quietly in the top bar (right), not under the figures.
+  useTopBarAction(
+    fresh ? (
+      <span
+        className={`font-sans text-[0.7rem] tracking-[0.02em] ${
+          fresh.stale ? 'text-gold/80' : 'text-muted/70'
+        }`}
+      >
+        {fresh.text}
+      </span>
+    ) : null,
+    [fresh?.text, fresh?.stale]
+  );
+
+  // Persist the kept (named) entries whenever they change.
+  useEffect(() => {
+    try {
+      localStorage.setItem(SAVED_KEY, JSON.stringify(saved));
+    } catch {
+      /* storage may be unavailable (private mode) — non-fatal */
+    }
+  }, [saved]);
 
   // Seed the result currency from the saved preference — but only on a fresh
   // device with no remembered pair, before the user touches anything, and once.
@@ -111,15 +157,30 @@ export function CurrencyRoute() {
     }
   }, [from, to]);
 
-  // Re-base the running total into the new currency when `to` changes, so the
-  // basket stays meaningful even if they switch what they're counting toward.
-  const prevTo = useRef(to);
+  // Auto-log conversions "in the moment": once typing settles, record the
+  // reading to the session history (deduped against the most recent). No Add
+  // button — you just convert, and it's there if you want to keep it.
   useEffect(() => {
-    if (prevTo.current === to) return;
-    const old = prevTo.current;
-    prevTo.current = to;
-    setTally((t) => (t > 0 ? (convert(t, old, to, index) ?? t) : t));
-  }, [to, index]);
+    if (n === 0 || result == null) return;
+    const t = window.setTimeout(() => {
+      setHistory((h) => {
+        const top = h[0];
+        if (top && top.amount === n && top.from === from && top.to === to)
+          return h;
+        return [
+          {
+            id: `${Date.now()}-${nextId.current++}`,
+            amount: n,
+            from,
+            to,
+            result,
+          },
+          ...h,
+        ].slice(0, 20);
+      });
+    }, 1100);
+    return () => window.clearTimeout(t);
+  }, [n, from, to, result]);
 
   // ── numpad ──
   const tap = (key: string) => {
@@ -150,20 +211,24 @@ export function CurrencyRoute() {
     setEditing(null);
   };
 
-  // Add the current reading to the basket, log it, and clear for the next price.
-  const add = () => {
-    if (result == null || n === 0) return;
-    setTally((t) => t + result);
-    setTallyCount((c) => c + 1);
-    setHistory((h) =>
-      [{ id: nextId.current++, amount: n, from, to, result }, ...h].slice(0, 30)
-    );
-    setAmount('');
+  const startRename = (e: Entry) => {
+    setRenamingId(e.id);
+    setRenameText(e.name ?? '');
   };
 
-  const clearTally = () => {
-    setTally(0);
-    setTallyCount(0);
+  // Naming an entry keeps it forever (moves it into the persisted `saved` list);
+  // an empty name leaves it where it is (still session-only).
+  const commitRename = (e: Entry) => {
+    const name = renameText.trim();
+    setRenamingId(null);
+    if (!name) return;
+    setSaved((s) => [{ ...e, name }, ...s.filter((x) => x.id !== e.id)]);
+    setHistory((h) => h.filter((x) => x.id !== e.id));
+  };
+
+  const removeEntry = (id: string) => {
+    setSaved((s) => s.filter((x) => x.id !== id));
+    setHistory((h) => h.filter((x) => x.id !== id));
   };
 
   const restore = (e: Entry) => {
@@ -231,47 +296,18 @@ export function CurrencyRoute() {
         </div>
       )}
 
-      {/* The reading — what I have, what I get, how fresh, and the basket. */}
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3">
-        <p className="font-display text-2xl tabular-nums text-muted">
+      {/* The reading — what I have, what I get. Each figure sits in its own
+          quiet tinted chip; no dead air between them. */}
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-1.5">
+        <p className="rounded-xl bg-surface/50 px-4 py-1.5 font-display text-2xl tabular-nums text-muted">
           {meta(from).flag} {shown}{' '}
           <span className="text-base text-muted/70">{from}</span>
         </p>
         <p
-          className={`font-display ${fit(resultText)} font-semibold leading-none tabular-nums text-fg`}
+          className={`rounded-2xl bg-surface/70 px-5 py-2 font-display ${fit(resultText)} font-semibold leading-none tabular-nums text-fg`}
         >
           {resultText} <span className="text-2xl text-accent">{to}</span>
         </p>
-        {fresh && (
-          <p
-            className={`font-sans text-[0.65rem] tracking-[0.04em] ${
-              fresh.stale ? 'text-gold/70' : 'text-muted/60'
-            }`}
-          >
-            {fresh.text}
-          </p>
-        )}
-        {tallyCount > 0 && (
-          <div className="curtain-reveal flex items-center gap-2 rounded-full bg-accent/10 px-3 py-1.5">
-            <span className="font-sans text-[0.6rem] font-semibold uppercase tracking-[0.12em] text-accent/70">
-              Σ {tallyCount}
-            </span>
-            <span
-              key={tallyCount}
-              className="tally-bump font-display text-base font-semibold tabular-nums text-accent"
-            >
-              {formatMoney(tally, to)}
-            </span>
-            <button
-              type="button"
-              onClick={clearTally}
-              aria-label="Clear total"
-              className="lift-press -mr-1 flex h-5 w-5 items-center justify-center rounded-full text-accent/60 active:text-danger"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Numpad — bare figures, generous targets. */}
@@ -290,53 +326,155 @@ export function CurrencyRoute() {
         )}
       </div>
 
-      {/* One action — add to the running total (and the log). */}
-      <button
-        type="button"
-        onClick={add}
-        disabled={result == null || n === 0}
-        className="lift-press flex shrink-0 items-center justify-center gap-2 rounded-lg bg-accent py-3.5 font-sans text-sm font-semibold uppercase tracking-[0.16em] text-accent-fg transition active:scale-[0.98] disabled:opacity-40"
-      >
-        <Plus className="h-4 w-4" /> Add
-      </button>
-
-      {/* Session log — no database, gone on reload. */}
+      {/* Saved + session log. */}
       <Sheet
         open={showHistory}
         onClose={() => setShowHistory(false)}
         title="History"
         size="full"
       >
-        {history.length === 0 ? (
-          <Empty title="Nothing added yet" hint="Hit Add and it lands here." />
+        {saved.length === 0 && history.length === 0 ? (
+          <Empty
+            title="Nothing yet"
+            hint="Convert something — it lands here. Rename one to keep it forever."
+          />
         ) : (
-          <div className="flex flex-col gap-2">
-            <button
-              type="button"
-              onClick={() => setHistory([])}
-              className="lift-press mb-1 flex items-center gap-1 self-end font-sans text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-muted active:text-danger"
-            >
-              <Trash2 className="h-3.5 w-3.5" /> Clear all
-            </button>
-            {history.map((e) => (
-              <button
-                key={e.id}
-                type="button"
-                onClick={() => restore(e)}
-                className="lift-press flex items-center justify-between gap-2 rounded-lg bg-surface px-4 py-3 text-left font-sans text-base tabular-nums active:bg-fg/5"
-              >
-                <span className="text-muted">
-                  {meta(e.from).flag} {formatMoney(e.amount, e.from)}
-                </span>
-                <span className="text-muted/50">→</span>
-                <span className="font-semibold text-fg">
-                  {meta(e.to).flag} {formatMoney(e.result, e.to)}
-                </span>
-              </button>
-            ))}
+          <div className="flex flex-col gap-4">
+            {saved.length > 0 && (
+              <section className="flex flex-col gap-2">
+                <p className="eyebrow">Kept</p>
+                {saved.map((e) => (
+                  <HistoryRow
+                    key={e.id}
+                    entry={e}
+                    renaming={renamingId === e.id}
+                    renameText={renameText}
+                    onRenameText={setRenameText}
+                    onStartRename={() => startRename(e)}
+                    onCommitRename={() => commitRename(e)}
+                    onRestore={() => restore(e)}
+                    onDelete={() => removeEntry(e.id)}
+                  />
+                ))}
+              </section>
+            )}
+            {history.length > 0 && (
+              <section className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <p className="eyebrow">Recent</p>
+                  <button
+                    type="button"
+                    onClick={() => setHistory([])}
+                    className="lift-press flex items-center gap-1 font-sans text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-muted active:text-danger"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" /> Clear
+                  </button>
+                </div>
+                {history.map((e) => (
+                  <HistoryRow
+                    key={e.id}
+                    entry={e}
+                    renaming={renamingId === e.id}
+                    renameText={renameText}
+                    onRenameText={setRenameText}
+                    onStartRename={() => startRename(e)}
+                    onCommitRename={() => commitRename(e)}
+                    onRestore={() => restore(e)}
+                    onDelete={() => removeEntry(e.id)}
+                  />
+                ))}
+              </section>
+            )}
           </div>
         )}
       </Sheet>
+    </div>
+  );
+}
+
+/** One history line — tap to restore, pencil to name-&-keep, trash to delete. */
+function HistoryRow({
+  entry,
+  renaming,
+  renameText,
+  onRenameText,
+  onStartRename,
+  onCommitRename,
+  onRestore,
+  onDelete,
+}: {
+  entry: Entry;
+  renaming: boolean;
+  renameText: string;
+  onRenameText: (v: string) => void;
+  onStartRename: () => void;
+  onCommitRename: () => void;
+  onRestore: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-2 rounded-lg bg-surface px-3 py-2.5">
+      {renaming ? (
+        <>
+          <input
+            autoFocus
+            value={renameText}
+            onChange={(e) => onRenameText(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && onCommitRename()}
+            placeholder="Name it to keep…"
+            className="min-w-0 flex-1 rounded-md border border-[rgba(251,245,240,0.18)] bg-[rgba(0,0,0,0.28)] px-3 py-1.5 font-sans text-sm text-fg placeholder:text-muted focus:outline-none"
+          />
+          <button
+            type="button"
+            onClick={onCommitRename}
+            aria-label="Keep"
+            className="lift-press flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-accent-fg"
+          >
+            <Check className="h-4 w-4" />
+          </button>
+        </>
+      ) : (
+        <>
+          <button
+            type="button"
+            onClick={onRestore}
+            className="flex min-w-0 flex-1 flex-col items-start gap-0.5 text-left"
+          >
+            {entry.name && (
+              <span className="max-w-full truncate font-sans text-sm font-semibold text-fg">
+                {entry.name}
+              </span>
+            )}
+            <span className="flex items-center gap-2 font-sans text-sm tabular-nums text-muted">
+              <span>
+                {meta(entry.from).flag} {formatMoney(entry.amount, entry.from)}
+              </span>
+              <span className="text-muted/50">→</span>
+              <span
+                className={entry.name ? 'text-muted' : 'font-semibold text-fg'}
+              >
+                {meta(entry.to).flag} {formatMoney(entry.result, entry.to)}
+              </span>
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={onStartRename}
+            aria-label="Rename"
+            className="lift-press flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted active:text-accent"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            aria-label="Delete"
+            className="lift-press flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted active:text-danger"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </>
+      )}
     </div>
   );
 }
