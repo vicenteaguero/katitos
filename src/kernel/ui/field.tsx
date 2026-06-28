@@ -10,8 +10,10 @@ import { cn } from '../lib/cn';
 // A clearly-recessed field: a light hairline border + a darker inset fill so
 // inputs stand out on BOTH the page (surface) and inside sheets/cards
 // (surface-2) — they used to share surface-2 and vanish.
+// `min-w-0 max-w-full` keeps native date/time inputs (which carry an intrinsic
+// min-width) from overflowing a sheet/grid cell on iOS.
 const base =
-  'w-full rounded-lg border border-[rgba(251,245,240,0.18)] bg-[rgba(0,0,0,0.28)] px-4 py-3 font-sans text-fg placeholder:text-muted shadow-[inset_0_1px_2px_rgba(0,0,0,0.35)] transition-colors duration-150 focus:border-[rgba(228,195,106,0.7)] focus:outline-none focus:ring-2 focus:ring-[rgba(228,195,106,0.28)]';
+  'w-full min-w-0 max-w-full rounded-lg border border-[rgba(251,245,240,0.18)] bg-[rgba(0,0,0,0.28)] px-4 py-3 font-sans text-fg placeholder:text-muted shadow-[inset_0_1px_2px_rgba(0,0,0,0.35)] transition-colors duration-150 focus:border-[rgba(228,195,106,0.7)] focus:outline-none focus:ring-2 focus:ring-[rgba(228,195,106,0.28)]';
 
 // Chevron so a <select> reads as a dropdown (appearance-none hides the native one).
 const SELECT_CHEVRON =
@@ -61,14 +63,16 @@ export function Field({
   error,
   hint,
   children,
+  className,
 }: {
   label?: string;
   error?: string;
   hint?: string;
   children: ReactNode;
+  className?: string;
 }) {
   return (
-    <label className="block space-y-2.5">
+    <label className={cn('block space-y-2.5', className)}>
       {label && (
         <span className="block font-sans text-xs font-semibold uppercase tracking-[0.18em] text-muted">
           {label}
