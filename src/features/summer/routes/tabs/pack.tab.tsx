@@ -7,10 +7,8 @@ import {
   Button,
   Card,
   Empty,
-  Field,
   IconButton,
   Input,
-  SectionHeader,
   Select,
   Sheet,
 } from '@kernel/ui';
@@ -58,20 +56,19 @@ export function PackTab({ trip }: { trip: Trip }) {
 
   return (
     <section className="space-y-4">
-      <SectionHeader
-        label="Luggage"
-        hint={list.length > 0 ? `${packed}/${list.length} packed` : undefined}
-        action={
-          <Button
-            size="sm"
-            onClick={() =>
-              setForm({ open: true, label: '', category: 'Clothes' })
-            }
-          >
-            <Plus size={15} /> Add
-          </Button>
-        }
-      />
+      <div className="flex items-center justify-between gap-3">
+        <span className="font-sans text-xs text-muted">
+          {list.length > 0 ? `${packed}/${list.length} packed` : ''}
+        </span>
+        <Button
+          size="sm"
+          onClick={() =>
+            setForm({ open: true, label: '', category: 'Clothes' })
+          }
+        >
+          <Plus size={15} /> Add
+        </Button>
+      </div>
 
       {list.length === 0 ? (
         <Empty
@@ -84,7 +81,9 @@ export function PackTab({ trip }: { trip: Trip }) {
           .concat([...byCat.keys()].filter((c) => !CATEGORIES.includes(c)))
           .map((cat) => (
             <div key={cat} className="space-y-2">
-              <p className="eyebrow">{cat}</p>
+              <p className="font-sans text-xs font-semibold text-muted">
+                {cat}
+              </p>
               {(byCat.get(cat) ?? []).map((it) => (
                 <Card
                   key={it.id}
@@ -130,30 +129,25 @@ export function PackTab({ trip }: { trip: Trip }) {
         title="Add to luggage"
       >
         <div className="space-y-3">
-          <Field label="Item">
-            <Input
-              value={form.label}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, label: e.target.value }))
-              }
-              onKeyDown={(e) => e.key === 'Enter' && submit()}
-              placeholder="Passport, charger, sunscreen…"
-            />
-          </Field>
-          <Field label="Category">
-            <Select
-              value={form.category}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, category: e.target.value }))
-              }
-            >
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </Select>
-          </Field>
+          <Input
+            value={form.label}
+            onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
+            onKeyDown={(e) => e.key === 'Enter' && submit()}
+            placeholder="Item — passport, charger, sunscreen…"
+            autoFocus
+          />
+          <Select
+            value={form.category}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, category: e.target.value }))
+            }
+          >
+            {CATEGORIES.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </Select>
           <Button full onClick={submit} disabled={addItem.isPending}>
             Add
           </Button>
