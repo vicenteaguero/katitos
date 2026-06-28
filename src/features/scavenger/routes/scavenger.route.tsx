@@ -11,7 +11,7 @@ import {
   Field,
   Input,
   LoadingScreen,
-  PageHeader,
+  SectionHeader,
   Segmented,
   Sheet,
   Textarea,
@@ -176,18 +176,20 @@ export function ScavengerRoute({
   if (isLoading) return <LoadingScreen />;
 
   return (
-    <div className="curtain-reveal space-y-7">
-      <div>
-        {georgia && <p className="eyebrow mb-3">Georgia trip</p>}
-        <PageHeader
-          title="Date cards"
-          subtitle="Claim a date to reveal it · they award the stars 🌟"
+    <div className="curtain-reveal space-y-5">
+      <div className="space-y-2">
+        <SectionHeader
+          label={georgia ? 'Georgia trip' : 'Date cards'}
+          className="mb-0"
           action={
             <Button size="sm" onClick={() => setAdding(true)}>
               <Plus size={16} /> Add
             </Button>
           }
         />
+        <p className="font-sans text-sm leading-snug text-muted">
+          Claim a date to reveal it — they award the stars 🌟
+        </p>
       </div>
 
       {/* The leaderboard — two decks drawing from one shared pot of stars. */}
