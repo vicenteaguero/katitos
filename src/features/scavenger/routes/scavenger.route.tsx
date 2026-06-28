@@ -8,10 +8,8 @@ import {
   CameraCapture,
   Card,
   Empty,
-  Field,
   Input,
   LoadingScreen,
-  SectionHeader,
   Segmented,
   Sheet,
   Textarea,
@@ -44,12 +42,7 @@ interface Reveal {
   cardImagePath: string | null;
 }
 
-export function ScavengerRoute({
-  georgia = true,
-}: {
-  /** Visually scopes the deck to the Georgia trip (shows the eyebrow). */
-  georgia?: boolean;
-} = {}) {
+export function ScavengerRoute() {
   useTableSync('scavenger_cards', qk.scavenger.cards());
   useTableSync('scavenger_claims', qk.scavenger.cards());
   const userId = useUserId();
@@ -177,21 +170,6 @@ export function ScavengerRoute({
 
   return (
     <div className="curtain-reveal space-y-5">
-      <div className="space-y-2">
-        <SectionHeader
-          label={georgia ? 'Georgia trip' : 'Date cards'}
-          className="mb-0"
-          action={
-            <Button size="sm" onClick={() => setAdding(true)}>
-              <Plus size={16} /> Add
-            </Button>
-          }
-        />
-        <p className="font-sans text-sm leading-snug text-muted">
-          Claim a date to reveal it — they award the stars 🌟
-        </p>
-      </div>
-
       {/* The leaderboard — two decks drawing from one shared pot of stars. */}
       <Card className="space-y-4">
         <div className="flex items-stretch text-center">
@@ -233,20 +211,28 @@ export function ScavengerRoute({
             />
           </div>
           <p className="mt-1.5 text-center font-sans text-[0.7rem] uppercase tracking-[0.16em] text-muted">
-            {used} / {STAR_POT} stars given · {potLeft} left in the pot
+            {used}/{STAR_POT} stars given
           </p>
         </div>
       </Card>
 
-      <Segmented
-        value={deck}
-        onChange={setDeck}
-        full
-        options={[
-          { value: 'a', label: `${nameOf('a')} 💙` },
-          { value: 'b', label: `${nameOf('b')} 💗` },
-        ]}
-      />
+      {/* Whose deck · Add — one line. */}
+      <div className="flex items-center gap-2">
+        <div className="min-w-0 flex-1">
+          <Segmented
+            value={deck}
+            onChange={setDeck}
+            full
+            options={[
+              { value: 'a', label: `${nameOf('a')} 💙` },
+              { value: 'b', label: `${nameOf('b')} 💗` },
+            ]}
+          />
+        </div>
+        <Button size="sm" onClick={() => setAdding(true)} className="shrink-0">
+          <Plus size={16} /> Add
+        </Button>
+      </div>
 
       {deckCards.length === 0 ? (
         <Empty
@@ -255,11 +241,6 @@ export function ScavengerRoute({
             deck === myRole
               ? 'No date cards yet'
               : `Nothing from ${nameOf(deck)} yet`
-          }
-          hint={
-            deck === myRole
-              ? 'Tap Add — your cards stay secret until you claim them.'
-              : `${nameOf(deck)}'s cards stay hidden until they claim one.`
           }
         />
       ) : (
@@ -354,47 +335,31 @@ export function ScavengerRoute({
       <Sheet
         open={adding}
         onClose={() => setAdding(false)}
-        title="New date card"
+        title="Only you can see"
       >
-        <div className="space-y-4">
-          <p className="font-sans text-sm text-muted">
-            Only you can see this until you claim it. 🤫
-          </p>
-          <Field label="Title">
-            <Input
-              value={form.title}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, title: e.target.value }))
-              }
-              placeholder="Picnic at Turtle Lake"
-            />
-          </Field>
-          <Field label="What it says" hint="The note written on the card">
-            <Textarea
-              value={form.description}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, description: e.target.value }))
-              }
-              rows={2}
-            />
-          </Field>
-          <Field label="Photo of the card">
-            <button
-              type="button"
-              onClick={() => setCardCam(true)}
-              className="lift-press flex h-20 w-full items-center justify-center overflow-hidden rounded-lg bg-surface-2 font-sans text-sm text-muted"
-            >
-              {cardBlob ? (
-                <img
-                  src={URL.createObjectURL(cardBlob)}
-                  alt="card"
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                'Tap to photograph the card'
-              )}
-            </button>
-          </Field>
+        <div className="space-y-3">
+          <Input
+            value={form.title}
+            onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+            placeholder="Title"
+            autoFocus
+          />
+          <Textarea
+            value={form.description}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, description: e.target.value }))
+            }
+            rows={3}
+            placeholder="Description"
+          />
+          <button
+            type="button"
+            onClick={() => setCardCam(true)}
+            className="lift-press flex w-full items-center justify-center gap-2 rounded-lg bg-surface-2 py-3 font-sans text-sm font-semibold text-muted active:text-fg"
+          >
+            <span className="text-lg">📷</span>
+            {cardBlob ? 'Photo added ✓' : 'Add photograph of card'}
+          </button>
           <Button
             full
             onClick={submitCard}
