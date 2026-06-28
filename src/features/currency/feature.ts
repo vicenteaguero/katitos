@@ -1,5 +1,5 @@
-import { Coins } from 'lucide-react';
 import { defineFeature } from '@kernel/registry';
+import { ExchangeIcon } from './components/exchange-icon';
 
 export const currencyFeature = defineFeature({
   id: 'currency',
@@ -14,5 +14,5 @@ export const currencyFeature = defineFeature({
         })),
     },
   ],
-  nav: [{ label: 'Currency', icon: Coins, to: '/currency', order: 110 }],
+  nav: [{ label: 'Currency', icon: ExchangeIcon, to: '/currency', order: 110 }],
 });
