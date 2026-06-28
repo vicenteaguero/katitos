@@ -1,0 +1,130 @@
+/* Boot splash — a faint rose-kitten mosaic behind the brand mark, with a soft
+   settle-in and a fade-out when the app is ready. */
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      90% 70% at 50% 40%,
+      rgba(110, 20, 35, 0.35),
+      transparent 70%
+    ),
+    linear-gradient(168deg, #1a0b13 0%, #100408 60%, #0b0306 100%);
+  animation: splash-in 0.45s ease both;
+}
+.splash--out {
+  animation: splash-out 0.55s ease forwards;
+}
+
+@keyframes splash-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes splash-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+.splash-mosaic {
+  position: absolute;
+  inset: -6%;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: center;
+  gap: 16px;
+  opacity: 0.5;
+  animation: splash-mosaic-breathe 6s ease-in-out infinite;
+}
+.splash-mosaic > * {
+  flex: 0 0 auto;
+}
+@keyframes splash-mosaic-breathe {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.62;
+  }
+}
+
+.splash-center {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+  animation: splash-pop 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.splash-halo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  height: 230px;
+  width: 230px;
+  transform: translate(-50%, -55%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(228, 195, 106, 0.28),
+    transparent 65%
+  );
+  animation: splash-halo 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+.splash-word {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #fbf5f0;
+}
+
+@keyframes splash-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.72);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes splash-halo {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: translate(-50%, -55%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -55%) scale(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash,
+  .splash-center,
+  .splash-halo,
+  .splash-mosaic {
+    animation: none !important;
+  }
+}
