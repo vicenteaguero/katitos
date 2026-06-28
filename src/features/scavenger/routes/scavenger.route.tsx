@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Crown, Plus } from 'lucide-react';
+import { Crown, Plus, Sparkles } from 'lucide-react';
 import { useMembers, usePartner, useUserId } from '@kernel/auth';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
@@ -8,7 +8,6 @@ import {
   CameraCapture,
   Card,
   Empty,
-  Fab,
   Field,
   Input,
   LoadingScreen,
@@ -22,18 +21,35 @@ import { useScavengerCards } from '../api/scavenger.queries';
 import {
   useAcceptRating,
   useAddDateCard,
+  useClaimCard,
   useDeleteScavengerCard,
-  useMarkDateDone,
+  useDismissClaim,
   useRateDate,
   useUnclaimCard,
 } from '../api/scavenger.mutations';
 import { DateCardItem } from '../components/scavenger-card';
+import { ClaimReveal } from '../components/claim-reveal';
 import { ScavengerProofImage } from '../components/scavenger-proof-image';
 import { STAR_POT, type ScavengerCardFull } from '../types';
+import '../scavenger.css';
 
 type Role = 'a' | 'b';
 
-export function ScavengerRoute() {
+const TONE: Record<Role, string> = { a: '#6f9bd8', b: '#d98fb0' };
+
+interface Reveal {
+  title: string;
+  tone: string;
+  photoUrl: string | null;
+  cardImagePath: string | null;
+}
+
+export function ScavengerRoute({
+  georgia = true,
+}: {
+  /** Visually scopes the deck to the Georgia trip (shows the eyebrow). */
+  georgia?: boolean;
+} = {}) {
   useTableSync('scavenger_cards', qk.scavenger.cards());
   useTableSync('scavenger_claims', qk.scavenger.cards());
   const userId = useUserId();
@@ -41,32 +57,46 @@ export function ScavengerRoute() {
   const { data: members } = useMembers();
   const { data: cards, isLoading } = useScavengerCards();
   const addCard = useAddDateCard();
-  const markDone = useMarkDateDone();
+  const claim = useClaimCard();
   const rate = useRateDate();
+  const dismiss = useDismissClaim();
   const accept = useAcceptRating();
   const unclaim = useUnclaimCard();
   const del = useDeleteScavengerCard();
 
   const myRole: Role = self?.role === 'b' ? 'b' : 'a';
   const [deck, setDeck] = useState<Role>(myRole);
-  const [doing, setDoing] = useState<ScavengerCardFull | null>(null);
   const [adding, setAdding] = useState(false);
   const [cardCam, setCardCam] = useState(false);
   const [cardBlob, setCardBlob] = useState<Blob | null>(null);
   const [form, setForm] = useState({ title: '', description: '' });
+  const [claiming, setClaiming] = useState<ScavengerCardFull | null>(null);
+  const [claimCam, setClaimCam] = useState(false);
+  const [claimBlob, setClaimBlob] = useState<Blob | null>(null);
+  const [reveal, setReveal] = useState<Reveal | null>(null);
 
-  const list = cards ?? [];
   const roleOf = (uid: string | null): Role | null =>
     (members?.find((m) => m.user_id === uid)?.role as Role | undefined) ?? null;
   const nameOf = (role: Role): string =>
     members?.find((m) => m.role === role)?.display_name ??
     (role === 'a' ? 'Katito' : 'Katita');
+  const partnerName = nameOf(myRole === 'a' ? 'b' : 'a');
+  const toneOf = (c: ScavengerCardFull) => TONE[roleOf(c.created_by) ?? 'a'];
+
+  // Visibility — claim to reveal: I see ALL my own cards in any state; my
+  // partner's cards are hidden until they claim one (and not cancel it), or it
+  // is accepted. A brand-new, unclaimed card is invisible to the partner.
+  const visible = (cards ?? []).filter((c) => {
+    if (c.created_by === userId) return true;
+    const cl = c.scavenger_claims;
+    return !!cl && (!cl.dismissed || cl.accepted);
+  });
 
   // Scores: stars on a person's OWN deck (awarded by the other). The shared pot
   // is whatever's been given across both decks; nobody can score themselves.
   const starsOf = (c: ScavengerCardFull) => c.scavenger_claims?.stars ?? 0;
   const scoreFor = (role: Role) =>
-    list.reduce(
+    visible.reduce(
       (s, c) => s + (roleOf(c.created_by) === role ? starsOf(c) : 0),
       0
     );
@@ -75,24 +105,11 @@ export function ScavengerRoute() {
   const used = scoreA + scoreB;
   const potLeft = Math.max(0, STAR_POT - used);
 
-  const deckCards = list.filter((c) => roleOf(c.created_by) === deck);
-  const topDates = [...list]
+  const deckCards = visible.filter((c) => roleOf(c.created_by) === deck);
+  const topDates = [...visible]
     .filter((c) => starsOf(c) > 0)
     .sort((a, b) => starsOf(b) - starsOf(a))
     .slice(0, 5);
-
-  const onDoneCapture = (blob: Blob) => {
-    const card = doing;
-    setDoing(null);
-    if (card)
-      markDone.mutate(
-        { cardId: card.id, blob },
-        {
-          onSuccess: () => toast.success('Date logged 📸'),
-          onError: (e) => toast.error(e.message),
-        }
-      );
-  };
 
   const onRate = (card: ScavengerCardFull, stars: number) => {
     if (!userId) return;
@@ -109,13 +126,39 @@ export function ScavengerRoute() {
     );
   };
 
+  const openClaim = (card: ScavengerCardFull) => {
+    setClaimBlob(null);
+    setClaiming(card);
+  };
+
+  // Fire the reveal immediately (the BOOM is the whole point) and persist the
+  // claim in the background. By the time the reveal dismisses, the list's
+  // refreshed and the card shows its revealed state.
+  const confirmClaim = () => {
+    const card = claiming;
+    if (!card || !userId) return;
+    const blob = claimBlob;
+    setReveal({
+      title: card.title,
+      tone: toneOf(card),
+      photoUrl: blob ? URL.createObjectURL(blob) : null,
+      cardImagePath: card.card_image_path,
+    });
+    setClaiming(null);
+    setClaimBlob(null);
+    claim.mutate(
+      { cardId: card.id, claimedBy: userId, blob },
+      { onError: (e) => toast.error(e.message) }
+    );
+  };
+
   const submitCard = () => {
     if (!form.title.trim()) return;
     addCard.mutate(
       {
         title: form.title.trim(),
         description: form.description || null,
-        position: list.filter((c) => roleOf(c.created_by) === myRole).length,
+        position: visible.filter((c) => roleOf(c.created_by) === myRole).length,
         cardBlob,
       },
       {
@@ -134,10 +177,18 @@ export function ScavengerRoute() {
 
   return (
     <div className="curtain-reveal space-y-7">
-      <PageHeader
-        title="Date cards"
-        subtitle="Secret dates in Georgia · score each other, not yourself 🌟"
-      />
+      <div>
+        {georgia && <p className="eyebrow mb-3">Georgia trip</p>}
+        <PageHeader
+          title="Date cards"
+          subtitle="Claim a date to reveal it · they award the stars 🌟"
+          action={
+            <Button size="sm" onClick={() => setAdding(true)}>
+              <Plus size={16} /> Add
+            </Button>
+          }
+        />
+      </div>
 
       {/* The leaderboard — two decks drawing from one shared pot of stars. */}
       <Card className="space-y-4">
@@ -145,7 +196,6 @@ export function ScavengerRoute() {
           {(['a', 'b'] as Role[]).map((role, i) => {
             const score = role === 'a' ? scoreA : scoreB;
             const leads = score > (role === 'a' ? scoreB : scoreA);
-            const color = role === 'a' ? '#6f9bd8' : '#d98fb0';
             return (
               <div
                 key={role}
@@ -157,7 +207,7 @@ export function ScavengerRoute() {
               >
                 <p
                   className="inline-flex items-center gap-1 font-sans text-xs font-semibold uppercase tracking-[0.16em]"
-                  style={{ color }}
+                  style={{ color: TONE[role] }}
                 >
                   {leads && <Crown size={12} className="text-gold" />}
                   {nameOf(role)}
@@ -199,11 +249,15 @@ export function ScavengerRoute() {
       {deckCards.length === 0 ? (
         <Empty
           icon="✉"
-          title={`No cards in ${nameOf(deck)}'s deck yet`}
+          title={
+            deck === myRole
+              ? 'No date cards yet'
+              : `Nothing from ${nameOf(deck)} yet`
+          }
           hint={
             deck === myRole
-              ? 'Tap + to add your date cards — title, note, and a photo of the card.'
-              : `${nameOf(deck)} hasn't added cards yet.`
+              ? 'Tap Add — your cards stay secret until you claim them.'
+              : `${nameOf(deck)}'s cards stay hidden until they claim one.`
           }
         />
       ) : (
@@ -213,18 +267,20 @@ export function ScavengerRoute() {
               key={c.id}
               card={c}
               ownerRole={roleOf(c.created_by)}
+              ownerName={nameOf(roleOf(c.created_by) ?? 'a')}
               raterName={nameOf(roleOf(c.created_by) === 'a' ? 'b' : 'a')}
               viewerIsOwner={c.created_by === userId}
               maxStars={potLeft + starsOf(c)}
-              onMarkDone={setDoing}
+              onClaim={openClaim}
+              onUnclaim={(card) => unclaim.mutate(card.id)}
               onRate={onRate}
+              onDismiss={(card) => dismiss.mutate(card.id)}
               onAccept={(card) =>
                 accept.mutate(card.id, {
                   onSuccess: () => toast.success('Locked in 🔒'),
                   onError: (e) => toast.error(e.message),
                 })
               }
-              onUndo={(card) => unclaim.mutate(card.id)}
               onDelete={(card) => {
                 if (confirm(`Delete "${card.title}"?`)) del.mutate(card.id);
               }}
@@ -271,17 +327,7 @@ export function ScavengerRoute() {
         </section>
       )}
 
-      <Fab label="Add card" onClick={() => setAdding(true)}>
-        <Plus />
-      </Fab>
-
-      {doing && (
-        <CameraCapture
-          facingMode="environment"
-          onCapture={onDoneCapture}
-          onCancel={() => setDoing(null)}
-        />
-      )}
+      {/* Add-card photo + claim proof both reuse the in-app camera. */}
       {cardCam && (
         <CameraCapture
           facingMode="environment"
@@ -292,13 +338,26 @@ export function ScavengerRoute() {
           onCancel={() => setCardCam(false)}
         />
       )}
+      {claimCam && (
+        <CameraCapture
+          facingMode="environment"
+          onCapture={(blob) => {
+            setClaimBlob(blob);
+            setClaimCam(false);
+          }}
+          onCancel={() => setClaimCam(false)}
+        />
+      )}
 
       <Sheet
         open={adding}
         onClose={() => setAdding(false)}
-        title={`Add to ${nameOf(myRole)}'s deck`}
+        title="New date card"
       >
-        <div className="space-y-3">
+        <div className="space-y-4">
+          <p className="font-sans text-sm text-muted">
+            Only you can see this until you claim it. 🤫
+          </p>
           <Field label="Title">
             <Input
               value={form.title}
@@ -308,14 +367,13 @@ export function ScavengerRoute() {
               placeholder="Picnic at Turtle Lake"
             />
           </Field>
-          <Field label="What it says">
+          <Field label="What it says" hint="The note written on the card">
             <Textarea
               value={form.description}
               onChange={(e) =>
                 setForm((f) => ({ ...f, description: e.target.value }))
               }
               rows={2}
-              placeholder="the text on the card…"
             />
           </Field>
           <Field label="Photo of the card">
@@ -335,11 +393,63 @@ export function ScavengerRoute() {
               )}
             </button>
           </Field>
-          <Button full onClick={submitCard} disabled={addCard.isPending}>
-            Add card
+          <Button
+            full
+            onClick={submitCard}
+            disabled={addCard.isPending || !form.title.trim()}
+          >
+            Add to my deck
           </Button>
         </div>
       </Sheet>
+
+      <Sheet
+        open={!!claiming}
+        onClose={() => {
+          setClaiming(null);
+          setClaimBlob(null);
+        }}
+        title={claiming ? `Claim "${claiming.title}"` : 'Claim'}
+        size="half"
+      >
+        <div className="space-y-4">
+          <p className="font-sans text-sm text-muted">
+            Claiming reveals this date to {partnerName} so they can give it
+            stars. Add a proof photo if you like.
+          </p>
+          <button
+            type="button"
+            onClick={() => setClaimCam(true)}
+            className="lift-press flex h-24 w-full items-center justify-center overflow-hidden rounded-lg bg-surface-2 font-sans text-sm text-muted"
+          >
+            {claimBlob ? (
+              <img
+                src={URL.createObjectURL(claimBlob)}
+                alt="proof"
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              'Add a proof photo (optional)'
+            )}
+          </button>
+          <Button full onClick={confirmClaim} disabled={claim.isPending}>
+            <Sparkles size={16} /> Claim it
+          </Button>
+        </div>
+      </Sheet>
+
+      {reveal && (
+        <ClaimReveal
+          title={reveal.title}
+          toneColor={reveal.tone}
+          photoUrl={reveal.photoUrl}
+          cardImagePath={reveal.cardImagePath}
+          onDone={() => {
+            if (reveal.photoUrl) URL.revokeObjectURL(reveal.photoUrl);
+            setReveal(null);
+          }}
+        />
+      )}
     </div>
   );
 }
