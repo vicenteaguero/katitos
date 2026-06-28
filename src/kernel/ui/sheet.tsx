@@ -43,13 +43,13 @@ export function Sheet({
       />
       <div
         className={cn(
-          'curtain-reveal relative z-10 w-full max-w-app overflow-y-auto rounded-t-xl bg-surface-2 p-7 pb-[max(1.75rem,env(safe-area-inset-bottom))] shadow-loge',
-          size === 'half' ? 'max-h-[52vh]' : 'max-h-[85vh]'
+          'curtain-reveal relative z-10 w-full max-w-app overflow-y-auto rounded-t-[1.75rem] border-t border-[rgba(228,195,106,0.3)] bg-surface-2 px-6 pb-[max(1.75rem,env(safe-area-inset-bottom))] pt-3.5 shadow-[0_-18px_40px_-12px_rgba(0,0,0,0.7)]',
+          size === 'half' ? 'max-h-[60vh]' : 'max-h-[88vh]'
         )}
       >
-        <div className="mx-auto mb-6 h-1 w-12 rounded-full bg-fg/15" />
+        <div className="mx-auto mb-5 h-1.5 w-10 rounded-full bg-fg/20" />
         {title && (
-          <h2 className="mb-6 font-display text-3xl font-semibold tracking-tight text-fg">
+          <h2 className="mb-5 font-display text-2xl font-semibold tracking-tight text-fg">
             {title}
           </h2>
         )}
