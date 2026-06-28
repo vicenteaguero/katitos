@@ -9,7 +9,6 @@ import type { Trip } from '../../types';
 export function PaniniTab({ trip }: { trip: Trip }) {
   return (
     <section className="space-y-3">
-      <p className="eyebrow">Summer Panini</p>
       <PhotoBook3D scope="trip" tripId={trip.id} title="Summer Panini" />
     </section>
   );
