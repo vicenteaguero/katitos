@@ -1,0 +1,335 @@
+/* ──────────────────────────────────────────────────────────────────────────
+ * Date cards — the EPIC claim reveal.
+ *
+ * When the creator claims a date, a full-screen legendary-card reveal plays
+ * over the WHOLE app (portal → <body>): the house drops to lit wine, gilt rays
+ * fan out and slowly turn, the card slams in with a back-ease overshoot, a foil
+ * shimmer sweeps across it, sparks burst, and "CLAIMED!" flourishes in — the
+ * "shove the phone at your partner" moment. Wine + warm gilt, white-on-wine,
+ * notch- and home-indicator-safe. GPU-only (transform/opacity). ~2.4s, tap to
+ * dismiss.
+ *
+ * prefers-reduced-motion: the whole spectacle collapses to a calm fade.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+.sc-reveal {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: max(env(safe-area-inset-top), 1.25rem)
+    max(env(safe-area-inset-right), 1.25rem)
+    max(env(safe-area-inset-bottom), 1.25rem)
+    max(env(safe-area-inset-left), 1.25rem);
+  overflow: hidden;
+  cursor: pointer;
+  opacity: 1;
+  transition: opacity 280ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.sc-reveal--out {
+  opacity: 0;
+}
+
+/* The house drops dark, lit wine from the centre. */
+.sc-reveal-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(
+    125% 90% at 50% 42%,
+    rgba(110, 20, 35, 0.94) 0%,
+    rgba(26, 11, 19, 0.97) 58%,
+    rgba(16, 4, 8, 0.99) 100%
+  );
+  animation: sc-fade-in 280ms ease both;
+}
+
+/* Gilt light rays fanning from behind the card. The wrapper handles the
+   scale-in (transform), the inner layer the slow spin (transform) — kept on
+   separate elements so the two transforms never fight. Centred with negative
+   margins so neither animation has to own the translate. */
+.sc-rays-wrap {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 230vmax;
+  height: 230vmax;
+  margin-left: -115vmax;
+  margin-top: -115vmax;
+  z-index: 1;
+  animation: sc-rays-in 760ms var(--ease-settle) both;
+  will-change: transform, opacity;
+}
+.sc-rays {
+  width: 100%;
+  height: 100%;
+  background: repeating-conic-gradient(
+    from 0deg at 50% 50%,
+    rgba(228, 195, 106, 0) 0deg,
+    rgba(228, 195, 106, 0.16) 3deg,
+    rgba(228, 195, 106, 0) 9deg
+  );
+  -webkit-mask-image: radial-gradient(
+    closest-side,
+    #000 0%,
+    #000 26%,
+    transparent 60%
+  );
+  mask-image: radial-gradient(closest-side, #000 0%, #000 26%, transparent 60%);
+  animation: sc-rays-spin 14s linear infinite;
+  will-change: transform;
+}
+@keyframes sc-rays-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes sc-rays-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* The legendary card — slams in with an overshoot, then breathes. The float is
+   delayed to start exactly where the entrance lands, so the handoff is clean. */
+.sc-card {
+  position: relative;
+  z-index: 3;
+  width: min(72vw, 290px);
+  aspect-ratio: 3 / 4;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: linear-gradient(180deg, #2a0e18 0%, #1a0b13 100%);
+  box-shadow:
+    0 0 0 1px rgba(228, 195, 106, 0.55),
+    0 18px 50px -12px rgba(0, 0, 0, 0.8),
+    0 0 64px -10px rgba(228, 195, 106, 0.32);
+  animation:
+    sc-card-in 720ms cubic-bezier(0.2, 1.3, 0.3, 1) both,
+    sc-card-float 4s ease-in-out 760ms infinite;
+  will-change: transform, opacity;
+}
+@keyframes sc-card-in {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.36) rotate(-7deg);
+  }
+  55% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+}
+@keyframes sc-card-float {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-5px) scale(1.012);
+  }
+}
+
+.sc-card-photo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.sc-card-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    180deg,
+    rgba(16, 4, 8, 0.05) 0%,
+    transparent 38%,
+    rgba(16, 4, 8, 0.88) 100%
+  );
+}
+.sc-card-seam {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  z-index: 3;
+}
+.sc-card-meta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  padding: 0.9rem 1rem 1rem;
+  text-align: left;
+}
+.sc-card-eyebrow {
+  font-family: var(--font-sans);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 0.18rem;
+}
+.sc-card-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.4rem;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: #fbf5f0;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+}
+
+/* The foil — a candlelit highlight that sweeps across the card twice. Sits
+   above the photo/veil but below the text, which stays crisp on top. */
+.sc-foil {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(
+    104deg,
+    transparent 38%,
+    rgba(255, 241, 201, 0) 44%,
+    rgba(255, 241, 201, 0.65) 50%,
+    rgba(255, 241, 201, 0) 56%,
+    transparent 62%
+  );
+  background-size: 260% 100%;
+  background-repeat: no-repeat;
+  background-position: 150% 0;
+  mix-blend-mode: screen;
+  animation: sc-foil-sweep 1150ms ease-in-out 460ms 2 both;
+}
+@keyframes sc-foil-sweep {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -150% 0;
+  }
+}
+
+/* Sparks burst outward from the card. Each carries its own angle/distance/delay
+   via --tx / --ty / --d custom properties set inline. */
+.sc-spark {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  z-index: 2;
+  border-radius: 9999px;
+  opacity: 0;
+  box-shadow: 0 0 6px rgba(228, 195, 106, 0.6);
+  animation: sc-spark-fly 1100ms ease-out var(--d, 0.5s) both;
+  will-change: transform, opacity;
+}
+@keyframes sc-spark-fly {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.2);
+  }
+  22% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(
+        calc(-50% + var(--tx, 0px)),
+        calc(-50% + var(--ty, 0px))
+      )
+      scale(0.35);
+  }
+}
+
+/* The flourish — gilt serif "CLAIMED!" that scales up out of wide tracking. */
+.sc-word {
+  position: relative;
+  z-index: 3;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(2.6rem, 13vw, 4rem);
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-align: center;
+  background: var(--grad-gilt);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 12px rgba(228, 195, 106, 0.42));
+  animation: sc-word-in 640ms cubic-bezier(0.2, 1.3, 0.3, 1) 540ms both;
+  will-change: transform, opacity;
+}
+@keyframes sc-word-in {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.5);
+    letter-spacing: 0.5em;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    letter-spacing: 0.16em;
+  }
+}
+
+.sc-hint {
+  position: relative;
+  z-index: 3;
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(251, 245, 240, 0.55);
+  animation: sc-fade-in 400ms ease 1400ms both;
+}
+
+@keyframes sc-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Reduced motion — no rays, no sparks, no foil, no overshoot. The card and the
+   word simply fade up; the moment still reads, calmly. */
+@media (prefers-reduced-motion: reduce) {
+  .sc-rays-wrap,
+  .sc-spark,
+  .sc-foil {
+    display: none !important;
+  }
+  .sc-reveal-backdrop {
+    animation: sc-fade-in 200ms ease both !important;
+  }
+  .sc-card {
+    animation: sc-fade-in 220ms ease both !important;
+    transform: none !important;
+  }
+  .sc-word {
+    animation: sc-fade-in 220ms ease both !important;
+    transform: none !important;
+    letter-spacing: 0.16em !important;
+  }
+  .sc-hint {
+    animation: sc-fade-in 220ms ease both !important;
+  }
+}
