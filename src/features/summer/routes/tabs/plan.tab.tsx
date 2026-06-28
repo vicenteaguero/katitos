@@ -30,6 +30,7 @@ import {
   useDeleteItem,
   useToggleItem,
 } from '../../api/summer.mutations';
+import { CitySearch } from '../../components/city-search';
 import {
   COUNTRIES,
   type CountryFilter,
@@ -279,28 +280,36 @@ export function PlanTab({
               placeholder="maps / booking / article"
             />
           </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Lat (map)">
-              <Input
-                inputMode="decimal"
-                value={form.lat}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, lat: e.target.value }))
-                }
-                placeholder="42.66"
-              />
-            </Field>
-            <Field label="Lng (map)">
-              <Input
-                inputMode="decimal"
-                value={form.lng}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, lng: e.target.value }))
-                }
-                placeholder="44.62"
-              />
-            </Field>
-          </div>
+          <Field
+            label="Put it on the map"
+            hint="Search a city or sight — it drops the pin for you."
+          >
+            <CitySearch
+              onPick={(h) =>
+                setForm((f) => ({
+                  ...f,
+                  title: f.title || h.name,
+                  lat: String(h.lat),
+                  lng: String(h.lng),
+                  country: h.country || f.country,
+                }))
+              }
+            />
+          </Field>
+          {form.lat && form.lng && (
+            <p className="flex items-center gap-2 font-sans text-xs text-copper">
+              <MapPin className="h-3.5 w-3.5" />
+              Pinned · {Number(form.lat).toFixed(3)},{' '}
+              {Number(form.lng).toFixed(3)}
+              <button
+                type="button"
+                onClick={() => setForm((f) => ({ ...f, lat: '', lng: '' }))}
+                className="underline"
+              >
+                clear
+              </button>
+            </p>
+          )}
           <Field label="Notes">
             <Textarea
               value={form.description}
