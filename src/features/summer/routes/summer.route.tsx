@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import {
   BookOpen,
   CalendarClock,
-  Images,
   ListChecks,
   Luggage,
   Map as MapIcon,
@@ -22,18 +21,9 @@ import { ReviewsTab } from './tabs/reviews.tab';
 import { BudgetTab } from './tabs/budget.tab';
 import { WorkTab } from './tabs/work.tab';
 import { PackTab } from './tabs/pack.tab';
-import { AlbumTab } from './tabs/album.tab';
 import { PaniniTab } from './tabs/panini.tab';
 
-type Tab =
-  | 'plan'
-  | 'map'
-  | 'reviews'
-  | 'budget'
-  | 'work'
-  | 'pack'
-  | 'album'
-  | 'panini';
+type Tab = 'plan' | 'map' | 'reviews' | 'budget' | 'work' | 'pack' | 'panini';
 
 const TABS: { id: Tab; label: string; icon: LucideIcon }[] = [
   { id: 'plan', label: 'Plan', icon: ListChecks },
@@ -42,7 +32,6 @@ const TABS: { id: Tab; label: string; icon: LucideIcon }[] = [
   { id: 'budget', label: 'Budget', icon: Wallet },
   { id: 'work', label: 'Work', icon: CalendarClock },
   { id: 'pack', label: 'Pack', icon: Luggage },
-  { id: 'album', label: 'Postcards', icon: Images },
   { id: 'panini', label: 'Panini', icon: BookOpen },
 ];
 
@@ -161,8 +150,6 @@ function SummerTab({
       return <WorkTab />;
     case 'pack':
       return <PackTab trip={trip} />;
-    case 'album':
-      return <AlbumTab trip={trip} country={country} />;
     case 'panini':
       return <PaniniTab trip={trip} />;
   }
