@@ -1,25 +1,27 @@
 import type { ReactNode } from 'react';
 
+/**
+ * Page header. The app's top bar already shows the screen's title, so this
+ * renders only an optional subtitle + action — keeping exactly ONE title per
+ * page. `title` is still accepted (callers pass it) but intentionally not
+ * rendered here to avoid a duplicate heading.
+ */
 export function PageHeader({
-  title,
   subtitle,
   action,
 }: {
-  title: ReactNode;
+  title?: ReactNode;
   subtitle?: ReactNode;
   action?: ReactNode;
 }) {
+  if (!subtitle && !action) return null;
   return (
-    <header className="mb-5 flex items-start justify-between gap-4">
-      <div className="min-w-0">
-        <h1 className="truncate font-display text-[2rem] font-semibold tracking-tight text-fg">
-          {title}
-        </h1>
-        <div className="mt-2 h-px w-12 bg-border/60" aria-hidden="true" />
-        {subtitle && (
-          <p className="mt-2 font-sans text-sm text-muted">{subtitle}</p>
-        )}
-      </div>
+    <header className="mb-4 flex items-start justify-between gap-4">
+      {subtitle ? (
+        <p className="min-w-0 font-sans text-sm text-muted">{subtitle}</p>
+      ) : (
+        <span />
+      )}
       {action && <div className="shrink-0">{action}</div>}
     </header>
   );
