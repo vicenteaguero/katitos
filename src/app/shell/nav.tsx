@@ -97,6 +97,7 @@ function NavTab({
       <Icon
         size={22}
         strokeWidth={1.75}
+        fill={active ? 'currentColor' : 'none'}
         className={cn(
           'transition-colors duration-200',
           active ? 'text-accent' : 'text-muted'
@@ -121,7 +122,7 @@ export function BottomNav() {
       {/* Borderless bar: tone separation (surface-2) + a soft top shadow.
           The safe-area inset lives INSIDE the bar's own background, so the
           bottom of the screen is always filled with nav color — never empty. */}
-      <nav className="relative z-30 shrink-0 bg-surface-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_28px_-16px_rgba(0,0,0,0.6)]">
+      <nav className="relative z-30 shrink-0 bg-surface-2 pt-[5px] pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_28px_-16px_rgba(0,0,0,0.6)]">
         {/* Items in a centered, capped row so they cluster rather than stretch
             edge-to-edge; the bar's background still spans the full width. */}
         <div className="mx-auto flex w-full max-w-[21rem] items-stretch">
