@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react';
 import { KatitosMark } from './katitos-mark';
 import './splash-screen.css';
 
@@ -31,24 +37,40 @@ function Mosaic() {
  * Boot splash. Shown while the app is loading; once `active` flips false it
  * fades and settles out, so the hand-off into the app feels smooth and warm.
  */
-export function SplashScreen({ active }: { active: boolean }) {
-  const [mounted, setMounted] = useState(true);
+// Show the splash for at least this long so the open animation always plays —
+// even when auth resolves instantly (a warm/cached boot), where it used to
+// flash by. Then fade out over FADE_MS.
+const MIN_VISIBLE_MS = 1200;
+const FADE_MS = 600;
 
+export function SplashScreen({ active }: { active: boolean }) {
+  const mountedAt = useRef(Date.now());
+  const [phase, setPhase] = useState<'in' | 'out' | 'gone'>('in');
+
+  // Once loading is done AND we've shown it long enough, start the fade.
   useEffect(() => {
     if (active) {
-      setMounted(true);
+      setPhase('in');
       return;
     }
-    // Keep it up a beat after "ready", then fade out.
-    const t = window.setTimeout(() => setMounted(false), 620);
+    const elapsed = Date.now() - mountedAt.current;
+    const wait = Math.max(0, MIN_VISIBLE_MS - elapsed);
+    const t = window.setTimeout(() => setPhase('out'), wait);
     return () => window.clearTimeout(t);
   }, [active]);
 
-  if (!mounted) return null;
+  // After the fade animation, unmount.
+  useEffect(() => {
+    if (phase !== 'out') return;
+    const t = window.setTimeout(() => setPhase('gone'), FADE_MS);
+    return () => window.clearTimeout(t);
+  }, [phase]);
+
+  if (phase === 'gone') return null;
 
   return (
     <div
-      className={active ? 'splash' : 'splash splash--out'}
+      className={phase === 'out' ? 'splash splash--out' : 'splash'}
       style={{ '--i': 0 } as CSSProperties}
     >
       <Mosaic />
