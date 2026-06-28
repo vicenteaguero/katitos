@@ -43,15 +43,29 @@
   </head>
   <body>
     <div id="root"></div>
-    <!-- Instant boot splash: paints before any JS so launch never flashes black/home.
-         Matches the in-app splash; main.tsx fades it out once React has painted. -->
-    <div id="boot" style="position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;background:radial-gradient(90% 70% at 50% 40%,rgba(110,20,35,.35),transparent 70%),linear-gradient(168deg,#1a0b13 0%,#100408 60%,#0b0306 100%);transition:opacity .35s ease">
-      <div style="display:flex;flex-direction:column;align-items:center;gap:14px">
-        <span style="position:absolute;width:230px;height:230px;border-radius:50%;background:radial-gradient(circle,rgba(228,195,106,.28),transparent 65%);transform:translateY(-22px)"></span>
+    <!-- The boot splash IS the full animated splash (mosaic + logo), styled
+         INLINE so there is zero CSS-load gap. React only decides when to remove
+         it (see splash-screen.tsx) — one loader, no hand-off, no home flash. -->
+    <div id="boot">
+      <div class="boot-mosaic"></div>
+      <div class="boot-center">
+        <span class="boot-halo"></span>
         <svg width="104" height="104" viewBox="0 0 1024 1024" style="position:relative"><g transform="translate(0.5,31)"><g transform="translate(0,1024) scale(0.1,-0.1)" fill="#FFFAFA"><path d="M3114 7595 c-30 -46 -102 -296 -120 -416 -20 -139 -15 -362 12 -521 18 -107 18 -107 -27 -165 -415 -533 -541 -1252 -338 -1932 154 -517 475 -876 971 -1089 254 -108 597 -186 993 -224 185 -17 861 -18 1045 0 182 17 477 67 615 103 806 209 1249 672 1396 1460 30 158 33 192 33 369 1 208 -10 315 -51 500 -64 290 -191 563 -370 797 -55 73 -55 73 -33 205 43 259 23 518 -60 770 -53 165 -58 171 -124 163 -278 -35 -635 -183 -889 -367 -69 -49 -69 -49 -235 -9 -370 89 -715 114 -1132 80 -168 -13 -317 -38 -506 -84 -147 -36 -147 -36 -203 4 -260 188 -631 342 -904 376 -52 7 -56 6 -73 -20z m559 -1955 c71 -11 170 -60 220 -108 21 -21 56 -63 77 -96 38 -58 38 -58 59 -19 34 67 114 147 183 181 168 85 356 56 484 -75 98 -100 140 -216 132 -365 -4 -72 -10 -97 -41 -163 -49 -101 -106 -166 -306 -344 -91 -81 -236 -216 -321 -299 l-155 -151 -135 133 c-74 72 -198 187 -275 255 -345 306 -401 384 -412 577 -10 171 60 322 190 408 101 67 184 85 300 66z m2238 0 c116 -22 219 -94 290 -202 37 -58 37 -58 53 -33 9 13 16 29 16 34 0 5 24 36 54 69 210 226 558 169 694 -115 36 -77 37 -80 37 -198 0 -120 0 -120 -42 -207 -48 -99 -116 -173 -378 -408 -82 -74 -206 -190 -275 -257 l-125 -122 -160 157 c-88 86 -231 220 -319 297 -169 149 -252 239 -290 313 -96 190 -66 409 76 555 100 101 231 143 369 117z"/></g></g></svg>
-        <span style="position:relative;font-family:Georgia,'Times New Roman',serif;font-size:1.7rem;font-weight:600;letter-spacing:.06em;color:#fbf5f0">Katitos</span>
+        <span class="boot-word">Katitos</span>
       </div>
     </div>
+    <style>
+      #boot{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;overflow:hidden;background:radial-gradient(90% 70% at 50% 40%,rgba(110,20,35,.35),transparent 70%),linear-gradient(168deg,#1a0b13 0%,#100408 60%,#0b0306 100%)}
+      #boot.boot-out{opacity:0;transition:opacity .5s ease}
+      .boot-mosaic{position:absolute;inset:-6%;background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'-200%20-200%201424%201424'%3E%3Cg%20transform%3D'translate(0.5%2C31)'%3E%3Cg%20transform%3D'translate(0%2C1024)%20scale(0.1%2C-0.1)'%20fill%3D'%23d98fb0'%3E%3Cpath%20d%3D'M3114%207595%20c-30%20-46%20-102%20-296%20-120%20-416%20-20%20-139%20-15%20-362%2012%20-521%2018%20-107%2018%20-107%20-27%20-165%20-415%20-533%20-541%20-1252%20-338%20-1932%20154%20-517%20475%20-876%20971%20-1089%20254%20-108%20597%20-186%20993%20-224%20185%20-17%20861%20-18%201045%200%20182%2017%20477%2067%20615%20103%20806%20209%201249%20672%201396%201460%2030%20158%2033%20192%2033%20369%201%20208%20-10%20315%20-51%20500%20-64%20290%20-191%20563%20-370%20797%20-55%2073%20-55%2073%20-33%20205%2043%20259%2023%20518%20-60%20770%20-53%20165%20-58%20171%20-124%20163%20-278%20-35%20-635%20-183%20-889%20-367%20-69%20-49%20-69%20-49%20-235%20-9%20-370%2089%20-715%20114%20-1132%2080%20-168%20-13%20-317%20-38%20-506%20-84%20-147%20-36%20-147%20-36%20-203%204%20-260%20188%20-631%20342%20-904%20376%20-52%207%20-56%206%20-73%20-20z%20m559%20-1955%20c71%20-11%20170%20-60%20220%20-108%2021%20-21%2056%20-63%2077%20-96%2038%20-58%2038%20-58%2059%20-19%2034%2067%20114%20147%20183%20181%20168%2085%20356%2056%20484%20-75%2098%20-100%20140%20-216%20132%20-365%20-4%20-72%20-10%20-97%20-41%20-163%20-49%20-101%20-106%20-166%20-306%20-344%20-91%20-81%20-236%20-216%20-321%20-299%20l-155%20-151%20-135%20133%20c-74%2072%20-198%20187%20-275%20255%20-345%20306%20-401%20384%20-412%20577%20-10%20171%2060%20322%20190%20408%20101%2067%20184%2085%20300%2066z%20m2238%200%20c116%20-22%20219%20-94%20290%20-202%2037%20-58%2037%20-58%2053%20-33%209%2013%2016%2029%2016%2034%200%205%2024%2036%2054%2069%20210%20226%20558%20169%20694%20-115%2036%20-77%2037%20-80%2037%20-198%200%20-120%200%20-120%20-42%20-207%20-48%20-99%20-116%20-173%20-378%20-408%20-82%20-74%20-206%20-190%20-275%20-257%20l-125%20-122%20-160%20157%20c-88%2086%20-231%20220%20-319%20297%20-169%20149%20-252%20239%20-290%20313%20-96%20190%20-66%20409%2076%20555%20100%20101%20231%20143%20369%20117z'%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E");background-size:72px 72px;opacity:.5;animation:boot-breathe 6s ease-in-out infinite}
+      .boot-center{position:relative;display:flex;flex-direction:column;align-items:center;gap:14px;animation:boot-pop .8s cubic-bezier(.16,1,.3,1) both}
+      .boot-halo{position:absolute;top:50%;left:50%;width:230px;height:230px;transform:translate(-50%,-55%);border-radius:50%;background:radial-gradient(circle,rgba(228,195,106,.28),transparent 65%);animation:boot-halo 2.4s ease-in-out infinite}
+      .boot-word{position:relative;font-family:Georgia,'Times New Roman',serif;font-size:1.7rem;font-weight:600;letter-spacing:.06em;color:#fbf5f0}
+      @keyframes boot-pop{0%{opacity:0;transform:scale(.72)}60%{opacity:1}100%{opacity:1;transform:scale(1)}}
+      @keyframes boot-halo{0%,100%{opacity:.6;transform:translate(-50%,-55%) scale(1)}50%{opacity:1;transform:translate(-50%,-55%) scale(1.08)}}
+      @keyframes boot-breathe{0%,100%{opacity:.4}50%{opacity:.62}}
+      @media (prefers-reduced-motion:reduce){.boot-center,.boot-halo,.boot-mosaic{animation:none}}
+    </style>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
