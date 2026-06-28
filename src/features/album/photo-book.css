@@ -166,15 +166,18 @@
 /* ── Photo slots ─────────────────────────────────────────────────────────── */
 .pb-slot {
   position: relative;
-  border-radius: 10px 3px 10px 3px;
+  border-radius: 8px;
   overflow: hidden;
   isolation: isolate;
 }
-.pb-slot:nth-child(2) {
-  border-radius: 3px 10px 3px 10px;
-}
-.pb-slot:nth-child(3) {
-  border-radius: 3px 10px 3px 10px;
+/* Filled = a real Panini sticker: white mount, soft lift, photo inset inside. */
+.pb-slot:not(.pb-slot--empty) {
+  overflow: visible;
+  background: #fdfaf4;
+  padding: 5px 5px 8px;
+  box-shadow:
+    0 3px 7px rgba(34, 14, 8, 0.32),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.6);
 }
 /* Empty: a soft inset well in the paper — no hard border, no "+ tile". */
 .pb-slot--empty {
@@ -206,6 +209,14 @@
   height: 100%;
   object-fit: cover;
   background: rgba(58, 30, 16, 0.06);
+  border-radius: inherit;
+}
+/* Inside a sticker the photo sits within the white mount. */
+.pb-slot:not(.pb-slot--empty) .pb-photo {
+  inset: 5px 5px 8px;
+  width: auto;
+  height: auto;
+  border-radius: 3px;
 }
 /* Gilt photo-corner mounts, like a real album. */
 .pb-mounts {
@@ -266,8 +277,8 @@
 }
 .pb-leaf.pb-snap {
   transition:
-    transform 620ms cubic-bezier(0.22, 0.68, 0.2, 1),
-    --pb-fold 620ms cubic-bezier(0.22, 0.68, 0.2, 1);
+    transform 1500ms cubic-bezier(0.33, 0, 0.2, 1),
+    --pb-fold 1500ms cubic-bezier(0.33, 0, 0.2, 1);
 }
 .pb-face {
   position: absolute;
