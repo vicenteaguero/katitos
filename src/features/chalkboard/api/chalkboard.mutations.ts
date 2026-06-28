@@ -55,6 +55,28 @@ export function useRotateNote() {
   });
 }
 
+export function useResizeNote() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      scale,
+      width,
+    }: {
+      id: string;
+      scale: number;
+      width: number | null;
+    }) => {
+      const { error } = await supabase
+        .from('chalkboard_notes')
+        .update({ scale, width })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.chalkboard.notes() }),
+  });
+}
+
 export function useDeleteNote() {
   const qc = useQueryClient();
   return useMutation({
