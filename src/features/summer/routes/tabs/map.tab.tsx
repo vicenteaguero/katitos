@@ -1,11 +1,14 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState } from 'react';
+import { Plus } from 'lucide-react';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
+import { Button, SectionHeader } from '@kernel/ui';
 import {
   useSummerItems,
   useSummerLegs,
   useSummerReviews,
 } from '../../api/summer.queries';
+import { StopSheet } from '../../components/stop-sheet';
 import type { MapLeg, MapPin } from '../../components/summer-map';
 import { COUNTRIES, type CountryFilter, type Trip } from '../../types';
 
@@ -25,6 +28,7 @@ export function MapTab({
   const { data: items } = useSummerItems(trip.id);
   const { data: reviews } = useSummerReviews(trip.id);
   const { data: legs } = useSummerLegs(trip.id);
+  const [adding, setAdding] = useState(false);
 
   const inCountry = (c: string | null) => country === 'all' || c === country;
 
@@ -67,6 +71,16 @@ export function MapTab({
 
   return (
     <section className="space-y-3">
+      <SectionHeader
+        label="Route & places"
+        hint="Pins are your itinerary stops — drop one here or in Plan"
+        action={
+          <Button size="sm" onClick={() => setAdding(true)}>
+            <Plus size={15} /> Add place
+          </Button>
+        }
+      />
+
       <Suspense
         fallback={
           <div className="h-[440px] w-full animate-pulse rounded-lg bg-surface-2" />
@@ -106,6 +120,13 @@ export function MapTab({
           {COUNTRIES.map((c) => `${c.flag} ${c.label}`).join('  ·  ')}
         </p>
       </div>
+
+      <StopSheet
+        open={adding}
+        onClose={() => setAdding(false)}
+        trip={trip}
+        country={country}
+      />
     </section>
   );
 }
