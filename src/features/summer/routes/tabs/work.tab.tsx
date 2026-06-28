@@ -213,15 +213,12 @@ export function WorkTab() {
         title="Add work block"
       >
         <div className="space-y-3">
-          <Field label="What">
-            <Input
-              value={form.title}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, title: e.target.value }))
-              }
-              placeholder="Standup, deep work, call…"
-            />
-          </Field>
+          <Input
+            value={form.title}
+            onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+            placeholder="What — standup, deep work, call…"
+            autoFocus
+          />
           <div className="grid grid-cols-2 gap-4">
             <Field label="From" className="min-w-0">
               <Input
