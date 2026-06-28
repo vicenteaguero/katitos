@@ -10,7 +10,6 @@ import {
   Empty,
   IconButton,
   Input,
-  SectionHeader,
   Sheet,
 } from '@kernel/ui';
 import { useSummerReviews } from '../../api/summer.queries';
@@ -62,8 +61,13 @@ const EMPTY = {
 
 function catMeta(value: string) {
   return (
-    REVIEW_CATEGORIES.find((c) => c.value === value) ?? REVIEW_CATEGORIES[7]
+    REVIEW_CATEGORIES.find((c) => c.value === value) ??
+    REVIEW_CATEGORIES[REVIEW_CATEGORIES.length - 1]
   );
+}
+
+function flagOf(code: string | null) {
+  return COUNTRIES.find((c) => c.code === code)?.flag ?? '';
 }
 
 export function ReviewsTab({
@@ -112,14 +116,11 @@ export function ReviewsTab({
 
   return (
     <section className="space-y-4">
-      <SectionHeader
-        label="Reviews"
-        action={
-          <Button size="sm" onClick={() => setAdding(true)}>
-            <Plus size={15} /> Add review
-          </Button>
-        }
-      />
+      <div className="flex justify-end">
+        <Button size="sm" onClick={() => setAdding(true)}>
+          <Plus size={15} /> Add review
+        </Button>
+      </div>
 
       {list.length === 0 ? (
         <Empty
@@ -158,8 +159,9 @@ export function ReviewsTab({
                   </div>
                   <div className="flex items-center gap-2">
                     {r.stars != null && <Stars value={r.stars} size={14} />}
-                    <span className="font-sans text-[0.7rem] uppercase tracking-wide text-muted">
-                      {meta.label}
+                    <span className="font-sans text-[0.7rem] text-muted">
+                      {meta.emoji} {meta.label}
+                      {r.country && ` · ${flagOf(r.country)}`}
                     </span>
                   </div>
                   {r.notes && (
@@ -239,29 +241,28 @@ export function ReviewsTab({
             })}
           </div>
 
-          {/* Country — two flags, tap to set. */}
-          <div className="flex gap-2">
-            {COUNTRIES.map((co) => {
-              const active = form.country === co.code;
-              return (
-                <button
-                  key={co.code}
-                  type="button"
-                  onClick={() =>
-                    setForm((f) => ({ ...f, country: active ? '' : co.code }))
-                  }
-                  className={cn(
-                    'lift-press flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2.5 font-sans text-sm font-semibold',
-                    active
-                      ? 'bg-accent text-accent-fg'
-                      : 'bg-surface-2 text-muted'
-                  )}
-                >
-                  <span className="text-lg leading-none">{co.flag}</span>
-                  {co.label}
-                </button>
-              );
-            })}
+          {/* Country — a flag switch, emoji only. */}
+          <div className="flex justify-center">
+            <div className="inline-flex rounded-full bg-surface-2 p-1">
+              {COUNTRIES.map((co) => {
+                const active = form.country === co.code;
+                return (
+                  <button
+                    key={co.code}
+                    type="button"
+                    onClick={() =>
+                      setForm((f) => ({ ...f, country: active ? '' : co.code }))
+                    }
+                    className={cn(
+                      'lift-press rounded-full px-5 py-1.5 text-xl leading-none transition',
+                      active ? 'bg-accent' : 'opacity-45'
+                    )}
+                  >
+                    {co.flag}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <Button variant="secondary" full onClick={() => setCam(true)}>
