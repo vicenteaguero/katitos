@@ -10,10 +10,8 @@ import {
   Button,
   Card,
   Empty,
-  Field,
   IconButton,
   Input,
-  SectionHeader,
   Select,
   Sheet,
 } from '@kernel/ui';
@@ -131,17 +129,14 @@ export function BudgetTab({ trip }: { trip: Trip }) {
 
   return (
     <section className="space-y-4">
-      <SectionHeader
-        label="Money · by sprint"
-        action={
-          <Button
-            size="sm"
-            onClick={() => setSprintForm({ open: true, name: '', anchor: '' })}
-          >
-            <Plus size={15} /> Sprint
-          </Button>
-        }
-      />
+      <div className="flex justify-end">
+        <Button
+          size="sm"
+          onClick={() => setSprintForm({ open: true, name: '', anchor: '' })}
+        >
+          <Plus size={15} /> Sprint
+        </Button>
+      </div>
 
       {(sprints ?? []).length === 0 ? (
         <Empty
@@ -190,24 +185,21 @@ export function BudgetTab({ trip }: { trip: Trip }) {
         title="New sprint"
       >
         <div className="space-y-3">
-          <Field label="Name">
-            <Input
-              value={sprintForm.name}
-              onChange={(e) =>
-                setSprintForm((f) => ({ ...f, name: e.target.value }))
-              }
-              placeholder="Before Jul 26"
-            />
-          </Field>
-          <Field label="Anchor date (optional)" hint="The period boundary.">
-            <Input
-              type="date"
-              value={sprintForm.anchor}
-              onChange={(e) =>
-                setSprintForm((f) => ({ ...f, anchor: e.target.value }))
-              }
-            />
-          </Field>
+          <Input
+            value={sprintForm.name}
+            onChange={(e) =>
+              setSprintForm((f) => ({ ...f, name: e.target.value }))
+            }
+            placeholder="Name — e.g. Before Jul 26"
+            autoFocus
+          />
+          <Input
+            type="date"
+            value={sprintForm.anchor}
+            onChange={(e) =>
+              setSprintForm((f) => ({ ...f, anchor: e.target.value }))
+            }
+          />
           <Button full onClick={submitSprint} disabled={addSprint.isPending}>
             Add sprint
           </Button>
@@ -221,50 +213,43 @@ export function BudgetTab({ trip }: { trip: Trip }) {
       >
         {lineEdit && (
           <div className="space-y-3">
-            <Field label="What for">
-              <Input
-                value={lineEdit.label}
-                onChange={(e) =>
-                  setLineEdit({ ...lineEdit, label: e.target.value })
-                }
-                placeholder="Flights, food, stay…"
-              />
-            </Field>
-            <Field label="Currency">
-              <Select
-                value={lineEdit.currency}
-                onChange={(e) =>
-                  setLineEdit({ ...lineEdit, currency: e.target.value })
-                }
-              >
-                {CURRENCIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </Select>
-            </Field>
+            <Input
+              value={lineEdit.label}
+              onChange={(e) =>
+                setLineEdit({ ...lineEdit, label: e.target.value })
+              }
+              placeholder="What for — flights, food, stay…"
+              autoFocus
+            />
+            <Select
+              value={lineEdit.currency}
+              onChange={(e) =>
+                setLineEdit({ ...lineEdit, currency: e.target.value })
+              }
+            >
+              {CURRENCIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </Select>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Planned">
-                <Input
-                  inputMode="decimal"
-                  value={lineEdit.planned}
-                  onChange={(e) =>
-                    setLineEdit({ ...lineEdit, planned: e.target.value })
-                  }
-                  placeholder="0"
-                />
-              </Field>
-              <Field label="Spent">
-                <Input
-                  inputMode="decimal"
-                  value={lineEdit.spent}
-                  onChange={(e) =>
-                    setLineEdit({ ...lineEdit, spent: e.target.value })
-                  }
-                  placeholder="0"
-                />
-              </Field>
+              <Input
+                inputMode="decimal"
+                value={lineEdit.planned}
+                onChange={(e) =>
+                  setLineEdit({ ...lineEdit, planned: e.target.value })
+                }
+                placeholder="Planned"
+              />
+              <Input
+                inputMode="decimal"
+                value={lineEdit.spent}
+                onChange={(e) =>
+                  setLineEdit({ ...lineEdit, spent: e.target.value })
+                }
+                placeholder="Spent"
+              />
             </div>
             <Button full onClick={submitLine}>
               {lineEdit.id ? 'Save' : 'Add line'}
