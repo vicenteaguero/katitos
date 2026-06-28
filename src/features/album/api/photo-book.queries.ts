@@ -27,20 +27,24 @@ async function findBook(
   return data;
 }
 
-/** Ensure the book has at least one page (prod has no seed → heal on open). */
-async function ensureFirstPage(bookId: string): Promise<void> {
+/** Seed the book up to a few empty pages so the flip-through feels like a book
+ *  from the first open (prod has no seed → heal on open). */
+const SEED_PAGES = 5;
+async function ensurePages(bookId: string): Promise<void> {
   const { data, error } = await supabase
     .from('album_pages')
-    .select('id')
+    .select('position')
     .eq('book_id', bookId)
-    .limit(1)
-    .maybeSingle();
+    .order('position', { ascending: false });
   if (error) throw error;
-  if (data) return;
-  const { error: insErr } = await supabase
-    .from('album_pages')
-    .insert({ book_id: bookId, position: 0 });
-  // A concurrent first-open may have created it — that's fine.
+  const have = data?.length ?? 0;
+  if (have >= SEED_PAGES) return;
+  const maxPos = data && data.length ? data[0].position : -1;
+  const rows = Array.from({ length: SEED_PAGES - have }, (_, i) => ({
+    book_id: bookId,
+    position: maxPos + 1 + i,
+  }));
+  const { error: insErr } = await supabase.from('album_pages').insert(rows);
   if (insErr && insErr.code !== '23505') throw insErr;
 }
 
@@ -80,7 +84,7 @@ export function useBook(scope: BookScope, tripId?: string, title?: string) {
         }
       }
       if (!book) throw new Error('Could not resolve album book');
-      await ensureFirstPage(book.id);
+      await ensurePages(book.id);
       return book;
     },
   });
