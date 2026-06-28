@@ -13,7 +13,7 @@ import { cn } from '../lib/cn';
 // `min-w-0 max-w-full` keeps native date/time inputs (which carry an intrinsic
 // min-width) from overflowing a sheet/grid cell on iOS.
 const base =
-  'w-full min-w-0 max-w-full rounded-lg border border-[rgba(251,245,240,0.18)] bg-[rgba(0,0,0,0.28)] px-4 py-3 font-sans text-fg placeholder:text-muted shadow-[inset_0_1px_2px_rgba(0,0,0,0.35)] transition-colors duration-150 focus:border-[rgba(228,195,106,0.7)] focus:outline-none focus:ring-2 focus:ring-[rgba(228,195,106,0.28)]';
+  'w-full min-w-0 max-w-full rounded-lg border border-[rgba(251,245,240,0.18)] bg-[rgba(0,0,0,0.28)] px-4 py-3 font-sans text-fg placeholder:text-[rgba(184,154,134,0.4)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.35)] transition-colors duration-150 focus:border-[rgba(228,195,106,0.7)] focus:outline-none focus:ring-2 focus:ring-[rgba(228,195,106,0.28)]';
 
 // Chevron so a <select> reads as a dropdown (appearance-none hides the native one).
 const SELECT_CHEVRON =
