@@ -9,6 +9,8 @@ import {
   useAddNote,
   useDeleteNote,
   useMoveNote,
+  useResizeNote,
+  useRotateNote,
 } from '../api/chalkboard.mutations';
 import { ChalkNoteItem } from '../components/chalk-note';
 import { CHALK_COLORS } from '../types';
@@ -20,6 +22,8 @@ export function ChalkboardRoute() {
   const { data: notes } = useChalkNotes();
   const add = useAddNote();
   const move = useMoveNote();
+  const resize = useResizeNote();
+  const rotate = useRotateNote();
   const del = useDeleteNote();
   const boardRef = useRef<HTMLDivElement>(null);
   const [editing, setEditing] = useState(false);
@@ -69,9 +73,9 @@ export function ChalkboardRoute() {
       <header className="mb-4 flex shrink-0 items-end justify-between gap-3">
         <div>
           <p className="eyebrow">Our wall</p>
-          <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight text-fg">
-            The blackboard
-          </h1>
+          <p className="mt-1 font-sans text-sm text-muted">
+            Drag, rotate, pinch — magnets hold it all.
+          </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {editing && (
@@ -114,6 +118,10 @@ export function ChalkboardRoute() {
             editing={editing}
             canDelete
             onMove={(x, y) => move.mutate({ id: n.id, x, y })}
+            onTransform={({ scale, rotation, width }) => {
+              resize.mutate({ id: n.id, scale, width });
+              rotate.mutate({ id: n.id, rotation });
+            }}
             onDelete={() => del.mutate(n.id)}
           />
         ))}
@@ -121,7 +129,7 @@ export function ChalkboardRoute() {
 
       <p className="mt-3 shrink-0 text-center font-sans text-xs italic text-muted">
         {editing
-          ? 'Drag to move · tap × to rub out · max 3 notes'
+          ? 'Drag to move · pinch to size & spin · tap × to rub out'
           : 'Held by magnets. The kitchen we share across two countries.'}
       </p>
 
