@@ -174,7 +174,7 @@ function Greeting() {
           type="button"
           onClick={() => void sendLove()}
           disabled={sent}
-          className="btn-catchlight gold-shimmer lift-press relative inline-flex items-center gap-2 rounded-full bg-accent px-7 py-3 font-sans text-[0.95rem] font-semibold text-accent-fg shadow-loge disabled:opacity-100"
+          className="btn-catchlight lift-press relative inline-flex items-center gap-2 rounded-full bg-accent px-7 py-3 font-sans text-[0.95rem] font-semibold text-accent-fg shadow-loge disabled:opacity-100"
           style={{ border: '1px solid rgba(201,162,75,.5)' }}
         >
           <Heart
