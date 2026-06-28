@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Luggage, Plus, Trash2 } from 'lucide-react';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import { cn } from '@kernel/lib';
@@ -10,6 +10,7 @@ import {
   Field,
   IconButton,
   Input,
+  SectionHeader,
   Select,
   Sheet,
 } from '@kernel/ui';
@@ -57,28 +58,24 @@ export function PackTab({ trip }: { trip: Trip }) {
 
   return (
     <section className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="eyebrow">Luggage</p>
-          {list.length > 0 && (
-            <p className="font-sans text-xs text-muted">
-              {packed}/{list.length} packed
-            </p>
-          )}
-        </div>
-        <Button
-          size="sm"
-          onClick={() =>
-            setForm({ open: true, label: '', category: 'Clothes' })
-          }
-        >
-          <Plus size={15} /> Add
-        </Button>
-      </div>
+      <SectionHeader
+        label="Luggage"
+        hint={list.length > 0 ? `${packed}/${list.length} packed` : undefined}
+        action={
+          <Button
+            size="sm"
+            onClick={() =>
+              setForm({ open: true, label: '', category: 'Clothes' })
+            }
+          >
+            <Plus size={15} /> Add
+          </Button>
+        }
+      />
 
       {list.length === 0 ? (
         <Empty
-          icon="🧳"
+          icon={<Luggage className="h-11 w-11" strokeWidth={1.25} />}
           title="Nothing on the list"
           hint="Add what you can't forget."
         />
