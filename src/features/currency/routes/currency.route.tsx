@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { convert, formatMoney, indexRates } from '@kernel/lib';
 import { usePartner } from '@kernel/auth';
-import { Empty, Sheet, useTopBarAction } from '@kernel/ui';
+import { Button, Empty, Input, Sheet, useTopBarAction } from '@kernel/ui';
 import { useRates } from '../api/currency.queries';
 import { CURRENCIES, isCode, meta, type Code } from '../currencies';
 
@@ -34,8 +34,6 @@ interface Entry {
   name?: string;
 }
 
-// Last pair survives reloads; the preferred currency only seeds the very first
-// visit (afterwards their own last choice wins).
 const PAIR_KEY = 'currency:pair';
 const SAVED_KEY = 'katitos:currency:saved';
 const DEFAULT_FROM: Code = 'RUB';
@@ -83,7 +81,7 @@ export function CurrencyRoute() {
   const index = useMemo(() => indexRates(rates ?? []), [rates]);
   const { self, isLoading: partnerLoading } = usePartner();
 
-  const [initialPair] = useState(loadPair); // read storage once, at mount
+  const [initialPair] = useState(loadPair);
   const [amount, setAmount] = useState('');
   const [from, setFrom] = useState<Code>(initialPair?.from ?? DEFAULT_FROM);
   const [to, setTo] = useState<Code>(initialPair?.to ?? DEFAULT_TO);
@@ -91,8 +89,12 @@ export function CurrencyRoute() {
   const [history, setHistory] = useState<Entry[]>([]); // session-only
   const [saved, setSaved] = useState<Entry[]>(loadSaved); // named → kept
   const [showHistory, setShowHistory] = useState(false);
+  const [historyEdit, setHistoryEdit] = useState(false);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameText, setRenameText] = useState('');
+  // After Save we ask for a name; empty → it just stays as a numbers-only entry.
+  const [pendingEntry, setPendingEntry] = useState<Entry | null>(null);
+  const [pendingName, setPendingName] = useState('');
   const nextId = useRef(1);
 
   const n = Number(amount) || 0;
@@ -133,18 +135,17 @@ export function CurrencyRoute() {
     }
   }, [saved]);
 
-  // Seed the result currency from the saved preference — but only on a fresh
-  // device with no remembered pair, before the user touches anything, and once.
+  // Seed the result currency from the saved preference — once, fresh device.
   const seeded = useRef(false);
   const touched = useRef(false);
   useEffect(() => {
     if (seeded.current || initialPair || touched.current || partnerLoading)
       return;
-    seeded.current = true; // one shot, whatever the outcome
+    seeded.current = true;
     const pref = self?.preferred_currency;
     if (isCode(pref) && pref !== to) {
       setTo(pref);
-      if (from === pref) setFrom(to); // keep the pair distinct
+      if (from === pref) setFrom(to);
     }
   }, [partnerLoading, self, initialPair, from, to]);
 
@@ -157,38 +158,13 @@ export function CurrencyRoute() {
     }
   }, [from, to]);
 
-  // Auto-log conversions "in the moment": once typing settles, record the
-  // reading to the session history (deduped against the most recent). No Add
-  // button — you just convert, and it's there if you want to keep it.
-  useEffect(() => {
-    if (n === 0 || result == null) return;
-    const t = window.setTimeout(() => {
-      setHistory((h) => {
-        const top = h[0];
-        if (top && top.amount === n && top.from === from && top.to === to)
-          return h;
-        return [
-          {
-            id: `${Date.now()}-${nextId.current++}`,
-            amount: n,
-            from,
-            to,
-            result,
-          },
-          ...h,
-        ].slice(0, 20);
-      });
-    }, 1100);
-    return () => window.clearTimeout(t);
-  }, [n, from, to, result]);
-
   // ── numpad ──
   const tap = (key: string) => {
     setAmount((a) => {
       if (key === '⌫') return a.slice(0, -1);
       if (key === '.') return a.includes('.') ? a : a === '' ? '0.' : a + '.';
-      if (a.replace('.', '').length >= 12) return a; // sane cap
-      if (a === '0') return key; // no leading zeros
+      if (a.replace('.', '').length >= 12) return a;
+      if (a === '0') return key;
       return a + key;
     });
   };
@@ -202,7 +178,7 @@ export function CurrencyRoute() {
   const pick = (code: Code) => {
     touched.current = true;
     if (editing === 'from') {
-      if (code === to) setTo(from); // keep the pair distinct
+      if (code === to) setTo(from);
       setFrom(code);
     } else if (editing === 'to') {
       if (code === from) setFrom(to);
@@ -211,13 +187,38 @@ export function CurrencyRoute() {
     setEditing(null);
   };
 
+  // Save the current reading; then ask for a name (optional). Clears for the next.
+  const save = () => {
+    if (result == null || n === 0) return;
+    const e: Entry = {
+      id: `${Date.now()}-${nextId.current++}`,
+      amount: n,
+      from,
+      to,
+      result,
+    };
+    setHistory((h) => [e, ...h].slice(0, 30));
+    setAmount('');
+    setPendingEntry(e);
+    setPendingName('');
+  };
+
+  // Resolve the name prompt — a name keeps it forever; empty leaves it transient.
+  const resolvePending = () => {
+    const name = pendingName.trim();
+    if (name && pendingEntry) {
+      setSaved((s) => [{ ...pendingEntry, name }, ...s]);
+      setHistory((h) => h.filter((x) => x.id !== pendingEntry.id));
+    }
+    setPendingEntry(null);
+    setPendingName('');
+  };
+
   const startRename = (e: Entry) => {
     setRenamingId(e.id);
     setRenameText(e.name ?? '');
   };
 
-  // Naming an entry keeps it forever (moves it into the persisted `saved` list);
-  // an empty name leaves it where it is (still session-only).
   const commitRename = (e: Entry) => {
     const name = renameText.trim();
     setRenamingId(null);
@@ -236,8 +237,16 @@ export function CurrencyRoute() {
     setAmount(String(e.amount));
     setFrom(e.from);
     setTo(e.to);
-    setShowHistory(false);
+    closeHistory();
   };
+
+  const closeHistory = () => {
+    setShowHistory(false);
+    setHistoryEdit(false);
+    setRenamingId(null);
+  };
+
+  const all = [...saved, ...history];
 
   return (
     <div className="flex h-full flex-col gap-3">
@@ -265,14 +274,13 @@ export function CurrencyRoute() {
           type="button"
           onClick={() => setShowHistory(true)}
           aria-label="History"
-          className="lift-press absolute right-0 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-muted active:text-accent"
+          className="lift-press absolute right-0 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-surface-2 text-gold shadow-[inset_0_0_0_1px_rgba(228,195,106,0.28)] active:text-accent"
         >
           <History className="h-4 w-4" />
         </button>
       </div>
 
-      {/* Inline flag picker — one tap, no menus. Dense vertical chips so all
-          five sit in a single tap-friendly row. */}
+      {/* Inline flag picker — one tap, no menus. */}
       {editing && (
         <div className="curtain-reveal flex shrink-0 flex-wrap justify-center gap-1.5">
           {CURRENCIES.map((c) => {
@@ -296,19 +304,20 @@ export function CurrencyRoute() {
         </div>
       )}
 
-      {/* The reading — what I have, what I get. Each figure sits in its own
-          quiet tinted chip; no dead air between them. */}
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2">
-        <p className="rounded-xl bg-surface-2 px-4 py-2 font-display text-2xl tabular-nums text-muted">
+      {/* The reading — full-width chips, tight, sitting just under the picker. */}
+      <div className="shrink-0 space-y-2">
+        <p className="w-full rounded-xl bg-surface-2 px-4 py-2 text-center font-display text-2xl tabular-nums text-muted">
           {meta(from).flag} {shown}{' '}
           <span className="text-base text-muted/70">{from}</span>
         </p>
         <p
-          className={`rounded-2xl bg-surface-2 px-5 py-3 font-display ring-1 ring-[rgba(228,195,106,0.16)] ${fit(resultText)} font-semibold leading-none tabular-nums text-fg`}
+          className={`w-full rounded-2xl bg-surface-2 px-5 py-2.5 text-center font-display ring-1 ring-[rgba(228,195,106,0.18)] ${fit(resultText)} font-semibold leading-none tabular-nums text-fg`}
         >
           {resultText} <span className="text-2xl text-accent">{to}</span>
         </p>
       </div>
+
+      <div className="min-h-2 flex-1" />
 
       {/* Numpad — bare figures, generous targets. */}
       <div className="grid shrink-0 grid-cols-3 gap-2">
@@ -326,75 +335,92 @@ export function CurrencyRoute() {
         )}
       </div>
 
-      {/* Saved + session log. */}
+      {/* Clear · Save — same wine tone, different weight. */}
+      <div className="grid shrink-0 grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={() => setAmount('')}
+          className="lift-press flex h-12 items-center justify-center rounded-lg bg-[rgba(110,20,35,0.32)] font-sans text-sm font-semibold uppercase tracking-[0.14em] text-fg active:scale-[0.98]"
+        >
+          Clear
+        </button>
+        <button
+          type="button"
+          onClick={save}
+          disabled={result == null || n === 0}
+          className="lift-press flex h-12 items-center justify-center rounded-lg bg-accent font-sans text-sm font-semibold uppercase tracking-[0.14em] text-accent-fg active:scale-[0.98] disabled:opacity-40"
+        >
+          Save
+        </button>
+      </div>
+
+      {/* History — kept + session, no mini-titles, delete only in edit mode. */}
       <Sheet
         open={showHistory}
-        onClose={() => setShowHistory(false)}
+        onClose={closeHistory}
         title="History"
         size="full"
       >
-        {saved.length === 0 && history.length === 0 ? (
+        {all.length === 0 ? (
           <Empty
             title="Nothing yet"
-            hint="Convert something — it lands here. Rename one to keep it forever."
+            hint="Hit Save — name it to keep it forever, or leave it for now."
           />
         ) : (
-          <div className="flex flex-col gap-4">
-            {saved.length > 0 && (
-              <section className="flex flex-col gap-2">
-                <p className="eyebrow">Kept</p>
-                {saved.map((e) => (
-                  <HistoryRow
-                    key={e.id}
-                    entry={e}
-                    renaming={renamingId === e.id}
-                    renameText={renameText}
-                    onRenameText={setRenameText}
-                    onStartRename={() => startRename(e)}
-                    onCommitRename={() => commitRename(e)}
-                    onRestore={() => restore(e)}
-                    onDelete={() => removeEntry(e.id)}
-                  />
-                ))}
-              </section>
-            )}
-            {history.length > 0 && (
-              <section className="flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <p className="eyebrow">Recent</p>
-                  <button
-                    type="button"
-                    onClick={() => setHistory([])}
-                    className="lift-press flex items-center gap-1 font-sans text-[0.7rem] font-semibold uppercase tracking-[0.12em] text-muted active:text-danger"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" /> Clear
-                  </button>
-                </div>
-                {history.map((e) => (
-                  <HistoryRow
-                    key={e.id}
-                    entry={e}
-                    renaming={renamingId === e.id}
-                    renameText={renameText}
-                    onRenameText={setRenameText}
-                    onStartRename={() => startRename(e)}
-                    onCommitRename={() => commitRename(e)}
-                    onRestore={() => restore(e)}
-                    onDelete={() => removeEntry(e.id)}
-                  />
-                ))}
-              </section>
-            )}
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => setHistoryEdit((v) => !v)}
+              className="lift-press mb-1 self-end font-sans text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-gold/85 active:text-gold"
+            >
+              {historyEdit ? 'Done' : 'Edit'}
+            </button>
+            {all.map((e) => (
+              <HistoryRow
+                key={e.id}
+                entry={e}
+                editing={historyEdit}
+                renaming={renamingId === e.id}
+                renameText={renameText}
+                onRenameText={setRenameText}
+                onStartRename={() => startRename(e)}
+                onCommitRename={() => commitRename(e)}
+                onRestore={() => restore(e)}
+                onDelete={() => removeEntry(e.id)}
+              />
+            ))}
           </div>
         )}
+      </Sheet>
+
+      {/* Name prompt after Save — optional. */}
+      <Sheet
+        open={!!pendingEntry}
+        onClose={resolvePending}
+        title="Name it?"
+        size="half"
+      >
+        <div className="space-y-3">
+          <Input
+            autoFocus
+            value={pendingName}
+            onChange={(e) => setPendingName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && resolvePending()}
+            placeholder="e.g. Groceries — empty just saves the numbers"
+          />
+          <Button full onClick={resolvePending}>
+            {pendingName.trim() ? 'Keep forever' : 'Save'}
+          </Button>
+        </div>
       </Sheet>
     </div>
   );
 }
 
-/** One history line — tap to restore, pencil to name-&-keep, trash to delete. */
+/** One history line — tap to restore; in edit mode, rename or delete. */
 function HistoryRow({
   entry,
+  editing,
   renaming,
   renameText,
   onRenameText,
@@ -404,6 +430,7 @@ function HistoryRow({
   onDelete,
 }: {
   entry: Entry;
+  editing: boolean;
   renaming: boolean;
   renameText: string;
   onRenameText: (v: string) => void;
@@ -422,7 +449,7 @@ function HistoryRow({
             onChange={(e) => onRenameText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && onCommitRename()}
             placeholder="Name it to keep…"
-            className="min-w-0 flex-1 rounded-md border border-[rgba(251,245,240,0.18)] bg-[rgba(0,0,0,0.28)] px-3 py-1.5 font-sans text-sm text-fg placeholder:text-muted focus:outline-none"
+            className="min-w-0 flex-1 rounded-md border border-[rgba(251,245,240,0.18)] bg-[rgba(0,0,0,0.28)] px-3 py-1.5 font-sans text-sm text-fg placeholder:text-[rgba(184,154,134,0.4)] focus:outline-none"
           />
           <button
             type="button"
@@ -446,6 +473,9 @@ function HistoryRow({
               </span>
             )}
             <span className="flex items-center gap-2 font-sans text-sm tabular-nums text-muted">
+              {!entry.name && (
+                <Check className="h-3.5 w-3.5 shrink-0 text-success" />
+              )}
               <span>
                 {meta(entry.from).flag} {formatMoney(entry.amount, entry.from)}
               </span>
@@ -457,22 +487,26 @@ function HistoryRow({
               </span>
             </span>
           </button>
-          <button
-            type="button"
-            onClick={onStartRename}
-            aria-label="Rename"
-            className="lift-press flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted active:text-accent"
-          >
-            <Pencil className="h-3.5 w-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={onDelete}
-            aria-label="Delete"
-            className="lift-press flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted active:text-danger"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
+          {editing && (
+            <>
+              <button
+                type="button"
+                onClick={onStartRename}
+                aria-label="Rename"
+                className="lift-press flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted active:text-accent"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={onDelete}
+                aria-label="Delete"
+                className="lift-press flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted active:text-danger"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </>
+          )}
         </>
       )}
     </div>
