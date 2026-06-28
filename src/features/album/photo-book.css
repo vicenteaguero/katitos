@@ -266,8 +266,8 @@
 }
 .pb-leaf.pb-snap {
   transition:
-    transform 320ms cubic-bezier(0.22, 0.68, 0.2, 1),
-    --pb-fold 320ms cubic-bezier(0.22, 0.68, 0.2, 1);
+    transform 620ms cubic-bezier(0.22, 0.68, 0.2, 1),
+    --pb-fold 620ms cubic-bezier(0.22, 0.68, 0.2, 1);
 }
 .pb-face {
   position: absolute;
