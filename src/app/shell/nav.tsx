@@ -4,7 +4,7 @@ import { NavLink, useLocation } from 'react-router';
 import type { LucideIcon } from 'lucide-react';
 import {
   Home,
-  MapPin,
+  Plane,
   Camera,
   StickyNote,
   LayoutGrid,
@@ -131,9 +131,9 @@ export function BottomNav() {
             )}
           </NavLink>
 
-          <NavLink to="/georgia" className="flex flex-1 lift-press">
+          <NavLink to="/summer" className="flex flex-1 lift-press">
             {({ isActive }) => (
-              <NavTab active={isActive} icon={MapPin} label="Georgia" />
+              <NavTab active={isActive} icon={Plane} label="Summer" />
             )}
           </NavLink>
 
