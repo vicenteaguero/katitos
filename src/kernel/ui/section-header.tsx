@@ -20,7 +20,9 @@ export function SectionHeader({
   className?: string;
 }) {
   return (
-    <div className={cn('mb-3 flex items-end justify-between gap-3', className)}>
+    <div
+      className={cn('mb-3 flex items-center justify-between gap-3', className)}
+    >
       <div className="min-w-0">
         <h2 className="font-sans text-[0.72rem] font-bold uppercase tracking-[0.2em] text-gold/85">
           {label}
