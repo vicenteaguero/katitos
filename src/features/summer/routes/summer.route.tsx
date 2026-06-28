@@ -51,6 +51,19 @@ export function SummerRoute() {
   const createTrip = useCreateSummerTrip();
   const [tab, setTab] = useState<Tab>('plan');
   const [country, setCountry] = useState<CountryFilter>('all');
+  const stripRef = useRef<HTMLDivElement>(null);
+
+  // Slide the active tab into view when it changes (so taps near the edge
+  // don't leave the active pill half-hidden).
+  useEffect(() => {
+    stripRef.current
+      ?.querySelector('[data-active="true"]')
+      ?.scrollIntoView({
+        behavior: 'smooth',
+        inline: 'center',
+        block: 'nearest',
+      });
+  }, [tab]);
 
   // The one Summer trip just exists. If the DB has no row (fresh/cloud, seeds
   // don't run there), materialize it once, silently — incl. the route legs.
@@ -87,7 +100,10 @@ export function SummerRoute() {
       {/* Dense, scrollable icon tab strip, with a soft right-edge fade so the
           overflow reads as "scroll for more" rather than a cut-off. */}
       <div className="relative -mx-1">
-        <div className="flex gap-1.5 overflow-x-auto px-1 pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div
+          ref={stripRef}
+          className="flex gap-1.5 overflow-x-auto px-1 pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
           {TABS.map((t) => {
             const active = t.id === tab;
             const Icon = t.icon;
@@ -95,6 +111,7 @@ export function SummerRoute() {
               <button
                 key={t.id}
                 type="button"
+                data-active={active}
                 onClick={() => setTab(t.id)}
                 className={cn(
                   'lift-press flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 font-sans text-[0.8rem] font-semibold transition-colors',
