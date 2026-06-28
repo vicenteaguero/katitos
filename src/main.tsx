@@ -35,3 +35,16 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>
 );
+
+// Hand the instant boot splash (#boot in index.html) off to React's identical
+// splash once it has painted, then remove it — so launch never flashes black
+// or a bare home before the real splash appears.
+const boot = document.getElementById('boot');
+if (boot) {
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => {
+      boot.style.opacity = '0';
+      window.setTimeout(() => boot.remove(), 400);
+    })
+  );
+}
