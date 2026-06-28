@@ -256,7 +256,7 @@ export function PolaroidViewer({
                 }}
               >
                 <div className="marble gilt-hairline shadow-loge rounded-lg p-3 pb-4">
-                  <div className="aspect-square w-full overflow-hidden rounded-none bg-brown">
+                  <div className="aspect-square w-full overflow-hidden rounded-md bg-brown">
                     <PolaroidImage
                       path={p.image_path}
                       full
