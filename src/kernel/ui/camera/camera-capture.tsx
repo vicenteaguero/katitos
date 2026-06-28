@@ -12,6 +12,11 @@ export interface CameraCaptureProps {
   facingMode?: Facing;
   /** JPEG quality 0..1 */
   quality?: number;
+  /**
+   * Frame the preview as a white-bordered 1:1 square and centre-crop the saved
+   * photo to match (the daily polaroid) — so what you shoot IS the polaroid.
+   */
+  square?: boolean;
 }
 
 /**
@@ -23,6 +28,7 @@ export function CameraCapture({
   onCancel,
   facingMode = 'environment',
   quality = 0.9,
+  square = false,
 }: CameraCaptureProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -93,16 +99,24 @@ export function CameraCapture({
   const capture = useCallback(() => {
     const video = videoRef.current;
     if (!video || !video.videoWidth) return;
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+    // Square mode centre-crops the source to 1:1 (matches the polaroid window).
+    const side = Math.min(vw, vh);
+    const sx = square ? (vw - side) / 2 : 0;
+    const sy = square ? (vh - side) / 2 : 0;
+    const cw = square ? side : vw;
+    const ch = square ? side : vh;
     const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = cw;
+    canvas.height = ch;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     if (mirror) {
-      ctx.translate(canvas.width, 0);
+      ctx.translate(cw, 0);
       ctx.scale(-1, 1);
     }
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(video, sx, sy, cw, ch, 0, 0, cw, ch);
     canvas.toBlob(
       (blob) => {
         // Keep the stream LIVE (no stop here) so retake doesn't re-prompt.
@@ -111,7 +125,7 @@ export function CameraCapture({
       'image/jpeg',
       quality
     );
-  }, [quality, mirror]);
+  }, [quality, mirror, square]);
 
   const confirm = () => {
     if (!preview) return;
@@ -152,28 +166,62 @@ export function CameraCapture({
         </IconButton>
       </div>
 
-      <div className="relative flex-1 overflow-hidden">
-        {preview ? (
-          <img
-            src={preview.url}
-            alt="Captured preview"
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <video
-            ref={videoRef}
-            playsInline
-            muted
-            className="h-full w-full object-cover"
-            style={mirror ? { transform: 'scaleX(-1)' } : undefined}
-          />
-        )}
-        {error && (
-          <div className="absolute inset-0 flex items-center justify-center p-6 text-center text-white">
-            {error}
+      {square ? (
+        // A white-bordered square — the polaroid window. What you see is what
+        // you get, since the capture centre-crops to the same square.
+        <div className="flex flex-1 flex-col items-center justify-center px-6">
+          <div className="w-full max-w-sm rounded-md bg-white p-3 pb-12 shadow-loge">
+            <div className="relative aspect-square w-full overflow-hidden rounded-sm bg-black">
+              {preview ? (
+                <img
+                  src={preview.url}
+                  alt="Captured preview"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <video
+                  ref={videoRef}
+                  playsInline
+                  muted
+                  className="h-full w-full object-cover"
+                  style={mirror ? { transform: 'scaleX(-1)' } : undefined}
+                />
+              )}
+              {error && (
+                <div className="absolute inset-0 flex items-center justify-center p-6 text-center text-white">
+                  {error}
+                </div>
+              )}
+            </div>
+            <p className="mt-3 text-center font-display text-base italic text-brown/70">
+              in the moment
+            </p>
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="relative flex-1 overflow-hidden">
+          {preview ? (
+            <img
+              src={preview.url}
+              alt="Captured preview"
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <video
+              ref={videoRef}
+              playsInline
+              muted
+              className="h-full w-full object-cover"
+              style={mirror ? { transform: 'scaleX(-1)' } : undefined}
+            />
+          )}
+          {error && (
+            <div className="absolute inset-0 flex items-center justify-center p-6 text-center text-white">
+              {error}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex items-center justify-center gap-6 p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         {preview ? (
