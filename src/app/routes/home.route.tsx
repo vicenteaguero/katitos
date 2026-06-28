@@ -9,7 +9,6 @@ import {
   durationBreakdown,
   formatDistance,
   haversineKm,
-  relativeTime,
   timeInZone,
   type DurationParts,
 } from '@kernel/lib';
@@ -29,6 +28,17 @@ function petNameOf(role: string | null | undefined): 'Katito' | 'Katita' {
 /** Grammatical gender of a role for endearments (him → m, her → f). */
 function genderOf(role: string | null | undefined): 'm' | 'f' {
   return role === 'a' ? 'm' : 'f';
+}
+
+/** "45 min ago" · "3 hrs ago" · "2 days ago" — always a whole number. */
+function compactAgo(iso: string): string {
+  const m = Math.floor((Date.now() - new Date(iso).getTime()) / 60_000);
+  if (m < 1) return 'moments ago';
+  if (m < 60) return `${m} min ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h} hr${h === 1 ? '' : 's'} ago`;
+  const d = Math.floor(h / 24);
+  return `${d} day${d === 1 ? '' : 's'} ago`;
 }
 
 /**
@@ -72,34 +82,6 @@ function loveNotes(name: string, g: 'm' | 'f'): string[] {
   ];
 }
 
-/**
- * Twenty closing lines for the "together for N days" hero — the bit after the
- * grand numeral. Rotates by day count, so it's stable through the day and turns
- * a new phrase each morning (no flicker on the 30s clock re-render).
- */
-const TOGETHER_LINES = [
-  'days — and every one a gift',
-  'days, and I’d choose you in all of them',
-  'days of you and me',
-  'days woven into us',
-  'days, still my favourite story',
-  'days and counting, my love',
-  'days that made us, us',
-  'days I would live again',
-  'days of coming home to you',
-  'days, and the best is now',
-  'days under the same sky',
-  'days, never enough of you',
-  'days the heart kept',
-  'days, and I still pick you',
-  'days against the distance',
-  'days, every dawn yours',
-  'days written in gold',
-  'days, and forever to go',
-  'days — luckiest of my life',
-  'days, my whole heart',
-];
-
 /** "2 years · 3 months · 1 week · 4 days", trimming leading zero units. */
 function fmtBreakdown(b: DurationParts): string {
   const plural = (n: number, unit: string) =>
@@ -120,10 +102,9 @@ function fmtBreakdown(b: DurationParts): string {
 
 /** The greeting — about your love's presence, with a "loves you" pulse. */
 function Greeting() {
-  const { partner } = usePartner();
+  const { self, partner } = usePartner();
   const { online } = usePartnerPresence();
   const partnerName = petNameOf(partner?.role);
-  const where = partner?.city;
   const [sent, setSent] = useState(false);
 
   const sendLove = async () => {
@@ -135,9 +116,12 @@ function Greeting() {
     // screen (broadcast) — the native push below still fires for when their
     // app is closed.
     sendLoveBurst(note);
+    // The push (for when their app is closed) now names the sender and carries
+    // the sweet-nothing itself as the body — so the lock screen reads like a note.
+    const fromName = petNameOf(self?.role);
     const { ok, delivered } = await notifyPartner({
-      title: note,
-      body: 'A little love from me 🤍',
+      title: `💌 from ${fromName}`,
+      body: note,
       url: '/',
     });
     if (!ok) {
@@ -157,16 +141,9 @@ function Greeting() {
   };
 
   return (
-    <header className="flex flex-col items-center pt-1 text-center">
-      {/* Eyebrow frames the name as the PARTNER's — never read as your own. */}
-      <p className="font-sans text-[0.6rem] font-semibold uppercase tracking-[0.34em] text-gold/75">
-        Your love
-      </p>
-      <p className="mt-1.5 font-display text-[2.05rem] font-medium leading-none text-fg">
-        {partnerName}{' '}
-        <span className="candle-flicker">{partner?.emoji ?? '❤️'}</span>
-      </p>
-      <div className="mt-2.5 flex items-center justify-center gap-2">
+    <header className="flex flex-col items-center text-center">
+      {/* One quiet line: who, and how lately they were here. */}
+      <p className="flex items-center justify-center gap-1.5 font-sans text-[0.92rem] text-muted">
         <span
           className={cn(
             'inline-block h-[7px] w-[7px] shrink-0 rounded-full',
@@ -179,27 +156,37 @@ function Greeting() {
           }
           aria-hidden="true"
         />
-        <span className="font-sans text-[0.84rem] text-muted">
-          {online
-            ? `here with you now${where ? ` · ${where}` : ''}`
-            : partner?.last_seen_at
-              ? `last here ${relativeTime(partner.last_seen_at)}`
-              : 'away right now'}
-        </span>
-      </div>
-      <button
-        type="button"
-        onClick={() => void sendLove()}
-        disabled={sent}
-        className="btn-catchlight lift-press mt-4 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-2.5 font-sans text-[0.9rem] font-semibold text-accent-fg shadow-loge disabled:opacity-100"
-        style={{ border: '1px solid rgba(201,162,75,.42)' }}
-      >
-        <Heart
-          size={15}
-          className={cn(sent ? 'candle-flicker fill-current' : 'fill-current')}
+        Your <span className="font-semibold text-fg">{partnerName}</span>{' '}
+        {online
+          ? 'is here now ✨'
+          : partner?.last_seen_at
+            ? `was here ${compactAgo(partner.last_seen_at)}`
+            : 'is away right now'}
+      </p>
+
+      {/* The hero CTA — gilt-rimmed, softly haloed, a beating heart. */}
+      <div className="relative mt-4 inline-flex">
+        <span
+          aria-hidden="true"
+          className="love-halo pointer-events-none absolute -inset-1 -z-10 rounded-full bg-accent/45 blur-lg"
         />
-        {sent ? 'Love sent 💌' : 'Send love'}
-      </button>
+        <button
+          type="button"
+          onClick={() => void sendLove()}
+          disabled={sent}
+          className="btn-catchlight gold-shimmer lift-press relative inline-flex items-center gap-2 rounded-full bg-accent px-7 py-3 font-sans text-[0.95rem] font-semibold text-accent-fg shadow-loge disabled:opacity-100"
+          style={{ border: '1px solid rgba(201,162,75,.5)' }}
+        >
+          <Heart
+            size={16}
+            className={cn(
+              'fill-current',
+              sent ? 'candle-flicker' : 'heart-beat'
+            )}
+          />
+          {sent ? 'Love sent 💌' : 'Send love'}
+        </button>
+      </div>
     </header>
   );
 }
@@ -259,7 +246,6 @@ function TogetherHero() {
   if (!self || !partner) return null;
   const days = daysTogether(couple?.relationship_start_date);
   const breakdown = durationBreakdown(couple?.relationship_start_date);
-  const line = TOGETHER_LINES[days % TOGETHER_LINES.length];
 
   const km =
     self.lat != null &&
@@ -306,17 +292,11 @@ function TogetherHero() {
         {/* hero body */}
 
         <div className="relative px-[22px]">
-          <p className="m-0 mt-3.5 font-display text-xs font-semibold uppercase tracking-[0.33em] text-[#d6ad55]">
-            {self.city ?? '—'}&nbsp; ✦ &nbsp;{partner.city ?? '—'}
-          </p>
-          <p className="m-0 mt-4 text-[10.5px] font-bold uppercase tracking-[0.3em] text-[#c89aa6]">
+          <p className="m-0 mt-5 text-[10.5px] font-bold uppercase tracking-[0.3em] text-[#c89aa6]">
             Together for
           </p>
           <p className="gilt-text gold-shimmer gilt-figures m-0 mt-1 font-display text-[5.6rem] font-semibold tracking-tight">
             {days.toLocaleString()}
-          </p>
-          <p className="m-0 mt-1 font-display text-[17px] italic text-[#dcbcc3]">
-            {line}
           </p>
           {/* The same span, decomposed — calendar years / months / weeks / days. */}
           <p className="m-0 mt-2.5 font-sans text-[10.5px] uppercase tracking-[0.16em] text-[#b08e95]">
