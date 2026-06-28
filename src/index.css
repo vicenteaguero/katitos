@@ -467,6 +467,42 @@ button {
   will-change: opacity, transform;
 }
 
+/* Countdown tick — the seconds digit drops in fresh each second. */
+@keyframes count-tick {
+  0% {
+    opacity: 0.35;
+    transform: translateY(-2px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.count-tick {
+  display: inline-block;
+  animation: count-tick 0.35s ease;
+}
+
+/* Dome sheen — a soft highlight glides across the silver NOVAT dome. */
+@keyframes dome-sheen {
+  0% {
+    transform: translateX(-130%);
+  }
+  60%,
+  100% {
+    transform: translateX(230%);
+  }
+}
+.dome-sheen {
+  background: linear-gradient(
+    105deg,
+    transparent 42%,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent 58%
+  );
+  animation: dome-sheen 5.5s ease-in-out infinite;
+}
+
 /* Lift-press — the button press; deepens + sinks on active. */
 .lift-press {
   transition:
@@ -920,6 +956,8 @@ button {
   .candle-flicker,
   .heart-beat,
   .love-halo,
+  .count-tick,
+  .dome-sheen,
   .sway-branch,
   .tree-bloom,
   .album-stick,
