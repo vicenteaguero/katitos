@@ -16,9 +16,10 @@ import {
 import { notifyPartner } from '@kernel/push';
 import { toast } from '@kernel/ui';
 import { usePartnerPresence } from '@features/presence';
-import { GeorgiaCountdownWidget } from '@features/georgia';
+import { SummerCountdownWidget } from '@features/summer';
 import { TodayQuestionsWidget } from '@features/know-me';
 import { LastPolaroidWidget } from '@features/polaroid';
+import { sendLoveBurst } from '../shell/love-channel';
 
 /** Our pet names by role: him (a) is Katito, her (b) is Katita. */
 function petNameOf(role: string | null | undefined): 'Katito' | 'Katita' {
@@ -130,6 +131,10 @@ function Greeting() {
     setSent(true);
     const notes = loveNotes(partnerName, genderOf(partner?.role));
     const note = notes[Math.floor(Math.random() * notes.length)];
+    // Play the on-screen love burst instantly (here) and on the partner's
+    // screen (broadcast) — the native push below still fires for when their
+    // app is closed.
+    sendLoveBurst(note);
     const { ok, delivered } = await notifyPartner({
       title: note,
       body: 'A little love from me 🤍',
@@ -269,93 +274,102 @@ function TogetherHero() {
 
   return (
     <div
-      className="relative mt-6 overflow-hidden rounded text-center"
+      className="relative mt-6 overflow-hidden rounded"
       style={{
-        border: '1px solid transparent',
-        borderImage:
-          'linear-gradient(150deg,#8a6c28,#e4c36a 42%,#fff1c9 50%,#e4c36a 58%,#8a6c28) 1',
+        // Gilt hairline as a 1px gradient frame that FOLLOWS the corner radius
+        // (border-image ignores border-radius — this nests a dark panel inside
+        // a gilt-gradient pad instead, so the gold corners are smooth too).
         background:
-          'radial-gradient(70% 40% at 50% 102%, rgba(201,162,75,.14), transparent 70%), radial-gradient(90% 55% at 50% -8%, rgba(196,200,213,.12), transparent 60%), linear-gradient(168deg, #3a0d1a 0%, #220812 52%, #130407 100%)',
-        boxShadow:
-          'inset 0 2px 0 rgba(255,241,201,.18), 0 26px 50px -26px rgba(0,0,0,.8)',
-        paddingBottom: '24px',
+          'linear-gradient(150deg,#8a6c28,#e4c36a 42%,#fff1c9 50%,#e4c36a 58%,#8a6c28)',
+        padding: '1px',
+        boxShadow: '0 26px 50px -26px rgba(0,0,0,.8)',
       }}
     >
-      <SilverDome />
-      <span
-        className="kx-glow pointer-events-none absolute bottom-0 left-1/2 h-[90px] w-[220px]"
+      <div
+        className="relative overflow-hidden rounded text-center"
         style={{
           background:
-            'radial-gradient(circle at 50% 100%, rgba(201,162,75,.22), transparent 70%)',
+            'radial-gradient(70% 40% at 50% 102%, rgba(201,162,75,.14), transparent 70%), radial-gradient(90% 55% at 50% -8%, rgba(196,200,213,.12), transparent 60%), linear-gradient(168deg, #3a0d1a 0%, #220812 52%, #130407 100%)',
+          boxShadow: 'inset 0 2px 0 rgba(255,241,201,.18)',
+          paddingBottom: '24px',
         }}
-        aria-hidden="true"
-      />
-      {/* hero body */}
+      >
+        <SilverDome />
+        <span
+          className="kx-glow pointer-events-none absolute bottom-0 left-1/2 h-[90px] w-[220px]"
+          style={{
+            background:
+              'radial-gradient(circle at 50% 100%, rgba(201,162,75,.22), transparent 70%)',
+          }}
+          aria-hidden="true"
+        />
+        {/* hero body */}
 
-      <div className="relative px-[22px]">
-        <p className="m-0 mt-3.5 font-display text-xs font-semibold uppercase tracking-[0.33em] text-[#d6ad55]">
-          {self.city ?? '—'}&nbsp; ✦ &nbsp;{partner.city ?? '—'}
-        </p>
-        <p className="m-0 mt-4 text-[10.5px] font-bold uppercase tracking-[0.3em] text-[#c89aa6]">
-          Together for
-        </p>
-        <p className="gilt-text gold-shimmer gilt-figures m-0 mt-1 font-display text-[5.6rem] font-semibold tracking-tight">
-          {days.toLocaleString()}
-        </p>
-        <p className="m-0 mt-1 font-display text-[17px] italic text-[#dcbcc3]">
-          {line}
-        </p>
-        {/* The same span, decomposed — calendar years / months / weeks / days. */}
-        <p className="m-0 mt-2.5 font-sans text-[10.5px] uppercase tracking-[0.16em] text-[#b08e95]">
-          {fmtBreakdown(breakdown)}
-        </p>
+        <div className="relative px-[22px]">
+          <p className="m-0 mt-3.5 font-display text-xs font-semibold uppercase tracking-[0.33em] text-[#d6ad55]">
+            {self.city ?? '—'}&nbsp; ✦ &nbsp;{partner.city ?? '—'}
+          </p>
+          <p className="m-0 mt-4 text-[10.5px] font-bold uppercase tracking-[0.3em] text-[#c89aa6]">
+            Together for
+          </p>
+          <p className="gilt-text gold-shimmer gilt-figures m-0 mt-1 font-display text-[5.6rem] font-semibold tracking-tight">
+            {days.toLocaleString()}
+          </p>
+          <p className="m-0 mt-1 font-display text-[17px] italic text-[#dcbcc3]">
+            {line}
+          </p>
+          {/* The same span, decomposed — calendar years / months / weeks / days. */}
+          <p className="m-0 mt-2.5 font-sans text-[10.5px] uppercase tracking-[0.16em] text-[#b08e95]">
+            {fmtBreakdown(breakdown)}
+          </p>
 
-        <div className="my-5 flex items-center justify-center gap-3">
-          <span className="h-px flex-1 bg-gradient-to-r from-transparent to-[rgba(201,162,75,0.5)]" />
-          <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full border border-[#c9a24b]">
-            <span className="h-1 w-1 rounded-full bg-[#eaf2ff] shadow-[0_0_6px_1px_rgba(234,242,255,0.7)]" />
-          </span>
-          <span className="h-px flex-1 bg-gradient-to-l from-transparent to-[rgba(201,162,75,0.5)]" />
-        </div>
-
-        <div className="flex items-center justify-between gap-2">
-          <Clock
-            align="left"
-            label={self.city ?? '—'}
-            time={self.timezone ? timeInZone(self.timezone, now) : '—'}
-          />
-          <div className="text-center">
-            <svg
-              width="46"
-              height="14"
-              viewBox="0 0 46 14"
-              fill="none"
-              aria-hidden="true"
-            >
-              <path
-                d="M2 7h40"
-                stroke="rgba(201,162,75,.45)"
-                strokeWidth="1.2"
-                strokeDasharray="2 3"
-              />
-              <path
-                d="M40 3l5 4-5 4"
-                stroke="rgba(201,162,75,.45)"
-                strokeWidth="1.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <p className="m-0 mt-1 text-[10px] tracking-wide text-[#9c7d84]">
-              {km != null ? formatDistance(km) : '—'}
-            </p>
+          <div className="my-5 flex items-center justify-center gap-3">
+            <span className="h-px flex-1 bg-gradient-to-r from-transparent to-[rgba(201,162,75,0.5)]" />
+            <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full border border-[#c9a24b]">
+              <span className="h-1 w-1 rounded-full bg-[#eaf2ff] shadow-[0_0_6px_1px_rgba(234,242,255,0.7)]" />
+            </span>
+            <span className="h-px flex-1 bg-gradient-to-l from-transparent to-[rgba(201,162,75,0.5)]" />
           </div>
-          <Clock
-            align="right"
-            her
-            label={partner.city ?? '—'}
-            time={partner.timezone ? timeInZone(partner.timezone, now) : '—'}
-          />
+
+          <div className="flex items-center justify-between gap-2">
+            <Clock
+              align="left"
+              label={self.city ?? '—'}
+              time={self.timezone ? timeInZone(self.timezone, now) : '—'}
+            />
+            <div className="text-center">
+              <svg
+                width="46"
+                height="14"
+                viewBox="0 0 46 14"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M2 7h40"
+                  stroke="rgba(201,162,75,.45)"
+                  strokeWidth="1.2"
+                  strokeDasharray="2 3"
+                />
+                <path
+                  d="M40 3l5 4-5 4"
+                  stroke="rgba(201,162,75,.45)"
+                  strokeWidth="1.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <p className="m-0 mt-1 text-[10px] tracking-wide text-[#9c7d84]">
+                {km != null ? formatDistance(km) : '—'}
+              </p>
+            </div>
+            <Clock
+              align="right"
+              her
+              label={partner.city ?? '—'}
+              time={partner.timezone ? timeInZone(partner.timezone, now) : '—'}
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -370,7 +384,7 @@ export function HomeRoute() {
     >
       <Greeting />
       <TogetherHero />
-      <GeorgiaCountdownWidget />
+      <SummerCountdownWidget />
       <TodayQuestionsWidget />
       <LastPolaroidWidget />
     </div>
