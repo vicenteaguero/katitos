@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useAuth, usePartner } from '@kernel/auth';
-import { useCouple, useUpdateCouple, useUpdateMember } from '@kernel/couple';
+import { useCouple, useUpdateMember } from '@kernel/couple';
 import { usePushSubscribe } from '@kernel/push';
+import { DateTime } from '@kernel/lib';
 import {
   Button,
   Card,
@@ -9,57 +10,33 @@ import {
   Field,
   Input,
   LoadingScreen,
-  PageHeader,
   Select,
   toast,
 } from '@kernel/ui';
 
 function CoupleCard() {
   const { data: couple, isLoading } = useCouple();
-  const update = useUpdateCouple();
-  const [startDate, setStartDate] = useState('');
-
-  useEffect(() => {
-    if (couple) setStartDate(couple.relationship_start_date ?? '');
-  }, [couple]);
-
   if (isLoading) return null;
+  const since = couple?.relationship_start_date;
 
   return (
-    <Card className="space-y-6">
+    <Card className="space-y-4">
       <div className="space-y-2">
         <p className="eyebrow">The Programme</p>
         <CardTitle>Us</CardTitle>
       </div>
-      <Field
-        label="Together since"
-        hint="Every month, this day is our little anniversary."
-      >
-        <Input
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-        />
-      </Field>
-      <Button
-        full
-        disabled={update.isPending}
-        onClick={() =>
-          update.mutate(
-            {
-              relationship_start_date: startDate || null,
-              // Monthsversary day is just the day-of-month of when we started —
-              // no separate, confusing field needed.
-              anniversary_day: startDate
-                ? new Date(`${startDate}T00:00:00`).getDate()
-                : 15,
-            },
-            { onSuccess: () => toast.success('Saved') }
-          )
-        }
-      >
-        Save
-      </Button>
+      {/* The anniversary is fixed forever — shown, never edited. */}
+      <div>
+        <p className="font-sans text-[0.7rem] uppercase tracking-[0.18em] text-muted">
+          Together since
+        </p>
+        <p className="mt-1 font-display text-xl text-fg">
+          {since ? DateTime.fromISO(since).toFormat('LLLL d, yyyy') : '—'}
+        </p>
+        <p className="mt-1 font-sans text-xs text-muted">
+          Our little anniversary every month on this day. 🤍
+        </p>
+      </div>
     </Card>
   );
 }
@@ -77,6 +54,7 @@ function MeCard() {
     timezone: '',
     native_language: 'es',
     learning_language: 'ru',
+    preferred_currency: 'USD',
   });
 
   useEffect(() => {
@@ -91,6 +69,7 @@ function MeCard() {
         timezone: self.timezone ?? '',
         native_language: self.native_language ?? 'es',
         learning_language: self.learning_language ?? 'ru',
+        preferred_currency: self.preferred_currency ?? 'USD',
       });
     }
   }, [self]);
@@ -157,6 +136,21 @@ function MeCard() {
             onChange={(e) => set('timezone', e.target.value)}
           />
         </Field>
+        <Field
+          label="Preferred currency"
+          hint="What amounts default to for me."
+        >
+          <Select
+            value={form.preferred_currency}
+            onChange={(e) => set('preferred_currency', e.target.value)}
+          >
+            <option value="USD">🇺🇸 USD</option>
+            <option value="CLP">🇨🇱 CLP</option>
+            <option value="RUB">🇷🇺 RUB</option>
+            <option value="GEL">🇬🇪 GEL</option>
+            <option value="TRY">🇹🇷 TRY</option>
+          </Select>
+        </Field>
         <div className="grid grid-cols-2 gap-4">
           <Field label="I speak">
             <Select
@@ -193,6 +187,7 @@ function MeCard() {
               timezone: form.timezone || null,
               native_language: form.native_language,
               learning_language: form.learning_language,
+              preferred_currency: form.preferred_currency || null,
             },
             { onSuccess: () => toast.success('Saved') }
           )
@@ -248,7 +243,6 @@ export function SettingsRoute() {
 
   return (
     <div className="curtain-reveal">
-      <PageHeader title="Settings" subtitle="Tune our little theater." />
       <div className="curtain-stagger space-y-8">
         <CoupleCard />
         <MeCard />
