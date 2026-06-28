@@ -1,22 +1,11 @@
-import { useRef, useState } from 'react';
-import { ArrowLeftRight, Delete, History, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowLeftRight, Delete, History, Plus, Trash2, X } from 'lucide-react';
 import { convert, formatMoney, indexRates } from '@kernel/lib';
+import { usePartner } from '@kernel/auth';
 import { Empty, Sheet } from '@kernel/ui';
 import { useRates } from '../api/currency.queries';
-
-// ── The bench ──────────────────────────────────────────────────────────────
-// RUB and CLP lead (our everyday pair), then GEL for Georgia, USD as the
-// anchor. Order here is the order the picker shows.
-const CURRENCIES = [
-  { code: 'RUB', flag: '🇷🇺', name: 'Ruble' },
-  { code: 'CLP', flag: '🇨🇱', name: 'Peso' },
-  { code: 'GEL', flag: '🇬🇪', name: 'Lari' },
-  { code: 'USD', flag: '🇺🇸', name: 'Dollar' },
-] as const;
-
-type Code = (typeof CURRENCIES)[number]['code'];
-const meta = (code: string) =>
-  CURRENCIES.find((c) => c.code === code) ?? CURRENCIES[0];
+import { CURRENCIES, isCode, meta, type Code } from '../currencies';
+import '../currency.css';
 
 // Shrink the figure as it grows so it never wraps or clips — tool, not poster.
 const fit = (s: string) =>
@@ -36,17 +25,51 @@ interface Entry {
   result: number;
 }
 
+// Last pair survives reloads; the preferred currency only seeds the very first
+// visit (afterwards their own last choice wins).
+const PAIR_KEY = 'currency:pair';
+const DEFAULT_FROM: Code = 'RUB';
+const DEFAULT_TO: Code = 'CLP';
+
+function loadPair(): { from: Code; to: Code } | null {
+  try {
+    const raw = localStorage.getItem(PAIR_KEY);
+    if (!raw) return null;
+    const p = JSON.parse(raw);
+    if (isCode(p?.from) && isCode(p?.to)) return { from: p.from, to: p.to };
+  } catch {
+    /* ignore malformed storage */
+  }
+  return null;
+}
+
+// "rates updated Xh ago" — a quiet freshness line; gently flagged when old.
+function freshness(updatedAt: number | null) {
+  if (!updatedAt) return null;
+  const h = Math.floor((Date.now() - updatedAt) / 3_600_000);
+  if (h < 1) return { text: 'rates just updated', stale: false };
+  if (h < 24) return { text: `rates updated ${h}h ago`, stale: false };
+  const d = Math.floor(h / 24);
+  return { text: `rates ${d}d old · may be off`, stale: d >= 2 };
+}
+
 export function CurrencyRoute() {
   const { data: rates } = useRates();
-  const index = indexRates(rates ?? []);
+  const index = useMemo(() => indexRates(rates ?? []), [rates]);
+  const { self, isLoading: partnerLoading } = usePartner();
 
+  const [initialPair] = useState(loadPair); // read storage once, at mount
   const [amount, setAmount] = useState('');
-  const [from, setFrom] = useState<Code>('RUB');
-  const [to, setTo] = useState<Code>('CLP');
+  const [from, setFrom] = useState<Code>(initialPair?.from ?? DEFAULT_FROM);
+  const [to, setTo] = useState<Code>(initialPair?.to ?? DEFAULT_TO);
   const [editing, setEditing] = useState<'from' | 'to' | null>(null);
   const [history, setHistory] = useState<Entry[]>([]);
   const [showHistory, setShowHistory] = useState(false);
-  const [saved, setSaved] = useState(false);
+
+  // Running tally — the shopping basket. Lives in the current `to`; count drives
+  // the bump animation. Session-only, like history.
+  const [tally, setTally] = useState(0);
+  const [tallyCount, setTallyCount] = useState(0);
   const nextId = useRef(1);
 
   const n = Number(amount) || 0;
@@ -54,9 +77,52 @@ export function CurrencyRoute() {
   const shown = amount === '' ? '0' : amount;
   const resultText = result != null ? formatMoney(result, to) : '—';
 
+  const updatedAt = useMemo(() => {
+    let max = 0;
+    for (const r of rates ?? []) {
+      const t = Date.parse(r.fetched_at);
+      if (t > max) max = t;
+    }
+    return max || null;
+  }, [rates]);
+  const fresh = freshness(updatedAt);
+
+  // Seed the result currency from the saved preference — but only on a fresh
+  // device with no remembered pair, before the user touches anything, and once.
+  const seeded = useRef(false);
+  const touched = useRef(false);
+  useEffect(() => {
+    if (seeded.current || initialPair || touched.current || partnerLoading)
+      return;
+    seeded.current = true; // one shot, whatever the outcome
+    const pref = self?.preferred_currency;
+    if (isCode(pref) && pref !== to) {
+      setTo(pref);
+      if (from === pref) setFrom(to); // keep the pair distinct
+    }
+  }, [partnerLoading, self, initialPair, from, to]);
+
+  // Persist the pair whenever it changes.
+  useEffect(() => {
+    try {
+      localStorage.setItem(PAIR_KEY, JSON.stringify({ from, to }));
+    } catch {
+      /* storage may be unavailable (private mode) — non-fatal */
+    }
+  }, [from, to]);
+
+  // Re-base the running total into the new currency when `to` changes, so the
+  // basket stays meaningful even if they switch what they're counting toward.
+  const prevTo = useRef(to);
+  useEffect(() => {
+    if (prevTo.current === to) return;
+    const old = prevTo.current;
+    prevTo.current = to;
+    setTally((t) => (t > 0 ? (convert(t, old, to, index) ?? t) : t));
+  }, [to, index]);
+
   // ── numpad ──
   const tap = (key: string) => {
-    setSaved(false);
     setAmount((a) => {
       if (key === '⌫') return a.slice(0, -1);
       if (key === '.') return a.includes('.') ? a : a === '' ? '0.' : a + '.';
@@ -67,11 +133,13 @@ export function CurrencyRoute() {
   };
 
   const swap = () => {
+    touched.current = true;
     setFrom(to);
     setTo(from);
   };
 
   const pick = (code: Code) => {
+    touched.current = true;
     if (editing === 'from') {
       if (code === to) setTo(from); // keep the pair distinct
       setFrom(code);
@@ -82,19 +150,27 @@ export function CurrencyRoute() {
     setEditing(null);
   };
 
-  const save = () => {
+  // Add the current reading to the basket, log it, and clear for the next price.
+  const add = () => {
     if (result == null || n === 0) return;
+    setTally((t) => t + result);
+    setTallyCount((c) => c + 1);
     setHistory((h) =>
       [{ id: nextId.current++, amount: n, from, to, result }, ...h].slice(0, 30)
     );
-    setSaved(true);
+    setAmount('');
+  };
+
+  const clearTally = () => {
+    setTally(0);
+    setTallyCount(0);
   };
 
   const restore = (e: Entry) => {
+    touched.current = true;
     setAmount(String(e.amount));
     setFrom(e.from);
     setTo(e.to);
-    setSaved(false);
     setShowHistory(false);
   };
 
@@ -130,9 +206,10 @@ export function CurrencyRoute() {
         </button>
       </div>
 
-      {/* Inline 4-flag picker — one tap, no menus. */}
+      {/* Inline flag picker — one tap, no menus. Dense vertical chips so all
+          five sit in a single tap-friendly row. */}
       {editing && (
-        <div className="curtain-reveal flex shrink-0 justify-center gap-2">
+        <div className="curtain-reveal flex shrink-0 flex-wrap justify-center gap-1.5">
           {CURRENCIES.map((c) => {
             const active = (editing === 'from' ? from : to) === c.code;
             return (
@@ -140,12 +217,12 @@ export function CurrencyRoute() {
                 key={c.code}
                 type="button"
                 onClick={() => pick(c.code)}
-                className={`lift-press flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition-colors ${
+                className={`lift-press flex flex-col items-center gap-0.5 rounded-lg px-2.5 py-1.5 transition-colors ${
                   active ? 'bg-accent/15 text-accent' : 'text-fg'
                 }`}
               >
-                <span className="text-lg leading-none">{c.flag}</span>
-                <span className="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.1em]">
+                <span className="text-xl leading-none">{c.flag}</span>
+                <span className="font-sans text-[0.6rem] font-semibold uppercase tracking-[0.08em]">
                   {c.code}
                 </span>
               </button>
@@ -154,8 +231,8 @@ export function CurrencyRoute() {
         </div>
       )}
 
-      {/* The reading — what I have, what I get. Plain figures, big, fluid. */}
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4">
+      {/* The reading — what I have, what I get, how fresh, and the basket. */}
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3">
         <p className="font-display text-2xl tabular-nums text-muted">
           {meta(from).flag} {shown}{' '}
           <span className="text-base text-muted/70">{from}</span>
@@ -165,6 +242,36 @@ export function CurrencyRoute() {
         >
           {resultText} <span className="text-2xl text-accent">{to}</span>
         </p>
+        {fresh && (
+          <p
+            className={`font-sans text-[0.65rem] tracking-[0.04em] ${
+              fresh.stale ? 'text-gold/70' : 'text-muted/60'
+            }`}
+          >
+            {fresh.text}
+          </p>
+        )}
+        {tallyCount > 0 && (
+          <div className="curtain-reveal flex items-center gap-2 rounded-full bg-accent/10 px-3 py-1.5">
+            <span className="font-sans text-[0.6rem] font-semibold uppercase tracking-[0.12em] text-accent/70">
+              Σ {tallyCount}
+            </span>
+            <span
+              key={tallyCount}
+              className="tally-bump font-display text-base font-semibold tabular-nums text-accent"
+            >
+              {formatMoney(tally, to)}
+            </span>
+            <button
+              type="button"
+              onClick={clearTally}
+              aria-label="Clear total"
+              className="lift-press -mr-1 flex h-5 w-5 items-center justify-center rounded-full text-accent/60 active:text-danger"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Numpad — bare figures, generous targets. */}
@@ -183,17 +290,17 @@ export function CurrencyRoute() {
         )}
       </div>
 
-      {/* One action — save. */}
+      {/* One action — add to the running total (and the log). */}
       <button
         type="button"
-        onClick={save}
+        onClick={add}
         disabled={result == null || n === 0}
-        className="lift-press shrink-0 rounded-lg bg-accent py-3.5 font-sans text-sm font-semibold uppercase tracking-[0.16em] text-accent-fg transition active:scale-[0.98] disabled:opacity-40"
+        className="lift-press flex shrink-0 items-center justify-center gap-2 rounded-lg bg-accent py-3.5 font-sans text-sm font-semibold uppercase tracking-[0.16em] text-accent-fg transition active:scale-[0.98] disabled:opacity-40"
       >
-        {saved ? 'Saved ✓' : 'Save'}
+        <Plus className="h-4 w-4" /> Add
       </button>
 
-      {/* Session history — no database, gone on reload. */}
+      {/* Session log — no database, gone on reload. */}
       <Sheet
         open={showHistory}
         onClose={() => setShowHistory(false)}
@@ -201,7 +308,7 @@ export function CurrencyRoute() {
         size="full"
       >
         {history.length === 0 ? (
-          <Empty title="Nothing saved yet" hint="Hit Save and it lands here." />
+          <Empty title="Nothing added yet" hint="Hit Add and it lands here." />
         ) : (
           <div className="flex flex-col gap-2">
             <button
