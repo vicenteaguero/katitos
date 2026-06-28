@@ -222,8 +222,8 @@ export function WorkTab() {
               placeholder="Standup, deep work, call…"
             />
           </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="From">
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="From" className="min-w-0">
               <Input
                 type="time"
                 value={form.start}
@@ -232,7 +232,7 @@ export function WorkTab() {
                 }
               />
             </Field>
-            <Field label="To">
+            <Field label="To" className="min-w-0">
               <Input
                 type="time"
                 value={form.end}
