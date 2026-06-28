@@ -11,10 +11,10 @@ export function TodayPolaroidWidget() {
       <Card className="lift-press flex h-full flex-col gap-3">
         <CardTitle className="text-xl">Today</CardTitle>
         {data ? (
-          // The day's photo — full-bleed, square corners (mixed-corner law).
+          // The day's photo — softly rounded inside its gilt frame.
           <PolaroidImage
             path={data.image_path}
-            className="aspect-square w-full rounded-none"
+            className="aspect-square w-full"
           />
         ) : (
           <div className="flex flex-col items-center gap-2 py-5 text-center text-muted">
