@@ -14,7 +14,7 @@ declare const self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: Array<{ url: string; revision: string | null }>;
 };
 
-const CACHE = 'katitos-shell-v4';
+const CACHE = 'katitos-shell-v5';
 // Photos from Supabase storage (signed URLs). Cached token-agnostically so a
 // warmed photo keeps loading offline even after its signed URL rotates.
 const IMG_CACHE = 'katitos-img-v1';
@@ -63,19 +63,30 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
 
-  // App-shell navigation: network-first, fall back to cached index.html, then
-  // to a hand-written offline page if even the shell is gone.
+  // App-shell navigation: CACHE-FIRST. Serve the precached index.html instantly
+  // so a cold launch paints the boot splash with ZERO network wait (the old
+  // network-first path left the screen black for seconds on a slow connection),
+  // and refresh the shell in the background for the next launch. (We already
+  // never skipWaiting, so applying the new shell on next launch is by design.)
   if (req.mode === 'navigate') {
     event.respondWith(
-      fetch(req).catch(async () => {
-        const cached = await caches.match('/index.html');
+      (async () => {
+        const cache = await caches.open(CACHE);
+        const cached = await cache.match('/index.html');
+        const network = fetch(req)
+          .then((resp) => {
+            if (resp.ok) void cache.put('/index.html', resp.clone());
+            return resp;
+          })
+          .catch(() => undefined);
         return (
           cached ??
+          (await network) ??
           new Response(OFFLINE_HTML, {
             headers: { 'Content-Type': 'text/html; charset=utf-8' },
           })
         );
-      })
+      })()
     );
     return;
   }
