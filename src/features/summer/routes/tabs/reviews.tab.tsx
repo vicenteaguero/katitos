@@ -11,6 +11,7 @@ import {
   Field,
   IconButton,
   Input,
+  SectionHeader,
   Select,
   Sheet,
   Textarea,
@@ -116,16 +117,18 @@ export function ReviewsTab({
 
   return (
     <section className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="eyebrow">Reviews</p>
-        <Button size="sm" onClick={() => setAdding(true)}>
-          <Plus size={15} /> Add review
-        </Button>
-      </div>
+      <SectionHeader
+        label="Reviews"
+        action={
+          <Button size="sm" onClick={() => setAdding(true)}>
+            <Plus size={15} /> Add review
+          </Button>
+        }
+      />
 
       {list.length === 0 ? (
         <Empty
-          icon="⭐"
+          icon={<Star className="h-11 w-11" strokeWidth={1.25} />}
           title="No reviews yet"
           hint="Rate a restaurant, a stay, a view…"
         />
