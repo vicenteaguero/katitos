@@ -55,7 +55,7 @@ export function SplashScreen({ active }: { active: boolean }) {
       <div className="splash-center">
         <span className="splash-halo" aria-hidden="true" />
         <KatitosMark size={104} />
-        <span className="splash-word gold-shimmer">Katitos</span>
+        <span className="splash-word">Katitos</span>
       </div>
     </div>
   );
