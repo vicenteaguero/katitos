@@ -57,9 +57,11 @@ function TopBar() {
               </span>
             </>
           )}
+          {/* Home's presence line rides on the LEFT, beside the mark. */}
+          {atHome && action}
         </div>
         <div className="flex items-center gap-1">
-          {action}
+          {!atHome && action}
           <DevUserSwitcher />
           {/* Home corner = the fast lane to the currency converter. Settings
               lives only in the More drawer now. */}
