@@ -142,7 +142,6 @@ export function BudgetTab({ trip }: { trip: Trip }) {
         <Empty
           icon={<Wallet className="h-11 w-11" strokeWidth={1.25} />}
           title="No sprints yet"
-          hint="Group money by period — e.g. “Before Jul 26”."
         />
       ) : (
         (sprints ?? []).map((s) => (
