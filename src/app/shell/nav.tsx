@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ComponentType } from 'react';
-import { NavLink } from 'react-router';
+import { NavLink, useLocation } from 'react-router';
 import type { LucideIcon } from 'lucide-react';
 import {
   Home,
@@ -92,9 +92,8 @@ function NavTab({
       <Icon
         size={22}
         strokeWidth={1.75}
-        // Active = wine-filled silhouette with a GOLD outline, so the inner
-        // line-art still reads instead of collapsing into one solid blob.
-        style={{ fill: active ? 'var(--color-accent)' : 'none' }}
+        // Active vs inactive is a pure COLOUR change (gold vs muted) — the same
+        // outline either way, so the glyph never morphs into a filled blob.
         className={cn(
           'transition-colors duration-200',
           active ? 'text-gold' : 'text-muted'
@@ -113,7 +112,10 @@ export function BottomNav() {
   const entries = featureRegistry.navEntries;
   // No portrait taken today → invite it with a magical, twinkling beacon.
   const { data: todayPhoto, isLoading } = useTodayPolaroid();
-  const needsPhoto = !isLoading && !todayPhoto;
+  const { pathname } = useLocation();
+  // The beacon only calls you to action from *within* the Polaroid page now.
+  const needsPhoto =
+    !isLoading && !todayPhoto && pathname.startsWith('/polaroid');
 
   return (
     <>
