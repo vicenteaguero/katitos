@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { X } from 'lucide-react';
 import { cn } from '@kernel/lib';
 
 /**
@@ -18,12 +19,15 @@ export function Sheet({
   title,
   children,
   size = 'full',
+  headerAction,
 }: {
   open: boolean;
   onClose: () => void;
   title?: string;
   children: ReactNode;
   size?: 'full' | 'half';
+  /** Optional control rendered left of the X (e.g. a settings gear). */
+  headerAction?: ReactNode;
 }) {
   // On-screen keyboard height (iOS visualViewport). 0 when closed/unsupported.
   const [kb, setKb] = useState(0);
@@ -94,13 +98,17 @@ export function Sheet({
             ) : (
               <span />
             )}
-            <button
-              type="button"
-              onClick={onClose}
-              className="lift-press shrink-0 rounded-full bg-surface px-3.5 py-1.5 font-sans text-xs font-semibold text-fg/80 shadow-[inset_0_0_0_1px_rgba(228,195,106,0.22)] active:text-fg"
-            >
-              Close
-            </button>
+            <div className="flex shrink-0 items-center gap-2">
+              {headerAction}
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close"
+                className="lift-press flex h-8 w-8 items-center justify-center rounded-full bg-surface text-fg shadow-[inset_0_0_0_1px_rgba(228,195,106,0.3)] active:text-accent"
+              >
+                <X className="h-4 w-4" strokeWidth={2.4} />
+              </button>
+            </div>
           </div>
         </div>
         {/* The body scrolls; its bottom padding grows with the keyboard so the
