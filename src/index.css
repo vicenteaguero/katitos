@@ -979,6 +979,9 @@ button {
   .book-leaf.snap,
   .chalk-note,
   .kx-glow,
+  .photo-beacon::before,
+  .photo-beacon::after,
+  .photo-spark,
   .btn-catchlight::after {
     animation: none !important;
     transition: none !important;
@@ -996,5 +999,95 @@ button {
   }
   .lift-press:active {
     transform: none !important;
+  }
+}
+
+/* ── Photo beacon — a magical, twinkling gilt halo behind the camera button,
+ *    shown only when no portrait has been taken today. ─────────────────────── */
+.photo-beacon {
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  z-index: 0;
+  width: 72px;
+  height: 72px;
+  margin-left: -36px;
+  border-radius: 9999px;
+  pointer-events: none;
+}
+.photo-beacon::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0 195deg,
+    rgba(228, 195, 106, 0.85) 300deg,
+    #fff1c9 338deg,
+    transparent 360deg
+  );
+  filter: blur(1.5px);
+  opacity: 0.85;
+  animation: beacon-spin 2.6s linear infinite;
+}
+.photo-beacon::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border-radius: inherit;
+  box-shadow: 0 0 17px 4px rgba(228, 195, 106, 0.45);
+  animation: beacon-breathe 2.4s ease-in-out infinite;
+}
+.photo-spark {
+  position: absolute;
+  font-style: normal;
+  font-size: 10px;
+  line-height: 1;
+  color: #fff1c9;
+  text-shadow: 0 0 6px rgba(228, 195, 106, 0.9);
+  animation: spark-twinkle 1.9s ease-in-out infinite;
+}
+.photo-spark--1 {
+  top: -1px;
+  left: 9px;
+}
+.photo-spark--2 {
+  top: 12px;
+  right: 1px;
+  font-size: 8px;
+  animation-delay: 0.6s;
+}
+.photo-spark--3 {
+  bottom: 5px;
+  left: 16px;
+  font-size: 7px;
+  animation-delay: 1.2s;
+}
+@keyframes beacon-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes beacon-breathe {
+  0%,
+  100% {
+    transform: scale(0.88);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.95;
+  }
+}
+@keyframes spark-twinkle {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.3) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1) rotate(90deg);
   }
 }
