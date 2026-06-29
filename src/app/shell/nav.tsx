@@ -94,7 +94,7 @@ function NavTab({
         strokeWidth={1.75}
         // Active = wine-filled silhouette with a GOLD outline, so the inner
         // line-art still reads instead of collapsing into one solid blob.
-        style={{ fill: active ? 'var(--accent)' : 'none' }}
+        style={{ fill: active ? 'var(--color-accent)' : 'none' }}
         className={cn(
           'transition-colors duration-200',
           active ? 'text-gold' : 'text-muted'
