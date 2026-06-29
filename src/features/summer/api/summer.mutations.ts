@@ -87,6 +87,7 @@ export function useAddItem() {
       day?: string | null;
       lat?: number | null;
       lng?: number | null;
+      position?: number;
     }) => {
       const { error } = await supabase.from('trip_items').insert({
         trip_id: input.tripId,
@@ -98,6 +99,7 @@ export function useAddItem() {
         day: input.day ?? null,
         lat: input.lat ?? null,
         lng: input.lng ?? null,
+        position: input.position ?? 0,
       });
       if (error) throw error;
     },
@@ -123,6 +125,7 @@ export function useUpdateItem() {
         lat?: number | null;
         lng?: number | null;
         status?: string;
+        position?: number;
       };
     }) => {
       const { error } = await supabase
