@@ -167,6 +167,22 @@ export function useDeleteItem() {
   });
 }
 
+export function useDeleteLeg() {
+  const qc = useQueryClient();
+  return useMutation({
+    onError: (e: Error) => toast.error(e.message),
+    mutationFn: async (v: { id: string; tripId: string }) => {
+      const { error } = await supabase
+        .from('trip_legs')
+        .delete()
+        .eq('id', v.id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, v) =>
+      qc.invalidateQueries({ queryKey: qk.trips.legs(v.tripId) }),
+  });
+}
+
 export function useAddItemPhoto() {
   const qc = useQueryClient();
   const { uploadPhoto } = usePhotoUpload();
