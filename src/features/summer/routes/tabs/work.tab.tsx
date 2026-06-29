@@ -246,23 +246,28 @@ export function WorkTab() {
             placeholder="What — standup, deep work, call…"
             autoFocus
           />
-          {/* Stacked, full-width — native time inputs never overlap. */}
-          <Field label="From">
-            <Input
-              type="time"
-              value={form.start}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, start: e.target.value }))
-              }
-            />
-          </Field>
-          <Field label="To">
-            <Input
-              type="time"
-              value={form.end}
-              onChange={(e) => setForm((f) => ({ ...f, end: e.target.value }))}
-            />
-          </Field>
+          {/* Two columns with a gap — the Input's min-w-0/max-w-full keeps the
+              native time pickers from overflowing the sheet or touching. */}
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="From">
+              <Input
+                type="time"
+                value={form.start}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, start: e.target.value }))
+                }
+              />
+            </Field>
+            <Field label="To">
+              <Input
+                type="time"
+                value={form.end}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, end: e.target.value }))
+                }
+              />
+            </Field>
+          </div>
           <Button full onClick={submit} disabled={addBlock.isPending}>
             Add to{' '}
             {form.day && DateTime.fromISO(form.day).toFormat('EEE, LLL d')}
