@@ -13,7 +13,7 @@ import {
   type DurationParts,
 } from '@kernel/lib';
 import { notifyPartner } from '@kernel/push';
-import { toast } from '@kernel/ui';
+import { toast, useTopBarAction } from '@kernel/ui';
 import { usePartnerPresence } from '@features/presence';
 import { SummerCountdownWidget } from '@features/summer';
 import { TodayQuestionsWidget } from '@features/know-me';
@@ -141,32 +141,23 @@ function Greeting() {
     window.setTimeout(() => setSent(false), 2200);
   };
 
+  // The presence one-liner lives in the top bar now (out of the hero).
+  useTopBarAction(
+    <span className="truncate font-sans text-xs text-muted">
+      <span className="font-semibold text-fg">{partnerName}</span>{' '}
+      {online
+        ? 'is here now'
+        : partner?.last_seen_at
+          ? `was here ${compactAgo(partner.last_seen_at)}`
+          : 'is away'}
+    </span>,
+    [partnerName, online, partner?.last_seen_at]
+  );
+
   return (
     <header className="flex flex-col items-center text-center">
-      {/* One quiet line: who, and how lately they were here. */}
-      <p className="flex items-center justify-center gap-1.5 font-sans text-[0.92rem] text-muted">
-        <span
-          className={cn(
-            'inline-block h-[7px] w-[7px] shrink-0 rounded-full',
-            online ? 'candle-flicker bg-purple' : 'bg-muted'
-          )}
-          style={
-            online
-              ? { boxShadow: '0 0 8px 1px rgba(44,138,94,0.6)' }
-              : undefined
-          }
-          aria-hidden="true"
-        />
-        Your <span className="font-semibold text-fg">{partnerName}</span>{' '}
-        {online
-          ? 'is here now ✨'
-          : partner?.last_seen_at
-            ? `was here ${compactAgo(partner.last_seen_at)}`
-            : 'is away right now'}
-      </p>
-
       {/* The hero CTA — gilt-rimmed, softly haloed, a beating heart. */}
-      <div className="relative mt-4 inline-flex">
+      <div className="relative inline-flex">
         <span
           aria-hidden="true"
           className="love-halo pointer-events-none absolute -inset-1 -z-10 rounded-full bg-accent/45 blur-lg"
