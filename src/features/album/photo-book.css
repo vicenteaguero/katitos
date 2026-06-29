@@ -17,29 +17,50 @@
   --pb-ink: #4a3520;
 }
 
-/* ── The case: a bound wine book the page sits inside ─────────────────────── */
+/* ── The sliding window onto the full open 2-page book ─────────────────────── */
+/* The wine CASE wraps the WHOLE open book and lives INSIDE the sliding track, so
+   the cover/frame slides WITH the pages and overflows the screen on the focused
+   side (page 1 → off the right, page 2 → off the left). The viewport just clips
+   to the visible width; .pb-track (200% wide = 2 pages + cover) pans with
+   translateX 0% (left page) / -50% (right page). */
 .pb-stage {
   position: relative;
 }
+.pb-viewport {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+.pb-track {
+  position: relative;
+  width: 200%;
+  will-change: transform;
+}
 .pb-case {
   position: relative;
-  border-radius: 6px 16px 16px 6px;
+  /* border-box so the padding (cover margin) is INSIDE the 100% track width —
+     book = track − 28, pages = (track−28)/2, so the −50% slide lands a page +
+     its outer cover exactly (no neighbouring-page sliver bleeding in). */
+  box-sizing: border-box;
+  width: 100%;
+  border-radius: 16px;
   background: linear-gradient(
     125deg,
     var(--pb-wine) 0%,
     var(--pb-wine-deep) 100%
   );
-  padding: 10px 12px 10px 10px;
+  padding: 14px; /* the wine cover margin framing the open book */
   box-shadow:
     0 26px 50px -22px rgba(20, 4, 9, 0.85),
     0 2px 0 rgba(255, 255, 255, 0.06) inset;
 }
-/* Gilt hairline framing the cover. */
+/* Gilt hairline framing the open cover (behind the pages: a turning leaf passes
+   OVER it, so it only shows in the wine margin). */
 .pb-case::before {
   content: '';
   position: absolute;
-  inset: 4px;
-  border-radius: 4px 12px 12px 4px;
+  inset: 5px;
+  border-radius: 12px;
   background: linear-gradient(
       135deg,
       var(--pb-gilt-deep),
@@ -56,25 +77,7 @@
   padding: 1px;
   opacity: 0.7;
   pointer-events: none;
-  /* Behind the pages (z:0, with the viewport at z:1) so a turning leaf passes
-     OVER the gilt rule, not under it — it only shows in the wine margin. */
   z-index: 0;
-}
-
-/* ── The single-page sliding window over the open 2-page book ──────────────── */
-/* Clips the spread to ONE page; .pb-track (200% wide = 2 pages) pans inside it
-   with translateX 0% (left page) / -50% (right page). */
-.pb-viewport {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  overflow: hidden;
-  border-radius: 2px 11px 11px 2px;
-}
-.pb-track {
-  position: relative;
-  width: 200%;
-  will-change: transform;
 }
 
 /* ── The StPageFlip mount + a single page host ────────────────────────────── */
