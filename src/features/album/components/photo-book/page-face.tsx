@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useDrag } from '@use-gesture/react';
-import { Plus, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { cn } from '@kernel/lib';
 import type { AlbumPageWithPhotos, AlbumPhoto, PhotoSource } from '../../types';
 import { useMovePhoto, useRemovePhoto } from '../../api/photo-book.mutations';
@@ -15,18 +15,16 @@ const BASE_W = 42;
  * A paper page: a free canvas of draggable photo "stickers". Positions are
  * stored as fractions of the page (0..1), so a sticker keeps its spot on ANY
  * screen size or aspect (like the chalkboard). Tap a sticker to select it (then
- * drag to move, × to remove); tap the "+" to add one.
+ * drag to move, × to remove). Adding is done from the top-bar "+".
  */
 export function PageFace({
   page,
   bookId,
   interactive = true,
-  onAdd,
 }: {
   page: AlbumPageWithPhotos;
   bookId: string;
   interactive?: boolean;
-  onAdd?: () => void;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
   const move = useMovePhoto();
@@ -58,17 +56,6 @@ export function PageFace({
           }
         />
       ))}
-
-      {interactive && onAdd && (
-        <button
-          type="button"
-          aria-label="Add a photo"
-          onClick={onAdd}
-          className="pb-add"
-        >
-          <Plus className="h-6 w-6" />
-        </button>
-      )}
     </div>
   );
 }
