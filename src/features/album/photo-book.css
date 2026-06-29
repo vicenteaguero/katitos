@@ -56,7 +56,25 @@
   padding: 1px;
   opacity: 0.7;
   pointer-events: none;
-  z-index: 30;
+  /* Behind the pages (z:0, with the viewport at z:1) so a turning leaf passes
+     OVER the gilt rule, not under it — it only shows in the wine margin. */
+  z-index: 0;
+}
+
+/* ── The single-page sliding window over the open 2-page book ──────────────── */
+/* Clips the spread to ONE page; .pb-track (200% wide = 2 pages) pans inside it
+   with translateX 0% (left page) / -50% (right page). */
+.pb-viewport {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 2px 11px 11px 2px;
+}
+.pb-track {
+  position: relative;
+  width: 200%;
+  will-change: transform;
 }
 
 /* ── The StPageFlip mount + a single page host ────────────────────────────── */
