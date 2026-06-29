@@ -7,6 +7,7 @@ export { Empty } from './empty';
 export { Badge } from './badge';
 export { Input, Textarea, Select, Field } from './field';
 export { Sheet } from './sheet';
+export { Switch } from './switch';
 export { Segmented } from './segmented';
 export type { SegmentOption } from './segmented';
 export { PageHeader } from './page-header';
