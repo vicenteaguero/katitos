@@ -21,7 +21,7 @@ import {
 import { TopAdd } from '../../components/top-add';
 import type { PackingItem, Trip } from '../../types';
 
-const CATEGORIES = ['Clothes', 'Docs', 'Tech', 'Toiletries', 'Misc'];
+const CATEGORIES = ['Clothes', 'Tech', 'Docs', 'Beauty', 'Misc'];
 
 export function PackTab({ trip }: { trip: Trip }) {
   useTableSync('packing_items', qk.trips.packing(trip.id), { enabled: true });
