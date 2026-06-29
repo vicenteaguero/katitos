@@ -43,12 +43,18 @@ export function Sheet({
       setKb(overlap > 80 ? overlap : 0);
     };
     sync();
+    // The keyboard opens from a field's autoFocus DURING mount — its first
+    // visualViewport `resize` can fire before this listener is attached, so the
+    // very first open would miss it (and only catch up on a later keyboard
+    // toggle). Re-sync a few times right after open to catch that first one.
+    const polls = [120, 320, 600, 900].map((d) => window.setTimeout(sync, d));
     vv?.addEventListener('resize', sync);
     vv?.addEventListener('scroll', sync);
 
     return () => {
       window.removeEventListener('keydown', onKey);
       document.body.style.overflow = '';
+      polls.forEach((t) => window.clearTimeout(t));
       vv?.removeEventListener('resize', sync);
       vv?.removeEventListener('scroll', sync);
       setKb(0);
@@ -100,7 +106,7 @@ export function Sheet({
         {/* The body scrolls; its bottom padding grows with the keyboard so the
             content clears it while the panel's surface still fills to the edge. */}
         <div
-          className="min-h-0 flex-1 overflow-y-auto px-5"
+          className="min-h-0 flex-1 overflow-y-auto px-5 transition-[padding] duration-200"
           style={{
             paddingBottom: kb
               ? `${kb + 20}px`
