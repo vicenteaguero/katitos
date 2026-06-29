@@ -4,12 +4,20 @@ import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import { usePartner } from '@kernel/auth';
 import { DateTime, cn } from '@kernel/lib';
-import { Button, Field, IconButton, Input, Sheet } from '@kernel/ui';
+import {
+  Button,
+  Field,
+  IconButton,
+  Input,
+  Sheet,
+  useTopBarAction,
+} from '@kernel/ui';
 import { useWorkBlocks } from '../../api/summer.queries';
 import {
   useAddWorkBlock,
   useDeleteWorkBlock,
 } from '../../api/summer.mutations';
+import { TopAdd } from '../../components/top-add';
 
 const ROLE_TONE: Record<string, string> = {
   a: '#6f9bd8',
@@ -54,6 +62,25 @@ export function WorkTab() {
   }>({ open: false, day: '', start: '09:00', end: '17:00', title: '' });
 
   const days = Array.from({ length: 7 }, (_, i) => weekStart.plus({ days: i }));
+
+  // Top-bar Add defaults to today (when it's in this week), else the week start.
+  const todayIso = DateTime.now().toFormat('yyyy-MM-dd');
+  const inWeek = days.some((d) => d.toFormat('yyyy-MM-dd') === todayIso);
+  const defaultDay = inWeek ? todayIso : weekStart.toFormat('yyyy-MM-dd');
+  useTopBarAction(
+    <TopAdd
+      onClick={() =>
+        setForm({
+          open: true,
+          day: defaultDay,
+          start: '09:00',
+          end: '17:00',
+          title: '',
+        })
+      }
+    />,
+    [defaultDay]
+  );
 
   const roleOf = (userId: string) =>
     userId === self?.user_id
@@ -219,26 +246,23 @@ export function WorkTab() {
             placeholder="What — standup, deep work, call…"
             autoFocus
           />
-          <div className="grid grid-cols-2 gap-4">
-            <Field label="From" className="min-w-0">
-              <Input
-                type="time"
-                value={form.start}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, start: e.target.value }))
-                }
-              />
-            </Field>
-            <Field label="To" className="min-w-0">
-              <Input
-                type="time"
-                value={form.end}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, end: e.target.value }))
-                }
-              />
-            </Field>
-          </div>
+          {/* Stacked, full-width — native time inputs never overlap. */}
+          <Field label="From">
+            <Input
+              type="time"
+              value={form.start}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, start: e.target.value }))
+              }
+            />
+          </Field>
+          <Field label="To">
+            <Input
+              type="time"
+              value={form.end}
+              onChange={(e) => setForm((f) => ({ ...f, end: e.target.value }))}
+            />
+          </Field>
           <Button full onClick={submit} disabled={addBlock.isPending}>
             Add to{' '}
             {form.day && DateTime.fromISO(form.day).toFormat('EEE, LLL d')}
