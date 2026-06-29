@@ -125,6 +125,14 @@ export function SummerRoute() {
           })}
         </div>
         <div
+          className="pointer-events-none absolute inset-y-0 left-0 w-10"
+          style={{
+            background:
+              'linear-gradient(to right, var(--color-surface), transparent)',
+          }}
+          aria-hidden="true"
+        />
+        <div
           className="pointer-events-none absolute inset-y-0 right-0 w-10"
           style={{
             background:
