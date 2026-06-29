@@ -2,7 +2,13 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@kernel/lib';
 
-/** A bottom sheet modal (phone-friendly). `size="half"` is short + easy to dismiss. */
+/**
+ * THE bottom-sheet modal for the whole app — one component, one behaviour. The
+ * overlay is sized to the VISIBLE viewport (`visualViewport`), so when the
+ * keyboard opens the sheet simply sits in the shrunken visible area above it —
+ * no input is ever covered, on a short sheet or a tall one. Don't hand-roll
+ * modals elsewhere; use this.
+ */
 export function Sheet({
   open,
   onClose,
@@ -16,9 +22,9 @@ export function Sheet({
   children: ReactNode;
   size?: 'full' | 'half';
 }) {
-  // How much the on-screen keyboard eats — so we can lift the sheet above it
-  // instead of letting it cover the inputs/buttons (iOS visualViewport).
-  const [kb, setKb] = useState(0);
+  // The visible viewport (top offset + height). Tracks the keyboard via
+  // `visualViewport`; null until measured / when unsupported (→ full screen).
+  const [vp, setVp] = useState<{ top: number; height: number } | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -29,32 +35,31 @@ export function Sheet({
     document.body.style.overflow = 'hidden';
 
     const vv = window.visualViewport;
-    const onViewport = () => {
-      if (!vv) return;
-      const overlap = window.innerHeight - vv.height - vv.offsetTop;
-      setKb(overlap > 60 ? overlap : 0);
+    const sync = () => {
+      if (vv) setVp({ top: vv.offsetTop, height: vv.height });
     };
-    vv?.addEventListener('resize', onViewport);
-    vv?.addEventListener('scroll', onViewport);
-    onViewport();
+    sync();
+    vv?.addEventListener('resize', sync);
+    vv?.addEventListener('scroll', sync);
 
     return () => {
       window.removeEventListener('keydown', onKey);
       document.body.style.overflow = '';
-      vv?.removeEventListener('resize', onViewport);
-      vv?.removeEventListener('scroll', onViewport);
-      setKb(0);
+      vv?.removeEventListener('resize', sync);
+      vv?.removeEventListener('scroll', sync);
+      setVp(null);
     };
   }, [open, onClose]);
 
   if (!open) return null;
 
-  // Portal to <body> so the sheet is a true full-screen overlay, even when the
-  // open trigger lives inside a transformed ancestor (a `.curtain-reveal` route
-  // would otherwise confine this fixed layer to the content box).
+  // Portal to <body> so the sheet is a true overlay even when the open trigger
+  // lives inside a transformed ancestor (a `.curtain-reveal` route would
+  // otherwise confine this fixed layer to the content box).
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center"
+      className="fixed left-0 right-0 z-50 flex items-end justify-center"
+      style={vp ? { top: vp.top, height: vp.height } : { top: 0, bottom: 0 }}
       role="dialog"
       aria-modal="true"
     >
@@ -64,31 +69,35 @@ export function Sheet({
         onClick={onClose}
       />
       <div
-        style={{ marginBottom: kb }}
         className={cn(
-          'curtain-reveal relative z-10 w-full max-w-app overflow-y-auto overflow-x-hidden rounded-t-[1.75rem] border-t border-[rgba(228,195,106,0.3)] bg-surface-2 px-5 pb-[max(1.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-18px_40px_-12px_rgba(0,0,0,0.7)] transition-[margin] duration-200',
-          size === 'half' ? 'max-h-[60vh]' : 'max-h-[88vh]'
+          'curtain-reveal relative z-10 flex w-full max-w-app flex-col overflow-x-hidden rounded-t-[1.75rem] border-t border-[rgba(228,195,106,0.3)] bg-surface-2 shadow-[0_-18px_40px_-12px_rgba(0,0,0,0.7)]',
+          size === 'half' ? 'max-h-[60%]' : 'max-h-[94%]'
         )}
       >
-        <div className="mx-auto mb-3.5 h-1.5 w-10 rounded-full bg-fg/20" />
-        {/* Title left · always-present Close pill right (distinct, highlighted). */}
-        <div className="mb-4 flex items-center justify-between gap-3">
-          {title ? (
-            <h2 className="min-w-0 truncate font-display text-xl font-semibold tracking-tight text-fg">
-              {title}
-            </h2>
-          ) : (
-            <span />
-          )}
-          <button
-            type="button"
-            onClick={onClose}
-            className="lift-press shrink-0 rounded-full bg-surface px-3.5 py-1.5 font-sans text-xs font-semibold text-fg/80 shadow-[inset_0_0_0_1px_rgba(228,195,106,0.22)] active:text-fg"
-          >
-            Close
-          </button>
+        {/* Pinned header — grip + title + Close — never scrolls away. */}
+        <div className="shrink-0 px-5 pt-3">
+          <div className="mx-auto mb-3.5 h-1.5 w-10 rounded-full bg-fg/20" />
+          <div className="mb-4 flex items-center justify-between gap-3">
+            {title ? (
+              <h2 className="min-w-0 truncate font-display text-xl font-semibold tracking-tight text-fg">
+                {title}
+              </h2>
+            ) : (
+              <span />
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              className="lift-press shrink-0 rounded-full bg-surface px-3.5 py-1.5 font-sans text-xs font-semibold text-fg/80 shadow-[inset_0_0_0_1px_rgba(228,195,106,0.22)] active:text-fg"
+            >
+              Close
+            </button>
+          </div>
         </div>
-        {children}
+        {/* The body scrolls within the visible area. */}
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-[max(1.75rem,env(safe-area-inset-bottom))]">
+          {children}
+        </div>
       </div>
     </div>,
     document.body
