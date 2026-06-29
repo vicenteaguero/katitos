@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ComponentType } from 'react';
-import { NavLink, useLocation } from 'react-router';
+import { NavLink } from 'react-router';
 import type { LucideIcon } from 'lucide-react';
 import {
   Home,
@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Sheet } from '@kernel/ui';
 import { cn } from '@kernel/lib';
+import { useTodayPolaroid } from '@features/polaroid';
 import { featureRegistry } from '../features.registry';
 
 /** Drawer section order; anything untagged falls into 'More'. */
@@ -115,9 +116,10 @@ function NavTab({
 
 export function BottomNav() {
   const [moreOpen, setMoreOpen] = useState(false);
-  const location = useLocation();
   const entries = featureRegistry.navEntries;
-  const polaroidActive = location.pathname.startsWith('/polaroid');
+  // No portrait taken today → invite it with a magical, twinkling beacon.
+  const { data: todayPhoto, isLoading } = useTodayPolaroid();
+  const needsPhoto = !isLoading && !todayPhoto;
 
   return (
     <>
@@ -143,13 +145,19 @@ export function BottomNav() {
           {/* Raised central Polaroid camera button — wine on white, gently
             overlapping the bar. */}
           <div className="relative flex w-16 shrink-0 items-stretch justify-center">
+            {needsPhoto && (
+              <span className="photo-beacon" aria-hidden="true">
+                <i className="photo-spark photo-spark--1">✦</i>
+                <i className="photo-spark photo-spark--2">✦</i>
+                <i className="photo-spark photo-spark--3">✦</i>
+              </span>
+            )}
             <NavLink
               to="/polaroid?shoot=1"
               aria-label="Take a photo"
               className={cn(
-                'lift-press absolute -top-5 flex h-14 w-14 flex-col items-center justify-center gap-0.5',
-                'rounded-full bg-accent text-accent-fg shadow-loge transition-shadow duration-200',
-                polaroidActive && 'ring-2 ring-gold/40'
+                'lift-press absolute -top-5 z-[1] flex h-14 w-14 flex-col items-center justify-center gap-0.5',
+                'rounded-full bg-accent text-accent-fg shadow-loge transition-shadow duration-200'
               )}
             >
               <Camera size={22} strokeWidth={1.75} />
