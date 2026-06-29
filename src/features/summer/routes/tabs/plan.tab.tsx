@@ -1,32 +1,24 @@
 import { useMemo, useState } from 'react';
-import {
-  Camera,
-  Check,
-  ExternalLink,
-  MapPin,
-  Plus,
-  Trash2,
-} from 'lucide-react';
+import { Camera, Check, ExternalLink, MapPin, Trash2 } from 'lucide-react';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import { DateTime, cn } from '@kernel/lib';
 import {
-  Button,
   CameraCapture,
   Card,
   Empty,
   IconButton,
-  Input,
   toast,
+  useTopBarAction,
 } from '@kernel/ui';
 import { useSummerItems } from '../../api/summer.queries';
 import {
-  useAddItem,
   useAddItemPhoto,
   useDeleteItem,
   useToggleItem,
 } from '../../api/summer.mutations';
 import { StopSheet } from '../../components/stop-sheet';
+import { TopAdd } from '../../components/top-add';
 import { type CountryFilter, type Trip, type TripItem } from '../../types';
 
 function tripDays(start?: string | null, end?: string | null): string[] {
@@ -48,47 +40,26 @@ export function PlanTab({
 }) {
   useTableSync('trip_items', qk.trips.items(trip.id), { enabled: true });
   const { data: items } = useSummerItems(trip.id);
-  const addItem = useAddItem();
   const toggleItem = useToggleItem();
   const delItem = useDeleteItem();
   const addItemPhoto = useAddItemPhoto();
 
   const [adding, setAdding] = useState(false);
-  const [wish, setWish] = useState('');
   const [camFor, setCamFor] = useState<string | null>(null);
+
+  useTopBarAction(<TopAdd onClick={() => setAdding(true)} />, []);
 
   const days = useMemo(
     () => tripDays(trip.start_date, trip.end_date),
     [trip.start_date, trip.end_date]
   );
 
-  const all = (items ?? []).filter(
-    (it) => country === 'all' || it.country === country
+  const planItems = (items ?? []).filter(
+    (it) => it.kind !== 'wish' && (country === 'all' || it.country === country)
   );
-  const planItems = all.filter((it) => it.kind !== 'wish');
-  const wishes = all.filter((it) => it.kind === 'wish');
-
-  const addWish = () => {
-    if (!wish.trim()) return;
-    addItem.mutate(
-      {
-        tripId: trip.id,
-        kind: 'wish',
-        title: wish.trim(),
-        country: country === 'all' ? null : country,
-      },
-      { onSuccess: () => setWish('') }
-    );
-  };
 
   return (
     <section className="space-y-4">
-      <div className="flex justify-end">
-        <Button size="sm" onClick={() => setAdding(true)}>
-          <Plus size={15} /> Add stop
-        </Button>
-      </div>
-
       {planItems.length === 0 ? (
         <Empty
           icon={<MapPin className="h-11 w-11" strokeWidth={1.25} />}
@@ -110,53 +81,6 @@ export function PlanTab({
           onPhoto={(it) => setCamFor(it.id)}
         />
       )}
-
-      {/* Wishlist — buy / eat / bring. No header; the placeholder says it. */}
-      <div className="space-y-2 pt-4">
-        <div className="flex gap-2">
-          <Input
-            value={wish}
-            onChange={(e) => setWish(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && addWish()}
-            placeholder="Khinkali, baklava, a rug…"
-          />
-          <Button onClick={addWish} className="shrink-0 px-4">
-            <Plus size={16} />
-          </Button>
-        </div>
-        {wishes.map((it) => (
-          <Card key={it.id} className="flex items-center gap-3 px-4 py-2.5">
-            <button
-              type="button"
-              aria-label="Toggle"
-              onClick={() =>
-                toggleItem.mutate({
-                  id: it.id,
-                  tripId: trip.id,
-                  status: it.status === 'done' ? 'open' : 'done',
-                })
-              }
-              className="shrink-0 text-lg"
-            >
-              {it.status === 'done' ? '✅' : '⬜'}
-            </button>
-            <span
-              className={cn(
-                'min-w-0 flex-1 truncate font-display text-base text-fg',
-                it.status === 'done' && 'text-muted line-through'
-              )}
-            >
-              {it.title}
-            </span>
-            <IconButton
-              label="Delete"
-              onClick={() => delItem.mutate({ id: it.id, tripId: trip.id })}
-            >
-              <Trash2 className="h-4 w-4" />
-            </IconButton>
-          </Card>
-        ))}
-      </div>
 
       {camFor && (
         <CameraCapture
