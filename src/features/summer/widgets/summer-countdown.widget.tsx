@@ -10,24 +10,6 @@ const DEPART = DateTime.fromISO('2026-07-05T09:50:00+07:00');
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
-function Seg({ n, u, tick }: { n: number; u: string; tick?: boolean }) {
-  return (
-    <span className="inline-flex items-baseline">
-      <span
-        key={tick ? n : undefined}
-        className={
-          tick ? 'count-tick gilt-text gilt-figures' : 'gilt-text gilt-figures'
-        }
-      >
-        {pad(n)}
-      </span>
-      <span className="ml-px text-[0.58rem] font-semibold text-copper/70">
-        {u}
-      </span>
-    </span>
-  );
-}
-
 /**
  * A slim, live one-liner countdown to take-off — sits between the greeting and
  * the kept hero. Days · hours · minutes · seconds, ticking, gilt figures.
@@ -57,10 +39,25 @@ export function SummerCountdownWidget() {
             Our summer
           </span>
           <span className="flex items-baseline gap-1.5 font-display text-[0.95rem] font-semibold tabular-nums tracking-tight">
-            <Seg n={Math.floor(diff.days)} u="d" />
-            <Seg n={diff.hours} u="h" />
-            <Seg n={diff.minutes} u="m" />
-            <Seg n={Math.floor(diff.seconds)} u="s" tick />
+            <span className="inline-flex items-baseline">
+              <span className="gilt-text gilt-figures">
+                {Math.floor(diff.days)}
+              </span>
+              <span className="ml-1 text-[0.58rem] font-semibold text-copper/70">
+                {Math.floor(diff.days) === 1 ? 'day' : 'days'}
+              </span>
+            </span>
+            <span className="inline-flex items-baseline">
+              <span className="gilt-text gilt-figures">
+                {diff.hours}:{pad(diff.minutes)}:
+              </span>
+              <span
+                key={Math.floor(diff.seconds)}
+                className="count-tick gilt-text gilt-figures"
+              >
+                {pad(Math.floor(diff.seconds))}
+              </span>
+            </span>
           </span>
         </>
       )}
