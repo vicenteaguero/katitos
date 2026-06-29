@@ -106,7 +106,7 @@ export function Sheet({
         {/* The body scrolls; its bottom padding grows with the keyboard so the
             content clears it while the panel's surface still fills to the edge. */}
         <div
-          className="min-h-0 flex-1 overflow-y-auto px-5 transition-[padding] duration-200"
+          className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-5 transition-[padding] duration-200"
           style={{
             paddingBottom: kb
               ? `${kb + 20}px`
