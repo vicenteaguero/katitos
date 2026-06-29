@@ -521,6 +521,7 @@ export type Database = {
           city: string | null
           country: string | null
           created_at: string
+          currency_from: string | null
           display_name: string
           emoji: string | null
           last_seen_at: string | null
@@ -538,6 +539,7 @@ export type Database = {
           city?: string | null
           country?: string | null
           created_at?: string
+          currency_from?: string | null
           display_name: string
           emoji?: string | null
           last_seen_at?: string | null
@@ -555,6 +557,7 @@ export type Database = {
           city?: string | null
           country?: string | null
           created_at?: string
+          currency_from?: string | null
           display_name?: string
           emoji?: string | null
           last_seen_at?: string | null
