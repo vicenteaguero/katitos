@@ -52,14 +52,6 @@ function TodayCard({
         <span className="gilt-text candle-flicker text-5xl" aria-hidden="true">
           <Camera className="mx-auto h-12 w-12" strokeWidth={1.25} />
         </span>
-        <div className="space-y-2">
-          <p className="font-display text-2xl font-medium tracking-tight text-fg">
-            No portrait developed yet
-          </p>
-          <p className="font-sans text-sm leading-relaxed text-muted">
-            One instant photo a day — taken in the moment, hung on our wall.
-          </p>
-        </div>
         <Button onClick={onOpenCamera}>
           <Camera size={18} /> Take today's photo
         </Button>
@@ -382,17 +374,14 @@ export function PolaroidRoute() {
 
   return (
     <div className="curtain-reveal space-y-8">
-      <PageHeader
-        title="Polaroid"
-        subtitle="One photo a day, taken in the moment"
-      />
+      <PageHeader title="Polaroid" />
 
       <TodayCard
         onOpenCamera={() => setCamOpen(true)}
         onOpen={() => openViewer(day)}
       />
 
-      <section className="space-y-5">
+      <section className="space-y-2">
         <h2 className="eyebrow">Our album</h2>
         <Gallery onOpen={openViewer} />
       </section>
