@@ -14,17 +14,19 @@ export function proxyPath(path: string): string {
 interface DownscaleOptions {
   /** Longest edge of the proxy, in px. */
   maxDim?: number;
-  /** JPEG quality 0–1. */
+  /** Encode quality 0–1. */
   quality?: number;
 }
 
 /**
- * Downscale a photo Blob to a small JPEG proxy. Resolves to the proxy Blob, or
- * rejects if the browser can't decode/encode — callers treat that as "no proxy".
+ * Downscale a photo Blob to a small WebP proxy (≈30% smaller than JPEG at equal
+ * quality, so album/polaroid thumbnails load faster). Falls back to JPEG on
+ * engines that can't encode WebP. Resolves to the proxy Blob, or rejects if the
+ * browser can't decode/encode — callers treat that as "no proxy".
  */
 export async function downscaleImage(
   blob: Blob,
-  { maxDim = 512, quality = 0.6 }: DownscaleOptions = {}
+  { maxDim = 400, quality = 0.72 }: DownscaleOptions = {}
 ): Promise<Blob> {
   const bitmap = await createImageBitmap(blob);
   try {
@@ -42,8 +44,16 @@ export async function downscaleImage(
 
     return await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
-        (out) => (out ? resolve(out) : reject(new Error('toBlob failed'))),
-        'image/jpeg',
+        (out) => {
+          if (out) return resolve(out);
+          // Engine can't encode WebP (older Safari) → fall back to JPEG.
+          canvas.toBlob(
+            (jpg) => (jpg ? resolve(jpg) : reject(new Error('toBlob failed'))),
+            'image/jpeg',
+            0.7
+          );
+        },
+        'image/webp',
         quality
       );
     });
