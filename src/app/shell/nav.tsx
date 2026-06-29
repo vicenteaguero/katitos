@@ -9,7 +9,6 @@ import {
   StickyNote,
   LayoutGrid,
   Settings,
-  ChevronRight,
   Lock,
 } from 'lucide-react';
 import { Sheet } from '@kernel/ui';
@@ -20,7 +19,7 @@ import { featureRegistry } from '../features.registry';
 /** Drawer section order; anything untagged falls into 'More'. */
 const CATEGORY_ORDER = ['Play', 'Memories', 'Us', 'Practical'];
 
-/** Full-width drawer row: icon + name + chevron. No borders, no tiles. */
+/** A drawer tile: icon + name, sized for a two-up grid. No borders. */
 function DrawerRow({
   to,
   icon: Icon,
@@ -36,23 +35,24 @@ function DrawerRow({
   locked?: boolean;
   onClick: () => void;
 }) {
-  // Locked = shipped-but-not-open: a quiet, inert row. No link, no press, just
-  // a padlock and a muted "Soon" so the couple sees what's coming.
+  // Locked = shipped-but-not-open: a quiet, inert tile with just a padlock.
   if (locked) {
     return (
       <div
         style={{ '--i': index } as React.CSSProperties}
         aria-disabled="true"
-        className="flex w-full items-center gap-4 rounded px-3 py-3 opacity-40"
+        className="flex items-center gap-2.5 rounded-lg px-2.5 py-2.5 opacity-40"
       >
         <Icon className="h-5 w-5 shrink-0 stroke-[1.75] text-muted" />
-        <span className="min-w-0 flex-1 truncate text-left font-sans text-sm font-semibold text-muted">
+        <span className="min-w-0 flex-1 truncate font-sans text-sm font-semibold text-muted">
           {label}
         </span>
-        <span className="flex shrink-0 items-center gap-1.5 font-sans text-[0.625rem] font-semibold uppercase tracking-[0.16em] text-muted">
-          Soon
-          <Lock size={13} strokeWidth={1.75} aria-hidden="true" />
-        </span>
+        <Lock
+          size={13}
+          strokeWidth={1.75}
+          className="shrink-0 text-muted"
+          aria-hidden="true"
+        />
       </div>
     );
   }
@@ -62,18 +62,12 @@ function DrawerRow({
       to={to}
       onClick={onClick}
       style={{ '--i': index } as React.CSSProperties}
-      className="lift-press flex w-full items-center gap-4 rounded px-3 py-3 transition-colors duration-150 hover:bg-fg/5 active:bg-fg/10"
+      className="lift-press flex items-center gap-2.5 rounded-lg px-2.5 py-2.5 transition-colors duration-150 hover:bg-fg/5 active:bg-fg/10"
     >
       <Icon className="h-5 w-5 shrink-0 stroke-[1.75] text-gold" />
-      <span className="min-w-0 flex-1 truncate text-left font-sans text-sm font-semibold text-fg">
+      <span className="min-w-0 flex-1 truncate font-sans text-sm font-semibold text-fg">
         {label}
       </span>
-      <ChevronRight
-        size={16}
-        strokeWidth={1.75}
-        className="shrink-0 text-muted"
-        aria-hidden="true"
-      />
     </NavLink>
   );
 }
@@ -188,6 +182,16 @@ export function BottomNav() {
         onClose={() => setMoreOpen(false)}
         title="More"
         size="half"
+        headerAction={
+          <NavLink
+            to="/settings"
+            onClick={() => setMoreOpen(false)}
+            aria-label="Settings"
+            className="lift-press flex h-8 w-8 items-center justify-center rounded-full bg-surface text-gold shadow-[inset_0_0_0_1px_rgba(228,195,106,0.3)] active:text-accent"
+          >
+            <Settings className="h-4 w-4" />
+          </NavLink>
+        }
       >
         {/* Open features all sit together at the top — the live app, one tap
             away. The "Soon" rows keep their categories beneath. No tiles, no
@@ -217,7 +221,7 @@ export function BottomNav() {
                     <p className="mb-1.5 px-3 font-sans text-[0.625rem] font-semibold uppercase tracking-[0.18em] text-gold/80">
                       Open
                     </p>
-                    <div className="flex flex-col">
+                    <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
                       {open.map((e) => (
                         <DrawerRow
                           key={e.to}
@@ -238,7 +242,7 @@ export function BottomNav() {
                       <p className="mb-1.5 px-3 font-sans text-[0.625rem] font-semibold uppercase tracking-[0.18em] text-muted">
                         {cat}
                       </p>
-                      <div className="flex flex-col">
+                      <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
                         {groups.get(cat)!.map((e) => (
                           <DrawerRow
                             key={e.to}
@@ -256,13 +260,6 @@ export function BottomNav() {
               </>
             );
           })()}
-          <DrawerRow
-            to="/settings"
-            icon={Settings}
-            label="Settings"
-            index={entries.length}
-            onClick={() => setMoreOpen(false)}
-          />
         </div>
       </Sheet>
     </>
