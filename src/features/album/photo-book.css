@@ -1,19 +1,10 @@
 /* ──────────────────────────────────────────────────────────────────────────
  * PhotoBook3D — the shared paper-book engine (Pololini + Summer Panini).
- *   A single portrait page is shown at a time; turning peels the leaf around
- *   the LEFT spine into the gutter, revealing the page beneath. Class names are
- *   `pb-` prefixed so they never collide with the legacy `.book-*` sticker
- *   album in src/index.css. Co-located + imported by photo-book-3d.tsx.
+ *   A single portrait page shows at a time; the realistic soft-paper curl is
+ *   powered by StPageFlip (react-pageflip). Class names are `pb-` prefixed so
+ *   they never collide with the legacy `.book-*` sticker album in src/index.css.
+ *   Co-located + imported by photo-book-3d.tsx.
  * ────────────────────────────────────────────────────────────────────────── */
-
-/* Animatable fold (0 flat … 1 folded into the gutter) — drives the peel shade.
-   Registered so it tweens with the snap transition; degrades to a static var
-   on engines without @property (the turn still works, the shade just jumps). */
-@property --pb-fold {
-  syntax: '<number>';
-  inherits: false;
-  initial-value: 0;
-}
 
 .pb-wine {
   --pb-wine: #6e1423;
@@ -38,7 +29,7 @@
     var(--pb-wine) 0%,
     var(--pb-wine-deep) 100%
   );
-  padding: 10px 12px 10px 0; /* fore-edge breathing room on the right */
+  padding: 10px 12px 10px 10px;
   box-shadow:
     0 26px 50px -22px rgba(20, 4, 9, 0.85),
     0 2px 0 rgba(255, 255, 255, 0.06) inset;
@@ -65,65 +56,23 @@
   padding: 1px;
   opacity: 0.7;
   pointer-events: none;
+  z-index: 30;
 }
 
-/* The clipped page well — pages turn into its LEFT edge (the gutter/spine).
-   Holds the perspective AND clips; the 3D context lives on the leaf (its direct
-   child) because `overflow:hidden` + `preserve-3d` on one box flattens to 2D. */
-.pb-stack {
+/* ── The StPageFlip mount + a single page host ────────────────────────────── */
+.pb-book {
   position: relative;
-  aspect-ratio: 3 / 4;
-  width: 100%;
   border-radius: 3px 12px 12px 3px;
+}
+/* StPageFlip applies the size/position to each host inline; we only paint it. */
+.pb-page-host {
+  border-radius: 2px 11px 11px 2px;
   overflow: hidden;
-  perspective: 1200px;
-  perspective-origin: 50% 34%;
   background: var(--pb-paper-2);
-}
-.pb-stack[data-turning='true'] {
-  pointer-events: none;
-}
-/* Gilded fore-edges: a stack of pages glimpsed at the right, top & bottom. */
-.pb-foredge {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background:
-    repeating-linear-gradient(
-        90deg,
-        rgba(228, 195, 106, 0.55),
-        rgba(156, 122, 46, 0.35) 1px,
-        rgba(247, 238, 218, 0) 2px
-      )
-      right / 8px 100% no-repeat,
-    repeating-linear-gradient(
-        0deg,
-        rgba(228, 195, 106, 0.35),
-        rgba(156, 122, 46, 0.22) 1px,
-        rgba(247, 238, 218, 0) 2px
-      )
-      bottom / 100% 5px no-repeat;
-  z-index: 5;
-}
-/* The spine shadow falling across the gutter. */
-.pb-foredge::after {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 26px;
-  background: linear-gradient(
-    90deg,
-    rgba(38, 8, 14, 0.4),
-    rgba(38, 8, 14, 0) 100%
-  );
+  box-shadow: inset 0 0 38px rgba(58, 30, 16, 0.07);
 }
 
-/* ── A flat page (warm paper + the 2×2 photo grid) ───────────────────────── */
-.pb-layer {
-  position: absolute;
-  inset: 0;
-}
+/* ── A flat page (warm paper) — fills its StPageFlip host or arrange slot ─── */
 .pb-page {
   position: absolute;
   inset: 0;
@@ -159,23 +108,31 @@
   pointer-events: none;
 }
 
-/* ── Photo stickers (free, draggable) ───────────────────────────────────── */
-.pb-photo {
+/* ── The arrange editor: an opaque page laid over the flip-book ───────────── */
+.pb-arrange {
   position: absolute;
   inset: 0;
+  z-index: 20;
+}
+.pb-arrange-page {
+  position: relative;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-  background: rgba(58, 30, 16, 0.06);
+  aspect-ratio: 3 / 4;
+  border-radius: 2px 11px 11px 2px;
+  overflow: hidden;
+  background: var(--pb-paper-2);
 }
 
+/* ── Photo stickers (free, draggable) ───────────────────────────────────── */
 .pb-sticker {
   position: absolute;
   z-index: 4;
   transform: translate(-50%, -50%);
   user-select: none;
+  pointer-events: none; /* reader: a drag peels the page, not the photo */
 }
 .pb-sticker--live {
+  pointer-events: auto; /* arrange: grab & drag the sticker */
   cursor: grab;
 }
 .pb-sticker--live:active {
@@ -202,6 +159,14 @@
   aspect-ratio: 1;
   border-radius: 3px;
   overflow: hidden;
+  background: rgba(58, 30, 16, 0.06);
+}
+.pb-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   background: rgba(58, 30, 16, 0.06);
 }
 .pb-sticker-cap {
@@ -247,65 +212,6 @@
   transform: scale(0.94);
 }
 
-/* ── The turning leaf ────────────────────────────────────────────────────── */
-.pb-leaf {
-  position: absolute;
-  inset: 0;
-  z-index: 8;
-  transform-style: preserve-3d;
-  transform-origin: left center;
-  will-change: transform;
-  backface-visibility: visible;
-}
-.pb-leaf.pb-snap {
-  transition:
-    transform 1500ms cubic-bezier(0.33, 0, 0.2, 1),
-    --pb-fold 1500ms cubic-bezier(0.33, 0, 0.2, 1);
-}
-.pb-face {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  overflow: hidden;
-}
-.pb-face--back {
-  transform: rotateY(180deg);
-  background:
-    radial-gradient(
-      90% 70% at 20% 18%,
-      rgba(255, 252, 244, 0.7),
-      transparent 60%
-    ),
-    linear-gradient(200deg, var(--pb-paper) 0%, var(--pb-paper-2) 100%);
-}
-.pb-face--back::after {
-  content: '';
-  position: absolute;
-  inset: 0 0 0 auto;
-  width: 30px;
-  background: linear-gradient(270deg, rgba(58, 30, 16, 0.22), transparent);
-}
-/* The peel shade: deepest at the spine, sweeping as the page folds. */
-.pb-shade {
-  position: absolute;
-  inset: 0;
-  z-index: 4;
-  pointer-events: none;
-  border-radius: inherit;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  background: linear-gradient(
-    100deg,
-    rgba(20, 6, 10, 0.42) 0%,
-    rgba(20, 6, 10, 0.12) 26%,
-    rgba(255, 255, 255, 0.05) 55%,
-    rgba(255, 248, 232, 0.18) 100%
-  );
-  opacity: calc(var(--pb-fold, 0) * 0.95);
-}
-
 /* ── Title plate (gilt, embossed on the cover head) ──────────────────────── */
 .pb-title {
   font-style: italic;
@@ -322,14 +228,4 @@
   background-clip: text;
   color: transparent;
   text-shadow: 0 1px 0 rgba(20, 4, 9, 0.35);
-}
-
-/* ── Respect reduced motion: no peel transition, instant page swaps ───────── */
-@media (prefers-reduced-motion: reduce) {
-  .pb-leaf.pb-snap {
-    transition: none !important;
-  }
-  .pb-slot--empty {
-    transition: none !important;
-  }
 }
