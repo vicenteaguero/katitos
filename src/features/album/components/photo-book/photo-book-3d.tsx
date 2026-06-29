@@ -1,7 +1,7 @@
 import {
   forwardRef,
+  useCallback,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -99,31 +99,39 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
   const bookRef = useRef<FlipBookRef | null>(null);
   const addPage = useAddPage();
 
-  // Size the book to fill the screen — its WIDTH is derived from the available
-  // HEIGHT (book is 3:4), so the nav row + the whole book are always visible
-  // without scrolling, on any phone. Re-measures on resize/orientation.
-  const stageRef = useRef<HTMLDivElement>(null);
+  // Size the book to fit the screen: the book is 3:4, so we derive its width
+  // from the available HEIGHT, but also cap it to the available WIDTH (a tall,
+  // narrow phone could otherwise make a height-derived width overflow). A
+  // CALLBACK ref drives this so it fires the moment the stage actually mounts —
+  // i.e. once pages have loaded past the LoadingScreen (a plain mount effect
+  // would run while the loader is up, measure nothing, and never re-run). It
+  // re-measures on any resize / orientation change.
   const [stageW, setStageW] = useState(0);
-  useLayoutEffect(() => {
+  const teardownRef = useRef<(() => void) | null>(null);
+  const setStage = useCallback((el: HTMLDivElement | null) => {
+    teardownRef.current?.();
+    teardownRef.current = null;
+    const main = el?.closest('main');
+    if (!el || !main) return;
     const compute = () => {
-      const el = stageRef.current;
-      const main = el?.closest('main');
-      if (!el || !main) return;
-      const padB = parseFloat(getComputedStyle(main).paddingBottom) || 0;
+      const cs = getComputedStyle(main);
+      const padB = parseFloat(cs.paddingBottom) || 0;
+      const padX =
+        (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
       const top = el.getBoundingClientRect().top;
-      // Available height for the book = main content bottom − stage top − the
-      // nav row + gap beneath it (~76px).
+      // Height left for the book = main bottom − stage top − nav row (~76px).
       const availH = main.getBoundingClientRect().bottom - padB - top - 76;
-      setStageW(Math.max(220, Math.floor(availH * 0.75)));
+      const byHeight = Math.floor(availH * 0.75);
+      const maxWidth = main.clientWidth - padX; // the content width it can span
+      setStageW(Math.max(220, Math.min(byHeight, maxWidth)));
     };
     compute();
-    const main = stageRef.current?.closest('main');
-    const ro = main ? new ResizeObserver(compute) : null;
-    if (main && ro) ro.observe(main);
+    const ro = new ResizeObserver(compute);
+    ro.observe(main);
     window.addEventListener('resize', compute);
     window.visualViewport?.addEventListener('resize', compute);
-    return () => {
-      ro?.disconnect();
+    teardownRef.current = () => {
+      ro.disconnect();
       window.removeEventListener('resize', compute);
       window.visualViewport?.removeEventListener('resize', compute);
     };
@@ -231,7 +239,7 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
       </div>
 
       <div
-        ref={stageRef}
+        ref={setStage}
         className="pb-stage"
         style={stageW ? { width: stageW, marginInline: 'auto' } : undefined}
       >
