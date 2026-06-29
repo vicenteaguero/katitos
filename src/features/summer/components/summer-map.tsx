@@ -6,7 +6,7 @@ export interface MapPin {
   lat: number;
   lng: number;
   title: string;
-  tone?: 'place' | 'home' | 'review';
+  tone?: 'place' | 'home' | 'review' | 'city';
 }
 
 export interface MapLeg {
@@ -23,6 +23,7 @@ const PIN_COLOR: Record<string, string> = {
   place: '#6e1423',
   home: '#2c8a5e',
   review: '#c9a24b',
+  city: '#caa53f',
 };
 
 /** Wine for Georgia legs, copper for Türkiye, gilt for the border crossing. */
@@ -134,16 +135,20 @@ export function SummerMap({
     const valid = pins.filter((p) => p.lat != null && p.lng != null);
     for (const p of valid) {
       const color = PIN_COLOR[p.tone ?? 'place'] ?? '#6e1423';
+      // Cities are the route anchors → a larger, brighter-ringed teardrop.
+      const isCity = p.tone === 'city';
+      const d = isCity ? 22 : 18;
+      const tipY = isCity ? 27 : 22;
       const icon = L.divIcon({
         className: '',
         html: `<div style="display:flex;flex-direction:column;align-items:center">
-          <div style="width:18px;height:18px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);
-            background:${color};border:1.5px solid #e4c36a;
+          <div style="width:${d}px;height:${d}px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);
+            background:${color};border:${isCity ? 2 : 1.5}px solid ${isCity ? '#fff1c9' : '#e4c36a'};
             box-shadow:0 2px 6px rgba(0,0,0,.5)"></div></div>`,
-        // The rotated teardrop's sharp tip sits ~22px down from the icon's top —
+        // The rotated teardrop's sharp tip sits ~tipY down from the icon's top —
         // anchor THERE so the point lands exactly on the lat/lng at any zoom.
-        iconSize: [18, 22],
-        iconAnchor: [9, 22],
+        iconSize: [d, tipY],
+        iconAnchor: [d / 2, tipY],
       });
       L.marker([p.lat, p.lng], { icon })
         .addTo(layer)
