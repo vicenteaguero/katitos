@@ -14,6 +14,7 @@ import {
   Input,
   Select,
   Sheet,
+  useTopBarAction,
 } from '@kernel/ui';
 import { useSummerLines, useSummerSprints } from '../../api/summer.queries';
 import {
@@ -23,6 +24,7 @@ import {
   useDeleteSprint,
   useUpdateLine,
 } from '../../api/summer.mutations';
+import { TopAdd } from '../../components/top-add';
 import type { BudgetLine, BudgetSprint, Trip } from '../../types';
 
 const CURRENCIES = ['USD', 'CLP', 'RUB', 'GEL', 'TRY'];
@@ -73,6 +75,13 @@ export function BudgetTab({ trip }: { trip: Trip }) {
     anchor: string;
   }>({ open: false, name: '', anchor: '' });
   const [lineEdit, setLineEdit] = useState<LineEdit | null>(null);
+
+  useTopBarAction(
+    <TopAdd
+      onClick={() => setSprintForm({ open: true, name: '', anchor: '' })}
+    />,
+    []
+  );
 
   const bySprint = new Map<string, BudgetLine[]>();
   for (const l of lines ?? []) {
@@ -129,15 +138,6 @@ export function BudgetTab({ trip }: { trip: Trip }) {
 
   return (
     <section className="space-y-4">
-      <div className="flex justify-end">
-        <Button
-          size="sm"
-          onClick={() => setSprintForm({ open: true, name: '', anchor: '' })}
-        >
-          <Plus size={15} /> Sprint
-        </Button>
-      </div>
-
       {(sprints ?? []).length === 0 ? (
         <Empty
           icon={<Wallet className="h-11 w-11" strokeWidth={1.25} />}
