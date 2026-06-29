@@ -2,9 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { MapPin } from 'lucide-react';
 import { DateTime, cn } from '@kernel/lib';
 import { Button, Input, Select, Sheet, Textarea } from '@kernel/ui';
-import { useAddItem } from '../api/summer.mutations';
+import { useAddItem, useUpdateItem } from '../api/summer.mutations';
 import { CitySearch } from './city-search';
-import { COUNTRIES, type CountryFilter, type Trip } from '../types';
+import {
+  COUNTRIES,
+  type CountryFilter,
+  type Trip,
+  type TripItem,
+} from '../types';
 
 function tripDays(start?: string | null, end?: string | null): string[] {
   if (!start) return [];
@@ -41,18 +46,36 @@ export function StopSheet({
   onClose,
   trip,
   country,
+  editItem,
 }: {
   open: boolean;
   onClose: () => void;
   trip: Trip;
   country: CountryFilter;
+  /** When set, the sheet edits this stop instead of adding a new one. */
+  editItem?: TripItem | null;
 }) {
   const addItem = useAddItem();
+  const updateItem = useUpdateItem();
   const [form, setForm] = useState({ ...EMPTY });
 
+  // Prefill from the item being edited (or clear) every time the sheet opens.
   useEffect(() => {
-    if (!open) setForm({ ...EMPTY });
-  }, [open]);
+    if (!open) return;
+    setForm(
+      editItem
+        ? {
+            title: editItem.title ?? '',
+            kind: editItem.kind ?? 'place',
+            country: editItem.country ?? '',
+            description: editItem.description ?? '',
+            day: editItem.day ?? '',
+            lat: editItem.lat != null ? String(editItem.lat) : '',
+            lng: editItem.lng != null ? String(editItem.lng) : '',
+          }
+        : { ...EMPTY }
+    );
+  }, [open, editItem]);
 
   const days = useMemo(
     () => tripDays(trip.start_date, trip.end_date),
@@ -61,24 +84,36 @@ export function StopSheet({
 
   const submit = () => {
     if (!form.title.trim()) return;
-    addItem.mutate(
-      {
-        tripId: trip.id,
-        kind: form.kind,
-        title: form.title.trim(),
-        description: form.description || null,
-        link: null,
-        country: form.country || (country === 'all' ? null : country),
-        day: form.day || null,
-        lat: form.lat ? Number(form.lat) : null,
-        lng: form.lng ? Number(form.lng) : null,
-      },
-      { onSuccess: onClose }
-    );
+    const fields = {
+      title: form.title.trim(),
+      kind: form.kind,
+      description: form.description || null,
+      country: form.country || (country === 'all' ? null : country),
+      day: form.day || null,
+      lat: form.lat ? Number(form.lat) : null,
+      lng: form.lng ? Number(form.lng) : null,
+    };
+    if (editItem) {
+      updateItem.mutate(
+        { id: editItem.id, tripId: trip.id, patch: fields },
+        { onSuccess: onClose }
+      );
+    } else {
+      addItem.mutate(
+        { tripId: trip.id, link: null, ...fields },
+        { onSuccess: onClose }
+      );
+    }
   };
 
+  const busy = addItem.isPending || updateItem.isPending;
+
   return (
-    <Sheet open={open} onClose={onClose} title="Add a stop">
+    <Sheet
+      open={open}
+      onClose={onClose}
+      title={editItem ? 'Edit stop' : 'Add a stop'}
+    >
       <div className="space-y-3">
         <Input
           value={form.title}
@@ -179,8 +214,8 @@ export function StopSheet({
           rows={2}
           placeholder="Notes (optional)"
         />
-        <Button full onClick={submit} disabled={addItem.isPending}>
-          Add to plan
+        <Button full onClick={submit} disabled={busy}>
+          {editItem ? 'Save' : 'Add to plan'}
         </Button>
       </div>
     </Sheet>
