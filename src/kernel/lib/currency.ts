@@ -53,7 +53,9 @@ export function formatMoney(amount: number, currency: CurrencyCode): string {
     return new Intl.NumberFormat(undefined, {
       style: 'currency',
       currency,
-      maximumFractionDigits: currency === 'CLP' || currency === 'RUB' ? 0 : 2,
+      // 1 decimal when it isn't a round number, none when it is (1.5, 2, 1.2).
+      minimumFractionDigits: 0,
+      maximumFractionDigits: currency === 'CLP' || currency === 'RUB' ? 0 : 1,
     }).format(amount);
   } catch {
     return `${Math.round(amount).toLocaleString()} ${currency}`;
