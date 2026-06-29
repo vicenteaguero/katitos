@@ -1,9 +1,9 @@
 import { lazy, Suspense, useLayoutEffect, useRef, useState } from 'react';
-import { List, Map as MapIcon, Plus, Star, Trash2 } from 'lucide-react';
+import { List, Map as MapIcon, Star, Trash2 } from 'lucide-react';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import { cn } from '@kernel/lib';
-import { Button, Card, IconButton, Sheet } from '@kernel/ui';
+import { Card, IconButton, Sheet, useTopBarAction } from '@kernel/ui';
 import {
   useSummerItems,
   useSummerLegs,
@@ -12,9 +12,11 @@ import {
 import {
   useAddItem,
   useDeleteItem,
+  useDeleteLeg,
   useDeleteReview,
 } from '../../api/summer.mutations';
 import { CitySearch, type CityHit } from '../../components/city-search';
+import { TopAdd } from '../../components/top-add';
 import type { MapLeg, MapPin } from '../../components/summer-map';
 import { COUNTRIES, type CountryFilter, type Trip } from '../../types';
 
@@ -43,9 +45,12 @@ export function MapTab({
   const addItem = useAddItem();
   const delItem = useDeleteItem();
   const delReview = useDeleteReview();
+  const delLeg = useDeleteLeg();
   const [mode, setMode] = useState<'map' | 'list'>('map');
   const [adding, setAdding] = useState(false);
   const [placeCountry, setPlaceCountry] = useState<'TR' | 'GE' | ''>('');
+
+  useTopBarAction(<TopAdd onClick={() => setAdding(true)} />, []);
 
   // Size the map to fill from its top down to the bottom of the scroll area, so
   // the Route tab never scrolls. Re-measures on viewport/orientation changes.
@@ -145,7 +150,7 @@ export function MapTab({
 
   return (
     <section className="space-y-3">
-      {/* Toolbar — switch list/map, add a place. No titles. */}
+      {/* Toolbar — switch list/map (Add lives in the top bar). */}
       <div className="flex items-center gap-2">
         <IconButton
           label={mode === 'map' ? 'List view' : 'Map view'}
@@ -158,10 +163,9 @@ export function MapTab({
             <MapIcon className="h-5 w-5" />
           )}
         </IconButton>
-        <div className="flex-1" />
-        <Button size="sm" onClick={() => setAdding(true)}>
-          <Plus size={15} /> Add place
-        </Button>
+        <span className="font-sans text-xs uppercase tracking-[0.14em] text-muted">
+          {mode === 'map' ? 'Map' : 'List'}
+        </span>
       </div>
 
       {mode === 'map' ? (
@@ -184,7 +188,7 @@ export function MapTab({
         </p>
       ) : (
         <div className="space-y-2">
-          {/* The seeded route (read-only backbone). */}
+          {/* The route legs — removable. */}
           {routeLegs.map((l) => (
             <Card key={l.id} className="flex items-center gap-3 px-4 py-2.5">
               <span
@@ -197,6 +201,12 @@ export function MapTab({
               <span className="shrink-0 font-sans text-xs capitalize text-muted">
                 {l.mode}
               </span>
+              <IconButton
+                label="Remove"
+                onClick={() => delLeg.mutate({ id: l.id, tripId: trip.id })}
+              >
+                <Trash2 className="h-4 w-4" />
+              </IconButton>
             </Card>
           ))}
           {/* Places you added (removable). */}
