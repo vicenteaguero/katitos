@@ -38,12 +38,12 @@ export function SummerCountdownWidget() {
           <span className="font-sans text-[0.6rem] font-bold uppercase tracking-[0.22em] text-copper">
             Our summer
           </span>
-          <span className="flex items-baseline gap-1.5 font-display text-[0.95rem] font-semibold tabular-nums tracking-tight">
+          <span className="flex items-baseline gap-1.5 font-display text-[1.425rem] font-semibold tabular-nums tracking-tight">
             <span className="inline-flex items-baseline">
               <span className="gilt-text gilt-figures">
                 {Math.floor(diff.days)}
               </span>
-              <span className="ml-1 text-[0.58rem] font-semibold text-copper/70">
+              <span className="ml-1 text-[0.87rem] font-semibold text-copper/70">
                 {Math.floor(diff.days) === 1 ? 'day' : 'days'}
               </span>
             </span>
