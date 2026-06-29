@@ -250,7 +250,7 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
         type="button"
         onClick={addStickerTop}
         aria-label="Add a photo"
-        className="lift-press flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-fg shadow-loge outline-none focus-visible:ring-2 focus-visible:ring-gold/30"
+        className="lift-press flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-fg shadow-loge outline-none focus-visible:ring-2 focus-visible:ring-gold"
         style={{ border: '1px solid rgba(228,195,106,.4)' }}
       >
         <Plus className="h-4 w-4" />
@@ -260,10 +260,10 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
         onClick={toggleArrange}
         aria-label={mode === 'arrange' ? 'Done arranging' : 'Arrange stickers'}
         className={cn(
-          'lift-press flex h-8 w-8 items-center justify-center rounded-full shadow-loge outline-none focus-visible:ring-2 focus-visible:ring-gold/30',
+          'lift-press flex h-8 w-8 items-center justify-center rounded-full shadow-loge outline-none focus-visible:ring-2 focus-visible:ring-gold',
           mode === 'arrange'
             ? 'bg-accent text-accent-fg'
-            : 'bg-surface text-fg/80 ring-1 ring-border/60'
+            : 'bg-surface text-fg/80 ring-1 ring-border'
         )}
         style={
           mode === 'arrange'
