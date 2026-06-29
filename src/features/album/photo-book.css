@@ -17,87 +17,43 @@
   --pb-ink: #4a3520;
 }
 
-/* ── The sliding window onto the full open 2-page book ─────────────────────── */
-/* The wine CASE wraps the WHOLE open book and lives INSIDE the sliding track, so
-   the cover/frame slides WITH the pages and overflows the screen on the focused
-   side (page 1 → off the right, page 2 → off the left). The viewport just clips
-   to the visible width; .pb-track (200% wide = 2 pages + cover) pans with
-   translateX 0% (left page) / -50% (right page). */
+/* ── Full-bleed open book ──────────────────────────────────────────────────
+   The album breaks out of <main>'s padding to FULL screen width and shows one
+   big page + a peek of the neighbour bleeding off the side (the sliding feel).
+   StPageFlip runs landscape with its NATIVE finger-curl; `.pb-track` is sized
+   (2 pages) and translated so the focused page sits big — both set inline. */
 .pb-stage {
   position: relative;
+  z-index: 1;
+  margin-inline: -0.875rem; /* cancel <main> px-[0.875rem] → edge to edge */
 }
 .pb-viewport {
   position: relative;
   width: 100%;
   overflow: hidden;
+  display: flex;
+  justify-content: center;
+  /* All touch on the book belongs to StPageFlip (the native finger-curl), not
+     the browser — without this the browser eats the horizontal drag. */
+  touch-action: none;
 }
-.pb-track {
-  position: relative;
-  width: 200%;
-  will-change: transform;
-}
-.pb-case {
-  position: relative;
-  /* border-box so the padding (cover margin) is INSIDE the 100% track width —
-     book = track − 28, pages = (track−28)/2, so the −50% slide lands a page +
-     its outer cover exactly (no neighbouring-page sliver bleeding in). */
-  box-sizing: border-box;
-  width: 100%;
-  border-radius: 16px;
-  background: linear-gradient(
-    125deg,
-    var(--pb-wine) 0%,
-    var(--pb-wine-deep) 100%
-  );
-  padding: 14px; /* the wine cover margin framing the open book */
-  box-shadow:
-    0 26px 50px -22px rgba(20, 4, 9, 0.85),
-    0 2px 0 rgba(255, 255, 255, 0.06) inset;
-}
-/* Gilt hairline framing the open cover (behind the pages: a turning leaf passes
-   OVER it, so it only shows in the wine margin). */
-.pb-case::before {
-  content: '';
-  position: absolute;
-  inset: 5px;
-  border-radius: 12px;
-  background: linear-gradient(
-      135deg,
-      var(--pb-gilt-deep),
-      var(--pb-gilt) 48%,
-      var(--pb-gilt-spark) 52%,
-      var(--pb-gilt-deep)
-    )
-    border-box;
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  padding: 1px;
-  opacity: 0.7;
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* ── The StPageFlip mount + a single page host ────────────────────────────── */
 .pb-book {
   position: relative;
-  border-radius: 3px 12px 12px 3px;
 }
-/* StPageFlip applies the size/position to each host inline; we only paint it. */
+/* Each StPageFlip page host: warm paper, ALL corners rounded, gilt hairline +
+   a soft drop shadow so it reads as a real photo leaf (no wine cover frame). */
 .pb-page-host {
-  border-radius: 2px 11px 11px 2px;
+  border-radius: 18px;
   overflow: hidden;
   background: var(--pb-paper-2);
-  box-shadow: inset 0 0 38px rgba(58, 30, 16, 0.07);
+  box-shadow:
+    0 14px 34px -12px rgba(20, 4, 9, 0.55),
+    inset 0 0 0 1.5px rgba(228, 195, 106, 0.3);
 }
-
-/* ── A flat page (warm paper) — fills its StPageFlip host or arrange slot ─── */
 .pb-page {
   position: absolute;
   inset: 0;
-  padding: 14px 14px 14px 22px; /* extra left for the gutter */
+  padding: 16px;
   border-radius: inherit;
   color: var(--pb-ink);
   background:
@@ -113,35 +69,21 @@
     ),
     linear-gradient(160deg, var(--pb-paper) 0%, var(--pb-paper-2) 100%);
 }
-/* The gutter crease on the inner (left) margin. */
-.pb-page::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 30px;
-  border-radius: inherit;
-  background: linear-gradient(
-    90deg,
-    rgba(58, 30, 16, 0.22),
-    rgba(58, 30, 16, 0.04) 55%,
-    transparent
-  );
-  pointer-events: none;
-}
 
-/* ── The arrange editor: an opaque page laid over the flip-book ───────────── */
-.pb-arrange {
-  position: absolute;
-  inset: 0;
-  z-index: 20;
-}
-.pb-arrange-page {
+/* ── Arrange editor: the single focused page, centred (no flip-book under it,
+ *    so there's never a second book peeking through). ─────────────────────── */
+.pb-editor {
   position: relative;
   width: 100%;
+  max-width: 26rem;
+  margin-inline: auto;
   aspect-ratio: 3 / 4;
-  border-radius: 2px 11px 11px 2px;
+  border-radius: 18px;
   overflow: hidden;
   background: var(--pb-paper-2);
+  box-shadow:
+    0 14px 34px -12px rgba(20, 4, 9, 0.55),
+    inset 0 0 0 1.5px rgba(228, 195, 106, 0.3);
 }
 
 /* ── Photo stickers (free, draggable) ───────────────────────────────────── */
