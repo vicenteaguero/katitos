@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Native-app feel: text isn't selectable and the iOS long-press callout is off
+   — but real fields stay selectable/editable so typing works normally. */
+body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+input,
+textarea,
+[contenteditable='true'] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 /*
  * ════════════════════════════════════════════════════════════════════════════
  *  KATITOS — "Silver Hall" · a clean, modern love app, NOVAT-inspired
