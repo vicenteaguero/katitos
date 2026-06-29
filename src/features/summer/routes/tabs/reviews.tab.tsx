@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Camera, Plus, Star, Trash2 } from 'lucide-react';
+import { Camera, Star, Trash2 } from 'lucide-react';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import { cn } from '@kernel/lib';
@@ -11,10 +11,12 @@ import {
   IconButton,
   Input,
   Sheet,
+  useTopBarAction,
 } from '@kernel/ui';
 import { useSummerReviews } from '../../api/summer.queries';
 import { useAddReview, useDeleteReview } from '../../api/summer.mutations';
 import { SummerPhoto } from '../../components/summer-photo';
+import { TopAdd } from '../../components/top-add';
 import {
   COUNTRIES,
   REVIEW_CATEGORIES,
@@ -87,6 +89,8 @@ export function ReviewsTab({
   const [blob, setBlob] = useState<Blob | null>(null);
   const [form, setForm] = useState({ ...EMPTY });
 
+  useTopBarAction(<TopAdd onClick={() => setAdding(true)} />, []);
+
   const list = (reviews ?? []).filter(
     (r) => country === 'all' || r.country === country
   );
@@ -116,12 +120,6 @@ export function ReviewsTab({
 
   return (
     <section className="space-y-4">
-      <div className="flex justify-end">
-        <Button size="sm" onClick={() => setAdding(true)}>
-          <Plus size={15} /> Add review
-        </Button>
-      </div>
-
       {list.length === 0 ? (
         <Empty
           icon={<Star className="h-11 w-11" strokeWidth={1.25} />}
@@ -206,7 +204,7 @@ export function ReviewsTab({
           <Input
             value={form.name}
             onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-            placeholder="Name — e.g. Café Littera"
+            placeholder="Name"
             autoFocus
           />
 
@@ -239,8 +237,8 @@ export function ReviewsTab({
             </div>
           </div>
 
-          {/* Category pills. */}
-          <div className="flex flex-wrap gap-1.5">
+          {/* Category — 3 per row, centred. */}
+          <div className="grid grid-cols-3 gap-2">
             {REVIEW_CATEGORIES.map((c) => {
               const active = form.category === c.value;
               return (
@@ -249,7 +247,7 @@ export function ReviewsTab({
                   type="button"
                   onClick={() => setForm((f) => ({ ...f, category: c.value }))}
                   className={cn(
-                    'lift-press rounded-full px-3 py-1.5 font-sans text-xs font-semibold',
+                    'lift-press justify-self-center rounded-full px-3 py-1.5 font-sans text-xs font-semibold',
                     active
                       ? 'bg-accent text-accent-fg'
                       : 'bg-surface-2 text-muted'
