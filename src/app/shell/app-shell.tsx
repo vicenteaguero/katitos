@@ -11,6 +11,7 @@ import { BottomNav } from './nav';
 import { CacheWarmer } from './cache-warmer';
 import { SplashScreen } from './splash-screen';
 import { LoveBurst } from './love-burst';
+import { NotificationPrompt } from './notification-prompt';
 import { featureRegistry } from '../features.registry';
 
 /** The name of the screen we're on — drives the quiet top-bar title. */
@@ -105,6 +106,7 @@ export function AppShell() {
             </main>
             <BottomNav />
             <LoveBurst />
+            <NotificationPrompt />
           </div>
         </TopBarSlotProvider>
       )}
