@@ -92,6 +92,16 @@ export function SummerMap({
     };
   }, []);
 
+  // Adapt to any container height the parent computes (so the map can be sized
+  // to fill the screen without a scroll). Leaflet needs invalidateSize on resize.
+  useEffect(() => {
+    const el = elRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => mapRef.current?.invalidateSize());
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   useEffect(() => {
     const map = mapRef.current;
     const layer = layerRef.current;
