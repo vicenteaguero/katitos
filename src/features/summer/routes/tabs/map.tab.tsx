@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState } from 'react';
-import { List, Map as MapIcon, Plus, Trash2 } from 'lucide-react';
+import { List, Map as MapIcon, Plus, Star, Trash2 } from 'lucide-react';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import { cn } from '@kernel/lib';
@@ -9,7 +9,11 @@ import {
   useSummerLegs,
   useSummerReviews,
 } from '../../api/summer.queries';
-import { useAddItem, useDeleteItem } from '../../api/summer.mutations';
+import {
+  useAddItem,
+  useDeleteItem,
+  useDeleteReview,
+} from '../../api/summer.mutations';
 import { CitySearch, type CityHit } from '../../components/city-search';
 import type { MapLeg, MapPin } from '../../components/summer-map';
 import { COUNTRIES, type CountryFilter, type Trip } from '../../types';
@@ -20,6 +24,8 @@ const SummerMap = lazy(() =>
 
 const flagOf = (code: string | null) =>
   COUNTRIES.find((c) => c.code === code)?.flag ?? '📍';
+const legDot = (c: string | null) =>
+  c === 'TR' ? '#b5633a' : c === 'GE' ? '#6e1423' : '#c9a24b';
 
 export function MapTab({
   trip,
@@ -36,6 +42,7 @@ export function MapTab({
   const { data: legs } = useSummerLegs(trip.id);
   const addItem = useAddItem();
   const delItem = useDeleteItem();
+  const delReview = useDeleteReview();
   const [mode, setMode] = useState<'map' | 'list'>('map');
   const [adding, setAdding] = useState(false);
   const [placeCountry, setPlaceCountry] = useState<'TR' | 'GE' | ''>('');
@@ -45,6 +52,10 @@ export function MapTab({
   const placeItems = (items ?? []).filter(
     (it) => it.lat != null && it.lng != null && inCountry(it.country)
   );
+  const reviewPins = (reviews ?? []).filter(
+    (r) => r.lat != null && r.lng != null && inCountry(r.country)
+  );
+  const routeLegs = legs ?? [];
 
   const pins: MapPin[] = [
     ...placeItems.map((it) => ({
@@ -53,17 +64,15 @@ export function MapTab({
       title: it.title,
       tone: 'place' as const,
     })),
-    ...(reviews ?? [])
-      .filter((r) => r.lat != null && r.lng != null && inCountry(r.country))
-      .map((r) => ({
-        lat: r.lat as number,
-        lng: r.lng as number,
-        title: `★ ${r.name}`,
-        tone: 'review' as const,
-      })),
+    ...reviewPins.map((r) => ({
+      lat: r.lat as number,
+      lng: r.lng as number,
+      title: `★ ${r.name}`,
+      tone: 'review' as const,
+    })),
   ];
 
-  const mapLegs: MapLeg[] = (legs ?? [])
+  const mapLegs: MapLeg[] = routeLegs
     .filter(
       (l) =>
         l.from_lat != null &&
@@ -99,6 +108,11 @@ export function MapTab({
     );
   };
 
+  const listEmpty =
+    routeLegs.length === 0 &&
+    placeItems.length === 0 &&
+    reviewPins.length === 0;
+
   return (
     <section className="space-y-3">
       {/* Toolbar — switch list/map, add a place. No titles. */}
@@ -121,67 +135,71 @@ export function MapTab({
       </div>
 
       {mode === 'map' ? (
-        <>
-          <Suspense
-            fallback={
-              <div className="h-[440px] w-full animate-pulse rounded-lg bg-surface-2" />
-            }
-          >
-            <SummerMap
-              pins={pins}
-              legs={mapLegs}
-              className="h-[440px] w-full overflow-hidden rounded-lg"
-            />
-          </Suspense>
-          <div className="space-y-1.5">
-            {(legs ?? []).map((l) => (
-              <div
-                key={l.id}
-                className="flex items-center gap-2 font-sans text-xs text-muted"
-              >
-                <span
-                  className="inline-block h-2 w-2 rounded-full"
-                  style={{
-                    background:
-                      l.country === 'TR'
-                        ? '#b5633a'
-                        : l.country === 'GE'
-                          ? '#6e1423'
-                          : '#c9a24b',
-                  }}
-                />
-                <span className="font-semibold text-fg">
-                  {l.from_label} → {l.to_label}
-                </span>
-                <span className="capitalize">· {l.mode}</span>
-              </div>
-            ))}
-          </div>
-        </>
+        <Suspense
+          fallback={
+            <div className="h-[460px] w-full animate-pulse rounded-lg bg-surface-2" />
+          }
+        >
+          <SummerMap
+            pins={pins}
+            legs={mapLegs}
+            className="h-[460px] w-full overflow-hidden rounded-lg"
+          />
+        </Suspense>
+      ) : listEmpty ? (
+        <p className="py-10 text-center font-sans text-sm text-muted">
+          Nothing here yet — add a place.
+        </p>
       ) : (
         <div className="space-y-2">
-          {placeItems.length === 0 ? (
-            <p className="py-10 text-center font-sans text-sm text-muted">
-              No places yet — add one.
-            </p>
-          ) : (
-            placeItems.map((it) => (
-              <Card key={it.id} className="flex items-center gap-3 px-4 py-2.5">
-                <span className="text-lg leading-none">
-                  {flagOf(it.country)}
-                </span>
-                <span className="min-w-0 flex-1 truncate font-display text-base text-fg">
-                  {it.title}
-                </span>
-                <IconButton
-                  label="Remove"
-                  onClick={() => delItem.mutate({ id: it.id, tripId: trip.id })}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </IconButton>
-              </Card>
-            ))
-          )}
+          {/* The seeded route (read-only backbone). */}
+          {routeLegs.map((l) => (
+            <Card key={l.id} className="flex items-center gap-3 px-4 py-2.5">
+              <span
+                className="h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ background: legDot(l.country) }}
+              />
+              <span className="min-w-0 flex-1 truncate font-display text-base text-fg">
+                {l.from_label} → {l.to_label}
+              </span>
+              <span className="shrink-0 font-sans text-xs capitalize text-muted">
+                {l.mode}
+              </span>
+            </Card>
+          ))}
+          {/* Places you added (removable). */}
+          {placeItems.map((it) => (
+            <Card key={it.id} className="flex items-center gap-3 px-4 py-2.5">
+              <span className="text-lg leading-none">{flagOf(it.country)}</span>
+              <span className="min-w-0 flex-1 truncate font-display text-base text-fg">
+                {it.title}
+              </span>
+              <IconButton
+                label="Remove"
+                onClick={() => delItem.mutate({ id: it.id, tripId: trip.id })}
+              >
+                <Trash2 className="h-4 w-4" />
+              </IconButton>
+            </Card>
+          ))}
+          {/* Reviews that are pinned (removable). */}
+          {reviewPins.map((r) => (
+            <Card key={r.id} className="flex items-center gap-3 px-4 py-2.5">
+              <Star className="h-4 w-4 shrink-0 fill-gold text-gold" />
+              <span className="min-w-0 flex-1 truncate font-display text-base text-fg">
+                {r.name}
+              </span>
+              <span className="text-base leading-none">
+                {flagOf(r.country)}
+              </span>
+              <IconButton
+                label="Remove"
+                onClick={() => delReview.mutate({ id: r.id, tripId: trip.id })}
+              >
+                <Trash2 className="h-4 w-4" />
+              </IconButton>
+            </Card>
+          ))}
         </div>
       )}
 
