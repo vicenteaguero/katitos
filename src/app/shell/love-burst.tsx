@@ -51,9 +51,11 @@ function makeBurst(note: string): Burst {
     k,
     emoji: pick(HEARTS),
     style: {
-      left: `${rand(2, 96)}%`,
+      // Originate from a centred band and fan outward, so the shower reads as
+      // coming from the middle of the screen (the hero), not edge-to-edge.
+      left: `${rand(30, 70)}%`,
       fontSize: `${rand(18, 40)}px`,
-      ['--dx' as string]: `${rand(-70, 70)}px`,
+      ['--dx' as string]: `${rand(-95, 95)}px`,
       ['--dur' as string]: `${rand(1, 2.5).toFixed(2)}s`,
       ['--delay' as string]: `${rand(0, 0.5).toFixed(2)}s`,
       ['--rot' as string]: `${rand(-45, 45)}deg`,
@@ -69,8 +71,9 @@ function makeBurst(note: string): Burst {
     k,
     word,
     style: {
-      top: `${rand(18, 70)}%`,
-      left: `${rand(12, 78)}%`,
+      // A centred cluster over the hero.
+      top: `${rand(30, 62)}%`,
+      left: `${rand(28, 72)}%`,
       ['--delay' as string]: `${(k * 0.35 + rand(0, 0.2)).toFixed(2)}s`,
     } as CSSProperties,
   }));
