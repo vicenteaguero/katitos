@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Camera, ImagePlus, Sparkles, Trash2 } from 'lucide-react';
+import { Camera, ImagePlus, Sparkles } from 'lucide-react';
 import {
   Button,
   CameraCapture,
@@ -12,40 +12,33 @@ import {
 } from '@kernel/ui';
 import { BUCKETS, useProxiedUrl } from '@kernel/storage';
 import type { Tables } from '@kernel/supabase';
-import type { AlbumPhoto, PhotoSource } from '../../types';
-import {
-  useAddPhoto,
-  useRemovePhoto,
-  useSetPhotoCaption,
-} from '../../api/photo-book.mutations';
+import { useAddPhoto } from '../../api/photo-book.mutations';
 import { usePolaroidPicker } from '../../api/photo-book.queries';
-import { SlotPhoto } from './slot-photo';
 
 type Polaroid = Tables<'polaroids'>;
 
-/** Add a new photo to an empty slot, or edit/replace/remove an existing one. */
+/**
+ * Add a NEW photo to the page — camera, library, or a daily polaroid. Its
+ * caption is set HERE, once, when you add it (it can't be changed afterwards);
+ * once placed, you drag the sticker around the page.
+ */
 export function SlotSheet({
   bookId,
   pageId,
   slot,
-  photo,
   onClose,
 }: {
   bookId: string;
   pageId: string;
   slot: number;
-  photo: AlbumPhoto | undefined;
   onClose: () => void;
 }) {
-  const editing = !!photo?.image_path;
-  const [caption, setCaption] = useState(photo?.caption ?? '');
+  const [caption, setCaption] = useState('');
   const [view, setView] = useState<'menu' | 'polaroids'>('menu');
   const [camera, setCamera] = useState(false);
 
   const add = useAddPhoto();
-  const setCap = useSetPhotoCaption();
-  const remove = useRemovePhoto();
-  const busy = add.isPending || setCap.isPending || remove.isPending;
+  const busy = add.isPending;
 
   async function addUpload(blob: Blob) {
     setCamera(false);
@@ -58,7 +51,7 @@ export function SlotSheet({
         blob,
         caption: caption.trim() || null,
       });
-      toast.success(editing ? 'Photo replaced' : 'Photo added');
+      toast.success('Photo added');
       onClose();
     } catch {
       toast.error('Could not add the photo');
@@ -82,125 +75,51 @@ export function SlotSheet({
     }
   }
 
-  async function saveCaption() {
-    if (!photo) return;
-    try {
-      await setCap.mutateAsync({ id: photo.id, bookId, caption });
-      toast.success('Caption saved');
-      onClose();
-    } catch {
-      toast.error('Could not save the caption');
-    }
-  }
-
-  async function removePhoto() {
-    if (!photo) return;
-    try {
-      await remove.mutateAsync({
-        id: photo.id,
-        bookId,
-        source: photo.source as PhotoSource,
-        path: photo.image_path,
-      });
-      toast.success('Photo removed');
-      onClose();
-    } catch {
-      toast.error('Could not remove the photo');
-    }
-  }
-
   return (
     <>
       <Sheet
         open
         onClose={onClose}
-        title={
-          view === 'polaroids'
-            ? 'Pick a polaroid'
-            : editing
-              ? 'Edit photo'
-              : 'Add a photo'
-        }
+        title={view === 'polaroids' ? 'Pick a polaroid' : 'Add a photo'}
       >
         {view === 'polaroids' ? (
           <PolaroidPicker onPick={addPolaroid} onBack={() => setView('menu')} />
         ) : (
-          <div className="space-y-6">
-            {editing && photo && (
-              <div className="relative mx-auto aspect-square w-44 overflow-hidden rounded-xl">
-                <SlotPhoto
-                  source={photo.source as PhotoSource}
-                  path={photo.image_path}
-                  alt={photo.caption ?? 'Album photo'}
-                />
-              </div>
-            )}
-
-            <Field label="Caption" hint="A line for this memory (optional).">
+          <div className="space-y-5">
+            <Field label="Caption" hint="Set it now — it stays with the photo.">
               <Input
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
                 placeholder="Say something sweet…"
                 maxLength={120}
+                autoFocus
               />
             </Field>
-
-            {editing ? (
-              <div className="space-y-3">
-                <Button full onClick={saveCaption} disabled={busy}>
-                  {setCap.isPending ? <Spinner /> : null} Save caption
-                </Button>
-                <div className="grid grid-cols-2 gap-3">
-                  <Button
-                    variant="secondary"
-                    onClick={() => setCamera(true)}
-                    disabled={busy}
-                  >
-                    <Camera size={18} /> Replace
-                  </Button>
-                  <Button
-                    variant="danger"
-                    onClick={removePhoto}
-                    disabled={busy}
-                  >
-                    <Trash2 size={18} /> Remove
-                  </Button>
-                </div>
-                <FilePickerButton
-                  onPick={(f) => void addUpload(f)}
-                  disabled={busy}
-                  className="w-full"
-                >
-                  <ImagePlus size={18} /> Replace from library
-                </FilePickerButton>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <Button full onClick={() => setCamera(true)} disabled={busy}>
-                  <Camera size={18} /> Take a photo
-                </Button>
-                <FilePickerButton
-                  onPick={(f) => void addUpload(f)}
-                  disabled={busy}
-                  className="w-full"
-                >
-                  <ImagePlus size={18} /> Upload from phone
-                </FilePickerButton>
-                <Button
-                  variant="secondary"
-                  full
-                  onClick={() => setView('polaroids')}
-                  disabled={busy}
-                >
-                  <Sparkles size={18} /> Add a polaroid
-                </Button>
-                {busy && (
-                  <p className="flex items-center justify-center gap-2 text-sm text-muted">
-                    <Spinner /> Adding…
-                  </p>
-                )}
-              </div>
-            )}
+            <div className="space-y-3">
+              <Button full onClick={() => setCamera(true)} disabled={busy}>
+                <Camera size={18} /> Take a photo
+              </Button>
+              <FilePickerButton
+                onPick={(f) => void addUpload(f)}
+                disabled={busy}
+                className="w-full"
+              >
+                <ImagePlus size={18} /> Upload from phone
+              </FilePickerButton>
+              <Button
+                variant="secondary"
+                full
+                onClick={() => setView('polaroids')}
+                disabled={busy}
+              >
+                <Sparkles size={18} /> Add a polaroid
+              </Button>
+              {busy && (
+                <p className="flex items-center justify-center gap-2 text-sm text-muted">
+                  <Spinner /> Adding…
+                </p>
+              )}
+            </div>
           </div>
         )}
       </Sheet>
@@ -215,7 +134,7 @@ export function SlotSheet({
   );
 }
 
-/** Grid of existing daily polaroids to drop straight into a page slot. */
+/** Grid of existing daily polaroids to drop straight onto the page. */
 function PolaroidPicker({
   onPick,
   onBack,
