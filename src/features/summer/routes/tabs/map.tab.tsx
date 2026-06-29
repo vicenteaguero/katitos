@@ -50,7 +50,23 @@ export function MapTab({
   const [adding, setAdding] = useState(false);
   const [placeCountry, setPlaceCountry] = useState<'TR' | 'GE' | ''>('');
 
-  useTopBarAction(<TopAdd onClick={() => setAdding(true)} />, []);
+  useTopBarAction(
+    <div className="flex items-center gap-1.5">
+      <IconButton
+        label={mode === 'map' ? 'List view' : 'Map view'}
+        onClick={() => setMode((m) => (m === 'map' ? 'list' : 'map'))}
+        className="bg-surface-2"
+      >
+        {mode === 'map' ? (
+          <List className="h-4 w-4" />
+        ) : (
+          <MapIcon className="h-4 w-4" />
+        )}
+      </IconButton>
+      <TopAdd onClick={() => setAdding(true)} />
+    </div>,
+    [mode]
+  );
 
   // Size the map to fill from its top down to the bottom of the scroll area, so
   // the Route tab never scrolls. Re-measures on viewport/orientation changes.
@@ -150,24 +166,6 @@ export function MapTab({
 
   return (
     <section className="space-y-3">
-      {/* Toolbar — switch list/map (Add lives in the top bar). */}
-      <div className="flex items-center gap-2">
-        <IconButton
-          label={mode === 'map' ? 'List view' : 'Map view'}
-          onClick={() => setMode((m) => (m === 'map' ? 'list' : 'map'))}
-          className="bg-surface-2"
-        >
-          {mode === 'map' ? (
-            <List className="h-5 w-5" />
-          ) : (
-            <MapIcon className="h-5 w-5" />
-          )}
-        </IconButton>
-        <span className="font-sans text-xs uppercase tracking-[0.14em] text-muted">
-          {mode === 'map' ? 'Map' : 'List'}
-        </span>
-      </div>
-
       {mode === 'map' ? (
         <div
           ref={mapWrapRef}
@@ -190,7 +188,7 @@ export function MapTab({
         <div className="space-y-2">
           {/* The route legs — removable. */}
           {routeLegs.map((l) => (
-            <Card key={l.id} className="flex items-center gap-3 px-4 py-2.5">
+            <Card key={l.id} className="flex items-center gap-2.5 px-3 py-2">
               <span
                 className="h-2.5 w-2.5 shrink-0 rounded-full"
                 style={{ background: legDot(l.country) }}
@@ -211,7 +209,7 @@ export function MapTab({
           ))}
           {/* Places you added (removable). */}
           {placeItems.map((it) => (
-            <Card key={it.id} className="flex items-center gap-3 px-4 py-2.5">
+            <Card key={it.id} className="flex items-center gap-2.5 px-3 py-2">
               <span className="text-lg leading-none">{flagOf(it.country)}</span>
               <span className="min-w-0 flex-1 truncate font-display text-base text-fg">
                 {it.title}
@@ -226,7 +224,7 @@ export function MapTab({
           ))}
           {/* Reviews that are pinned (removable). */}
           {reviewPins.map((r) => (
-            <Card key={r.id} className="flex items-center gap-3 px-4 py-2.5">
+            <Card key={r.id} className="flex items-center gap-2.5 px-3 py-2">
               <Star className="h-4 w-4 shrink-0 fill-gold text-gold" />
               <span className="min-w-0 flex-1 truncate font-display text-base text-fg">
                 {r.name}
