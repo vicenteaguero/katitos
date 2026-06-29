@@ -119,8 +119,11 @@ export type Database = {
           id: string
           image_path: string | null
           page_id: string
+          scale: number
           slot: number
           source: string
+          x: number
+          y: number
         }
         Insert: {
           caption?: string | null
@@ -129,8 +132,11 @@ export type Database = {
           id?: string
           image_path?: string | null
           page_id: string
+          scale?: number
           slot: number
           source?: string
+          x?: number
+          y?: number
         }
         Update: {
           caption?: string | null
@@ -139,8 +145,11 @@ export type Database = {
           id?: string
           image_path?: string | null
           page_id?: string
+          scale?: number
           slot?: number
           source?: string
+          x?: number
+          y?: number
         }
         Relationships: [
           {
