@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Luggage, Plus, Trash2 } from 'lucide-react';
+import { Luggage, Trash2 } from 'lucide-react';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import { cn } from '@kernel/lib';
@@ -9,8 +9,8 @@ import {
   Empty,
   IconButton,
   Input,
-  Select,
   Sheet,
+  useTopBarAction,
 } from '@kernel/ui';
 import { useSummerPacking } from '../../api/summer.queries';
 import {
@@ -18,6 +18,7 @@ import {
   useDeletePacking,
   useTogglePacking,
 } from '../../api/summer.mutations';
+import { TopAdd } from '../../components/top-add';
 import type { PackingItem, Trip } from '../../types';
 
 const CATEGORIES = ['Clothes', 'Docs', 'Tech', 'Toiletries', 'Misc'];
@@ -38,6 +39,13 @@ export function PackTab({ trip }: { trip: Trip }) {
   const list = items ?? [];
   const packed = list.filter((i) => i.packed).length;
 
+  useTopBarAction(
+    <TopAdd
+      onClick={() => setForm({ open: true, label: '', category: 'Clothes' })}
+    />,
+    []
+  );
+
   const byCat = new Map<string, PackingItem[]>();
   for (const it of list) {
     const key = it.category ?? 'Misc';
@@ -56,19 +64,11 @@ export function PackTab({ trip }: { trip: Trip }) {
 
   return (
     <section className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <span className="font-sans text-xs text-muted">
-          {list.length > 0 ? `${packed}/${list.length} packed` : ''}
-        </span>
-        <Button
-          size="sm"
-          onClick={() =>
-            setForm({ open: true, label: '', category: 'Clothes' })
-          }
-        >
-          <Plus size={15} /> Add
-        </Button>
-      </div>
+      {list.length > 0 && (
+        <p className="text-center font-sans text-xs text-muted">
+          {packed}/{list.length} packed
+        </p>
+      )}
 
       {list.length === 0 ? (
         <Empty
@@ -133,21 +133,30 @@ export function PackTab({ trip }: { trip: Trip }) {
             value={form.label}
             onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
             onKeyDown={(e) => e.key === 'Enter' && submit()}
-            placeholder="Item — passport, charger, sunscreen…"
+            placeholder="Name"
             autoFocus
           />
-          <Select
-            value={form.category}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, category: e.target.value }))
-            }
-          >
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </Select>
+          {/* Category — centred, selectable. */}
+          <div className="flex flex-wrap justify-center gap-1.5">
+            {CATEGORIES.map((c) => {
+              const active = form.category === c;
+              return (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, category: c }))}
+                  className={cn(
+                    'lift-press rounded-full px-3.5 py-1.5 font-sans text-xs font-semibold',
+                    active
+                      ? 'bg-accent text-accent-fg'
+                      : 'bg-surface-2 text-muted'
+                  )}
+                >
+                  {c}
+                </button>
+              );
+            })}
+          </div>
           <Button full onClick={submit} disabled={addItem.isPending}>
             Add
           </Button>
