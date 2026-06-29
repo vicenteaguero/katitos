@@ -25,7 +25,8 @@ import {
 } from '../../api/summer.mutations';
 import { CitySearch, type CityHit } from '../../components/city-search';
 import { TopAdd } from '../../components/top-add';
-import type { MapLeg, MapPin } from '../../components/summer-map';
+import type { MapPin } from '../../components/summer-map';
+import { buildRoute, reorderPositions } from '../../lib/map-route';
 import { COUNTRIES, type CountryFilter, type Trip } from '../../types';
 
 const SummerMap = lazy(() =>
@@ -157,36 +158,9 @@ export function MapTab({
     })),
   ];
 
-  // The route: connect the cities in order. Until there are 2+ cities, fall back
-  // to the seeded legs so the original Istanbul→…→Tbilisi line never vanishes.
-  const routeLegs: MapLeg[] =
-    cityItems.length >= 2
-      ? cityItems.slice(0, -1).map((c, i) => ({
-          fromLat: c.lat as number,
-          fromLng: c.lng as number,
-          toLat: cityItems[i + 1].lat as number,
-          toLng: cityItems[i + 1].lng as number,
-          mode: 'car',
-          country: c.country as 'TR' | 'GE' | null,
-          label: `${c.title} → ${cityItems[i + 1].title}`,
-        }))
-      : seededLegs
-          .filter(
-            (l) =>
-              l.from_lat != null &&
-              l.from_lng != null &&
-              l.to_lat != null &&
-              l.to_lng != null
-          )
-          .map((l) => ({
-            fromLat: l.from_lat as number,
-            fromLng: l.from_lng as number,
-            toLat: l.to_lat as number,
-            toLng: l.to_lng as number,
-            mode: l.mode,
-            country: l.country as 'TR' | 'GE' | null,
-            label: `${l.from_label} → ${l.to_label}`,
-          }));
+  // The route: connect the cities in order, or fall back to the seeded legs
+  // until 2+ cities are tagged (so the original line never vanishes on prod).
+  const routeLegs = buildRoute(cityItems, seededLegs);
 
   const addPlace = (hit: CityHit) => {
     addItem.mutate(
@@ -207,21 +181,14 @@ export function MapTab({
     );
   };
 
-  // Reorder a city up/down — normalise every city's position to its new index
-  // so the drawn route and the list always agree.
+  // Reorder a city up/down — normalise positions so route + list always agree.
   const moveCity = (i: number, dir: 1 | -1) => {
-    const j = i + dir;
-    if (j < 0 || j >= cityItems.length) return;
-    const order = [...cityItems];
-    [order[i], order[j]] = [order[j], order[i]];
-    order.forEach((c, idx) => {
-      if (c.position !== idx)
-        updateItem.mutate({
-          id: c.id,
-          tripId: trip.id,
-          patch: { position: idx },
-        });
-    });
+    for (const w of reorderPositions(cityItems, i, dir))
+      updateItem.mutate({
+        id: w.id,
+        tripId: trip.id,
+        patch: { position: w.position },
+      });
   };
 
   const listEmpty =
