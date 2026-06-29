@@ -1,22 +1,19 @@
 import { useMemo, useState } from 'react';
-import { Camera, Check, ExternalLink, MapPin, Trash2 } from 'lucide-react';
+import { Camera, ExternalLink, MapPin } from 'lucide-react';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import { DateTime, cn } from '@kernel/lib';
 import {
   CameraCapture,
   Card,
+  Checkbox,
   Empty,
   IconButton,
   toast,
   useTopBarAction,
 } from '@kernel/ui';
 import { useSummerItems } from '../../api/summer.queries';
-import {
-  useAddItemPhoto,
-  useDeleteItem,
-  useToggleItem,
-} from '../../api/summer.mutations';
+import { useAddItemPhoto, useToggleItem } from '../../api/summer.mutations';
 import { StopSheet } from '../../components/stop-sheet';
 import { TopAdd } from '../../components/top-add';
 import { type CountryFilter, type Trip, type TripItem } from '../../types';
@@ -41,7 +38,6 @@ export function PlanTab({
   useTableSync('trip_items', qk.trips.items(trip.id), { enabled: true });
   const { data: items } = useSummerItems(trip.id);
   const toggleItem = useToggleItem();
-  const delItem = useDeleteItem();
   const addItemPhoto = useAddItemPhoto();
 
   const [adding, setAdding] = useState(false);
@@ -78,7 +74,6 @@ export function PlanTab({
               status: it.status === 'done' ? 'open' : 'done',
             })
           }
-          onDelete={(it) => delItem.mutate({ id: it.id, tripId: trip.id })}
           onPhoto={(it) => setCamFor(it.id)}
           onEdit={(it) => setEditing(it)}
         />
@@ -117,14 +112,12 @@ function DayPlan({
   days,
   items,
   onToggle,
-  onDelete,
   onPhoto,
   onEdit,
 }: {
   days: string[];
   items: TripItem[];
   onToggle: (it: TripItem) => void;
-  onDelete: (it: TripItem) => void;
   onPhoto: (it: TripItem) => void;
   onEdit: (it: TripItem) => void;
 }) {
@@ -154,14 +147,11 @@ function DayPlan({
           </p>
           {(byDay.get(s.key) ?? []).map((it) => (
             <Card key={it.id} className="flex items-center gap-3 px-4 py-2.5">
-              <button
-                type="button"
-                aria-label="Toggle done"
-                onClick={() => onToggle(it)}
-                className="shrink-0 text-lg"
-              >
-                {it.status === 'done' ? '✅' : '⬜'}
-              </button>
+              <Checkbox
+                checked={it.status === 'done'}
+                onChange={() => onToggle(it)}
+                label="Toggle done"
+              />
               <button
                 type="button"
                 onClick={() => onEdit(it)}
@@ -194,16 +184,13 @@ function DayPlan({
                 </a>
               )}
               {it.lat != null && (
-                <Check
+                <MapPin
                   className="h-3.5 w-3.5 shrink-0 text-copper"
                   aria-label="on map"
                 />
               )}
               <IconButton label="Photo" onClick={() => onPhoto(it)}>
                 <Camera className="h-4 w-4" />
-              </IconButton>
-              <IconButton label="Delete" onClick={() => onDelete(it)}>
-                <Trash2 className="h-4 w-4" />
               </IconButton>
             </Card>
           ))}
