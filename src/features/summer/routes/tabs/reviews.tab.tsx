@@ -202,7 +202,7 @@ export function ReviewsTab({
         onClose={() => setAdding(false)}
         title="Add a review"
       >
-        <div className="space-y-3">
+        <div className="space-y-3.5">
           <Input
             value={form.name}
             onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
@@ -210,16 +210,36 @@ export function ReviewsTab({
             autoFocus
           />
 
-          {/* Stars, unlabelled and centred. */}
-          <div className="flex justify-center py-0.5">
+          {/* Rating · country flag switch — one tidy row. */}
+          <div className="flex items-center justify-between gap-3">
             <Stars
               value={form.stars}
               onChange={(v) => setForm((f) => ({ ...f, stars: v }))}
-              size={32}
+              size={28}
             />
+            <div className="inline-flex shrink-0 rounded-full bg-surface-2 p-1">
+              {COUNTRIES.map((co) => {
+                const active = form.country === co.code;
+                return (
+                  <button
+                    key={co.code}
+                    type="button"
+                    onClick={() =>
+                      setForm((f) => ({ ...f, country: active ? '' : co.code }))
+                    }
+                    className={cn(
+                      'lift-press rounded-full px-4 py-1.5 text-xl leading-none transition',
+                      active ? 'bg-accent' : 'opacity-45'
+                    )}
+                  >
+                    {co.flag}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Category — a quick pill row, no menu. */}
+          {/* Category pills. */}
           <div className="flex flex-wrap gap-1.5">
             {REVIEW_CATEGORIES.map((c) => {
               const active = form.category === c.value;
@@ -241,33 +261,14 @@ export function ReviewsTab({
             })}
           </div>
 
-          {/* Country — a flag switch, emoji only. */}
-          <div className="flex justify-center">
-            <div className="inline-flex rounded-full bg-surface-2 p-1">
-              {COUNTRIES.map((co) => {
-                const active = form.country === co.code;
-                return (
-                  <button
-                    key={co.code}
-                    type="button"
-                    onClick={() =>
-                      setForm((f) => ({ ...f, country: active ? '' : co.code }))
-                    }
-                    className={cn(
-                      'lift-press rounded-full px-5 py-1.5 text-xl leading-none transition',
-                      active ? 'bg-accent' : 'opacity-45'
-                    )}
-                  >
-                    {co.flag}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <Button variant="secondary" full onClick={() => setCam(true)}>
+          {/* Photo — a clear button, not ghost text. */}
+          <button
+            type="button"
+            onClick={() => setCam(true)}
+            className="lift-press flex w-full items-center justify-center gap-2 rounded-lg bg-surface-2 py-3 font-sans text-sm font-semibold text-muted active:text-fg"
+          >
             <Camera size={16} /> {blob ? 'Photo added ✓' : 'Add a photo'}
-          </Button>
+          </button>
           <Button full onClick={submit} disabled={addReview.isPending}>
             Save review
           </Button>
