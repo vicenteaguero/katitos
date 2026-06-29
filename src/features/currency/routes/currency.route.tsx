@@ -304,8 +304,9 @@ export function CurrencyRoute() {
         </div>
       )}
 
-      {/* The reading — full-width chips, tight, sitting just under the picker. */}
-      <div className="shrink-0 space-y-2">
+      {/* The reading — full-width chips, centred in the space between the
+          currency picker and the numpad. */}
+      <div className="flex min-h-0 flex-1 flex-col justify-center gap-2">
         <p className="w-full rounded-xl bg-surface-2 px-4 py-2 text-center font-display text-2xl tabular-nums text-muted">
           {meta(from).flag} {shown}{' '}
           <span className="text-base text-muted/70">{from}</span>
@@ -316,8 +317,6 @@ export function CurrencyRoute() {
           {resultText} <span className="text-2xl text-accent">{to}</span>
         </p>
       </div>
-
-      <div className="min-h-2 flex-1" />
 
       {/* Numpad — bare figures, generous targets. */}
       <div className="grid shrink-0 grid-cols-3 gap-2">
