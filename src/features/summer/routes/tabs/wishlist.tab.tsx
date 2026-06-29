@@ -3,7 +3,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import { cn } from '@kernel/lib';
-import { Button, Card, Empty, IconButton, Input } from '@kernel/ui';
+import { Button, Card, Checkbox, Empty, IconButton, Input } from '@kernel/ui';
 import { useSummerItems } from '../../api/summer.queries';
 import {
   useAddItem,
@@ -51,31 +51,28 @@ export function WishlistTab({
           value={wish}
           onChange={(e) => setWish(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && addWish()}
-          placeholder="To do, eat, buy — khinkali, baklava, a rug…"
+          placeholder="Item's name"
         />
         <Button onClick={addWish} className="shrink-0 px-4">
           <Plus size={16} />
         </Button>
       </div>
       {wishes.length === 0 ? (
-        <Empty title="Wishlist's empty" hint="To do, eat, buy — no date." />
+        <Empty title="Wishlist's empty" />
       ) : (
         wishes.map((it) => (
           <Card key={it.id} className="flex items-center gap-3 px-4 py-2.5">
-            <button
-              type="button"
-              aria-label="Toggle"
-              onClick={() =>
+            <Checkbox
+              checked={it.status === 'done'}
+              onChange={() =>
                 toggleItem.mutate({
                   id: it.id,
                   tripId: trip.id,
                   status: it.status === 'done' ? 'open' : 'done',
                 })
               }
-              className="shrink-0 text-lg"
-            >
-              {it.status === 'done' ? '✅' : '⬜'}
-            </button>
+              label="Toggle"
+            />
             <span
               className={cn(
                 'min-w-0 flex-1 truncate font-display text-base text-fg',
