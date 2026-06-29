@@ -5,6 +5,7 @@ import {
   ListChecks,
   Luggage,
   Map as MapIcon,
+  Sparkles,
   Star,
   Wallet,
   type LucideIcon,
@@ -16,6 +17,7 @@ import { useCreateSummerTrip } from '../api/summer.mutations';
 import { CountrySwitch } from '../components/country-switch';
 import type { CountryFilter, Trip } from '../types';
 import { PlanTab } from './tabs/plan.tab';
+import { WishlistTab } from './tabs/wishlist.tab';
 import { MapTab } from './tabs/map.tab';
 import { ReviewsTab } from './tabs/reviews.tab';
 import { BudgetTab } from './tabs/budget.tab';
@@ -23,10 +25,19 @@ import { WorkTab } from './tabs/work.tab';
 import { PackTab } from './tabs/pack.tab';
 import { PaniniTab } from './tabs/panini.tab';
 
-type Tab = 'plan' | 'map' | 'reviews' | 'budget' | 'work' | 'pack' | 'panini';
+type Tab =
+  | 'plan'
+  | 'wishlist'
+  | 'map'
+  | 'reviews'
+  | 'budget'
+  | 'work'
+  | 'pack'
+  | 'panini';
 
 const TABS: { id: Tab; label: string; icon: LucideIcon }[] = [
   { id: 'plan', label: 'Plan', icon: ListChecks },
+  { id: 'wishlist', label: 'Wishlist', icon: Sparkles },
   { id: 'map', label: 'Route', icon: MapIcon },
   { id: 'reviews', label: 'Reviews', icon: Star },
   { id: 'budget', label: 'Budget', icon: Wallet },
@@ -140,6 +151,8 @@ function SummerTab({
   switch (tab) {
     case 'plan':
       return <PlanTab trip={trip} country={country} />;
+    case 'wishlist':
+      return <WishlistTab trip={trip} country={country} />;
     case 'map':
       return <MapTab trip={trip} country={country} />;
     case 'reviews':
