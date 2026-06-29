@@ -198,13 +198,17 @@ function Greeting() {
  */
 function SilverDome() {
   return (
-    <div className="relative mx-auto mt-5 w-[232px]">
+    <div className="relative isolate mx-auto mt-5 w-[232px]">
+      {/* A SQUARE box so the circle fades out before every edge — the old
+          non-square box left the glow uncovered at the top/bottom edges and
+          clipped it into a hard rectangle. Stays BEHIND the image (earlier in
+          the DOM, so the building paints on top). */}
       <span
         aria-hidden="true"
-        className="love-halo pointer-events-none absolute left-1/2 top-[46%] h-[150px] w-[210px] -translate-x-1/2 -translate-y-1/2 rounded-full"
+        className="love-halo pointer-events-none absolute left-1/2 top-[42%] -z-10 h-[240px] w-[240px] -translate-x-1/2 -translate-y-1/2 rounded-full"
         style={{
           background:
-            'radial-gradient(circle, rgba(228,195,106,0.32), transparent 70%)',
+            'radial-gradient(circle, rgba(228,195,106,0.36) 0%, rgba(228,195,106,0.12) 38%, transparent 64%)',
         }}
       />
       <img
