@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, BookOpen, Plus } from 'lucide-react';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import { Empty, IconButton, LoadingScreen } from '@kernel/ui';
-import { SLOTS_PER_PAGE, type BookScope } from '../../types';
+import { type BookScope } from '../../types';
 import { useBook, usePages } from '../../api/photo-book.queries';
 import { useAddPage } from '../../api/photo-book.mutations';
 import { PageFace } from './page-face';
@@ -105,7 +105,7 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
     }
     return <LoadingScreen />;
   }
-  if (bookLoading || pagesLoading || !pages || count === 0) {
+  if (bookLoading || pagesLoading || !pages || count === 0 || !bookId) {
     return <LoadingScreen />;
   }
 
@@ -122,25 +122,22 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
         : undefined;
 
   const atLast = safeIndex === count - 1;
-  const lastFull =
-    current.photos.filter((p) => p.image_path).length >= SLOTS_PER_PAGE;
-  const showAddPage = atLast && lastFull && !turning;
+  const showAddPage = atLast && !turning;
 
-  const tapSlot = (slot: number) => {
+  // Add a sticker to the current page. Slot is now just a unique id; the photo
+  // lands at the page centre and you drag it where you want.
+  const onAdd = () => {
     if (turning) return;
-    setTarget({ pageId: current.id, slot });
+    const nextSlot =
+      current.photos.reduce((m, p) => Math.max(m, p.slot), -1) + 1;
+    setTarget({ pageId: current.id, slot: nextSlot });
   };
 
   const onAddPage = () => {
-    if (!bookId) return;
     const position = (pages[count - 1]?.position ?? -1) + 1;
     addPage.mutate({ bookId, position });
     setIndex(count); // advance onto the new page once it arrives
   };
-
-  const targetPhoto = target
-    ? current.photos.find((p) => p.slot === target.slot)
-    : undefined;
 
   return (
     <div className="pb-wine curtain-reveal">
@@ -159,8 +156,9 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
             <div className="pb-layer">
               <PageFace
                 page={basePage}
-                onTapSlot={tapSlot}
+                bookId={bookId}
                 interactive={!turning}
+                onAdd={onAdd}
               />
             </div>
 
@@ -171,7 +169,11 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
                 onTransitionEnd={onLeafTransitionEnd}
               >
                 <div className="pb-face">
-                  <PageFace page={leafPage} interactive={false} />
+                  <PageFace
+                    page={leafPage}
+                    bookId={bookId}
+                    interactive={false}
+                  />
                 </div>
                 <div className="pb-face pb-face--back" />
                 <div className="pb-shade" />
@@ -216,13 +218,12 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
         </div>
       </div>
 
-      {target && bookId && (
+      {target && (
         <SlotSheet
           key={`${target.pageId}:${target.slot}`}
           bookId={bookId}
           pageId={target.pageId}
           slot={target.slot}
-          photo={targetPhoto}
           onClose={() => setTarget(null)}
         />
       )}
