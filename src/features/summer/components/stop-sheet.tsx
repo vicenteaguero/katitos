@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { MapPin } from 'lucide-react';
+import { MapPin, Trash2 } from 'lucide-react';
 import { DateTime, cn } from '@kernel/lib';
 import { Button, Input, Select, Sheet, Textarea } from '@kernel/ui';
-import { useAddItem, useUpdateItem } from '../api/summer.mutations';
+import {
+  useAddItem,
+  useDeleteItem,
+  useUpdateItem,
+} from '../api/summer.mutations';
 import { CitySearch } from './city-search';
 import {
   COUNTRIES,
@@ -57,6 +61,7 @@ export function StopSheet({
 }) {
   const addItem = useAddItem();
   const updateItem = useUpdateItem();
+  const deleteItem = useDeleteItem();
   const [form, setForm] = useState({ ...EMPTY });
 
   // Prefill from the item being edited (or clear) every time the sheet opens.
@@ -104,6 +109,14 @@ export function StopSheet({
         { onSuccess: onClose }
       );
     }
+  };
+
+  const onDelete = () => {
+    if (!editItem) return;
+    deleteItem.mutate(
+      { id: editItem.id, tripId: trip.id },
+      { onSuccess: onClose }
+    );
   };
 
   const busy = addItem.isPending || updateItem.isPending;
@@ -214,9 +227,23 @@ export function StopSheet({
           rows={2}
           placeholder="Notes (optional)"
         />
-        <Button full onClick={submit} disabled={busy}>
-          {editItem ? 'Save' : 'Add to plan'}
-        </Button>
+        {/* Delete lives here now (off the list row) — only when editing. */}
+        <div className="flex gap-2">
+          {editItem && (
+            <Button
+              variant="secondary"
+              aria-label="Delete stop"
+              onClick={onDelete}
+              disabled={deleteItem.isPending}
+              className="shrink-0 px-4"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+          <Button full onClick={submit} disabled={busy}>
+            {editItem ? 'Save' : 'Add to plan'}
+          </Button>
+        </div>
       </div>
     </Sheet>
   );
