@@ -136,12 +136,14 @@ export function SummerMap({
       const color = PIN_COLOR[p.tone ?? 'place'] ?? '#6e1423';
       const icon = L.divIcon({
         className: '',
-        html: `<div style="display:flex;flex-direction:column;align-items:center;transform:translateY(-50%)">
+        html: `<div style="display:flex;flex-direction:column;align-items:center">
           <div style="width:18px;height:18px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);
             background:${color};border:1.5px solid #e4c36a;
             box-shadow:0 2px 6px rgba(0,0,0,.5)"></div></div>`,
-        iconSize: [18, 18],
-        iconAnchor: [9, 18],
+        // The rotated teardrop's sharp tip sits ~22px down from the icon's top —
+        // anchor THERE so the point lands exactly on the lat/lng at any zoom.
+        iconSize: [18, 22],
+        iconAnchor: [9, 22],
       });
       L.marker([p.lat, p.lng], { icon })
         .addTo(layer)
