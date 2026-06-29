@@ -19,7 +19,7 @@ import {
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import { cn } from '@kernel/lib';
-import { Empty, IconButton, LoadingScreen } from '@kernel/ui';
+import { Empty, IconButton, LoadingScreen, useTopBarAction } from '@kernel/ui';
 import { type AlbumPageWithPhotos, type BookScope } from '../../types';
 import { useBook, usePages } from '../../api/photo-book.queries';
 import { useAddPage } from '../../api/photo-book.mutations';
@@ -121,7 +121,8 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
         (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
       const top = el.getBoundingClientRect().top;
       const availH = main.getBoundingClientRect().bottom - padB - top - 76;
-      const byHeight = Math.floor(availH * 0.75);
+      const M = 14; // wine cover margin (matches .pb-case padding)
+      const byHeight = Math.floor((availH - 2 * M) * 0.75 + M);
       const maxWidth = main.clientWidth - padX;
       setStageW(Math.max(220, Math.min(byHeight, maxWidth)));
     };
@@ -192,6 +193,58 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
     { axis: 'x', filterTaps: true, pointer: { touch: true } }
   );
 
+  // Top-bar controls (icon-only): + adds a sticker to the focused page, ✎
+  // toggles arrange. A ref keeps the handlers reading the latest page/data.
+  const liveRef = useRef({ pages, safeIndex });
+  liveRef.current = { pages, safeIndex };
+  const addStickerTop = useCallback(() => {
+    const { pages: ps, safeIndex: si } = liveRef.current;
+    const cur = ps?.[si];
+    if (!cur) return;
+    const nextSlot = cur.photos.reduce((m, p) => Math.max(m, p.slot), -1) + 1;
+    setTarget({ pageId: cur.id, slot: nextSlot });
+  }, []);
+  const toggleArrange = useCallback(
+    () => setMode((m) => (m === 'arrange' ? 'read' : 'arrange')),
+    []
+  );
+  useTopBarAction(
+    <div className="flex items-center gap-1.5">
+      <button
+        type="button"
+        onClick={addStickerTop}
+        aria-label="Add a photo"
+        className="lift-press flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-fg shadow-loge"
+        style={{ border: '1px solid rgba(228,195,106,.4)' }}
+      >
+        <Plus className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        onClick={toggleArrange}
+        aria-label={mode === 'arrange' ? 'Done arranging' : 'Arrange stickers'}
+        className={cn(
+          'lift-press flex h-8 w-8 items-center justify-center rounded-full shadow-loge',
+          mode === 'arrange'
+            ? 'bg-accent text-accent-fg'
+            : 'bg-surface text-fg/80 ring-1 ring-border/60'
+        )}
+        style={
+          mode === 'arrange'
+            ? { border: '1px solid rgba(228,195,106,.4)' }
+            : undefined
+        }
+      >
+        {mode === 'arrange' ? (
+          <Check className="h-4 w-4" />
+        ) : (
+          <Pencil className="h-4 w-4" />
+        )}
+      </button>
+    </div>,
+    [mode]
+  );
+
   if ((scope === 'life' && bookLoading) || (scope === 'trip' && !tripId)) {
     if (scope === 'trip' && !tripId) {
       return (
@@ -213,12 +266,6 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
   // 200%-wide track: 0% shows the left page of the spread, -50% the right page.
   const offsetPct = safeIndex % 2 === 0 ? 0 : -50;
 
-  const onAdd = () => {
-    const nextSlot =
-      current.photos.reduce((m, p) => Math.max(m, p.slot), -1) + 1;
-    setTarget({ pageId: current.id, slot: nextSlot });
-  };
-
   const onAddPage = () => {
     const position = (pages[count - 1]?.position ?? -1) + 1;
     addPage.mutate({ bookId, position });
@@ -233,48 +280,25 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
 
   return (
     <div className="pb-wine curtain-reveal">
-      <div className="mb-2 flex items-center justify-end">
-        <button
-          type="button"
-          onClick={() => setMode(arranging ? 'read' : 'arrange')}
-          className={cn(
-            'inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold shadow-loge transition active:scale-95',
-            arranging
-              ? 'bg-accent text-accent-fg'
-              : 'bg-surface text-fg/80 ring-1 ring-border/60'
-          )}
-        >
-          {arranging ? (
-            <>
-              <Check className="h-3.5 w-3.5" /> Done
-            </>
-          ) : (
-            <>
-              <Pencil className="h-3.5 w-3.5" /> Arrange
-            </>
-          )}
-        </button>
-      </div>
-
       <div
         ref={setStage}
         className="pb-stage"
         style={stageW ? { width: stageW, marginInline: 'auto' } : undefined}
       >
         {stageW > 0 && (
-          <div className="pb-case">
+          <div
+            className="pb-viewport"
+            {...(arranging ? {} : bind())}
+            style={{ touchAction: 'pan-y' }}
+          >
             <div
-              className="pb-viewport"
-              {...(arranging ? {} : bind())}
-              style={{ touchAction: 'pan-y' }}
+              className="pb-track"
+              style={{
+                transform: `translateX(${offsetPct}%)`,
+                transition: `transform ${FLIP_MS}ms cubic-bezier(0.33, 0, 0.2, 1)`,
+              }}
             >
-              <div
-                className="pb-track"
-                style={{
-                  transform: `translateX(${offsetPct}%)`,
-                  transition: `transform ${FLIP_MS}ms cubic-bezier(0.33, 0, 0.2, 1)`,
-                }}
-              >
+              <div className="pb-case">
                 <HTMLFlipBook
                   ref={bookRef}
                   className="pb-book"
@@ -318,7 +342,6 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
                   page={current}
                   bookId={bookId}
                   interactive
-                  onAdd={onAdd}
                 />
               </div>
             </div>
