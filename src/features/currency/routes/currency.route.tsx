@@ -143,10 +143,13 @@ export function CurrencyRoute() {
       return;
     seeded.current = true;
     const pref = self?.preferred_currency;
+    const base = self?.currency_from;
     if (isCode(pref) && pref !== to) {
       setTo(pref);
       if (from === pref) setFrom(to);
     }
+    // The "from" half of the saved default pair (preferred_currency is "to").
+    if (isCode(base) && base !== pref) setFrom(base);
   }, [partnerLoading, self, initialPair, from, to]);
 
   // Persist the pair whenever it changes.
