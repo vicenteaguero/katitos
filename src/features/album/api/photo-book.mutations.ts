@@ -88,6 +88,33 @@ export function useSetPhotoCaption() {
   });
 }
 
+/** Move/resize a sticker — its normalized position (x, y ∈ 0..1) and scale. */
+export function useMovePhoto() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: {
+      id: string;
+      bookId: string;
+      x: number;
+      y: number;
+      scale?: number;
+    }) => {
+      const patch: { x: number; y: number; scale?: number } = {
+        x: v.x,
+        y: v.y,
+      };
+      if (v.scale != null) patch.scale = v.scale;
+      const { error } = await supabase
+        .from('album_photos')
+        .update(patch)
+        .eq('id', v.id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, v) =>
+      qc.invalidateQueries({ queryKey: qk.album.pages(v.bookId) }),
+  });
+}
+
 export function useRemovePhoto() {
   const qc = useQueryClient();
   return useMutation({
