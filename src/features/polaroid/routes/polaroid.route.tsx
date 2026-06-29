@@ -39,23 +39,13 @@ function TodayCard({
   if (isLoading) return <LoadingScreen />;
 
   if (!today) {
+    // Just the button — no card, no decorative chrome, no dead top space.
     return (
-      <Card className="footlight flex flex-col items-center gap-6 py-9 text-center">
-        <span
-          className="polaroid-warmth pointer-events-none absolute inset-0 -z-10"
-          aria-hidden="true"
-          style={{
-            background:
-              'radial-gradient(60% 50% at 50% 40%, rgb(181 99 58 / 0.16), transparent 70%)',
-          }}
-        />
-        <span className="gilt-text candle-flicker text-5xl" aria-hidden="true">
-          <Camera className="mx-auto h-12 w-12" strokeWidth={1.25} />
-        </span>
+      <div className="flex justify-center py-2">
         <Button onClick={onOpenCamera}>
           <Camera size={18} /> Take today's photo
         </Button>
-      </Card>
+      </div>
     );
   }
 
