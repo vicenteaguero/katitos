@@ -14,6 +14,7 @@ import {
   Sheet,
   Textarea,
   toast,
+  useTopBarAction,
 } from '@kernel/ui';
 import { useScavengerCards } from '../api/scavenger.queries';
 import {
@@ -166,12 +167,19 @@ export function ScavengerRoute() {
     );
   };
 
+  useTopBarAction(
+    <span className="rounded-full bg-surface-2 px-2.5 py-1 font-sans text-xs font-semibold tabular-nums text-muted">
+      {used}/{STAR_POT}
+    </span>,
+    [used]
+  );
+
   if (isLoading) return <LoadingScreen />;
 
   return (
-    <div className="curtain-reveal space-y-5">
+    <div className="curtain-reveal space-y-3">
       {/* The leaderboard — two decks drawing from one shared pot of stars. */}
-      <Card className="space-y-4">
+      <Card className="space-y-2 p-3">
         <div className="flex items-stretch text-center">
           {(['a', 'b'] as Role[]).map((role, i) => {
             const score = role === 'a' ? scoreA : scoreB;
@@ -192,7 +200,7 @@ export function ScavengerRoute() {
                   {leads && <Crown size={12} className="text-gold" />}
                   {nameOf(role)}
                 </p>
-                <p className="gilt-text font-display text-5xl font-semibold tabular-nums">
+                <p className="gilt-text gilt-figures font-display text-5xl font-semibold tabular-nums">
                   {score}
                 </p>
                 <p className="font-sans text-[0.6rem] uppercase tracking-[0.18em] text-muted">
@@ -210,9 +218,6 @@ export function ScavengerRoute() {
               style={{ width: `${(used / STAR_POT) * 100}%` }}
             />
           </div>
-          <p className="mt-1.5 text-center font-sans text-[0.7rem] uppercase tracking-[0.16em] text-muted">
-            {used}/{STAR_POT} stars given
-          </p>
         </div>
       </Card>
 
