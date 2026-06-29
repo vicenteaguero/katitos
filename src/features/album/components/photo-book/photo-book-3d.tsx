@@ -25,11 +25,18 @@ import { useBook, usePages } from '../../api/photo-book.queries';
 import { useAddPage } from '../../api/photo-book.mutations';
 import { PageFace } from './page-face';
 import { SlotSheet } from './slot-sheet';
+import {
+  computeLayout,
+  decideGesture,
+  restFor,
+  slideDx,
+  stepCrossing,
+} from './book-geometry';
 import '../../photo-book.css';
 
 const FLIP_MS = 700;
 const M = 10; // wine cover margin around the open pages
-const PEEK = 38; // px of the facing page you can always see
+const MIN_PEEK = 40; // smallest sliver of the facing page kept visible
 
 export interface PhotoBook3DProps {
   scope: BookScope;
@@ -92,6 +99,10 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
   });
   const bookRef = useRef<FlipBookRef | null>(null);
   const busyRef = useRef(false);
+  // The gesture is classified ONCE at touch-start and locked for its duration.
+  const modeRef = useRef<'slide' | 'flip' | null>(null);
+  const targetRef = useRef(0);
+  const vpRef = useRef<HTMLDivElement | null>(null);
 
   const addPage = useAddPage();
 
@@ -109,16 +120,9 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
       const cs = getComputedStyle(main);
       const padB = parseFloat(cs.paddingBottom) || 0;
       const top = el.getBoundingClientRect().top;
-      const fullW = el.getBoundingClientRect().width;
+      const elW = el.getBoundingClientRect().width; // padded content width
       const availH = main.getBoundingClientRect().bottom - padB - top - 76;
-      const byH = Math.floor((availH - 2 * M) * 0.75);
-      const pageW = Math.max(220, Math.min(fullW - PEEK, byH));
-      setSize({
-        pageW,
-        trackW: 2 * pageW + 2 * M,
-        restL: -M, // left page full, next page peeks on the right
-        restR: PEEK - M - pageW, // right page full, prev page peeks on the left
-      });
+      setSize(computeLayout(elW, availH, M, MIN_PEEK));
     };
     compute();
     const ro = new ResizeObserver(compute);
@@ -152,41 +156,76 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
     [pages, bookId]
   );
 
-  // One step through the book. Within a spread it just pans (no flip); crossing
-  // a spread boundary turns a page (StPageFlip curl) as the piece slides.
-  const step = useCallback(
-    (dir: 1 | -1) => {
+  // A page flip (StPageFlip curl) across a spread boundary, locked for FLIP_MS.
+  const doFlip = useCallback(
+    (target: number) => {
       if (busyRef.current) return;
-      setIndex((p) => {
-        const np = p + dir;
-        if (np < 0 || np > count - 1) return p;
-        const crossing = dir > 0 ? p % 2 === 1 : p % 2 === 0;
-        if (crossing) {
-          busyRef.current = true;
-          const pf = bookRef.current?.pageFlip();
-          if (dir > 0) pf?.flipNext();
-          else pf?.flipPrev();
-          window.setTimeout(() => {
-            busyRef.current = false;
-          }, FLIP_MS);
-        }
-        return np;
-      });
+      busyRef.current = true;
+      const pf = bookRef.current?.pageFlip();
+      if (target > focused) pf?.flipNext();
+      else pf?.flipPrev();
+      setIndex(target);
+      window.setTimeout(() => {
+        busyRef.current = false;
+      }, FLIP_MS);
     },
-    [count]
+    [focused]
   );
 
-  // Drag the whole piece: it follows the finger; on release, snap or step.
+  // One step in a direction. Within a spread it SLIDES (the .pb-track CSS
+  // transition pans, no curl); across a spread boundary it FLIPS (curl). Both
+  // the buttons and the drag route through this same slide-or-flip decision.
+  const go = useCallback(
+    (dir: 1 | -1) => {
+      const target = focused + dir;
+      if (target < 0 || target > count - 1 || busyRef.current) return;
+      if (stepCrossing(focused, dir)) doFlip(target);
+      else setIndex(target);
+    },
+    [focused, count, doFlip]
+  );
+
+  // The gesture: split the book in halves and decide ONCE at touch-start whether
+  // this is a SLIDE or a FLIP, then LOCK it for the gesture so the two never mix
+  // (that mixing was the old bounce). Left page → [ flipPrev | slide ]; right
+  // page → [ slide | flipNext ]. Slide follows the finger between the two rest
+  // offsets; flip commits the curl on a deliberate drag/flick.
   const bind = useDrag(
-    ({ last, movement: [mx], swipe: [sx] }) => {
-      if (last) {
-        setDrag({ active: false, dx: 0 });
-        if (sx === -1 || mx < -40) step(1);
-        else if (sx === 1 || mx > 40) step(-1);
+    ({ first, last, xy: [x], movement: [mx], velocity: [vx] }) => {
+      if (first) {
+        const rect = vpRef.current?.getBoundingClientRect();
+        const leftHalf = rect ? x - rect.left < rect.width / 2 : true;
+        const { mode, target } = decideGesture(
+          focused,
+          count,
+          leftHalf,
+          busyRef.current
+        );
+        modeRef.current = mode;
+        targetRef.current = target;
         return;
       }
-      const lim = size.pageW * 0.9;
-      setDrag({ active: true, dx: Math.max(-lim, Math.min(lim, mx)) });
+      const mode = modeRef.current;
+      if (!mode) return;
+      const committed = Math.abs(mx) > 40 || Math.abs(vx) > 0.4;
+      if (mode === 'slide') {
+        if (last) {
+          modeRef.current = null;
+          setDrag({ active: false, dx: 0 });
+          if (committed) setIndex(targetRef.current);
+          return;
+        }
+        // Follow the finger between the current rest and the target rest.
+        setDrag({
+          active: true,
+          dx: slideDx(focused, mx, size.restL, size.restR),
+        });
+      } else if (last) {
+        // Flip zone: no live pan (the next spread isn't drawn yet) — the curl
+        // commits on release past the threshold, else the gesture is cancelled.
+        modeRef.current = null;
+        if (committed) doFlip(targetRef.current);
+      }
     },
     { axis: 'x', filterTaps: true, pointer: { touch: true } }
   );
@@ -211,7 +250,7 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
         type="button"
         onClick={addStickerTop}
         aria-label="Add a photo"
-        className="lift-press flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-fg shadow-loge"
+        className="lift-press flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-fg shadow-loge outline-none focus-visible:ring-2 focus-visible:ring-gold/30"
         style={{ border: '1px solid rgba(228,195,106,.4)' }}
       >
         <Plus className="h-4 w-4" />
@@ -221,7 +260,7 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
         onClick={toggleArrange}
         aria-label={mode === 'arrange' ? 'Done arranging' : 'Arrange stickers'}
         className={cn(
-          'lift-press flex h-8 w-8 items-center justify-center rounded-full shadow-loge',
+          'lift-press flex h-8 w-8 items-center justify-center rounded-full shadow-loge outline-none focus-visible:ring-2 focus-visible:ring-gold/30',
           mode === 'arrange'
             ? 'bg-accent text-accent-fg'
             : 'bg-surface text-fg/80 ring-1 ring-border/60'
@@ -262,7 +301,7 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
   const current = pages[focused];
   const { pageW, trackW, restL, restR } = size;
   const pageH = Math.round(pageW * (4 / 3));
-  const rest = focused % 2 === 0 ? restL : restR;
+  const rest = restFor(focused, restL, restR);
   const tx = rest + (drag.active ? drag.dx : 0);
 
   const onAddPage = () => {
@@ -277,6 +316,7 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
       <div ref={setStage} className="pb-stage">
         {pageW > 0 && !arranging && (
           <div
+            ref={vpRef}
             className="pb-viewport"
             style={{ height: pageH + 2 * M }}
             {...bind()}
@@ -340,7 +380,7 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
       <div className="mt-4 flex items-center justify-between pb-[env(safe-area-inset-bottom)]">
         <IconButton
           label="Previous page"
-          onClick={() => step(-1)}
+          onClick={() => go(-1)}
           disabled={arranging || focused <= 0}
         >
           <ChevronLeft />
@@ -362,7 +402,7 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
           )}
           <IconButton
             label="Next page"
-            onClick={() => step(1)}
+            onClick={() => go(1)}
             disabled={arranging || atEnd}
           >
             <ChevronRight />
