@@ -115,6 +115,7 @@ export function useUpdateItem() {
       tripId: string;
       patch: {
         title?: string;
+        kind?: string;
         description?: string | null;
         link?: string | null;
         country?: string | null;
