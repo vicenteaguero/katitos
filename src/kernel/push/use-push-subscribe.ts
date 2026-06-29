@@ -30,7 +30,7 @@ function supported(): boolean {
 }
 
 /** Running as an installed PWA (iOS exposes web push only when standalone). */
-function isStandalone(): boolean {
+export function isStandalone(): boolean {
   return (
     typeof window !== 'undefined' &&
     (window.matchMedia?.('(display-mode: standalone)').matches === true ||
