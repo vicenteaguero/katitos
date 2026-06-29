@@ -83,7 +83,7 @@ export function StopSheet({
         <Input
           value={form.title}
           onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-          placeholder="Name — e.g. Gergeti Trinity"
+          placeholder="Name"
           autoFocus
         />
 
@@ -136,7 +136,7 @@ export function StopSheet({
             onChange={(e) => setForm((f) => ({ ...f, day: e.target.value }))}
             className="min-w-0 flex-1"
           >
-            <option value="">When? (optional)</option>
+            <option value="">When?</option>
             {days.map((d) => (
               <option key={d} value={d}>
                 {DateTime.fromISO(d).toFormat('EEE, LLL d')}
