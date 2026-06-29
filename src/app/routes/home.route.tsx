@@ -205,7 +205,7 @@ function SilverDome() {
           the DOM, so the building paints on top). */}
       <span
         aria-hidden="true"
-        className="love-halo pointer-events-none absolute left-1/2 top-[42%] -z-10 h-[240px] w-[240px] -translate-x-1/2 -translate-y-1/2 rounded-full"
+        className="love-halo pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[240px] w-[240px] -translate-x-1/2 -translate-y-1/2 rounded-full"
         style={{
           background:
             'radial-gradient(circle, rgba(228,195,106,0.36) 0%, rgba(228,195,106,0.12) 38%, transparent 64%)',
@@ -301,14 +301,14 @@ function TogetherHero() {
         {/* hero body */}
 
         <div className="relative px-[22px]">
-          <p className="m-0 mt-5 text-[10.5px] font-bold uppercase tracking-[0.3em] text-[#c89aa6]">
+          <p className="m-0 mt-2.5 text-[10.5px] font-bold uppercase tracking-[0.3em] text-[#c89aa6]">
             Together for
           </p>
-          <p className="gilt-text gold-shimmer gilt-figures m-0 mt-1 font-display text-[5.6rem] font-semibold tracking-tight">
+          <p className="gilt-text gold-shimmer gilt-figures m-0 font-display text-[5.6rem] font-semibold tracking-tight">
             {days.toLocaleString()}
           </p>
           {/* The same span, decomposed — calendar years / months / weeks / days. */}
-          <p className="m-0 mt-2.5 font-sans text-[10.5px] uppercase tracking-[0.16em] text-[#b08e95]">
+          <p className="m-0 font-sans text-[10.5px] uppercase tracking-[0.16em] text-[#b08e95]">
             {fmtBreakdown(breakdown)}
           </p>
 
@@ -368,7 +368,7 @@ function TogetherHero() {
 export function HomeRoute() {
   return (
     <div
-      className="curtain-reveal -mt-2 space-y-5"
+      className="curtain-reveal space-y-5"
       style={{ '--i': 0 } as CSSProperties}
     >
       <Greeting />
