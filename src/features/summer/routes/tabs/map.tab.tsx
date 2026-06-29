@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useLayoutEffect, useRef, useState } from 'react';
 import { List, Map as MapIcon, Plus, Star, Trash2 } from 'lucide-react';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
@@ -46,6 +46,36 @@ export function MapTab({
   const [mode, setMode] = useState<'map' | 'list'>('map');
   const [adding, setAdding] = useState(false);
   const [placeCountry, setPlaceCountry] = useState<'TR' | 'GE' | ''>('');
+
+  // Size the map to fill from its top down to the bottom of the scroll area, so
+  // the Route tab never scrolls. Re-measures on viewport/orientation changes.
+  const mapWrapRef = useRef<HTMLDivElement>(null);
+  const [mapH, setMapH] = useState(460);
+  useLayoutEffect(() => {
+    if (mode !== 'map') return;
+    const compute = () => {
+      const el = mapWrapRef.current;
+      const main = el?.closest('main');
+      if (!el || !main) return;
+      const padB = parseFloat(getComputedStyle(main).paddingBottom) || 0;
+      const avail =
+        main.getBoundingClientRect().bottom -
+        padB -
+        el.getBoundingClientRect().top;
+      setMapH(Math.max(260, Math.floor(avail)));
+    };
+    compute();
+    const main = mapWrapRef.current?.closest('main');
+    const ro = main ? new ResizeObserver(compute) : null;
+    if (main && ro) ro.observe(main);
+    window.addEventListener('resize', compute);
+    window.visualViewport?.addEventListener('resize', compute);
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener('resize', compute);
+      window.visualViewport?.removeEventListener('resize', compute);
+    };
+  }, [mode]);
 
   const inCountry = (c: string | null) => country === 'all' || c === country;
 
@@ -135,17 +165,19 @@ export function MapTab({
       </div>
 
       {mode === 'map' ? (
-        <Suspense
-          fallback={
-            <div className="h-[460px] w-full animate-pulse rounded-lg bg-surface-2" />
-          }
+        <div
+          ref={mapWrapRef}
+          style={{ height: mapH }}
+          className="w-full overflow-hidden rounded-lg"
         >
-          <SummerMap
-            pins={pins}
-            legs={mapLegs}
-            className="h-[460px] w-full overflow-hidden rounded-lg"
-          />
-        </Suspense>
+          <Suspense
+            fallback={
+              <div className="h-full w-full animate-pulse bg-surface-2" />
+            }
+          >
+            <SummerMap pins={pins} legs={mapLegs} className="h-full w-full" />
+          </Suspense>
+        </div>
       ) : listEmpty ? (
         <p className="py-10 text-center font-sans text-sm text-muted">
           Nothing here yet — add a place.
