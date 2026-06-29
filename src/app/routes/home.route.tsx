@@ -203,14 +203,21 @@ function SilverDome() {
           non-square box left the glow uncovered at the top/bottom edges and
           clipped it into a hard rectangle. Stays BEHIND the image (earlier in
           the DOM, so the building paints on top). */}
+      {/* Outer span does the centering (static translate); the inner .love-halo
+          only animates SCALE — otherwise the keyframe's `transform` overrides
+          the centering translate and the halo drifts off the emblem's centre. */}
       <span
         aria-hidden="true"
-        className="love-halo pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[240px] w-[240px] -translate-x-1/2 -translate-y-1/2 rounded-full"
-        style={{
-          background:
-            'radial-gradient(circle, rgba(228,195,106,0.36) 0%, rgba(228,195,106,0.12) 38%, transparent 64%)',
-        }}
-      />
+        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[240px] w-[240px] -translate-x-1/2 -translate-y-1/2"
+      >
+        <span
+          className="love-halo block h-full w-full rounded-full"
+          style={{
+            background:
+              'radial-gradient(circle, rgba(228,195,106,0.36) 0%, rgba(228,195,106,0.12) 38%, transparent 64%)',
+          }}
+        />
+      </span>
       <img
         src="/novat.png"
         alt="The Novosibirsk Opera"
