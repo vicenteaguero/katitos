@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, BookOpen, Plus } from 'lucide-react';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
@@ -46,6 +46,36 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
   );
   const leafRef = useRef<HTMLDivElement | null>(null);
   const addPage = useAddPage();
+
+  // Size the book to fill the screen — its WIDTH is derived from the available
+  // HEIGHT (book is 3:4), so the page-turn buttons + the whole book are always
+  // visible without scrolling, on any phone. Re-measures on resize/orientation.
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [stageW, setStageW] = useState(0);
+  useLayoutEffect(() => {
+    const compute = () => {
+      const el = stageRef.current;
+      const main = el?.closest('main');
+      if (!el || !main) return;
+      const padB = parseFloat(getComputedStyle(main).paddingBottom) || 0;
+      const top = el.getBoundingClientRect().top;
+      // Available height for the book = main content bottom − stage top − the
+      // nav row + gap beneath it (~76px).
+      const availH = main.getBoundingClientRect().bottom - padB - top - 76;
+      setStageW(Math.max(220, Math.floor(availH * 0.75)));
+    };
+    compute();
+    const main = stageRef.current?.closest('main');
+    const ro = main ? new ResizeObserver(compute) : null;
+    if (main && ro) ro.observe(main);
+    window.addEventListener('resize', compute);
+    window.visualViewport?.addEventListener('resize', compute);
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener('resize', compute);
+      window.visualViewport?.removeEventListener('resize', compute);
+    };
+  }, []);
 
   // A fresh book starts at its cover.
   useEffect(() => setIndex(0), [bookId]);
@@ -114,7 +144,11 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
 
   return (
     <div className="pb-wine curtain-reveal">
-      <div className="pb-stage">
+      <div
+        ref={stageRef}
+        className="pb-stage"
+        style={stageW ? { width: stageW, marginInline: 'auto' } : undefined}
+      >
         <div className="pb-case">
           <div
             {...bind()}
