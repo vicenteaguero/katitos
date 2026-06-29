@@ -7,6 +7,7 @@ import {
   useState,
 } from 'react';
 import HTMLFlipBook from 'react-pageflip';
+import { useDrag } from '@use-gesture/react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -26,7 +27,9 @@ import { PageFace } from './page-face';
 import { SlotSheet } from './slot-sheet';
 import '../../photo-book.css';
 
-const FLIP_MS = 800;
+const FLIP_MS = 700;
+const M = 10; // wine cover margin around the open pages
+const PEEK = 38; // px of the facing page you can always see
 
 export interface PhotoBook3DProps {
   scope: BookScope;
@@ -37,7 +40,7 @@ export interface PhotoBook3DProps {
 interface FlipApi {
   flipNext: () => void;
   flipPrev: () => void;
-  getCurrentPageIndex: () => number;
+  turnToPage: (page: number) => void;
 }
 interface FlipBookRef {
   pageFlip: () => FlipApi | undefined;
@@ -56,11 +59,13 @@ const FlipPage = forwardRef<
 });
 
 /**
- * The shared photo-book engine (Pololini + Panini): one BIG page, edge to edge,
- * with StPageFlip's NATIVE finger-curl — drag a page corner to peel it, exactly
- * like the reference repo. `read` shows the flip-book; `arrange` swaps it for a
- * single-page editor (so there's never a second book underneath). Add / edit
- * live in the top bar.
+ * The shared photo-book engine — a wine-bound, double-page open book rendered as
+ * ONE PIECE (cover + both pages) that is WIDER than the screen. You see one full
+ * page + part of the facing page; DRAG to slide the whole piece (the gesture is
+ * ours — `useMouseEvents:false` + `touch-action:none`), and a page curls at the
+ * spread edges. `read` shows the book; `arrange` swaps it for a single-page
+ * editor (so there's never a second book underneath). Add / edit live in the
+ * top bar.
  */
 export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
   const { data: book, isLoading: bookLoading } = useBook(scope, tripId, title);
@@ -75,17 +80,25 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
     enabled: !!bookId,
   });
 
-  const [index, setIndex] = useState(0); // the page being read
+  // `index` = the page being read; its spread + side decide where the piece sits.
+  const [index, setIndex] = useState(0);
   const [mode, setMode] = useState<'read' | 'arrange'>('read');
   const [target, setTarget] = useState<{ pageId: string; slot: number } | null>(
     null
   );
+  const [drag, setDrag] = useState<{ active: boolean; dx: number }>({
+    active: false,
+    dx: 0,
+  });
   const bookRef = useRef<FlipBookRef | null>(null);
+  const busyRef = useRef(false);
+
   const addPage = useAddPage();
 
-  // The page is 3:4 and fills the screen WIDTH (full-bleed), capped so its height
-  // still fits without scrolling. A callback ref measures once the stage mounts.
-  const [pageW, setPageW] = useState(0);
+  // Measure full width → page size, the track (whole piece) width, and the two
+  // rest offsets: focus the LEFT page (peek the next on the right) or the RIGHT
+  // page (peek the previous on the left).
+  const [size, setSize] = useState({ pageW: 0, trackW: 0, restL: 0, restR: 0 });
   const teardownRef = useRef<(() => void) | null>(null);
   const setStage = useCallback((el: HTMLDivElement | null) => {
     teardownRef.current?.();
@@ -96,9 +109,16 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
       const cs = getComputedStyle(main);
       const padB = parseFloat(cs.paddingBottom) || 0;
       const top = el.getBoundingClientRect().top;
-      const fullW = el.getBoundingClientRect().width; // edge-to-edge stage
+      const fullW = el.getBoundingClientRect().width;
       const availH = main.getBoundingClientRect().bottom - padB - top - 76;
-      setPageW(Math.max(220, Math.min(Math.floor(availH * 0.75), fullW)));
+      const byH = Math.floor((availH - 2 * M) * 0.75);
+      const pageW = Math.max(220, Math.min(fullW - PEEK, byH));
+      setSize({
+        pageW,
+        trackW: 2 * pageW + 2 * M,
+        restL: -M, // left page full, next page peeks on the right
+        restR: PEEK - M - pageW, // right page full, prev page peeks on the left
+      });
     };
     compute();
     const ro = new ResizeObserver(compute);
@@ -117,12 +137,58 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
   const count = pages?.length ?? 0;
   const focused = Math.min(Math.max(index, 0), Math.max(0, count - 1));
 
+  // Keep StPageFlip's spread aligned to the focused page after a data change
+  // (which re-runs updateFromHtml and can reset it).
+  useEffect(() => {
+    if (mode === 'read') bookRef.current?.pageFlip()?.turnToPage(focused);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pages]);
+
   const flipPages = useMemo(
     () =>
       (pages ?? []).map((p) => (
         <FlipPage key={p.id} page={p} bookId={bookId ?? ''} />
       )),
     [pages, bookId]
+  );
+
+  // One step through the book. Within a spread it just pans (no flip); crossing
+  // a spread boundary turns a page (StPageFlip curl) as the piece slides.
+  const step = useCallback(
+    (dir: 1 | -1) => {
+      if (busyRef.current) return;
+      setIndex((p) => {
+        const np = p + dir;
+        if (np < 0 || np > count - 1) return p;
+        const crossing = dir > 0 ? p % 2 === 1 : p % 2 === 0;
+        if (crossing) {
+          busyRef.current = true;
+          const pf = bookRef.current?.pageFlip();
+          if (dir > 0) pf?.flipNext();
+          else pf?.flipPrev();
+          window.setTimeout(() => {
+            busyRef.current = false;
+          }, FLIP_MS);
+        }
+        return np;
+      });
+    },
+    [count]
+  );
+
+  // Drag the whole piece: it follows the finger; on release, snap or step.
+  const bind = useDrag(
+    ({ last, movement: [mx], swipe: [sx] }) => {
+      if (last) {
+        setDrag({ active: false, dx: 0 });
+        if (sx === -1 || mx < -40) step(1);
+        else if (sx === 1 || mx > 40) step(-1);
+        return;
+      }
+      const lim = size.pageW * 0.9;
+      setDrag({ active: true, dx: Math.max(-lim, Math.min(lim, mx)) });
+    },
+    { axis: 'x', filterTaps: true, pointer: { touch: true } }
   );
 
   // Top-bar controls: + adds a sticker to the current page, ✎ toggles arrange.
@@ -194,51 +260,68 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
 
   const arranging = mode === 'arrange';
   const current = pages[focused];
+  const { pageW, trackW, restL, restR } = size;
   const pageH = Math.round(pageW * (4 / 3));
+  const rest = focused % 2 === 0 ? restL : restR;
+  const tx = rest + (drag.active ? drag.dx : 0);
 
   const onAddPage = () => {
     const position = (pages[count - 1]?.position ?? -1) + 1;
     addPage.mutate({ bookId, position });
     setIndex(count);
   };
-  const goPrev = () => bookRef.current?.pageFlip()?.flipPrev();
-  const goNext = () => bookRef.current?.pageFlip()?.flipNext();
   const atEnd = focused >= count - 1;
 
   return (
     <div className="pb-wine curtain-reveal">
       <div ref={setStage} className="pb-stage">
         {pageW > 0 && !arranging && (
-          <div className="pb-viewport" style={{ height: pageH }}>
-            <HTMLFlipBook
-              ref={bookRef}
-              className="pb-book"
-              style={{}}
-              startPage={focused}
-              width={pageW}
-              height={pageH}
-              size="fixed"
-              minWidth={pageW}
-              maxWidth={pageW}
-              minHeight={pageH}
-              maxHeight={pageH}
-              drawShadow
-              flippingTime={FLIP_MS}
-              usePortrait
-              startZIndex={0}
-              autoSize={false}
-              maxShadowOpacity={0.5}
-              showCover={false}
-              mobileScrollSupport={false}
-              clickEventForward={false}
-              useMouseEvents
-              swipeDistance={18}
-              showPageCorners
-              disableFlipByClick={false}
-              onFlip={(e: { data: number }) => setIndex(e.data)}
+          <div
+            className="pb-viewport"
+            style={{ height: pageH + 2 * M }}
+            {...bind()}
+          >
+            <div
+              className="pb-track"
+              style={{
+                width: trackW,
+                transform: `translateX(${tx}px)`,
+                transition: drag.active
+                  ? 'none'
+                  : `transform ${FLIP_MS}ms cubic-bezier(0.33, 0, 0.2, 1)`,
+              }}
             >
-              {flipPages}
-            </HTMLFlipBook>
+              <div className="pb-case">
+                <HTMLFlipBook
+                  ref={bookRef}
+                  className="pb-book"
+                  style={{}}
+                  startPage={focused}
+                  width={pageW}
+                  height={pageH}
+                  size="fixed"
+                  minWidth={pageW}
+                  maxWidth={pageW}
+                  minHeight={pageH}
+                  maxHeight={pageH}
+                  drawShadow
+                  flippingTime={FLIP_MS}
+                  usePortrait={false}
+                  startZIndex={0}
+                  autoSize={false}
+                  maxShadowOpacity={0.5}
+                  showCover={false}
+                  mobileScrollSupport={false}
+                  clickEventForward={false}
+                  useMouseEvents={false}
+                  swipeDistance={18}
+                  showPageCorners
+                  disableFlipByClick
+                >
+                  {flipPages}
+                </HTMLFlipBook>
+              </div>
+            </div>
           </div>
         )}
 
@@ -257,7 +340,7 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
       <div className="mt-4 flex items-center justify-between pb-[env(safe-area-inset-bottom)]">
         <IconButton
           label="Previous page"
-          onClick={goPrev}
+          onClick={() => step(-1)}
           disabled={arranging || focused <= 0}
         >
           <ChevronLeft />
@@ -279,7 +362,7 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
           )}
           <IconButton
             label="Next page"
-            onClick={goNext}
+            onClick={() => step(1)}
             disabled={arranging || atEnd}
           >
             <ChevronRight />
