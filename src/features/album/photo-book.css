@@ -26,7 +26,8 @@
 .pb-stage {
   position: relative;
   z-index: 1;
-  margin-inline: -0.875rem; /* cancel <main> px-[0.875rem] → edge to edge */
+  /* No break-out: the focused page aligns to the app's own side padding —
+     page 1 to the left padding, page 2 (when slid) to the right padding. */
 }
 .pb-viewport {
   position: relative;
