@@ -27,7 +27,7 @@ export function LastPolaroidWidget() {
         </span>
         {last && (
           <span className="font-sans text-[10px] uppercase tracking-[0.13em] text-muted">
-            {relativeTime(`${last.day}T12:00:00`)}
+            {relativeTime(last.created_at)}
           </span>
         )}
       </div>
