@@ -274,7 +274,7 @@ export function CurrencyRoute() {
           type="button"
           onClick={() => setShowHistory(true)}
           aria-label="History"
-          className="lift-press absolute right-0 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-surface-2 text-gold shadow-[inset_0_0_0_1px_rgba(228,195,106,0.28)] active:text-accent"
+          className="lift-press absolute bottom-0 right-0 top-0 my-auto flex h-9 w-9 items-center justify-center rounded-full bg-surface-2 text-gold shadow-[inset_0_0_0_1px_rgba(228,195,106,0.28)] active:text-accent"
         >
           <History className="h-4 w-4" />
         </button>
@@ -361,10 +361,7 @@ export function CurrencyRoute() {
         size="full"
       >
         {all.length === 0 ? (
-          <Empty
-            title="Nothing yet"
-            hint="Hit Save — name it to keep it forever, or leave it for now."
-          />
+          <Empty title="Nothing yet" />
         ) : (
           <div className="flex flex-col gap-2">
             <button
