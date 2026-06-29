@@ -52,7 +52,10 @@ export function PlanTab({
   );
 
   const planItems = (items ?? []).filter(
-    (it) => it.kind !== 'wish' && (country === 'all' || it.country === country)
+    (it) =>
+      it.kind !== 'wish' &&
+      it.kind !== 'city' &&
+      (country === 'all' || it.country === country)
   );
 
   return (
