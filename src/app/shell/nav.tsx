@@ -97,10 +97,12 @@ function NavTab({
       <Icon
         size={22}
         strokeWidth={1.75}
-        fill={active ? 'currentColor' : 'none'}
+        // Active = wine-filled silhouette with a GOLD outline, so the inner
+        // line-art still reads instead of collapsing into one solid blob.
+        style={{ fill: active ? 'var(--accent)' : 'none' }}
         className={cn(
           'transition-colors duration-200',
-          active ? 'text-accent' : 'text-muted'
+          active ? 'text-gold' : 'text-muted'
         )}
       />
       {/* Every tab is always named — no guessing which glyph is which. */}
