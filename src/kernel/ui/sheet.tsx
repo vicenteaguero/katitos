@@ -3,11 +3,14 @@ import { createPortal } from 'react-dom';
 import { cn } from '@kernel/lib';
 
 /**
- * THE bottom-sheet modal for the whole app — one component, one behaviour. The
- * overlay is sized to the VISIBLE viewport (`visualViewport`), so when the
- * keyboard opens the sheet simply sits in the shrunken visible area above it —
- * no input is ever covered, on a short sheet or a tall one. Don't hand-roll
- * modals elsewhere; use this.
+ * THE bottom-sheet modal for the whole app — one component, one behaviour.
+ *
+ * Keyboard handling: the panel stays ANCHORED to the screen bottom (its
+ * surface fills all the way down, behind the keyboard), and only the scrolling
+ * BODY gets extra bottom padding equal to the keyboard height — so the content
+ * lifts above the keyboard while the background still reaches the bottom edge.
+ * (It expands, it doesn't translate up leaving a cut + black strip.) Don't
+ * hand-roll modals elsewhere; use this.
  */
 export function Sheet({
   open,
@@ -22,9 +25,8 @@ export function Sheet({
   children: ReactNode;
   size?: 'full' | 'half';
 }) {
-  // The visible viewport (top offset + height). Tracks the keyboard via
-  // `visualViewport`; null until measured / when unsupported (→ full screen).
-  const [vp, setVp] = useState<{ top: number; height: number } | null>(null);
+  // On-screen keyboard height (iOS visualViewport). 0 when closed/unsupported.
+  const [kb, setKb] = useState(0);
 
   useEffect(() => {
     if (!open) return;
@@ -36,7 +38,9 @@ export function Sheet({
 
     const vv = window.visualViewport;
     const sync = () => {
-      if (vv) setVp({ top: vv.offsetTop, height: vv.height });
+      if (!vv) return;
+      const overlap = window.innerHeight - vv.height - vv.offsetTop;
+      setKb(overlap > 80 ? overlap : 0);
     };
     sync();
     vv?.addEventListener('resize', sync);
@@ -47,7 +51,7 @@ export function Sheet({
       document.body.style.overflow = '';
       vv?.removeEventListener('resize', sync);
       vv?.removeEventListener('scroll', sync);
-      setVp(null);
+      setKb(0);
     };
   }, [open, onClose]);
 
@@ -58,8 +62,7 @@ export function Sheet({
   // otherwise confine this fixed layer to the content box).
   return createPortal(
     <div
-      className="fixed left-0 right-0 z-50 flex items-end justify-center"
-      style={vp ? { top: vp.top, height: vp.height } : { top: 0, bottom: 0 }}
+      className="fixed inset-0 z-50 flex items-end justify-center"
       role="dialog"
       aria-modal="true"
     >
@@ -71,7 +74,7 @@ export function Sheet({
       <div
         className={cn(
           'curtain-reveal relative z-10 flex w-full max-w-app flex-col overflow-x-hidden rounded-t-[1.75rem] border-t border-[rgba(228,195,106,0.3)] bg-surface-2 shadow-[0_-18px_40px_-12px_rgba(0,0,0,0.7)]',
-          size === 'half' ? 'max-h-[60%]' : 'max-h-[94%]'
+          size === 'half' ? 'max-h-[64vh]' : 'max-h-[94vh]'
         )}
       >
         {/* Pinned header — grip + title + Close — never scrolls away. */}
@@ -94,8 +97,16 @@ export function Sheet({
             </button>
           </div>
         </div>
-        {/* The body scrolls within the visible area. */}
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-[max(1.75rem,env(safe-area-inset-bottom))]">
+        {/* The body scrolls; its bottom padding grows with the keyboard so the
+            content clears it while the panel's surface still fills to the edge. */}
+        <div
+          className="min-h-0 flex-1 overflow-y-auto px-5"
+          style={{
+            paddingBottom: kb
+              ? `${kb + 20}px`
+              : 'max(1.75rem, env(safe-area-inset-bottom))',
+          }}
+        >
           {children}
         </div>
       </div>
