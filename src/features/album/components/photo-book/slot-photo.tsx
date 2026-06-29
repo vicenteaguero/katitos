@@ -28,6 +28,8 @@ export function SlotPhoto({
       src={src}
       alt={alt}
       draggable={false}
+      loading="lazy"
+      decoding="async"
       onError={() => setProxyFailed(true)}
     />
   );
