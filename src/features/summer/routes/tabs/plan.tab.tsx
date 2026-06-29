@@ -45,6 +45,7 @@ export function PlanTab({
   const addItemPhoto = useAddItemPhoto();
 
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<TripItem | null>(null);
   const [camFor, setCamFor] = useState<string | null>(null);
 
   useTopBarAction(<TopAdd onClick={() => setAdding(true)} />, []);
@@ -79,6 +80,7 @@ export function PlanTab({
           }
           onDelete={(it) => delItem.mutate({ id: it.id, tripId: trip.id })}
           onPhoto={(it) => setCamFor(it.id)}
+          onEdit={(it) => setEditing(it)}
         />
       )}
 
@@ -98,10 +100,14 @@ export function PlanTab({
       )}
 
       <StopSheet
-        open={adding}
-        onClose={() => setAdding(false)}
+        open={adding || !!editing}
+        onClose={() => {
+          setAdding(false);
+          setEditing(null);
+        }}
         trip={trip}
         country={country}
+        editItem={editing}
       />
     </section>
   );
@@ -113,12 +119,14 @@ function DayPlan({
   onToggle,
   onDelete,
   onPhoto,
+  onEdit,
 }: {
   days: string[];
   items: TripItem[];
   onToggle: (it: TripItem) => void;
   onDelete: (it: TripItem) => void;
   onPhoto: (it: TripItem) => void;
+  onEdit: (it: TripItem) => void;
 }) {
   const byDay = new Map<string, TripItem[]>();
   for (const it of items) {
@@ -154,7 +162,12 @@ function DayPlan({
               >
                 {it.status === 'done' ? '✅' : '⬜'}
               </button>
-              <div className="min-w-0 flex-1">
+              <button
+                type="button"
+                onClick={() => onEdit(it)}
+                aria-label="Edit stop"
+                className="min-w-0 flex-1 text-left"
+              >
                 <p
                   className={cn(
                     'truncate font-display text-base text-fg',
@@ -168,7 +181,7 @@ function DayPlan({
                     {it.description}
                   </p>
                 )}
-              </div>
+              </button>
               {it.link && (
                 <a
                   href={it.link}
