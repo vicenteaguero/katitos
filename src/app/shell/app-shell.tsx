@@ -101,7 +101,7 @@ export function AppShell() {
             <PresenceTracker />
             <CacheWarmer />
             <TopBar />
-            <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-[1.75rem] pb-8 pt-[1.75rem] [-webkit-overflow-scrolling:touch]">
+            <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-[0.875rem] pb-8 pt-[0.44rem] [-webkit-overflow-scrolling:touch]">
               <Outlet />
             </main>
             <BottomNav />
