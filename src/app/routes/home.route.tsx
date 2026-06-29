@@ -193,131 +193,25 @@ function Greeting() {
 }
 
 /**
- * The Novosibirsk Opera (NOVAT): the great ribbed silver dome over a classical
- * colonnade. Hand-built SVG — ribs + lattice on the dome, a lit portico, a
- * finial light, and a slow sheen that glides across the silver.
+ * The Novosibirsk Opera (NOVAT) — the couple's hand-painted stained-glass
+ * emblem, floated over a soft, slowly-breathing gilt aura so it feels lit.
  */
-const DOME_RIBS = [24, 46, 70, 94, 118, 142, 164];
-const COLONNADE = [30, 48, 66, 84, 102, 120, 138, 156];
-
 function SilverDome() {
   return (
-    <div className="relative mx-auto mt-7 h-[94px] w-[188px]">
-      {/* Finial: spire + a flickering star atop the dome. */}
-      <span className="candle-flicker absolute left-1/2 top-[1px] z-10 h-[6px] w-[6px] -translate-x-1/2 rounded-full bg-[#eaf2ff] shadow-[0_0_12px_3px_rgba(234,242,255,0.75)]" />
-      <span className="absolute left-1/2 top-[5px] z-10 h-[11px] w-[2px] -translate-x-1/2 bg-gradient-to-b from-gold to-[#8a6c28]" />
-
-      <svg
-        viewBox="0 0 188 94"
-        className="absolute inset-0 h-full w-full"
-        fill="none"
+    <div className="relative mx-auto mt-5 w-[232px]">
+      <span
         aria-hidden="true"
-      >
-        <defs>
-          <radialGradient id="domeFill" cx="50%" cy="118%" r="95%">
-            <stop offset="0%" stopColor="#eef2f7" />
-            <stop offset="42%" stopColor="#c2c8d0" />
-            <stop offset="74%" stopColor="#868d96" />
-            <stop offset="100%" stopColor="#545a62" />
-          </radialGradient>
-          <linearGradient id="colFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#e0cca3" />
-            <stop offset="100%" stopColor="#9c855c" />
-          </linearGradient>
-        </defs>
-
-        {/* Dome body. */}
-        <path
-          d="M16 64 A78 56 0 0 1 172 64 Z"
-          fill="url(#domeFill)"
-          stroke="#c9a24b"
-          strokeWidth="1.4"
-        />
-        {/* Ribs fanning from the finial. */}
-        {DOME_RIBS.map((x, i) => (
-          <line
-            key={`r${i}`}
-            x1="94"
-            y1="10"
-            x2={x}
-            y2="63"
-            stroke="rgba(255,255,255,0.32)"
-            strokeWidth="0.7"
-          />
-        ))}
-        {/* Lattice arcs (the geodesic banding). */}
-        <path
-          d="M28 64 A66 42 0 0 1 160 64"
-          stroke="rgba(20,20,28,0.18)"
-          strokeWidth="0.9"
-        />
-        <path
-          d="M44 64 A50 30 0 0 1 144 64"
-          stroke="rgba(20,20,28,0.16)"
-          strokeWidth="0.9"
-        />
-        <path
-          d="M62 64 A32 18 0 0 1 126 64"
-          stroke="rgba(20,20,28,0.14)"
-          strokeWidth="0.9"
-        />
-
-        {/* Entablature / frieze. */}
-        <rect x="12" y="63" width="164" height="7" fill="#d8c39a" />
-        <rect x="12" y="63" width="164" height="2" fill="#efe2c2" />
-
-        {/* Lit portico behind the columns. */}
-        <rect x="20" y="71" width="148" height="17" fill="#1c0d12" />
-        {/* A few warm windows, gently flickering. */}
-        <rect
-          className="candle-flicker"
-          x="38"
-          y="75"
-          width="6"
-          height="9"
-          fill="#e9b86a"
-          opacity="0.85"
-        />
-        <rect
-          className="candle-flicker"
-          x="92"
-          y="75"
-          width="6"
-          height="9"
-          fill="#e9b86a"
-          opacity="0.7"
-        />
-        <rect
-          className="candle-flicker"
-          x="146"
-          y="75"
-          width="6"
-          height="9"
-          fill="#e9b86a"
-          opacity="0.8"
-        />
-
-        {/* Colonnade. */}
-        {COLONNADE.map((x, i) => (
-          <rect
-            key={`c${i}`}
-            x={x}
-            y="70"
-            width="4"
-            height="18"
-            rx="1"
-            fill="url(#colFill)"
-          />
-        ))}
-        {/* Steps. */}
-        <rect x="8" y="88" width="172" height="3" fill="#b39e74" />
-        <rect x="4" y="91" width="180" height="3" fill="#8f7c57" />
-      </svg>
-
-      {/* Slow sheen gliding across the silver. */}
-      <span className="pointer-events-none absolute inset-x-0 top-0 h-[64px] overflow-hidden">
-        <span className="dome-sheen absolute inset-0" />
-      </span>
+        className="love-halo pointer-events-none absolute left-1/2 top-[46%] h-[150px] w-[210px] -translate-x-1/2 -translate-y-1/2 rounded-full"
+        style={{
+          background:
+            'radial-gradient(circle, rgba(228,195,106,0.32), transparent 70%)',
+        }}
+      />
+      <img
+        src="/novat.png"
+        alt="The Novosibirsk Opera"
+        className="relative mx-auto w-full drop-shadow-[0_10px_22px_rgba(0,0,0,0.5)]"
+      />
     </div>
   );
 }
