@@ -11,7 +11,7 @@ export type StickerHalf = 'solo' | 'a' | 'b';
 /* ── PhotoBook3D engine (shared Pololini + Summer Panini) ─────────────────── */
 
 export type BookScope = 'life' | 'trip';
-export type PhotoSource = 'upload' | 'polaroid';
+export type PhotoSource = 'upload' | 'polaroid' | 'text';
 
 export type AlbumBook = Tables<'album_books'>;
 export type AlbumPhoto = Tables<'album_photos'>;
