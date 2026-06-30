@@ -17,14 +17,22 @@ import {
   Plus,
   Pencil,
   Check,
+  Type,
 } from 'lucide-react';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import { cn } from '@kernel/lib';
-import { Empty, LoadingScreen, useTopBarAction } from '@kernel/ui';
+import {
+  Button,
+  Empty,
+  Input,
+  LoadingScreen,
+  Sheet,
+  useTopBarAction,
+} from '@kernel/ui';
 import { type AlbumPageWithPhotos, type BookScope } from '../../types';
 import { useBook, usePages } from '../../api/photo-book.queries';
-import { useAddPage } from '../../api/photo-book.mutations';
+import { useAddPage, useAddPhoto } from '../../api/photo-book.mutations';
 import { PageFace } from './page-face';
 import { SlotSheet } from './slot-sheet';
 import { computeLayout, restFor, slideDx, stepCrossing } from './book-geometry';
@@ -126,6 +134,9 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
   const controlsRef = useRef<HTMLDivElement | null>(null);
 
   const addPage = useAddPage();
+  const addPhoto = useAddPhoto();
+  const [textOpen, setTextOpen] = useState(false);
+  const [textVal, setTextVal] = useState('');
 
   // Measure content width → page size + the rest offsets, reserving the REAL
   // controls-row height so the book never clips (the old fixed -76 under-
@@ -254,6 +265,27 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
     () => setMode((m) => (m === 'arrange' ? 'read' : 'arrange')),
     []
   );
+  const submitText = useCallback(() => {
+    const { pages: ps, focused: f } = stickerRef.current;
+    const cur = ps?.[f];
+    if (!cur || !textVal.trim() || !bookId) return;
+    const nextSlot = cur.photos.reduce((m, p) => Math.max(m, p.slot), -1) + 1;
+    addPhoto.mutate(
+      {
+        bookId,
+        pageId: cur.id,
+        slot: nextSlot,
+        source: 'text',
+        caption: textVal.trim(),
+      },
+      {
+        onSuccess: () => {
+          setTextOpen(false);
+          setTextVal('');
+        },
+      }
+    );
+  }, [textVal, bookId, addPhoto]);
   useTopBarAction(
     <div className="flex items-center gap-1.5">
       <button
@@ -264,6 +296,15 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
         style={{ border: '1px solid rgba(228,195,106,.4)' }}
       >
         <Plus className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        onClick={() => setTextOpen(true)}
+        aria-label="Add text"
+        className="lift-press flex h-8 w-8 items-center justify-center rounded-full bg-surface-2 text-gold shadow-loge outline-none focus-visible:ring-2 focus-visible:ring-gold"
+        style={{ border: '1px solid rgba(228,195,106,.4)' }}
+      >
+        <Type className="h-4 w-4" />
       </button>
       <button
         type="button"
@@ -435,6 +476,30 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
           </NavBtn>
         )}
       </div>
+
+      <Sheet
+        open={textOpen}
+        onClose={() => setTextOpen(false)}
+        title="Add text"
+        size="half"
+      >
+        <div className="space-y-3">
+          <Input
+            value={textVal}
+            onChange={(e) => setTextVal(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && submitText()}
+            placeholder="A title, a little message…"
+            autoFocus
+          />
+          <Button
+            full
+            onClick={submitText}
+            disabled={addPhoto.isPending || !textVal.trim()}
+          >
+            Add to the page
+          </Button>
+        </div>
+      </Sheet>
 
       {target && (
         <SlotSheet
