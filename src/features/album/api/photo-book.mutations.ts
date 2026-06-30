@@ -98,12 +98,16 @@ export function useMovePhoto() {
       x: number;
       y: number;
       scale?: number;
+      rotation?: number;
     }) => {
-      const patch: { x: number; y: number; scale?: number } = {
-        x: v.x,
-        y: v.y,
-      };
+      const patch: {
+        x: number;
+        y: number;
+        scale?: number;
+        rotation?: number;
+      } = { x: v.x, y: v.y };
       if (v.scale != null) patch.scale = v.scale;
+      if (v.rotation != null) patch.rotation = v.rotation;
       const { error } = await supabase
         .from('album_photos')
         .update(patch)
