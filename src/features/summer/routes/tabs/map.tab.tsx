@@ -1,12 +1,6 @@
 import { lazy, Suspense, useLayoutEffect, useRef, useState } from 'react';
-import {
-  ChevronDown,
-  ChevronUp,
-  List,
-  Map as MapIcon,
-  Star,
-  Trash2,
-} from 'lucide-react';
+import { GripVertical, List, Map as MapIcon, Star, Trash2 } from 'lucide-react';
+import { useDrag } from '@use-gesture/react';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import { cn, greatCircle } from '@kernel/lib';
@@ -27,8 +21,13 @@ import { CitySearch, type CityHit } from '../../components/city-search';
 import { useRoadRoutes } from '../../api/road-route';
 import { TopAdd } from '../../components/top-add';
 import type { MapLeg, MapPin } from '../../components/summer-map';
-import { buildRoute, reorderPositions } from '../../lib/map-route';
-import { COUNTRIES, type CountryFilter, type Trip } from '../../types';
+import { buildRoute } from '../../lib/map-route';
+import {
+  COUNTRIES,
+  type CountryFilter,
+  type Trip,
+  type TripItem,
+} from '../../types';
 
 const SummerMap = lazy(() =>
   import('../../components/summer-map').then((m) => ({ default: m.SummerMap }))
@@ -50,6 +49,90 @@ function RemoveBtn({ onClick }: { onClick: () => void }) {
     >
       <Trash2 className="h-4 w-4" />
     </button>
+  );
+}
+
+const CITY_ROW_H = 46; // approx row height (incl. the space-y gap)
+
+/** The ordered cities — drag a row by its handle to reorder (no arrows). */
+function CityRoute({
+  cities,
+  onReorder,
+  onRemove,
+}: {
+  cities: TripItem[];
+  onReorder: (writes: { id: string; position: number }[]) => void;
+  onRemove: (id: string) => void;
+}) {
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dy, setDy] = useState(0);
+
+  const bind = useDrag(
+    ({ args, first, last, movement: [, my] }) => {
+      const [id, index] = args as [string, number];
+      if (first) setDragId(id);
+      setDy(my);
+      if (last) {
+        const shift = Math.round(my / CITY_ROW_H);
+        const target = Math.max(0, Math.min(cities.length - 1, index + shift));
+        setDragId(null);
+        setDy(0);
+        if (target !== index) {
+          const order = [...cities];
+          const [moved] = order.splice(index, 1);
+          order.splice(target, 0, moved);
+          onReorder(
+            order
+              .map((c, idx) => ({ id: c.id, position: idx }))
+              .filter((_, idx) => order[idx].position !== idx)
+          );
+        }
+      }
+    },
+    { axis: 'y', filterTaps: true, pointer: { touch: true } }
+  );
+
+  return (
+    <div className="space-y-1.5">
+      <p className="eyebrow px-0.5">Route · drag to reorder</p>
+      {cities.map((it, i) => {
+        const dragging = dragId === it.id;
+        return (
+          <Card
+            key={it.id}
+            className="flex items-center gap-2 px-2.5 py-1.5"
+            style={{
+              position: 'relative',
+              zIndex: dragging ? 20 : 1,
+              transform: dragging
+                ? `translateY(${dy}px) scale(1.02)`
+                : undefined,
+              boxShadow: dragging
+                ? '0 12px 26px -10px rgba(0,0,0,0.65)'
+                : undefined,
+              transition: dragging ? 'none' : 'transform 120ms ease',
+            }}
+          >
+            <button
+              type="button"
+              aria-label="Drag to reorder"
+              {...bind(it.id, i)}
+              className="shrink-0 cursor-grab touch-none text-muted active:cursor-grabbing"
+            >
+              <GripVertical className="h-4 w-4" />
+            </button>
+            <span className="w-4 shrink-0 text-center font-display text-sm text-copper">
+              {i + 1}
+            </span>
+            <span className="text-base leading-none">{flagOf(it.country)}</span>
+            <span className="min-w-0 flex-1 truncate font-display text-base text-fg">
+              {it.title}
+            </span>
+            <RemoveBtn onClick={() => onRemove(it.id)} />
+          </Card>
+        );
+      })}
+    </div>
   );
 }
 
@@ -75,6 +158,7 @@ export function MapTab({
   const [adding, setAdding] = useState(false);
   const [placeCountry, setPlaceCountry] = useState<'TR' | 'GE' | ''>('');
   const [placeKind, setPlaceKind] = useState<'city' | 'place'>('city');
+  const [placeMode, setPlaceMode] = useState('car');
 
   useTopBarAction(
     <div className="flex items-center gap-1.5">
@@ -180,11 +264,19 @@ export function MapTab({
     }))
   );
   const routeLegs: MapLeg[] = [
-    ...groundRoute.map((l, i) => ({
-      ...l,
-      kind: 'road' as const,
-      path: road.data?.[i] ?? undefined,
-    })),
+    ...groundRoute.map((l, i) =>
+      l.mode === 'flight'
+        ? {
+            ...l,
+            kind: 'flight' as const,
+            path: greatCircle(
+              { lat: l.fromLat, lng: l.fromLng },
+              { lat: l.toLat, lng: l.toLng },
+              48
+            ),
+          }
+        : { ...l, kind: 'road' as const, path: road.data?.[i] ?? undefined }
+    ),
     ...flightLegs.map((l) => ({
       fromLat: l.from_lat as number,
       fromLng: l.from_lng as number,
@@ -216,20 +308,24 @@ export function MapTab({
         lat: hit.lat,
         lng: hit.lng,
         position: placeKind === 'city' ? cityItems.length : 0,
+        mode: placeKind === 'city' ? placeMode : null,
       },
       { onSuccess: () => setAdding(false) }
     );
   };
 
-  // Reorder a city up/down — normalise positions so route + list always agree.
-  const moveCity = (i: number, dir: 1 | -1) => {
-    for (const w of reorderPositions(cityItems, i, dir))
+  // Persist a drag-reorder (the minimal {id, position} writes).
+  const reorderCities = (writes: { id: string; position: number }[]) => {
+    for (const w of writes)
       updateItem.mutate({
         id: w.id,
         tripId: trip.id,
         patch: { position: w.position },
       });
   };
+
+  // A country must be chosen (here or via the top filter) before searching.
+  const effCountry = placeCountry || (country !== 'all' ? country : '');
 
   const listEmpty =
     routeLegs.length === 0 &&
@@ -259,50 +355,13 @@ export function MapTab({
         </p>
       ) : (
         <div className="space-y-2">
-          {/* The route — ordered cities (reorder + remove). */}
+          {/* The route — drag a row by its handle to reorder. */}
           {cityItems.length > 0 && (
-            <div className="space-y-1.5">
-              <p className="eyebrow px-0.5">Route</p>
-              {cityItems.map((it, i) => (
-                <Card
-                  key={it.id}
-                  className="flex items-center gap-2 px-2.5 py-1.5"
-                >
-                  <span className="w-4 shrink-0 text-center font-display text-sm text-copper">
-                    {i + 1}
-                  </span>
-                  <span className="text-base leading-none">
-                    {flagOf(it.country)}
-                  </span>
-                  <span className="min-w-0 flex-1 truncate font-display text-base text-fg">
-                    {it.title}
-                  </span>
-                  <button
-                    type="button"
-                    aria-label="Move up"
-                    disabled={i === 0}
-                    onClick={() => moveCity(i, -1)}
-                    className="lift-press shrink-0 rounded p-0.5 text-muted outline-none active:text-accent disabled:opacity-30"
-                  >
-                    <ChevronUp className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label="Move down"
-                    disabled={i === cityItems.length - 1}
-                    onClick={() => moveCity(i, 1)}
-                    className="lift-press shrink-0 rounded p-0.5 text-muted outline-none active:text-accent disabled:opacity-30"
-                  >
-                    <ChevronDown className="h-4 w-4" />
-                  </button>
-                  <RemoveBtn
-                    onClick={() =>
-                      delItem.mutate({ id: it.id, tripId: trip.id })
-                    }
-                  />
-                </Card>
-              ))}
-            </div>
+            <CityRoute
+              cities={cityItems}
+              onReorder={reorderCities}
+              onRemove={(id) => delItem.mutate({ id, tripId: trip.id })}
+            />
           )}
 
           {/* Seeded route legs — only while there's no city route yet. */}
@@ -419,10 +478,40 @@ export function MapTab({
               })}
             </div>
           </div>
-          <CitySearch onPick={addPlace} />
+          {/* How you travel onward — colours the route hop. Cities only. */}
+          {placeKind === 'city' && (
+            <div className="flex gap-1.5">
+              {(
+                [
+                  ['car', '🚗 Car'],
+                  ['bus', '🚌 Bus'],
+                  ['flight', '✈️ Flight'],
+                ] as const
+              ).map(([val, label]) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => setPlaceMode(val)}
+                  className={cn(
+                    'lift-press flex-1 rounded-full py-1.5 font-sans text-xs font-semibold outline-none',
+                    placeMode === val
+                      ? 'bg-accent text-accent-fg'
+                      : 'bg-surface-2 text-muted'
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+          <CitySearch
+            onPick={addPlace}
+            disabled={!effCountry}
+            hint="Pick a country first ☝️"
+          />
           <p className="px-1 text-center font-sans text-xs text-muted">
             {placeKind === 'city'
-              ? 'Cities link into your route in order.'
+              ? 'Cities link into your route — the line is coloured by how you travel.'
               : 'Places drop a plain pin — no route line.'}
           </p>
         </div>
