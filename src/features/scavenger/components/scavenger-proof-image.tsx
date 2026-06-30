@@ -1,5 +1,5 @@
-import { BUCKETS, useSignedUrl } from '@kernel/storage';
-import { Spinner } from '@kernel/ui';
+import { useState } from 'react';
+import { BUCKETS, useProxiedUrl } from '@kernel/storage';
 import { cn } from '@kernel/lib';
 
 export function ScavengerProofImage({
@@ -9,18 +9,21 @@ export function ScavengerProofImage({
   path: string;
   className?: string;
 }) {
-  const { data: url, isLoading } = useSignedUrl(BUCKETS.scavengerProof, path);
-  if (isLoading || !url) {
-    return (
-      <div
-        className={cn(
-          'flex items-center justify-center bg-surface-2',
-          className
-        )}
-      >
-        {isLoading && <Spinner />}
-      </div>
-    );
+  // Prefer the small WebP proxy (fast); fall back to the full image on miss.
+  const { proxyUrl, fullUrl } = useProxiedUrl(BUCKETS.scavengerProof, path);
+  const [proxyFailed, setProxyFailed] = useState(false);
+  const src = !proxyFailed && proxyUrl ? proxyUrl : fullUrl;
+  if (!src) {
+    return <div className={cn('bg-surface-2', className)} aria-hidden="true" />;
   }
-  return <img src={url} alt="proof" className={className} />;
+  return (
+    <img
+      src={src}
+      alt="proof"
+      className={className}
+      loading="lazy"
+      decoding="async"
+      onError={() => setProxyFailed(true)}
+    />
+  );
 }
