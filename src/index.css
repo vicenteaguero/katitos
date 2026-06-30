@@ -191,17 +191,16 @@ body,
      standalone gets right on first paint. */
   overflow: hidden;
 }
-/* The bottom nav lives in surface-2; paint the root the same so the iOS
-   home-indicator / rounded-corner strip below the viewport blends in rather
-   than showing a darker band. (The TOP notch is painted by the opaque header
-   instead — see app-shell — so it matches the darker top bar, not this.) */
+/* Paint the root in the TOP-bar wine so the notch / dynamic-island region reads
+   as the top bar (not the lighter bottom-nav tone). The bottom nav still paints
+   its own surface-2 over the home-indicator inset. */
 html {
-  background-color: var(--color-surface-2);
+  background-color: var(--color-surface);
 }
 
 body {
   margin: 0;
-  background: var(--color-surface-2);
+  background: var(--color-surface);
   color: var(--color-fg);
   font-family: var(--font-sans);
   font-size: 16px;
