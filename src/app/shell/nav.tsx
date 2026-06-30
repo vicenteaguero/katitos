@@ -17,7 +17,7 @@ import { useTodayPolaroid } from '@features/polaroid';
 import { featureRegistry } from '../features.registry';
 
 /** Drawer section order; anything untagged falls into 'More'. */
-const CATEGORY_ORDER = ['Play', 'Memories', 'Us', 'Practical'];
+const CATEGORY_ORDER = ['Utilities', 'Play', 'Memories', 'Pololos'];
 
 /** A drawer tile: icon + name, sized for a two-up grid. No borders. */
 function DrawerRow({
