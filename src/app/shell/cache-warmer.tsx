@@ -11,29 +11,52 @@ import { useTodayQuestions, useEnsureToday } from '@features/know-me';
 // token-agnostic key, so warmed photos also survive a cold boot offline.
 const PRELOAD = 24;
 
-// Which USD-based pairs to refresh. The converter triangulates through USD, so
-// these cover every in-app conversion (RUB·CLP·GEL·TRY) — including TRY, which
-// the server-side function omits.
-const RATE_QUOTES = ['CLP', 'RUB', 'GEL', 'TRY'] as const;
+// Every in-app currency. One USD fetch yields all cross rates.
+const RATE_CODES = ['USD', 'CLP', 'RUB', 'GEL', 'TRY'] as const;
+const RATE_STALE_MS = 8 * 60 * 60 * 1000; // refresh only when ≥8h old
 
 /**
- * Pull fresh FX rates from a free, keyless API and upsert the shared
- * `currency_rates` table (member RLS permits the write). Best-effort; on any
- * failure the rates just stay as they were.
+ * Refresh the WHOLE FX matrix from one free, keyless USD fetch — but only when
+ * the stored rates are stale. `open.er-api` gives `perUsd[X]` (X per 1 USD), so
+ * a cross rate X→Y = perUsd[Y]/perUsd[X]; we upsert every directed pair so the
+ * converter's *direct* lookup is always current (no stale seed row survives —
+ * that was the "rates don't match Google" bug). Member RLS permits the write.
  */
-async function refreshRates(): Promise<void> {
+async function refreshRatesIfStale(): Promise<void> {
   try {
+    const { data: newest } = await supabase
+      .from('currency_rates')
+      .select('fetched_at')
+      .order('fetched_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const age = newest?.fetched_at
+      ? Date.now() - new Date(newest.fetched_at).getTime()
+      : Infinity;
+    if (age < RATE_STALE_MS) return;
+
     const res = await fetch('https://open.er-api.com/v6/latest/USD');
     const json = (await res.json()) as {
       result?: string;
       rates?: Record<string, number>;
     };
     if (json.result !== 'success' || !json.rates) return;
-    const rates = json.rates;
+    const perUsd = json.rates;
     const fetched_at = new Date().toISOString();
-    const rows = RATE_QUOTES.filter((q) => typeof rates[q] === 'number').map(
-      (q) => ({ base: 'USD', quote: q, rate: rates[q], fetched_at })
-    );
+    const rows: {
+      base: string;
+      quote: string;
+      rate: number;
+      fetched_at: string;
+    }[] = [];
+    for (const from of RATE_CODES)
+      for (const to of RATE_CODES) {
+        if (from === to) continue;
+        const a = perUsd[from];
+        const b = perUsd[to];
+        if (typeof a === 'number' && a > 0 && typeof b === 'number')
+          rows.push({ base: from, quote: to, rate: b / a, fetched_at });
+      }
     if (rows.length)
       await supabase
         .from('currency_rates')
@@ -106,14 +129,13 @@ export function CacheWarmer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ~1 in 4 opens, quietly refresh exchange rates in the background. Cheap,
-  // shared, no schedule — the converter reads the table so rates self-update.
+  // Quietly keep FX fresh on open — a tiny staleness check, and only an actual
+  // fetch+upsert when the rates are ≥8h old. Background, no perf hit.
   const ratesFired = useRef(false);
   useEffect(() => {
     if (ratesFired.current) return;
     ratesFired.current = true;
-    if (Math.random() >= 0.25) return;
-    const t = window.setTimeout(() => void refreshRates(), 0);
+    const t = window.setTimeout(() => void refreshRatesIfStale(), 0);
     return () => clearTimeout(t);
   }, []);
 
