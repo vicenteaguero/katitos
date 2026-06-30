@@ -22,7 +22,7 @@ import {
 import { ChalkNoteItem } from '../components/chalk-note';
 import { CHALK_COLORS } from '../types';
 
-const MAX_NOTES = 3;
+const MAX_NOTES = 10;
 
 export function ChalkboardRoute() {
   useTableSync('chalkboard_notes', qk.chalkboard.notes());
@@ -75,7 +75,10 @@ export function ChalkboardRoute() {
   // Edit + add live in the TOP BAR (no in-content title, per the one-title rule)
   // so the matte slate gets the whole height below the bar.
   useTopBarAction(
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1.5">
+      <span className="font-sans text-xs tabular-nums text-muted">
+        {count}/{MAX_NOTES}
+      </span>
       {editing && (
         <IconButton label="Add note" onClick={openAdd} className="h-9 w-9">
           <Plus className="h-5 w-5" />
@@ -93,7 +96,7 @@ export function ChalkboardRoute() {
         )}
       </IconButton>
     </div>,
-    [editing, atMax]
+    [editing, atMax, count]
   );
 
   // One fixed blackboard: this route never scrolls. The matte-slate board takes
@@ -108,9 +111,11 @@ export function ChalkboardRoute() {
           editing && 'ring-1 ring-gold/30'
         )}
         style={{
-          backgroundColor: '#23272a',
+          backgroundColor: '#1a1d1f',
           backgroundImage:
-            'radial-gradient(120% 60% at 18% 8%, rgba(255,255,255,0.04) 0%, transparent 42%), radial-gradient(90% 70% at 88% 96%, rgba(255,255,255,0.03) 0%, transparent 50%)',
+            'linear-gradient(rgba(8,10,10,0.32), rgba(8,10,10,0.42)), url(/chalkboard.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
         }}
       >
         {(notes ?? []).map((n) => (
@@ -135,36 +140,30 @@ export function ChalkboardRoute() {
         onClose={() => setAdding(false)}
         title="Write something"
       >
-        <div className="space-y-6">
-          <p className="eyebrow">In chalk</p>
+        <div className="space-y-4">
           <Textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            placeholder="te amo…"
+            placeholder="Write here…"
             rows={3}
           />
-          <div className="space-y-2">
-            <p className="font-sans text-xs uppercase tracking-[0.18em] text-muted">
-              Chalk color
-            </p>
-            <div className="flex gap-3">
-              {CHALK_COLORS.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  aria-label={`color ${c}`}
-                  aria-pressed={color === c}
-                  onClick={() => setColor(c)}
-                  className={cn(
-                    'lift-press h-9 w-9 rounded-full transition-transform',
-                    color === c
-                      ? 'ring-2 ring-gold/40 ring-offset-2 ring-offset-surface-2'
-                      : 'opacity-60'
-                  )}
-                  style={{ background: c }}
-                />
-              ))}
-            </div>
+          <div className="flex justify-center gap-3">
+            {CHALK_COLORS.map((c) => (
+              <button
+                key={c}
+                type="button"
+                aria-label={`color ${c}`}
+                aria-pressed={color === c}
+                onClick={() => setColor(c)}
+                className={cn(
+                  'lift-press h-9 w-9 rounded-full transition-transform',
+                  color === c
+                    ? 'ring-2 ring-gold/40 ring-offset-2 ring-offset-surface-2'
+                    : 'opacity-60'
+                )}
+                style={{ background: c }}
+              />
+            ))}
           </div>
           <Button full onClick={submit} disabled={add.isPending}>
             Add to wall
