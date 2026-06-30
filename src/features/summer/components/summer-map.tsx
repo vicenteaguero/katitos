@@ -17,6 +17,9 @@ export interface MapLeg {
   mode: string;
   country?: 'TR' | 'GE' | null;
   label?: string;
+  /** Full geometry (road follow / geodesic arc); falls back to a straight line. */
+  path?: [number, number][];
+  kind?: 'road' | 'flight';
 }
 
 const PIN_COLOR: Record<string, string> = {
@@ -38,6 +41,16 @@ function legDash(mode: string): string | undefined {
   return mode === 'bus' || mode === 'ferry' || mode === 'walk'
     ? '6 8'
     : undefined;
+}
+
+/** A small plane glyph rotated to a heading (✈ points NE, so offset by 45°). */
+function planeIcon(deg: number): L.DivIcon {
+  return L.divIcon({
+    className: '',
+    html: `<div style="transform:rotate(${deg - 45}deg);font-size:15px;line-height:1;color:#6fa0ff;text-shadow:0 1px 3px rgba(0,0,0,.6)">✈</div>`,
+    iconSize: [16, 16],
+    iconAnchor: [8, 8],
+  });
 }
 
 function esc(s: string): string {
@@ -77,11 +90,13 @@ export function SummerMap({
       zoomControl: false,
       attributionControl: false,
       scrollWheelZoom: false,
+      zoomSnap: 0, // fractional zoom → fitBounds lands exactly, no coarse jumps
+      zoomDelta: 0.5,
     }).setView([41.4, 38.0], 6);
-    // CARTO Voyager — warm, refined, well-labelled (free, no key).
+    // Esri NatGeo — warm topographic basemap (free, no key; tiles to z16).
     L.tileLayer(
-      'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-      { maxZoom: 20, subdomains: 'abcd' }
+      'https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}',
+      { maxZoom: 16 }
     ).addTo(map);
     L.control.zoom({ position: 'bottomright' }).addTo(map);
     layerRef.current = L.layerGroup().addTo(map);
@@ -109,26 +124,51 @@ export function SummerMap({
     if (!map || !layer) return;
     layer.clearLayers();
 
-    // Route legs first (so pins sit on top).
+    // Route legs first (so pins sit on top). Each leg draws its real geometry
+    // (road follow / geodesic arc) when present, else a straight line.
     for (const leg of legs) {
-      const from: [number, number] = [leg.fromLat, leg.fromLng];
-      const to: [number, number] = [leg.toLat, leg.toLng];
-      L.polyline([from, to], {
-        color: legColor(leg.country),
-        weight: 3,
-        opacity: 0.75,
-        dashArray: legDash(leg.mode),
-        lineCap: 'round',
-      }).addTo(layer);
-      // Small waypoint dots at each endpoint.
-      for (const pt of [from, to]) {
-        L.circleMarker(pt, {
-          radius: 4,
-          color: '#e4c36a',
-          weight: 1.5,
-          fillColor: '#1a0b13',
-          fillOpacity: 1,
+      const pts: [number, number][] =
+        leg.path && leg.path.length > 1
+          ? leg.path
+          : [
+              [leg.fromLat, leg.fromLng],
+              [leg.toLat, leg.toLng],
+            ];
+      if (leg.kind === 'flight') {
+        L.polyline(pts, {
+          color: '#6fa0ff',
+          weight: 2.5,
+          opacity: 0.9,
+          dashArray: '1 9',
+          lineCap: 'round',
         }).addTo(layer);
+        // A plane partway along, pointed along its heading.
+        const m = Math.floor(pts.length / 2);
+        const [aLat, aLng] = pts[Math.max(0, m - 1)];
+        const [bLat, bLng] = pts[Math.min(pts.length - 1, m + 1)];
+        const deg = (Math.atan2(bLng - aLng, bLat - aLat) * 180) / Math.PI;
+        L.marker(pts[m], { icon: planeIcon(deg), interactive: false }).addTo(
+          layer
+        );
+      } else {
+        L.polyline(pts, {
+          color: legColor(leg.country),
+          weight: 3.5,
+          opacity: 0.85,
+          dashArray: legDash(leg.mode),
+          lineCap: 'round',
+          lineJoin: 'round',
+        }).addTo(layer);
+        // Small waypoint dots at the true endpoints.
+        for (const pt of [pts[0], pts[pts.length - 1]]) {
+          L.circleMarker(pt, {
+            radius: 3.5,
+            color: '#e4c36a',
+            weight: 1.5,
+            fillColor: '#1a0b13',
+            fillOpacity: 1,
+          }).addTo(layer);
+        }
       }
     }
 
@@ -149,17 +189,25 @@ export function SummerMap({
         // anchor THERE so the point lands exactly on the lat/lng at any zoom.
         iconSize: [d, tipY],
         iconAnchor: [d / 2, tipY],
+        // Open the popup ABOVE the tip, not on the point.
+        popupAnchor: [0, -tipY - 2],
       });
       L.marker([p.lat, p.lng], { icon })
         .addTo(layer)
-        .bindPopup(`<b>${esc(p.title)}</b>`);
+        .bindPopup(`<b>${esc(p.title)}</b>`, {
+          minWidth: 120,
+          autoPanPadding: [24, 24],
+        });
     }
 
-    // Frame the route + place pins (not the far-apart home cities).
-    const legPts: [number, number][] = legs.flatMap((l) => [
-      [l.fromLat, l.fromLng],
-      [l.toLat, l.toLng],
-    ]);
+    // Frame the GROUND route + place pins (not the far-flung flight arc, which
+    // would zoom the whole trip down to a speck).
+    const legPts: [number, number][] = legs
+      .filter((l) => l.kind !== 'flight')
+      .flatMap((l) => [
+        [l.fromLat, l.fromLng],
+        [l.toLat, l.toLng],
+      ]);
     const focus = valid.filter((p) => p.tone !== 'home');
     const framedPts: [number, number][] = [
       ...legPts,
@@ -169,7 +217,7 @@ export function SummerMap({
     const pts = framedPts.length > 0 ? framedPts : fallback;
     if (pts.length > 0) {
       const bounds = L.latLngBounds(pts);
-      map.fitBounds(bounds.pad(0.25), { maxZoom: 9 });
+      map.fitBounds(bounds.pad(0.2), { maxZoom: 7 });
     }
     map.invalidateSize();
   }, [pins, legs]);
