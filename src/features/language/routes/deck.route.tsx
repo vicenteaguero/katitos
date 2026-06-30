@@ -18,7 +18,7 @@ import {
 } from '@kernel/ui';
 import { useDeck, useDeckCards, deckKeys } from '../api/decks.queries';
 import { useAddCard, useDeleteCard } from '../api/decks.mutations';
-import type { Lang } from '../types';
+import { LANG_LABELS, type Lang } from '../types';
 
 export function DeckRoute() {
   const { deckId } = useParams<{ deckId: string }>();
@@ -141,12 +141,19 @@ export function DeckRoute() {
 
       <Sheet open={open} onClose={() => setOpen(false)} title="Add a card">
         <div className="space-y-3">
-          <Field label={lang === 'ru' ? 'In Russian' : 'In Spanish'}>
+          <Field label={`In ${LANG_LABELS[lang]}`}>
             <Input
               value={form.text}
               onChange={(e) => setForm((f) => ({ ...f, text: e.target.value }))}
               className="font-display text-lg"
-              placeholder={lang === 'ru' ? 'Я тебя люблю' : 'Te amo'}
+              placeholder={
+                {
+                  ru: 'Я тебя люблю',
+                  es: 'Te amo',
+                  tr: 'Merhaba',
+                  ka: 'გამარჯობა',
+                }[lang]
+              }
             />
           </Field>
           <div className="grid grid-cols-2 gap-3">
