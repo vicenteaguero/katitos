@@ -1716,6 +1716,7 @@ export type Database = {
           lat: number | null
           link: string | null
           lng: number | null
+          mode: string | null
           position: number
           status: string
           title: string
@@ -1733,6 +1734,7 @@ export type Database = {
           lat?: number | null
           link?: string | null
           lng?: number | null
+          mode?: string | null
           position?: number
           status?: string
           title: string
@@ -1750,6 +1752,7 @@ export type Database = {
           lat?: number | null
           link?: string | null
           lng?: number | null
+          mode?: string | null
           position?: number
           status?: string
           title?: string
