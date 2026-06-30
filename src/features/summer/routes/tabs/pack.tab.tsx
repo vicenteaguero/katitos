@@ -3,7 +3,7 @@ import { Luggage, Trash2 } from 'lucide-react';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import { cn } from '@kernel/lib';
-import { useMembers } from '@kernel/auth';
+import { useMembers, usePartner } from '@kernel/auth';
 import {
   Button,
   Card,
@@ -29,6 +29,7 @@ export function PackTab({ trip }: { trip: Trip }) {
   useTableSync('packing_items', qk.trips.packing(trip.id), { enabled: true });
   const { data: items } = useSummerPacking(trip.id);
   const { data: members } = useMembers();
+  const { self } = usePartner();
   const addItem = useAddPacking();
   const toggle = useTogglePacking();
   const del = useDeletePacking();
@@ -38,11 +39,14 @@ export function PackTab({ trip }: { trip: Trip }) {
     open: boolean;
     label: string;
     category: string;
-  }>({ open: false, label: '', category: 'Clothes' });
+    person: string;
+  }>({ open: false, label: '', category: 'Clothes', person: '' });
 
   useTopBarAction(
     <TopAdd
-      onClick={() => setForm({ open: true, label: '', category: 'Clothes' })}
+      onClick={() =>
+        setForm({ open: true, label: '', category: 'Clothes', person: '' })
+      }
     />,
     []
   );
@@ -81,7 +85,7 @@ export function PackTab({ trip }: { trip: Trip }) {
         tripId: trip.id,
         label: form.label.trim(),
         category: form.category,
-        assignedTo: who === 'all' ? null : who,
+        assignedTo: (form.person || self?.user_id) ?? null,
       },
       { onSuccess: () => setForm((f) => ({ ...f, open: false, label: '' })) }
     );
@@ -176,6 +180,19 @@ export function PackTab({ trip }: { trip: Trip }) {
             onKeyDown={(e) => e.key === 'Enter' && submit()}
             placeholder="Name"
             autoFocus
+          />
+          {/* Whose bag — defaults to me. */}
+          <Segmented
+            value={form.person || self?.user_id || ''}
+            onChange={(v) => setForm((f) => ({ ...f, person: v }))}
+            full
+            options={(members ?? []).map((m) => ({
+              value: m.user_id,
+              label:
+                m.user_id === self?.user_id
+                  ? 'Me'
+                  : (m.display_name ?? 'Partner'),
+            }))}
           />
           {/* Category — centred, selectable. */}
           <div className="flex flex-wrap justify-center gap-1.5">
