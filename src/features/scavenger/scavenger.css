@@ -289,15 +289,25 @@
   }
 }
 
-.sc-hint {
+/* A deliberately faint Close button — the reveal is epic, so the way out is
+   quiet and stays out of the moment until you reach for it. */
+.sc-close {
   position: relative;
   z-index: 3;
   font-family: var(--font-sans);
-  font-size: 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(251, 245, 240, 0.55);
-  animation: sc-fade-in 400ms ease 1400ms both;
+  color: rgba(251, 245, 240, 0.4);
+  padding: 0.5rem 1.6rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.05);
+  -webkit-tap-highlight-color: transparent;
+  animation: sc-fade-in 500ms ease 900ms both;
+}
+.sc-close:active {
+  color: rgba(251, 245, 240, 0.75);
 }
 
 @keyframes sc-fade-in {
@@ -329,7 +339,7 @@
     transform: none !important;
     letter-spacing: 0.16em !important;
   }
-  .sc-hint {
+  .sc-close {
     animation: sc-fade-in 220ms ease both !important;
   }
 }
