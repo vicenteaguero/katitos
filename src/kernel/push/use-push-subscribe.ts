@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@kernel/supabase';
 import { useUserId } from '@kernel/auth';
 
+const PUSH_ON_KEY = 'katitos:push-on';
+
 export type PushStatus =
   | 'idle'
   | 'subscribed'
@@ -122,7 +124,14 @@ export function useEnsurePushSubscription(): void {
  */
 export function usePushSubscribe() {
   const userId = useUserId();
-  const [status, setStatus] = useState<PushStatus>('idle');
+  // Seed from a synchronous hint so an already-subscribed device renders ON
+  // immediately (no off→on sweep on open); the async check below confirms it.
+  const [status, setStatus] = useState<PushStatus>(() =>
+    typeof localStorage !== 'undefined' &&
+    localStorage.getItem(PUSH_ON_KEY) === '1'
+      ? 'subscribed'
+      : 'idle'
+  );
 
   useEffect(() => {
     if (!supported()) {
@@ -131,7 +140,14 @@ export function usePushSubscribe() {
     }
     void navigator.serviceWorker.ready.then(async (reg) => {
       const existing = await reg.pushManager.getSubscription();
-      if (existing) setStatus('subscribed');
+      if (existing) {
+        localStorage.setItem(PUSH_ON_KEY, '1');
+        setStatus('subscribed');
+      } else {
+        // Hint was stale (subscription rotated/revoked) → correct it.
+        localStorage.removeItem(PUSH_ON_KEY);
+        setStatus((s) => (s === 'subscribed' ? 'idle' : s));
+      }
     });
   }, []);
 
@@ -155,6 +171,7 @@ export function usePushSubscribe() {
           import.meta.env.VITE_VAPID_PUBLIC_KEY
         );
       }
+      localStorage.setItem(PUSH_ON_KEY, '1');
       setStatus('subscribed');
     } catch {
       setStatus('idle');
