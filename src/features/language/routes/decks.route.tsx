@@ -9,7 +9,6 @@ import {
   Empty,
   Field,
   Input,
-  PageHeader,
   Segmented,
   Sheet,
   Textarea,
@@ -54,12 +53,7 @@ export function DecksRoute() {
   const list = decks ?? [];
 
   return (
-    <div className="curtain-reveal space-y-6">
-      <PageHeader
-        title="Language"
-        subtitle="Little courses, built for each other 💙"
-      />
-
+    <div className="curtain-reveal space-y-4">
       <Segmented
         value={lang}
         onChange={setLang}
@@ -67,6 +61,8 @@ export function DecksRoute() {
         options={[
           { value: 'ru', label: LANG_LABELS.ru },
           { value: 'es', label: LANG_LABELS.es },
+          { value: 'tr', label: LANG_LABELS.tr },
+          { value: 'ka', label: LANG_LABELS.ka },
         ]}
       />
 
