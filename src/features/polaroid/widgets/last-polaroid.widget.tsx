@@ -15,7 +15,7 @@ export function LastPolaroidWidget() {
   return (
     <Link
       to="/polaroid"
-      className="lift-press block rounded p-[18px] text-left"
+      className="lift-press block rounded-2xl p-[18px] text-left"
       style={{
         border: '1px solid rgba(201,162,75,.26)',
         background: 'linear-gradient(160deg, #221019, #180b13)',
@@ -33,7 +33,7 @@ export function LastPolaroidWidget() {
       </div>
       {last ? (
         <div
-          className="mt-3.5 bg-[#f3ebdd] px-2.5 pb-3.5 pt-2.5"
+          className="mt-3.5 rounded-lg bg-[#f3ebdd] px-2.5 pb-3.5 pt-2.5"
           style={{ boxShadow: '0 14px 30px -16px rgba(0,0,0,.7)' }}
         >
           <PolaroidImage
