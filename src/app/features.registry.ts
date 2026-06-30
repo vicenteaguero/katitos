@@ -21,7 +21,6 @@ import { ideaBankFeature } from '@features/idea-bank';
 import { fightTimerFeature } from '@features/fight-timer';
 import { flowersFeature } from '@features/flowers';
 import { financeFeature } from '@features/finance';
-import { travelFeature } from '@features/travel';
 import { datesFeature } from '@features/dates';
 import { summerFeature } from '@features/summer';
 import { scavengerFeature } from '@features/scavenger';
@@ -39,32 +38,31 @@ const categories: Record<string, string> = {
   quizzes: 'Play',
   'know-me': 'Play',
   scavenger: 'Play',
-  decisions: 'Play',
   // Memories
   album: 'Memories',
   polaroid: 'Memories',
   dates: 'Memories',
   summer: 'Memories',
-  travel: 'Memories',
   flowers: 'Memories',
-  // Us
-  tree: 'Us',
-  'days-together': 'Us',
-  distance: 'Us',
-  timezone: 'Us',
-  presence: 'Us',
-  'fight-timer': 'Us',
-  punito: 'Us',
-  'baby-names': 'Us',
-  'cute-words': 'Us',
-  // Practical
-  countdowns: 'Practical',
-  wishlists: 'Practical',
-  'idea-bank': 'Practical',
-  finance: 'Practical',
-  currency: 'Practical',
-  language: 'Practical',
-  chalkboard: 'Practical',
+  // Pololos
+  decisions: 'Pololos',
+  tree: 'Pololos',
+  'days-together': 'Pololos',
+  distance: 'Pololos',
+  timezone: 'Pololos',
+  presence: 'Pololos',
+  'fight-timer': 'Pololos',
+  punito: 'Pololos',
+  'baby-names': 'Pololos',
+  'cute-words': 'Pololos',
+  // Utilities
+  countdowns: 'Utilities',
+  wishlists: 'Utilities',
+  'idea-bank': 'Utilities',
+  finance: 'Utilities',
+  currency: 'Utilities',
+  language: 'Utilities',
+  chalkboard: 'Utilities',
 };
 
 const modules: FeatureModule[] = [
@@ -94,7 +92,6 @@ const modules: FeatureModule[] = [
   cuteWordsFeature,
   ideaBankFeature,
   financeFeature,
-  travelFeature,
 ];
 
 // ── Demo gate ──────────────────────────────────────────────────────────────
@@ -103,8 +100,7 @@ const modules: FeatureModule[] = [
 const GATED = true;
 const OPEN = new Set([
   'polaroid',
-  'summer', // Summer Travel — Türkiye → Georgia
-  'album', // Pololini — the life photo-book
+  'summer', // Summer Travel — Türkiye → Georgia (Panini is the live book)
   'language',
   'chalkboard', // "The wall"
   'know-me',
