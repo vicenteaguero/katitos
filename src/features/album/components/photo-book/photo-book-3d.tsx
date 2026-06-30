@@ -5,6 +5,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
 } from 'react';
 import HTMLFlipBook from 'react-pageflip';
 import { useDrag } from '@use-gesture/react';
@@ -25,13 +26,7 @@ import { useBook, usePages } from '../../api/photo-book.queries';
 import { useAddPage } from '../../api/photo-book.mutations';
 import { PageFace } from './page-face';
 import { SlotSheet } from './slot-sheet';
-import {
-  computeLayout,
-  decideGesture,
-  restFor,
-  slideDx,
-  stepCrossing,
-} from './book-geometry';
+import { computeLayout, restFor, slideDx, stepCrossing } from './book-geometry';
 import '../../photo-book.css';
 
 const FLIP_MS = 700;
@@ -68,11 +63,12 @@ const FlipPage = forwardRef<
 /**
  * The shared photo-book engine — a wine-bound, double-page open book rendered as
  * ONE PIECE (cover + both pages) that is WIDER than the screen. You see one full
- * page + part of the facing page; DRAG to slide the whole piece (the gesture is
- * ours — `useMouseEvents:false` + `touch-action:none`), and a page curls at the
- * spread edges. `read` shows the book; `arrange` swaps it for a single-page
- * editor (so there's never a second book underneath). Add / edit live in the
- * top bar.
+ * page + a peek of the facing page. Each focused page is split down the middle:
+ * the OUTER half gives StPageFlip's native finger-curl (`useMouseEvents`), the
+ * SPINE half is a transparent overlay that SLIDES the piece between the two
+ * pages of a spread. Left page → [ curl | slide ]; right page → [ slide | curl ].
+ * The two never fight — ownership is decided by which half the touch starts on.
+ * `read` shows the book; `arrange` swaps it for a single-page editor.
  */
 export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
   const { data: book, isLoading: bookLoading } = useBook(scope, tripId, title);
@@ -98,18 +94,21 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
     dx: 0,
   });
   const bookRef = useRef<FlipBookRef | null>(null);
-  const busyRef = useRef(false);
-  // The gesture is classified ONCE at touch-start and locked for its duration.
-  const modeRef = useRef<'slide' | 'flip' | null>(null);
-  const targetRef = useRef(0);
   const vpRef = useRef<HTMLDivElement | null>(null);
+  const controlsRef = useRef<HTMLDivElement | null>(null);
 
   const addPage = useAddPage();
 
-  // Measure full width → page size, the track (whole piece) width, and the two
-  // rest offsets: focus the LEFT page (peek the next on the right) or the RIGHT
-  // page (peek the previous on the left).
-  const [size, setSize] = useState({ pageW: 0, trackW: 0, restL: 0, restR: 0 });
+  // Measure content width → page size + the rest offsets, reserving the REAL
+  // controls-row height so the book never clips (the old fixed -76 under-
+  // reserved on iOS standalone, which is what cut Panini off).
+  const [size, setSize] = useState({
+    pageW: 0,
+    trackW: 0,
+    restL: 0,
+    restR: 0,
+    vw: 0,
+  });
   const teardownRef = useRef<(() => void) | null>(null);
   const setStage = useCallback((el: HTMLDivElement | null) => {
     teardownRef.current?.();
@@ -121,15 +120,23 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
       const padB = parseFloat(cs.paddingBottom) || 0;
       const top = el.getBoundingClientRect().top;
       const elW = el.getBoundingClientRect().width; // padded content width
-      const availH = main.getBoundingClientRect().bottom - padB - top - 76;
+      const controlsH = controlsRef.current?.offsetHeight ?? 96;
+      const availH =
+        main.getBoundingClientRect().bottom - padB - top - controlsH - 8;
       setSize(computeLayout(elW, availH, M, MIN_PEEK));
     };
     compute();
+    // Re-measure once the curtain-reveal transform settles — the one-shot mount
+    // read happens mid-animation, so this locks in the resting geometry.
+    const raf = requestAnimationFrame(compute);
+    const t = window.setTimeout(compute, 420);
     const ro = new ResizeObserver(compute);
     ro.observe(main);
     window.addEventListener('resize', compute);
     window.visualViewport?.addEventListener('resize', compute);
     teardownRef.current = () => {
+      cancelAnimationFrame(raf);
+      window.clearTimeout(t);
       ro.disconnect();
       window.removeEventListener('resize', compute);
       window.visualViewport?.removeEventListener('resize', compute);
@@ -140,6 +147,10 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
 
   const count = pages?.length ?? 0;
   const focused = Math.min(Math.max(index, 0), Math.max(0, count - 1));
+
+  // Live mirror so the stable onFlip handler always reads the latest values.
+  const liveRef = useRef({ pages, focused, count });
+  liveRef.current = { pages, focused, count };
 
   // Keep StPageFlip's spread aligned to the focused page after a data change
   // (which re-runs updateFromHtml and can reset it).
@@ -156,85 +167,56 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
     [pages, bookId]
   );
 
-  // A page flip (StPageFlip curl) across a spread boundary, locked for FLIP_MS.
-  const doFlip = useCallback(
-    (target: number) => {
-      if (busyRef.current) return;
-      busyRef.current = true;
-      const pf = bookRef.current?.pageFlip();
-      if (target > focused) pf?.flipNext();
-      else pf?.flipPrev();
-      setIndex(target);
-      window.setTimeout(() => {
-        busyRef.current = false;
-      }, FLIP_MS);
-    },
-    [focused]
-  );
+  // StPageFlip drives the curl natively; when it lands on a new spread it tells
+  // us here so our sliding-window track + overlay re-sync. A backward flip
+  // enters the previous spread from its RIGHT page (sliding-window continuity).
+  const onFlipped = useCallback((e: { data: number }) => {
+    const spread = e.data;
+    const { focused: f, count: c } = liveRef.current;
+    setIndex(spread < f ? Math.min(spread + 1, c - 1) : spread);
+  }, []);
 
-  // One step in a direction. Within a spread it SLIDES (the .pb-track CSS
-  // transition pans, no curl); across a spread boundary it FLIPS (curl). Both
-  // the buttons and the drag route through this same slide-or-flip decision.
+  // Buttons: slide within a spread (CSS pan), or trigger the native curl across
+  // a boundary (onFlipped then syncs the index).
   const go = useCallback(
     (dir: 1 | -1) => {
-      const target = focused + dir;
-      if (target < 0 || target > count - 1 || busyRef.current) return;
-      if (stepCrossing(focused, dir)) doFlip(target);
-      else setIndex(target);
+      const t = focused + dir;
+      if (t < 0 || t > count - 1) return;
+      if (stepCrossing(focused, dir)) {
+        const pf = bookRef.current?.pageFlip();
+        if (dir > 0) pf?.flipNext();
+        else pf?.flipPrev();
+      } else setIndex(t);
     },
-    [focused, count, doFlip]
+    [focused, count]
   );
 
-  // The gesture: split the book in halves and decide ONCE at touch-start whether
-  // this is a SLIDE or a FLIP, then LOCK it for the gesture so the two never mix
-  // (that mixing was the old bounce). Left page → [ flipPrev | slide ]; right
-  // page → [ slide | flipNext ]. Slide follows the finger between the two rest
-  // offsets; flip commits the curl on a deliberate drag/flick.
-  const bind = useDrag(
-    ({ first, last, xy: [x], movement: [mx], velocity: [vx] }) => {
-      if (first) {
-        const rect = vpRef.current?.getBoundingClientRect();
-        const leftHalf = rect ? x - rect.left < rect.width / 2 : true;
-        const { mode, target } = decideGesture(
-          focused,
-          count,
-          leftHalf,
-          busyRef.current
-        );
-        modeRef.current = mode;
-        targetRef.current = target;
+  // The SLIDE overlay (spine half) owns its touches and pans the piece between
+  // the two pages of the current spread, committing on release. The outer half
+  // is left uncovered for StPageFlip's native curl.
+  const slideBind = useDrag(
+    ({ last, movement: [mx], velocity: [vx] }) => {
+      const even = focused % 2 === 0;
+      const t = even ? focused + 1 : focused - 1;
+      if (t < 0 || t > count - 1) return; // lone page — nothing to slide to
+      if (last) {
+        setDrag({ active: false, dx: 0 });
+        if (Math.abs(mx) > 40 || Math.abs(vx) > 0.4) setIndex(t);
         return;
       }
-      const mode = modeRef.current;
-      if (!mode) return;
-      const committed = Math.abs(mx) > 40 || Math.abs(vx) > 0.4;
-      if (mode === 'slide') {
-        if (last) {
-          modeRef.current = null;
-          setDrag({ active: false, dx: 0 });
-          if (committed) setIndex(targetRef.current);
-          return;
-        }
-        // Follow the finger between the current rest and the target rest.
-        setDrag({
-          active: true,
-          dx: slideDx(focused, mx, size.restL, size.restR),
-        });
-      } else if (last) {
-        // Flip zone: no live pan (the next spread isn't drawn yet) — the curl
-        // commits on release past the threshold, else the gesture is cancelled.
-        modeRef.current = null;
-        if (committed) doFlip(targetRef.current);
-      }
+      setDrag({
+        active: true,
+        dx: slideDx(focused, mx, size.restL, size.restR),
+      });
     },
     { axis: 'x', filterTaps: true, pointer: { touch: true } }
   );
 
   // Top-bar controls: + adds a sticker to the current page, ✎ toggles arrange.
-  const liveRef = useRef({ pages, focused });
-  liveRef.current = { pages, focused };
+  const stickerRef = useRef({ pages, focused });
+  stickerRef.current = { pages, focused };
   const addStickerTop = useCallback(() => {
-    const { pages: ps, focused: f } = liveRef.current;
+    const { pages: ps, focused: f } = stickerRef.current;
     const cur = ps?.[f];
     if (!cur) return;
     const nextSlot = cur.photos.reduce((m, p) => Math.max(m, p.slot), -1) + 1;
@@ -299,10 +281,17 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
 
   const arranging = mode === 'arrange';
   const current = pages[focused];
-  const { pageW, trackW, restL, restR } = size;
+  const { pageW, trackW, restL, restR, vw } = size;
   const pageH = Math.round(pageW * (4 / 3));
   const rest = restFor(focused, restL, restR);
   const tx = rest + (drag.active ? drag.dx : 0);
+  const even = focused % 2 === 0;
+  // The slide overlay sits on the spine half of the focused page; the outer half
+  // stays open for StPageFlip's native curl.
+  const dividerX = even ? pageW / 2 : vw - pageW / 2;
+  const slideStyle: CSSProperties = even
+    ? { left: dividerX, right: 0 }
+    : { left: 0, width: dividerX };
 
   const onAddPage = () => {
     const position = (pages[count - 1]?.position ?? -1) + 1;
@@ -319,7 +308,6 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
             ref={vpRef}
             className="pb-viewport"
             style={{ height: pageH + 2 * M }}
-            {...bind()}
           >
             <div
               className="pb-track"
@@ -353,7 +341,8 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
                   showCover={false}
                   mobileScrollSupport={false}
                   clickEventForward={false}
-                  useMouseEvents={false}
+                  useMouseEvents
+                  onFlip={onFlipped}
                   swipeDistance={18}
                   showPageCorners
                   disableFlipByClick
@@ -362,6 +351,13 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
                 </HTMLFlipBook>
               </div>
             </div>
+            {/* Slide zone — the spine half; the outer half stays open for the
+                native curl. */}
+            <div
+              className="pb-slide-zone"
+              style={{ ...slideStyle, top: 0, bottom: 0 }}
+              {...slideBind()}
+            />
           </div>
         )}
 
@@ -377,7 +373,10 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
         )}
       </div>
 
-      <div className="mt-4 flex items-center justify-between pb-[env(safe-area-inset-bottom)]">
+      <div
+        ref={controlsRef}
+        className="mt-4 flex items-center justify-between pb-[env(safe-area-inset-bottom)]"
+      >
         <IconButton
           label="Previous page"
           onClick={() => go(-1)}
