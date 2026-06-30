@@ -30,11 +30,14 @@ export function computeLayout(
 ): BookLayout {
   const byH = Math.floor((availH - 2 * m) * 0.75);
   const pageW = Math.max(200, Math.min(elW - minPeek, byH));
+  const trackW = 2 * pageW + 2 * m;
   return {
     pageW,
-    trackW: 2 * pageW + 2 * m,
-    restL: -m,
-    restR: elW - m - 2 * pageW,
+    trackW,
+    // The wine COVER (frame) sits at the content padding on the focused side;
+    // the page is inset by the cover margin `m`. The other side overflows.
+    restL: 0,
+    restR: elW - trackW,
     vw: elW,
   };
 }
