@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Crown, Plus, Sparkles } from 'lucide-react';
+import { Camera, Crown, Plus, Sparkles } from 'lucide-react';
 import { useMembers, usePartner, useUserId } from '@kernel/auth';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
@@ -131,6 +131,8 @@ export function ScavengerRoute() {
   const confirmClaim = () => {
     const card = claiming;
     if (!card || !userId) return;
+    // Proof photo is mandatory on a first claim (re-claims keep the old one).
+    if (!claimBlob && !card.scavenger_claims) return;
     const blob = claimBlob;
     setReveal({
       title: card.title,
@@ -177,9 +179,9 @@ export function ScavengerRoute() {
   if (isLoading) return <LoadingScreen />;
 
   return (
-    <div className="curtain-reveal space-y-3">
+    <div className="curtain-reveal space-y-2">
       {/* The leaderboard — two decks drawing from one shared pot of stars. */}
-      <Card className="space-y-2 p-3">
+      <Card className="space-y-1.5 px-3 py-2">
         <div className="flex items-stretch text-center">
           {(['a', 'b'] as Role[]).map((role, i) => {
             const score = role === 'a' ? scoreA : scoreB;
@@ -292,6 +294,11 @@ export function ScavengerRoute() {
                       path={c.scavenger_claims.image_path}
                       className="h-full w-full object-cover"
                     />
+                  ) : c.card_image_path ? (
+                    <ScavengerProofImage
+                      path={c.card_image_path}
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
                     <img
                       src="/deck.png"
@@ -387,12 +394,15 @@ export function ScavengerRoute() {
         <div className="space-y-4">
           <p className="font-sans text-sm text-muted">
             Claiming reveals this date to {partnerName} so they can give it
-            stars. Add a proof photo if you like.
+            stars.{' '}
+            {claiming?.scavenger_claims
+              ? 'Add a new proof photo, or keep the old one.'
+              : 'A proof photo is required.'}
           </p>
           <button
             type="button"
             onClick={() => setClaimCam(true)}
-            className="lift-press flex h-24 w-full items-center justify-center overflow-hidden rounded-lg bg-surface-2 font-sans text-sm text-muted"
+            className="lift-press flex h-28 w-full items-center justify-center gap-2 overflow-hidden rounded-lg bg-surface-2 font-sans text-sm font-semibold text-gold ring-1 ring-gold/40"
           >
             {claimBlob ? (
               <img
@@ -401,10 +411,18 @@ export function ScavengerRoute() {
                 className="h-full w-full object-cover"
               />
             ) : (
-              'Add a proof photo (optional)'
+              <>
+                <Camera size={18} /> Add a proof photo
+              </>
             )}
           </button>
-          <Button full onClick={confirmClaim} disabled={claim.isPending}>
+          <Button
+            full
+            onClick={confirmClaim}
+            disabled={
+              claim.isPending || (!claimBlob && !claiming?.scavenger_claims)
+            }
+          >
             <Sparkles size={16} /> Claim it
           </Button>
         </div>
