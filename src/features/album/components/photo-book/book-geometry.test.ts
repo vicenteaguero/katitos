@@ -11,13 +11,13 @@ const M = 10;
 const MIN_PEEK = 40;
 
 describe('computeLayout', () => {
-  it('aligns page 1 to the left padding and page 2 to the right padding', () => {
+  it('aligns the cover to the left/right padding (page inset by the cover)', () => {
     const elW = 360;
     const { pageW, restL, restR } = computeLayout(elW, 600, M, MIN_PEEK);
-    // Focus-left: left page (track x = M) lands at content-left (0).
-    expect(M + restL).toBe(0);
-    // Focus-right: right page's right edge (track x = M + 2*pageW) lands at elW.
-    expect(M + 2 * pageW + restR).toBe(elW);
+    // Focus-left: the cover's left edge sits at content-left (0).
+    expect(restL).toBe(0);
+    // Focus-right: the cover's right edge (trackW + restR) sits at elW.
+    expect(2 * pageW + 2 * M + restR).toBe(elW);
   });
 
   it('always keeps at least MIN_PEEK of the facing page visible', () => {
