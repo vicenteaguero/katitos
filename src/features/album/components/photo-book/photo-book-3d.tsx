@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type ReactNode,
 } from 'react';
 import HTMLFlipBook from 'react-pageflip';
 import { useDrag } from '@use-gesture/react';
@@ -20,7 +21,7 @@ import {
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import { cn } from '@kernel/lib';
-import { Empty, IconButton, LoadingScreen, useTopBarAction } from '@kernel/ui';
+import { Empty, LoadingScreen, useTopBarAction } from '@kernel/ui';
 import { type AlbumPageWithPhotos, type BookScope } from '../../types';
 import { useBook, usePages } from '../../api/photo-book.queries';
 import { useAddPage } from '../../api/photo-book.mutations';
@@ -29,9 +30,36 @@ import { SlotSheet } from './slot-sheet';
 import { computeLayout, restFor, slideDx, stepCrossing } from './book-geometry';
 import '../../photo-book.css';
 
-const FLIP_MS = 700;
+const FLIP_MS = 700; // StPageFlip curl duration
+const SLIDE_MS = 380; // snappier within-spread slide (CSS track transition)
 const M = 10; // wine cover margin around the open pages
 const MIN_PEEK = 40; // smallest sliver of the facing page kept visible
+
+/** A round, gilt-edged page-nav button. */
+function NavBtn({
+  label,
+  onClick,
+  disabled,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      disabled={disabled}
+      className="lift-press flex h-11 w-11 items-center justify-center rounded-full bg-surface-2 text-gold shadow-loge outline-none transition disabled:opacity-25"
+      style={{ border: '1px solid rgba(228,195,106,.28)' }}
+    >
+      {children}
+    </button>
+  );
+}
 
 export interface PhotoBook3DProps {
   scope: BookScope;
@@ -122,7 +150,7 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
       const elW = el.getBoundingClientRect().width; // padded content width
       const controlsH = controlsRef.current?.offsetHeight ?? 96;
       const availH =
-        main.getBoundingClientRect().bottom - padB - top - controlsH - 8;
+        main.getBoundingClientRect().bottom - padB - top - controlsH - 16;
       setSize(computeLayout(elW, availH, M, MIN_PEEK));
     };
     compute();
@@ -245,7 +273,7 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
           'lift-press flex h-8 w-8 items-center justify-center rounded-full shadow-loge outline-none focus-visible:ring-2 focus-visible:ring-gold',
           mode === 'arrange'
             ? 'bg-accent text-accent-fg'
-            : 'bg-surface text-fg/80 ring-1 ring-border'
+            : 'bg-surface text-fg/80 ring-1 ring-accent'
         )}
         style={
           mode === 'arrange'
@@ -288,7 +316,7 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
   const even = focused % 2 === 0;
   // The slide overlay sits on the spine half of the focused page; the outer half
   // stays open for StPageFlip's native curl.
-  const dividerX = even ? pageW / 2 : vw - pageW / 2;
+  const dividerX = even ? M + pageW / 2 : vw - M - pageW / 2;
   const slideStyle: CSSProperties = even
     ? { left: dividerX, right: 0 }
     : { left: 0, width: dividerX };
@@ -316,7 +344,7 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
                 transform: `translateX(${tx}px)`,
                 transition: drag.active
                   ? 'none'
-                  : `transform ${FLIP_MS}ms cubic-bezier(0.33, 0, 0.2, 1)`,
+                  : `transform ${SLIDE_MS}ms cubic-bezier(0.33, 0, 0.2, 1)`,
               }}
             >
               <div className="pb-case">
@@ -375,38 +403,37 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
 
       <div
         ref={controlsRef}
-        className="mt-4 flex items-center justify-between pb-[env(safe-area-inset-bottom)]"
+        className="mt-3 flex items-center justify-center gap-4 pb-[env(safe-area-inset-bottom)]"
       >
-        <IconButton
+        <NavBtn
           label="Previous page"
           onClick={() => go(-1)}
           disabled={arranging || focused <= 0}
         >
-          <ChevronLeft />
-        </IconButton>
+          <ChevronLeft className="h-5 w-5" />
+        </NavBtn>
 
-        <span className="font-sans text-sm tabular-nums text-muted">
+        <span className="gilt-text gilt-figures min-w-[3.75rem] text-center font-display text-lg font-semibold tabular-nums">
           {focused + 1} / {count}
         </span>
 
-        <div className="flex items-center gap-1">
-          {!arranging && atEnd && (
-            <IconButton
-              label="Add a page"
-              onClick={onAddPage}
-              disabled={addPage.isPending}
-            >
-              <Plus />
-            </IconButton>
-          )}
-          <IconButton
+        {!arranging && atEnd ? (
+          <NavBtn
+            label="Add a page"
+            onClick={onAddPage}
+            disabled={addPage.isPending}
+          >
+            <Plus className="h-5 w-5" />
+          </NavBtn>
+        ) : (
+          <NavBtn
             label="Next page"
             onClick={() => go(1)}
             disabled={arranging || atEnd}
           >
-            <ChevronRight />
-          </IconButton>
-        </div>
+            <ChevronRight className="h-5 w-5" />
+          </NavBtn>
+        )}
       </div>
 
       {target && (
