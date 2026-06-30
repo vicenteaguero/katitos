@@ -138,7 +138,9 @@ export function ScavengerRoute() {
       title: card.title,
       tone: toneOf(card),
       photoUrl: blob ? URL.createObjectURL(blob) : null,
-      cardImagePath: card.card_image_path,
+      // Show the PROOF (fresh blob, or the existing claim's proof) — fall back
+      // to the card's own photo only if there's truly no proof.
+      cardImagePath: card.scavenger_claims?.image_path ?? card.card_image_path,
     });
     setClaiming(null);
     setClaimBlob(null);
@@ -212,15 +214,6 @@ export function ScavengerRoute() {
             );
           })}
         </div>
-        {/* Pot meter. */}
-        <div>
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-[#6f9bd8] to-[#d98fb0] transition-[width]"
-              style={{ width: `${(used / STAR_POT) * 100}%` }}
-            />
-          </div>
-        </div>
       </Card>
 
       {/* Whose deck · Add — one line. */}
@@ -251,7 +244,7 @@ export function ScavengerRoute() {
           }
         />
       ) : (
-        <div className="curtain-stagger space-y-3">
+        <div className="curtain-stagger space-y-2">
           {deckCards.map((c) => (
             <DateCardItem
               key={c.id}
