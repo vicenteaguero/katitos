@@ -191,13 +191,10 @@ body,
      standalone gets right on first paint. */
   overflow: hidden;
 }
-/* TEMP DEBUG: flood html+body magenta to find what paints the bottom band.
-   If the band turns magenta it's the page background (CSS-fixable); if it stays
-   dark it's the install-frozen manifest background_color / iOS chrome. Revert
-   to var(--color-surface-2) right after. */
 /* The bottom nav lives in surface-2; paint the root the same so the iOS
    home-indicator / rounded-corner strip below the viewport blends in rather
-   than showing a darker band. */
+   than showing a darker band. (The TOP notch is painted by the opaque header
+   instead — see app-shell — so it matches the darker top bar, not this.) */
 html {
   background-color: var(--color-surface-2);
 }
