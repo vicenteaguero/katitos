@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
-import { cn } from '@kernel/lib';
+import { cn, greatCircle } from '@kernel/lib';
 import { Card, IconButton, Sheet, useTopBarAction } from '@kernel/ui';
 import {
   useSummerItems,
@@ -24,8 +24,9 @@ import {
   useUpdateItem,
 } from '../../api/summer.mutations';
 import { CitySearch, type CityHit } from '../../components/city-search';
+import { useRoadRoutes } from '../../api/road-route';
 import { TopAdd } from '../../components/top-add';
-import type { MapPin } from '../../components/summer-map';
+import type { MapLeg, MapPin } from '../../components/summer-map';
 import { buildRoute, reorderPositions } from '../../lib/map-route';
 import { COUNTRIES, type CountryFilter, type Trip } from '../../types';
 
@@ -80,7 +81,7 @@ export function MapTab({
       <IconButton
         label={mode === 'map' ? 'List view' : 'Map view'}
         onClick={() => setMode((m) => (m === 'map' ? 'list' : 'map'))}
-        className="bg-surface-2"
+        className="h-9 w-9 bg-surface-2"
       >
         {mode === 'map' ? (
           <List className="h-4 w-4" />
@@ -158,9 +159,48 @@ export function MapTab({
     })),
   ];
 
-  // The route: connect the cities in order, or fall back to the seeded legs
-  // until 2+ cities are tagged (so the original line never vanishes on prod).
-  const routeLegs = buildRoute(cityItems, seededLegs);
+  // Flights (mode='flight') draw as geodesic arcs; every other leg follows the
+  // roads. Cities (2+) drive the ground route, else the seeded legs are it.
+  const flightLegs = seededLegs.filter(
+    (l) =>
+      l.mode === 'flight' &&
+      l.from_lat != null &&
+      l.from_lng != null &&
+      l.to_lat != null &&
+      l.to_lng != null
+  );
+  const groundRoute = buildRoute(
+    cityItems,
+    seededLegs.filter((l) => l.mode !== 'flight')
+  );
+  const road = useRoadRoutes(
+    groundRoute.map((l) => ({
+      from: { lat: l.fromLat, lng: l.fromLng },
+      to: { lat: l.toLat, lng: l.toLng },
+    }))
+  );
+  const routeLegs: MapLeg[] = [
+    ...groundRoute.map((l, i) => ({
+      ...l,
+      kind: 'road' as const,
+      path: road.data?.[i] ?? undefined,
+    })),
+    ...flightLegs.map((l) => ({
+      fromLat: l.from_lat as number,
+      fromLng: l.from_lng as number,
+      toLat: l.to_lat as number,
+      toLng: l.to_lng as number,
+      mode: 'flight',
+      country: l.country as 'TR' | 'GE' | null,
+      label: `${l.from_label} → ${l.to_label}`,
+      kind: 'flight' as const,
+      path: greatCircle(
+        { lat: l.from_lat as number, lng: l.from_lng as number },
+        { lat: l.to_lat as number, lng: l.to_lng as number },
+        48
+      ),
+    })),
+  ];
 
   const addPlace = (hit: CityHit) => {
     addItem.mutate(
