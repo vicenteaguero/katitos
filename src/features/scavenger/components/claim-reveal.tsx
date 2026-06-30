@@ -24,9 +24,9 @@ const SPARKS = 18;
 
 /**
  * Full-screen, notch-safe "you opened the rarest card in the pack" reveal that
- * plays when the creator claims a date. Portal → <body>, tap (or ~2.5s) to
- * dismiss. All the spectacle lives in scavenger.css; this just stages it and
- * fires the haptic punch.
+ * plays when the creator claims a date. Portal → <body>; no auto-dismiss — you
+ * close it with the quiet Close button. All the spectacle lives in
+ * scavenger.css; this just stages it and fires the haptic punch.
  */
 export function ClaimReveal({
   title,
@@ -47,15 +47,11 @@ export function ClaimReveal({
     window.setTimeout(() => onDoneRef.current(), 300);
   }, []);
 
-  // Haptic flourish on entrance + auto-dismiss. Reduced motion → quick + calm.
+  // Haptic flourish on entrance. NO auto-dismiss — claiming is epic, you linger
+  // and close it yourself with the (very quiet) Close button.
   useEffect(() => {
     navigator.vibrate?.([0, 40, 30, 60]);
-    const reduced = window.matchMedia?.(
-      '(prefers-reduced-motion: reduce)'
-    ).matches;
-    const t = window.setTimeout(dismiss, reduced ? 1100 : 2500);
-    return () => window.clearTimeout(t);
-  }, [dismiss]);
+  }, []);
 
   const sparks = Array.from({ length: SPARKS }, (_, i) => {
     const angle = (i / SPARKS) * Math.PI * 2 + (i % 2 ? 0.32 : 0);
@@ -84,9 +80,17 @@ export function ClaimReveal({
       className={`sc-reveal${out ? ' sc-reveal--out' : ''}`}
       role="dialog"
       aria-label={`${title} claimed`}
-      onClick={dismiss}
     >
-      <div className="sc-reveal-backdrop" />
+      {/* The Card-Deck cover, tinted wine, IS the backdrop. */}
+      <div
+        className="sc-reveal-backdrop"
+        style={{
+          backgroundImage:
+            'radial-gradient(125% 90% at 50% 42%, rgba(110,20,35,0.80) 0%, rgba(26,11,19,0.92) 58%, rgba(16,4,8,0.97) 100%), url(/deck.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      />
       <div className="sc-rays-wrap" aria-hidden="true">
         <div className="sc-rays" />
       </div>
@@ -110,7 +114,9 @@ export function ClaimReveal({
       </div>
 
       <p className="sc-word">CLAIMED!</p>
-      <p className="sc-hint">Tap to close</p>
+      <button type="button" className="sc-close" onClick={dismiss}>
+        Close
+      </button>
     </div>,
     document.body
   );
