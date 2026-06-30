@@ -1,10 +1,11 @@
 import { useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
-import { ArrowLeft, ArrowLeftRight } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@kernel/auth';
 import { useEnsurePushSubscription } from '@kernel/push';
 import { IconButton, TopBarSlotProvider, useTopBarSlot } from '@kernel/ui';
 import { PresenceTracker, PartnerStatusDot } from '@features/presence';
+import { ExchangeIcon } from '@features/currency';
 import { LoginScreen } from './login';
 import { DevUserSwitcher } from './dev-switcher';
 import { KatitosMark } from './katitos-mark';
@@ -73,7 +74,7 @@ function TopBar() {
               className="lift-press flex h-9 w-9 items-center justify-center rounded-full bg-accent text-accent-fg shadow-loge"
               style={{ border: '1px solid rgba(228,195,106,.4)' }}
             >
-              <ArrowLeftRight size={18} />
+              <ExchangeIcon size={18} />
             </Link>
           )}
         </div>
