@@ -24,14 +24,16 @@ const RATE_STALE_MS = 8 * 60 * 60 * 1000; // refresh only when ≥8h old
  */
 async function refreshRatesIfStale(): Promise<void> {
   try {
-    const { data: newest } = await supabase
+    // Check the OLDEST rate — if ANY pair is stale (e.g. seeded cross-rates that
+    // a prior USD-only refresh never touched), refresh the whole matrix.
+    const { data: oldest } = await supabase
       .from('currency_rates')
       .select('fetched_at')
-      .order('fetched_at', { ascending: false })
+      .order('fetched_at', { ascending: true })
       .limit(1)
       .maybeSingle();
-    const age = newest?.fetched_at
-      ? Date.now() - new Date(newest.fetched_at).getTime()
+    const age = oldest?.fetched_at
+      ? Date.now() - new Date(oldest.fetched_at).getTime()
       : Infinity;
     if (age < RATE_STALE_MS) return;
 
