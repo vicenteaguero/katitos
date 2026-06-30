@@ -29,11 +29,20 @@ const PIN_COLOR: Record<string, string> = {
   city: '#caa53f',
 };
 
-/** Wine for Georgia legs, copper for Türkiye, gilt for the border crossing. */
-function legColor(country?: string | null): string {
-  if (country === 'GE') return '#6e1423';
-  if (country === 'TR') return '#b5633a';
-  return '#c9a24b';
+/** Each transport mode gets its own line colour. */
+function legColor(mode?: string | null): string {
+  switch (mode) {
+    case 'bus':
+      return '#c9a24b'; // gilt
+    case 'train':
+      return '#6e1423'; // wine
+    case 'ferry':
+      return '#3a9b8a'; // teal
+    case 'walk':
+      return '#9a8a6a'; // muted
+    default:
+      return '#b5633a'; // car — copper
+  }
 }
 
 /** Buses + ferries get a dashed line; driven/flown legs are solid. */
@@ -135,10 +144,17 @@ export function SummerMap({
               [leg.toLat, leg.toLng],
             ];
       if (leg.kind === 'flight') {
+        // Black halo under the blue, so the flight reads on the busy basemap.
         L.polyline(pts, {
-          color: '#6fa0ff',
-          weight: 2.5,
-          opacity: 0.9,
+          color: '#0a0306',
+          weight: 6.5,
+          opacity: 0.55,
+          lineCap: 'round',
+        }).addTo(layer);
+        L.polyline(pts, {
+          color: '#7cb0ff',
+          weight: 3.5,
+          opacity: 1,
           dashArray: '1 9',
           lineCap: 'round',
         }).addTo(layer);
@@ -152,7 +168,7 @@ export function SummerMap({
         );
       } else {
         L.polyline(pts, {
-          color: legColor(leg.country),
+          color: legColor(leg.mode),
           weight: 3.5,
           opacity: 0.85,
           dashArray: legDash(leg.mode),
@@ -192,7 +208,10 @@ export function SummerMap({
         // Open the popup ABOVE the tip, not on the point.
         popupAnchor: [0, -tipY - 2],
       });
-      L.marker([p.lat, p.lng], { icon })
+      // Z-order: cities on top, then places, then reviews (routes sit in the
+      // overlay pane, always below every marker).
+      const z = p.tone === 'city' ? 2000 : p.tone === 'place' ? 1000 : 0;
+      L.marker([p.lat, p.lng], { icon, zIndexOffset: z })
         .addTo(layer)
         .bindPopup(`<b>${esc(p.title)}</b>`, {
           minWidth: 120,
