@@ -83,6 +83,14 @@
 .pb-book {
   position: relative;
 }
+/* The slide zone — a transparent overlay over the SPINE half of the focused
+   page. It owns the pan gesture; the OUTER half is left uncovered so StPageFlip
+   receives the native finger-curl there. Position set inline per page side. */
+.pb-slide-zone {
+  position: absolute;
+  z-index: 5;
+  touch-action: none;
+}
 .pb-page-host {
   border-radius: 11px;
   overflow: hidden;
