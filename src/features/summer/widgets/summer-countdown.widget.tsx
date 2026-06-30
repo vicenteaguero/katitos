@@ -22,28 +22,31 @@ export function SummerCountdownWidget() {
   return (
     <Link
       to="/summer"
-      className="lift-press flex items-center justify-center gap-2.5 rounded-full px-4 py-2"
+      className="lift-press flex flex-col items-center gap-1 rounded-2xl px-4 py-3"
       style={{
         border: '1px solid rgba(201,162,75,.22)',
         background: 'linear-gradient(165deg, #1c0d15, #160a11)',
       }}
     >
-      <Plane className="h-3.5 w-3.5 shrink-0 text-copper" strokeWidth={2} />
       {past ? (
-        <span className="font-display text-sm font-semibold italic text-fg">
+        <span className="flex items-center gap-2 font-display text-base font-semibold italic text-fg">
+          <Plane className="h-4 w-4 shrink-0 text-copper" strokeWidth={2} />
           We’re away ❤️
         </span>
       ) : (
         <>
-          <span className="font-sans text-[0.6rem] font-bold uppercase tracking-[0.22em] text-copper">
-            Our summer
+          <span className="flex items-center gap-1.5">
+            <Plane className="h-3 w-3 shrink-0 text-copper" strokeWidth={2} />
+            <span className="font-sans text-[0.6rem] font-bold uppercase tracking-[0.22em] text-copper">
+              Our summer
+            </span>
           </span>
-          <span className="flex items-baseline gap-1.5 font-display text-[1.425rem] font-semibold tabular-nums tracking-tight">
+          <span className="flex items-baseline gap-2 font-display text-[2.85rem] font-semibold leading-none tabular-nums tracking-tight">
             <span className="inline-flex items-baseline">
               <span className="gilt-text gilt-figures">
                 {Math.floor(diff.days)}
               </span>
-              <span className="ml-1 text-[0.87rem] font-semibold text-copper/70">
+              <span className="ml-1 text-[1.4rem] font-semibold text-copper/70">
                 {Math.floor(diff.days) === 1 ? 'day' : 'days'}
               </span>
             </span>
