@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useDrag } from '@use-gesture/react';
+import { useGesture } from '@use-gesture/react';
 import { X } from 'lucide-react';
 import { cn } from '@kernel/lib';
 import type { AlbumPageWithPhotos, AlbumPhoto, PhotoSource } from '../../types';
@@ -8,14 +8,22 @@ import { SlotPhoto } from './slot-photo';
 
 const clamp = (n: number, lo: number, hi: number) =>
   Math.min(hi, Math.max(lo, n));
-/** Sticker width as a % of the page, at scale 1. */
+/** Photo-sticker width as a % of the page, at scale 1. */
 const BASE_W = 42;
 
+interface Transform {
+  x: number;
+  y: number;
+  scale: number;
+  rotation: number;
+}
+
 /**
- * A paper page: a free canvas of draggable photo "stickers". Positions are
- * stored as fractions of the page (0..1), so a sticker keeps its spot on ANY
- * screen size or aspect (like the chalkboard). Tap a sticker to select it (then
- * drag to move, × to remove). Adding is done from the top-bar "+".
+ * A paper page: a free canvas of draggable photo + text "stickers". Positions
+ * are page fractions (0..1) so a sticker keeps its spot on any screen. In
+ * arrange mode: drag to move, two-finger pinch to scale + rotate (like the
+ * Wall), tap to select, × to remove. Stickers live inside the page, so they
+ * curl with the 3D flip.
  */
 export function PageFace({
   page,
@@ -45,7 +53,7 @@ export function PageFace({
           onSelect={() =>
             setSelected((s) => (s === photo.id ? null : photo.id))
           }
-          onMove={(x, y) => move.mutate({ id: photo.id, bookId, x, y })}
+          onTransform={(t) => move.mutate({ id: photo.id, bookId, ...t })}
           onRemove={() =>
             remove.mutate({
               id: photo.id,
@@ -65,53 +73,105 @@ function Sticker({
   interactive,
   selected,
   onSelect,
-  onMove,
+  onTransform,
   onRemove,
 }: {
   photo: AlbumPhoto;
   interactive: boolean;
   selected: boolean;
   onSelect: () => void;
-  onMove: (x: number, y: number) => void;
+  onTransform: (t: Transform) => void;
   onRemove: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const draggingRef = useRef(false);
-  const [pos, setPos] = useState({ x: photo.x, y: photo.y });
+  const busyRef = useRef(false);
+  const isText = photo.source === 'text';
+  const [view, setView] = useState<Transform>({
+    x: photo.x,
+    y: photo.y,
+    scale: photo.scale || 1,
+    rotation: photo.rotation || 0,
+  });
 
-  // Sync to external changes (e.g. partner moved it) — but never mid-drag.
+  // Sync to external changes (e.g. partner moved it) — never mid-gesture.
   useEffect(() => {
-    if (!draggingRef.current) setPos({ x: photo.x, y: photo.y });
-  }, [photo.x, photo.y]);
-
-  const bind = useDrag(
-    ({ event, first, last, tap, movement: [mx, my], memo }) => {
-      if (tap) {
-        onSelect();
-        return;
-      }
-      if (first) {
-        // Stop the page-turn gesture (on the stack) from also firing.
-        event?.stopPropagation();
-        draggingRef.current = true;
-      }
-      const parent = ref.current?.offsetParent as HTMLElement | null;
-      const pw = parent?.clientWidth || 1;
-      const ph = parent?.clientHeight || 1;
-      const base = (memo as { x: number; y: number }) ?? {
+    if (!busyRef.current)
+      setView({
         x: photo.x,
         y: photo.y,
-      };
-      const nx = clamp(base.x + mx / pw, 0.08, 0.92);
-      const ny = clamp(base.y + my / ph, 0.08, 0.92);
-      setPos({ x: nx, y: ny });
-      if (last) {
-        draggingRef.current = false;
-        onMove(nx, ny);
-      }
-      return base;
+        scale: photo.scale || 1,
+        rotation: photo.rotation || 0,
+      });
+  }, [photo.x, photo.y, photo.scale, photo.rotation]);
+
+  const bind = useGesture(
+    {
+      onDrag: ({
+        event,
+        first,
+        last,
+        tap,
+        movement: [mx, my],
+        memo,
+        pinching,
+        cancel,
+      }) => {
+        if (pinching) {
+          cancel();
+          return;
+        }
+        if (tap) {
+          onSelect();
+          return;
+        }
+        if (first) {
+          // Stop the page-turn gesture (on the stack) from also firing.
+          event?.stopPropagation();
+          busyRef.current = true;
+        }
+        const parent = ref.current?.offsetParent as HTMLElement | null;
+        const pw = parent?.clientWidth || 1;
+        const ph = parent?.clientHeight || 1;
+        const base = (memo as { x: number; y: number }) ?? {
+          x: view.x,
+          y: view.y,
+        };
+        const nx = clamp(base.x + mx / pw, 0.06, 0.94);
+        const ny = clamp(base.y + my / ph, 0.06, 0.94);
+        setView((v) => ({ ...v, x: nx, y: ny }));
+        if (last) {
+          busyRef.current = false;
+          onTransform({
+            x: nx,
+            y: ny,
+            scale: view.scale,
+            rotation: view.rotation,
+          });
+        }
+        return base;
+      },
+      onPinch: ({ first, last, offset: [scale, rotation] }) => {
+        if (first) {
+          busyRef.current = true;
+          onSelect();
+        }
+        setView((v) => ({ ...v, scale, rotation }));
+        if (last) {
+          busyRef.current = false;
+          onTransform({ x: view.x, y: view.y, scale, rotation });
+        }
+      },
     },
-    { filterTaps: true, pointer: { touch: true }, enabled: interactive }
+    {
+      enabled: interactive,
+      eventOptions: { passive: false },
+      drag: { filterTaps: true, pointer: { touch: true } },
+      pinch: {
+        from: () => [view.scale, view.rotation],
+        scaleBounds: { min: 0.4, max: 3 },
+        rubberband: true,
+      },
+    }
   );
 
   return (
@@ -120,28 +180,36 @@ function Sticker({
       {...(interactive ? bind() : {})}
       className={cn(
         'pb-sticker',
+        isText && 'pb-sticker--text',
         interactive && 'pb-sticker--live',
         selected && 'pb-sticker--sel'
       )}
       style={{
-        left: `${pos.x * 100}%`,
-        top: `${pos.y * 100}%`,
-        width: `${BASE_W * (photo.scale || 1)}%`,
+        left: `${view.x * 100}%`,
+        top: `${view.y * 100}%`,
+        transform: `translate(-50%, -50%) rotate(${view.rotation}deg)`,
         touchAction: 'none',
+        ...(isText
+          ? { fontSize: `${Math.round(16 * view.scale)}px`, maxWidth: '80%' }
+          : { width: `${BASE_W * view.scale}%` }),
       }}
     >
-      <div className="pb-sticker-frame">
-        <div className="pb-sticker-photo">
-          <SlotPhoto
-            source={photo.source as PhotoSource}
-            path={photo.image_path}
-            alt={photo.caption ?? 'Album photo'}
-          />
+      {isText ? (
+        <span className="pb-text-sticker">{photo.caption}</span>
+      ) : (
+        <div className="pb-sticker-frame">
+          <div className="pb-sticker-photo">
+            <SlotPhoto
+              source={photo.source as PhotoSource}
+              path={photo.image_path}
+              alt={photo.caption ?? 'Album photo'}
+            />
+          </div>
+          {photo.caption && (
+            <span className="pb-sticker-cap">{photo.caption}</span>
+          )}
         </div>
-        {photo.caption && (
-          <span className="pb-sticker-cap">{photo.caption}</span>
-        )}
-      </div>
+      )}
       {interactive && selected && (
         <button
           type="button"
