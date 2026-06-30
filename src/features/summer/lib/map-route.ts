@@ -5,6 +5,7 @@ export interface RouteCity {
   lng: number | null;
   title: string;
   country: string | null;
+  mode?: string | null;
 }
 
 export interface SeededLeg {
@@ -30,7 +31,7 @@ export function buildRoute(cities: RouteCity[], seeded: SeededLeg[]): MapLeg[] {
       fromLng: c.lng as number,
       toLat: cities[i + 1].lat as number,
       toLng: cities[i + 1].lng as number,
-      mode: 'car',
+      mode: c.mode ?? 'car',
       country: c.country as 'TR' | 'GE' | null,
       label: `${c.title} → ${cities[i + 1].title}`,
     }));
