@@ -21,7 +21,7 @@ interface NominatimHit {
 /** Free OpenStreetMap (Nominatim) geocode — no key. Couple-scale traffic only. */
 async function geocode(q: string): Promise<CityHit[]> {
   const url =
-    'https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=6&accept-language=en&q=' +
+    'https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=5&accept-language=en&q=' +
     encodeURIComponent(q);
   const res = await fetch(url, { headers: { Accept: 'application/json' } });
   if (!res.ok) throw new Error('Search failed');
@@ -39,10 +39,26 @@ async function geocode(q: string): Promise<CityHit[]> {
 }
 
 /** Type a city/sight name → pick a result → its coordinates drop on the map. */
-export function CitySearch({ onPick }: { onPick: (hit: CityHit) => void }) {
+export function CitySearch({
+  onPick,
+  disabled,
+  hint,
+}: {
+  onPick: (hit: CityHit) => void;
+  disabled?: boolean;
+  hint?: string;
+}) {
   const [q, setQ] = useState('');
   const [hits, setHits] = useState<CityHit[]>([]);
   const [busy, setBusy] = useState(false);
+
+  if (disabled) {
+    return (
+      <p className="rounded-lg bg-surface-2 px-3 py-2.5 text-center font-sans text-xs text-muted">
+        {hint ?? 'Pick a country first'}
+      </p>
+    );
+  }
 
   const run = async () => {
     if (!q.trim()) return;
