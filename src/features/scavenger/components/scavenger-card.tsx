@@ -102,7 +102,7 @@ export function DateCardItem({
       {/* Deck color seam — blue for his, pink for hers. */}
       <div className="h-1 w-full" style={{ background: tone.color }} />
 
-      <div className="space-y-2 p-2">
+      <div className="space-y-1.5 p-1.5">
         <div className="flex items-start gap-2.5">
           {/* The physical card photo (or the deck envelope as a fallback). */}
           <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-surface-2">
