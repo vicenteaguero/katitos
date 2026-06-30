@@ -102,8 +102,8 @@ export function DateCardItem({
       {/* Deck color seam — blue for his, pink for hers. */}
       <div className="h-1 w-full" style={{ background: tone.color }} />
 
-      <div className="space-y-2.5 p-2.5">
-        <div className="flex items-start gap-3">
+      <div className="space-y-2 p-2">
+        <div className="flex items-start gap-2.5">
           {/* The physical card photo (or the deck envelope as a fallback). */}
           <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-surface-2">
             {card.card_image_path ? (
@@ -120,13 +120,12 @@ export function DateCardItem({
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <p
-              className="text-left font-sans text-[0.6rem] font-semibold uppercase tracking-[0.18em]"
+            {/* Title carries the deck's colour (no "His/Hers deck" label — the
+                tab above already says whose deck this is). */}
+            <h3
+              className="truncate font-display text-xl font-semibold tracking-tight"
               style={{ color: tone.color }}
             >
-              {tone.label} deck
-            </p>
-            <h3 className="truncate font-display text-xl font-semibold tracking-tight text-fg">
               {card.title}
             </h3>
             {card.description && (
