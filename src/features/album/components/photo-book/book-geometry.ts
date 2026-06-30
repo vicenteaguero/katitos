@@ -13,6 +13,8 @@ export interface BookLayout {
   restL: number;
   /** translateX that puts the RIGHT page's right edge at the content-right. */
   restR: number;
+  /** The viewport (padded content) width — for splitting the drag halves. */
+  vw: number;
 }
 
 /**
@@ -33,6 +35,7 @@ export function computeLayout(
     trackW: 2 * pageW + 2 * m,
     restL: -m,
     restR: elW - m - 2 * pageW,
+    vw: elW,
   };
 }
 
