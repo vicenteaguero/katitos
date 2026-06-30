@@ -3,12 +3,14 @@ import { Luggage, Trash2 } from 'lucide-react';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import { cn } from '@kernel/lib';
+import { useMembers } from '@kernel/auth';
 import {
   Button,
   Card,
+  Checkbox,
   Empty,
-  IconButton,
   Input,
+  Segmented,
   Sheet,
   useTopBarAction,
 } from '@kernel/ui';
@@ -26,18 +28,17 @@ const CATEGORIES = ['Clothes', 'Tech', 'Docs', 'Beauty', 'Misc'];
 export function PackTab({ trip }: { trip: Trip }) {
   useTableSync('packing_items', qk.trips.packing(trip.id), { enabled: true });
   const { data: items } = useSummerPacking(trip.id);
+  const { data: members } = useMembers();
   const addItem = useAddPacking();
   const toggle = useTogglePacking();
   const del = useDeletePacking();
 
+  const [who, setWho] = useState('all'); // 'all' | user_id
   const [form, setForm] = useState<{
     open: boolean;
     label: string;
     category: string;
   }>({ open: false, label: '', category: 'Clothes' });
-
-  const list = items ?? [];
-  const packed = list.filter((i) => i.packed).length;
 
   useTopBarAction(
     <TopAdd
@@ -46,28 +47,71 @@ export function PackTab({ trip }: { trip: Trip }) {
     []
   );
 
+  const all = items ?? [];
+  const list = who === 'all' ? all : all.filter((i) => i.assigned_to === who);
+  const packed = list.filter((i) => i.packed).length;
+
+  // All | Vicente | Anastasia — members already come in role order (a, b).
+  const whoOptions = [
+    { value: 'all', label: 'All' },
+    ...(members ?? []).map((m) => ({
+      value: m.user_id,
+      label: m.display_name ?? 'Me',
+    })),
+  ];
+
+  // Bucket by category, unchecked before checked within each.
   const byCat = new Map<string, PackingItem[]>();
   for (const it of list) {
     const key = it.category ?? 'Misc';
-    const arr = byCat.get(key) ?? [];
-    arr.push(it);
-    byCat.set(key, arr);
+    const arr = byCat.get(key);
+    if (arr) arr.push(it);
+    else byCat.set(key, [it]);
   }
+  for (const arr of byCat.values())
+    arr.sort((a, b) => Number(a.packed) - Number(b.packed));
+  const orderedCats = CATEGORIES.filter((c) => byCat.has(c)).concat(
+    [...byCat.keys()].filter((c) => !CATEGORIES.includes(c))
+  );
 
   const submit = () => {
     if (!form.label.trim()) return;
     addItem.mutate(
-      { tripId: trip.id, label: form.label.trim(), category: form.category },
+      {
+        tripId: trip.id,
+        label: form.label.trim(),
+        category: form.category,
+        assignedTo: who === 'all' ? null : who,
+      },
       { onSuccess: () => setForm((f) => ({ ...f, open: false, label: '' })) }
     );
   };
 
+  const clearAll = () => {
+    for (const it of list)
+      if (it.packed)
+        toggle.mutate({ id: it.id, tripId: trip.id, packed: false });
+  };
+
   return (
-    <section className="space-y-4">
+    <section className="space-y-2.5">
+      <Segmented value={who} onChange={setWho} full options={whoOptions} />
+
       {list.length > 0 && (
-        <p className="text-center font-sans text-xs text-muted">
-          {packed}/{list.length} packed
-        </p>
+        <div className="flex items-center justify-between px-0.5">
+          <p className="font-sans text-xs text-muted">
+            {packed}/{list.length} packed
+          </p>
+          {packed > 0 && (
+            <button
+              type="button"
+              onClick={clearAll}
+              className="lift-press font-sans text-xs font-semibold text-copper outline-none active:text-accent"
+            >
+              Clear
+            </button>
+          )}
+        </div>
       )}
 
       {list.length === 0 ? (
@@ -77,50 +121,47 @@ export function PackTab({ trip }: { trip: Trip }) {
           hint="Add what you can't forget."
         />
       ) : (
-        CATEGORIES.filter((c) => byCat.has(c))
-          .concat([...byCat.keys()].filter((c) => !CATEGORIES.includes(c)))
-          .map((cat) => (
-            <div key={cat} className="space-y-2">
-              <p className="font-sans text-xs font-semibold text-muted">
-                {cat}
-              </p>
-              {(byCat.get(cat) ?? []).map((it) => (
-                <Card
-                  key={it.id}
-                  className="flex items-center gap-3 px-4 py-2.5"
+        orderedCats.map((cat) => (
+          <div key={cat} className="space-y-1">
+            <p className="px-0.5 font-sans text-xs font-semibold text-muted">
+              {cat}
+            </p>
+            {(byCat.get(cat) ?? []).map((it) => (
+              <Card
+                key={it.id}
+                className="flex items-center gap-2.5 px-2.5 py-1.5"
+              >
+                <Checkbox
+                  checked={it.packed}
+                  onChange={() =>
+                    toggle.mutate({
+                      id: it.id,
+                      tripId: trip.id,
+                      packed: !it.packed,
+                    })
+                  }
+                  label="Toggle packed"
+                />
+                <span
+                  className={cn(
+                    'min-w-0 flex-1 truncate font-display text-base text-fg',
+                    it.packed && 'text-muted line-through'
+                  )}
                 >
-                  <button
-                    type="button"
-                    aria-label="Toggle packed"
-                    onClick={() =>
-                      toggle.mutate({
-                        id: it.id,
-                        tripId: trip.id,
-                        packed: !it.packed,
-                      })
-                    }
-                    className="shrink-0 text-lg"
-                  >
-                    {it.packed ? '✅' : '⬜'}
-                  </button>
-                  <span
-                    className={cn(
-                      'min-w-0 flex-1 truncate font-display text-base text-fg',
-                      it.packed && 'text-muted line-through'
-                    )}
-                  >
-                    {it.label}
-                  </span>
-                  <IconButton
-                    label="Delete"
-                    onClick={() => del.mutate({ id: it.id, tripId: trip.id })}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </IconButton>
-                </Card>
-              ))}
-            </div>
-          ))
+                  {it.label}
+                </span>
+                <button
+                  type="button"
+                  aria-label="Remove"
+                  onClick={() => del.mutate({ id: it.id, tripId: trip.id })}
+                  className="lift-press -mr-0.5 shrink-0 rounded p-1 text-muted outline-none active:text-accent"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </Card>
+            ))}
+          </div>
+        ))
       )}
 
       <Sheet
