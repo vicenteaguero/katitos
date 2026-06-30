@@ -86,7 +86,7 @@ export function ClaimReveal({
         className="sc-reveal-backdrop"
         style={{
           backgroundImage:
-            'radial-gradient(125% 90% at 50% 42%, rgba(110,20,35,0.80) 0%, rgba(26,11,19,0.92) 58%, rgba(16,4,8,0.97) 100%), url(/deck.png)',
+            'radial-gradient(125% 90% at 50% 42%, rgba(110,20,35,0.60) 0%, rgba(26,11,19,0.85) 58%, rgba(16,4,8,0.95) 100%), url(/deck.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
