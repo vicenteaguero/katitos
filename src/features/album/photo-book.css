@@ -187,6 +187,27 @@
   text-align: center;
   color: var(--pb-ink);
 }
+
+/* Text sticker — a title / little message on the page (no photo frame). The
+   wrapper sets the px font-size (so it scales with the sticker); 1em here. */
+.pb-text-sticker {
+  display: block;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 600;
+  font-size: 1em;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--pb-ink);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+.pb-sticker--text.pb-sticker--sel .pb-text-sticker {
+  outline: 1.5px dashed rgba(228, 195, 106, 0.85);
+  outline-offset: 5px;
+  border-radius: 3px;
+}
 .pb-sticker-x {
   position: absolute;
   top: -9px;
