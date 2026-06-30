@@ -119,6 +119,7 @@ export type Database = {
           id: string
           image_path: string | null
           page_id: string
+          rotation: number
           scale: number
           slot: number
           source: string
@@ -132,6 +133,7 @@ export type Database = {
           id?: string
           image_path?: string | null
           page_id: string
+          rotation?: number
           scale?: number
           slot: number
           source?: string
@@ -145,6 +147,7 @@ export type Database = {
           id?: string
           image_path?: string | null
           page_id?: string
+          rotation?: number
           scale?: number
           slot?: number
           source?: string
