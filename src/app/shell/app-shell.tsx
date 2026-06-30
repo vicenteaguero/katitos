@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { ArrowLeft, ArrowLeftRight } from 'lucide-react';
 import { useAuth } from '@kernel/auth';
@@ -32,7 +33,7 @@ function TopBar() {
   const action = useTopBarSlot();
 
   return (
-    <header className="z-20 shrink-0 bg-surface/95 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur">
+    <header className="z-20 shrink-0 bg-surface pt-[max(0.5rem,env(safe-area-inset-top))]">
       {/* Minimal marquee: (back) · small mark + quiet section name · settings. */}
       <div className="flex items-center justify-between gap-2 px-[1.5rem] py-2">
         <div className="flex min-w-0 items-center gap-2">
@@ -81,6 +82,15 @@ function TopBar() {
   );
 }
 
+/** Reset the scroll container to the top on every route change. */
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    document.querySelector('main')?.scrollTo({ top: 0, left: 0 });
+  }, [pathname]);
+  return null;
+}
+
 export function AppShell() {
   const { status } = useAuth();
   // Heal this device's push subscription on every launch (no prompt) so loves
@@ -101,6 +111,7 @@ export function AppShell() {
         <TopBarSlotProvider>
           <div className="mx-auto flex h-full max-w-app flex-col overflow-hidden bg-surface">
             <PresenceTracker />
+            <ScrollToTop />
             <CacheWarmer />
             <TopBar />
             <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-[0.875rem] pb-8 pt-[0.44rem] [-webkit-overflow-scrolling:touch]">
