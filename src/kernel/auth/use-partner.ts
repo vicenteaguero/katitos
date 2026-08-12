@@ -16,7 +16,16 @@ async function fetchMembers(): Promise<Member[]> {
 }
 
 export function useMembers() {
-  return useQuery({ queryKey: qk.couple.members(), queryFn: fetchMembers });
+  const userId = useUserId();
+  return useQuery({
+    queryKey: qk.couple.members(),
+    // Wait for the session. Every row here is behind `is_member()`, so firing
+    // this before the token exists returns an empty list — which then sits in
+    // the cache looking like "there is no couple", and the whole app renders
+    // as though nobody is signed in until it goes stale.
+    enabled: !!userId,
+    queryFn: fetchMembers,
+  });
 }
 
 export interface PartnerInfo {
