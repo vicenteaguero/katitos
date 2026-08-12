@@ -3,7 +3,15 @@ import { Link } from 'react-router';
 import { BookHeart, Plus } from 'lucide-react';
 import { DateTime } from 'luxon';
 import { BUCKETS, useSignedUrls } from '@kernel/storage';
-import { Button, Field, Input, Sheet, Skeleton, toast } from '@kernel/ui';
+import {
+  Button,
+  Empty,
+  Field,
+  Input,
+  Sheet,
+  Skeleton,
+  toast,
+} from '@kernel/ui';
 import { useAlbumPhotoCounts, useAlbums } from '../api/photo-book.queries';
 import { useCreateAlbum } from '../api/albums.mutations';
 import type { AlbumBook } from '../types';
@@ -58,6 +66,12 @@ export function AlbumsRoute() {
           <Skeleton className="h-28 w-full" rounded="lg" />
           <Skeleton className="h-28 w-full" rounded="lg" />
         </div>
+      ) : (books ?? []).length === 0 ? (
+        <Empty
+          icon="📖"
+          title="No albums yet"
+          hint="One book per era of ours — start with the one you're living."
+        />
       ) : (
         <div className="curtain-stagger space-y-3">
           {(books ?? []).map((book, i) => (
