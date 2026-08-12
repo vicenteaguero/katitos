@@ -1,18 +1,18 @@
 import { useMemo, useState } from 'react';
-import { Check, ImagePlus, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Check, Pencil, Plus, Trash2 } from 'lucide-react';
 import { usePartner } from '@kernel/auth';
 import { qk } from '@kernel/query';
 import { useTableSync } from '@kernel/realtime';
-import { BUCKETS, useSignedUrls } from '@kernel/storage';
+import { BUCKETS, usePrefetchImages, useSignedUrls } from '@kernel/storage';
 import { cn } from '@kernel/lib';
 import {
   Empty,
   FilePickerButton,
   IconButton,
+  PolaroidPlate,
   Sheet,
   Skeleton,
   SquareCropper,
-  Textarea,
   toast,
   useTopBarAction,
 } from '@kernel/ui';
@@ -22,11 +22,12 @@ import { groupByYear, type MonthSlot } from '../lib/months';
 import type { Flower } from '../types';
 
 /**
- * A bouquet for every month, three across, each one captioned with its month.
+ * A bouquet for every month, three across, each on its own instant photo with
+ * the month printed on the chin.
  *
  * Looking mode shows only the months that have one — a grid of empty frames is
- * a list of things you didn't do. Edit mode opens up every month of the year so
- * she can drop one into whichever she likes.
+ * a list of things you didn't do. Edit mode opens every month from June 2025 to
+ * the end of the currently open year so she can tap the one she likes.
  *
  * Three columns is an explicit request and overrides the usual no-grid rule.
  */
@@ -43,7 +44,6 @@ export function FlowersRoute() {
     file: File;
   } | null>(null);
   const [detail, setDetail] = useState<Flower | null>(null);
-  const [note, setNote] = useState('');
 
   // Her, or him while he still has the admin flag. Mirrors can_upload_flowers()
   // in the database, which is what actually enforces it.
@@ -58,6 +58,7 @@ export function FlowersRoute() {
     BUCKETS.flowers,
     (flowers ?? []).map((f) => f.image_path)
   );
+  usePrefetchImages(urls?.values());
 
   useTopBarAction(
     canUpload ? (
@@ -78,12 +79,9 @@ export function FlowersRoute() {
 
   const save = (month: string, blob: Blob) =>
     upsert.mutate(
-      { month, blob, note: note.trim() || null },
+      { month, blob },
       {
-        onSuccess: () => {
-          toast.success('Bouquet set down 💐');
-          setNote('');
-        },
+        onSuccess: () => toast.success('Bouquet set down 💐'),
         onError: (e) => toast.error(e.message),
       }
     );
@@ -94,7 +92,7 @@ export function FlowersRoute() {
         <Skeleton className="h-4 w-28" />
         <div className="grid grid-cols-3 gap-2">
           {Array.from({ length: 6 }, (_, i) => (
-            <Skeleton key={i} className="aspect-[3/4] w-full" rounded="md" />
+            <Skeleton key={i} className="aspect-[4/5] w-full" rounded="md" />
           ))}
         </div>
       </div>
@@ -123,7 +121,7 @@ export function FlowersRoute() {
             {y.year}
             {editing && canUpload && (
               <span className="ml-2 normal-case tracking-normal text-muted">
-                {y.filled}/{y.slots.length}
+                {y.filled}/{y.total}
               </span>
             )}
           </h2>
@@ -179,42 +177,19 @@ export function FlowersRoute() {
           ) : undefined
         }
       >
-        {detail && (
-          <div className="space-y-4">
-            {detail.image_path && urls?.get(detail.image_path) && (
-              <img
-                src={urls.get(detail.image_path)}
-                alt=""
-                className="w-full rounded-lg"
-              />
-            )}
-            {detail.note && (
-              <p className="font-display text-lg italic text-fg">
-                {detail.note}
-              </p>
-            )}
-          </div>
+        {detail?.image_path && urls?.get(detail.image_path) && (
+          <img
+            src={urls.get(detail.image_path)}
+            alt=""
+            className="w-full rounded-lg"
+          />
         )}
       </Sheet>
-
-      {editing && canUpload && (
-        <div className="space-y-2 rounded-lg bg-surface px-4 py-3">
-          <p className="font-sans text-xs text-muted">
-            A note to go with the next one you add:
-          </p>
-          <Textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            rows={2}
-            placeholder="optional…"
-          />
-        </div>
-      )}
     </div>
   );
 }
 
-/** One month: a square polaroid whose caption is the month itself. */
+/** One month, on instant film. Same stock as the daily photo, three across. */
 function MonthPlate({
   slot,
   index,
@@ -230,77 +205,53 @@ function MonthPlate({
   onPick: (file: File) => void;
   onOpen: () => void;
 }) {
-  const caption = (
-    <span className="mt-1.5 block truncate text-center font-sans text-[0.55rem] font-semibold uppercase tracking-[0.14em] text-brown/80">
-      {slot.label}
-    </span>
-  );
+  const photo = url ? (
+    <img
+      src={url}
+      alt={slot.label}
+      decoding="async"
+      className="h-full w-full object-cover"
+    />
+  ) : null;
 
-  // Filled, and we're just looking → tap to see it big.
-  if (slot.flower && !editing) {
+  // Just looking → tap the plate to see the whole photo.
+  if (!editing) {
     return (
-      <button
-        type="button"
+      <PolaroidPlate
+        size="sm"
+        caption={slot.label}
         onClick={onOpen}
+        label={slot.label}
+        className="flower-bloom"
         style={{ '--i': index } as React.CSSProperties}
-        className="flower-bloom marble lift-press block w-full rounded-md p-1.5 pb-2 shadow-loge"
       >
-        <span className="block aspect-square w-full overflow-hidden rounded-sm bg-brown">
-          {url && (
-            <img
-              src={url}
-              alt={slot.label}
-              loading="lazy"
-              decoding="async"
-              className="h-full w-full object-cover"
-            />
-          )}
-        </span>
-        {caption}
-      </button>
+        {photo}
+      </PolaroidPlate>
     );
   }
 
-  // Editing → every slot becomes a picker, filled or not.
+  // Editing → the same plate, but tapping it opens the picker. Identical
+  // geometry to the reading mode, so nothing shifts when you toggle.
   return (
-    <FilePickerButton
-      onPick={onPick}
-      className={cn(
-        'flex-col gap-0 border-0 p-1.5 pb-2 shadow-loge',
-        slot.flower ? 'marble' : 'bg-surface-2'
-      )}
-    >
-      <span
-        className={cn(
-          'flex aspect-square w-full items-center justify-center overflow-hidden rounded-sm',
-          slot.flower ? 'bg-brown' : 'bg-[rgba(255,255,255,0.04)]'
-        )}
-      >
-        {slot.flower && url ? (
-          <span className="relative block h-full w-full">
-            <img
-              src={url}
-              alt={slot.label}
-              loading="lazy"
-              decoding="async"
-              className="h-full w-full object-cover"
-            />
-            <span className="absolute inset-0 flex items-center justify-center bg-black/35">
-              <ImagePlus className="h-4 w-4 text-white" />
-            </span>
+    <FilePickerButton bare onPick={onPick}>
+      <PolaroidPlate size="sm" caption={slot.label} className="w-full">
+        <span className="relative block h-full w-full">
+          {photo}
+          <span
+            className={cn(
+              'absolute inset-0 flex items-center justify-center',
+              // An empty month is unexposed film — pale, not a dark hole. The
+              // tone has to be OPAQUE: the plate's window is brown underneath,
+              // so a translucent brown tint just reads as more brown.
+              slot.flower
+                ? 'bg-black/35 text-white'
+                : 'bg-[#ded2c2] text-brown/45'
+            )}
+          >
+            <Plus className="h-5 w-5" />
           </span>
-        ) : (
-          <Plus className="h-4 w-4 text-gold/60" />
-        )}
-      </span>
-      <span
-        className={cn(
-          'mt-1.5 block w-full truncate text-center font-sans text-[0.55rem] font-semibold uppercase tracking-[0.14em]',
-          slot.flower ? 'text-brown/80' : 'text-muted'
-        )}
-      >
-        {slot.label}
-      </span>
+        </span>
+      </PolaroidPlate>
     </FilePickerButton>
   );
 }
