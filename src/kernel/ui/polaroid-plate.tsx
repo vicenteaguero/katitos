@@ -57,7 +57,9 @@ export function PolaroidPlate({
   const body = (
     <>
       {/* Always square, whatever the plate's width. */}
-      <span className="block aspect-square w-full overflow-hidden rounded-sm bg-brown">
+      {/* Unexposed film, not a dark hole: whatever shows at the photo's
+          rounded corners has to read as part of the plate. */}
+      <span className="block aspect-square w-full overflow-hidden rounded-sm bg-[#e3d8c6]">
         {children}
       </span>
       {caption != null && (
