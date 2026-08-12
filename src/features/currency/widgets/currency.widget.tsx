@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
 import { ArrowRight } from 'lucide-react';
-import { convert, formatMoney, indexRates } from '@kernel/lib';
+import { convert, formatAmount, indexRates } from '@kernel/lib';
 import { useRates } from '../api/currency.queries';
 import { ExchangeIcon } from '../components/exchange-icon';
 import { meta } from '../currencies';
@@ -26,7 +26,7 @@ export function CurrencyWidget() {
         <span className="block font-sans text-xs tabular-nums text-muted">
           {meta('RUB').flag} 1000 RUB ≈{' '}
           <span className="font-semibold text-accent">
-            {clp != null ? formatMoney(clp, 'CLP') : '—'}
+            {clp != null ? formatAmount(clp, 'CLP') : '—'} CLP
           </span>{' '}
           {meta('CLP').flag}
         </span>
