@@ -15,7 +15,7 @@ POOLER_HOST ?= aws-1-eu-central-1.pooler.supabase.com
 POOLER_PORT ?= 5432
 
 .DEFAULT_GOAL := help
-.PHONY: help link db-push db-diff db-pull functions-deploy deploy \
+.PHONY: help link db-push db-diff db-pull db-types functions-deploy deploy \
         vercel-link vercel-status vercel-env vercel-deploy vercel-prod
 
 # Source creds (set -a exports them so python sees them) + build the session-pooler
@@ -45,6 +45,15 @@ db-diff: ## Show schema drift (want: empty)
 db-pull: ## Pull remote schema into a new migration
 	@$(dburl) \
 	supabase db pull --db-url "$$DBURL"
+
+# `npm run db:types` reads the LOCAL stack, which means a full `supabase start`
+# just to learn about a column we already pushed. This reads the cloud schema
+# over the same IPv4 pooler as db-push, so types always match what shipped.
+# (Still needs Docker running — the CLI runs the generator in a container.)
+db-types: ## Regenerate database.types.ts from the CLOUD schema
+	@$(dburl) \
+	supabase gen types typescript --db-url "$$DBURL" > src/kernel/supabase/database.types.ts
+	@echo "wrote src/kernel/supabase/database.types.ts"
 
 functions-deploy: ## Deploy edge functions (--use-api = server-side bundle, no Docker)
 	@supabase functions deploy push-notify --use-api
