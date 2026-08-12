@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import type { RefObject } from 'react';
 import { useGesture } from '@use-gesture/react';
 import type { ChalkNote as Note } from '../types';
+import { clampToBounds, noteBounds } from '../lib/note-bounds';
 
 /** DB constraint: scale lives in [0.4, 3]. */
 const SCALE_MIN = 0.4;
@@ -17,19 +18,20 @@ export function ChalkNoteItem({
   note,
   boardRef,
   editing,
-  canDelete,
+  selected,
+  onSelect,
   onMove,
   onTransform,
-  onDelete,
 }: {
   note: Note;
   boardRef: RefObject<HTMLDivElement | null>;
-  /** Only in edit mode can a note be dragged, pinched or deleted. */
+  /** Only in edit mode can a note be dragged, pinched or picked up. */
   editing: boolean;
-  canDelete: boolean;
+  /** Picked out for deletion — the trash in the top bar acts on this one. */
+  selected: boolean;
+  onSelect: () => void;
   onMove: (x: number, y: number) => void;
   onTransform: (t: { scale: number; rotation: number; width: number }) => void;
-  onDelete: () => void;
 }) {
   const selfRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
@@ -48,21 +50,30 @@ export function ChalkNoteItem({
 
   // Clamp any position (seeded, synced, or dragged) to the board bounds so a
   // note can never clip outside the blackboard.
+  // The travel a note has, measured against its *transformed* shape — see
+  // `note-bounds.ts`. Using the layout box alone stopped a shrunken note well
+  // short of the right-hand edge and let a tilted one hang off the slate.
+  const bounds = useCallback(() => {
+    const board = boardRef.current;
+    const el = selfRef.current;
+    if (!board || !el) return null;
+    return noteBounds({
+      boardW: board.clientWidth,
+      boardH: board.clientHeight,
+      w: el.offsetWidth,
+      h: el.offsetHeight,
+      scale: view.current.scale,
+      rotation: view.current.rotation,
+    });
+  }, [boardRef]);
+
   const clamp = useCallback(
     (x: number, y: number) => {
-      const board = boardRef.current;
-      const el = selfRef.current;
-      if (!board || !el) {
-        return { x: Math.max(0, x), y: Math.max(0, y) };
-      }
-      const maxX = Math.max(0, board.clientWidth - el.offsetWidth);
-      const maxY = Math.max(0, board.clientHeight - el.offsetHeight);
-      return {
-        x: Math.min(Math.max(0, x), maxX),
-        y: Math.min(Math.max(0, y), maxY),
-      };
+      const b = bounds();
+      if (!b) return { x, y };
+      return clampToBounds(x, y, b);
     },
-    [boardRef]
+    [bounds]
   );
 
   // Paint position/rotation/scale via one GPU transform — never layout.
@@ -155,7 +166,11 @@ export function ChalkNoteItem({
       },
       onDragEnd: ({ tap, canceled }) => {
         end();
-        if (tap || canceled) return;
+        if (tap) {
+          onSelect();
+          return;
+        }
+        if (canceled) return;
         buzz();
         onMove(Math.round(view.current.x), Math.round(view.current.y));
       },
@@ -168,6 +183,14 @@ export function ChalkNoteItem({
       onPinchEnd: () => {
         end();
         buzz();
+        // Growing a note can push it off the slate; put it back before saving.
+        const { x, y } = clamp(view.current.x, view.current.y);
+        if (x !== view.current.x || y !== view.current.y) {
+          view.current.x = x;
+          view.current.y = y;
+          apply();
+          onMove(Math.round(x), Math.round(y));
+        }
         onTransform({
           scale: Math.round(view.current.scale * 100) / 100,
           rotation: Math.round(view.current.rotation),
@@ -181,14 +204,13 @@ export function ChalkNoteItem({
       drag: {
         from: () => [view.current.x, view.current.y],
         bounds: () => {
-          const board = boardRef.current;
-          const el = selfRef.current;
-          if (!board || !el) return {};
+          const b = bounds();
+          if (!b) return {};
           return {
-            left: 0,
-            top: 0,
-            right: Math.max(0, board.clientWidth - el.offsetWidth),
-            bottom: Math.max(0, board.clientHeight - el.offsetHeight),
+            left: b.minX,
+            top: b.minY,
+            right: b.maxX,
+            bottom: b.maxY,
           };
         },
         rubberband: false,
@@ -214,7 +236,13 @@ export function ChalkNoteItem({
       }}
       className={`chalk-note group absolute select-none px-3 pb-2 pt-4 ${
         editing
-          ? 'cursor-grab touch-none ring-1 ring-gold/25 active:cursor-grabbing'
+          ? 'cursor-grab touch-none rounded-md ring-1 active:cursor-grabbing'
+          : ''
+      } ${
+        editing
+          ? selected
+            ? 'ring-2 ring-gold shadow-catch'
+            : 'ring-gold/25'
           : ''
       }`}
     >
@@ -229,20 +257,6 @@ export function ChalkNoteItem({
       >
         {note.body}
       </span>
-      {editing && canDelete && (
-        <button
-          type="button"
-          aria-label="Delete note"
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
-          }}
-          className="lift-press absolute -right-2.5 -top-2.5 flex h-6 w-6 items-center justify-center rounded-full bg-surface-2 text-sm leading-none text-gold shadow-catch"
-        >
-          ×
-        </button>
-      )}
     </div>
   );
 }
