@@ -323,16 +323,22 @@ export function CurrencyRoute() {
       )}
 
       {/* The reading — full-width chips, centred in the space between the
-          currency picker and the numpad. */}
+          currency picker and the numpad. The cross-rates sit with them, so the
+          whole group is what gets centred. */}
       <div className="flex min-h-0 flex-1 flex-col justify-center gap-2">
         <p className="w-full rounded-xl bg-surface-2 px-4 py-2 text-center font-display text-2xl tabular-nums text-muted">
           {meta(from).flag} {shown}{' '}
           <span className="text-base text-muted/70">{from}</span>
         </p>
+        {/* Flex-centred rather than relying on line-height: the display serif
+            has tall ascenders, so `leading-none` parked the figures against the
+            bottom of the box. `gilt-figures` supplies lining tabular numerals
+            and the descender room they need. */}
         <p
-          className={`w-full rounded-2xl bg-surface-2 px-5 py-2.5 text-center font-display ring-1 ring-[rgba(228,195,106,0.18)] ${fit(resultText)} font-semibold leading-none tabular-nums text-fg`}
+          className={`flex min-h-[4.5rem] w-full items-center justify-center gap-2 rounded-2xl bg-surface-2 px-5 py-3 text-center font-display ring-1 ring-[rgba(228,195,106,0.18)] ${fit(resultText)} gilt-figures font-semibold tabular-nums text-fg`}
         >
-          {resultText} <span className="text-2xl text-accent">{to}</span>
+          <span className="min-w-0 truncate">{resultText}</span>
+          <span className="shrink-0 text-2xl text-accent">{to}</span>
         </p>
 
         {/* The other one's number, always in reach. One line if only CLP or RUB
