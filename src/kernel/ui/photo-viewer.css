@@ -1,0 +1,57 @@
+/* ──────────────────────────────────────────────────────────────────────────
+ * The lightbox. Moved here from the polaroid feature when the flowers needed
+ * the same thing — one viewer, one set of motion, no drift between them.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+/* The house dims to black behind the held photo. */
+@keyframes pv-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.pv-backdrop-in {
+  animation: pv-backdrop-in 240ms var(--ease-settle) both;
+}
+
+/* The photo lifts off the wall into the hand. */
+@keyframes pv-plate-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.pv-plate-in {
+  animation: pv-plate-in 340ms var(--ease-settle) both;
+}
+
+/* The header/footer chrome fades up a beat after the photo. */
+@keyframes pv-chrome-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.pv-chrome-in {
+  animation: pv-chrome-in 320ms var(--ease-settle) both;
+  animation-delay: 120ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pv-plate-in,
+  .pv-chrome-in {
+    animation: pv-backdrop-in 200ms ease both !important;
+    animation-delay: 0ms !important;
+    transform: none !important;
+  }
+}
