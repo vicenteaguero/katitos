@@ -18,6 +18,7 @@ import { toast, useTopBarAction } from '@kernel/ui';
 import { usePartnerPresence } from '@features/presence';
 import { TodayQuestionsWidget } from '@features/know-me';
 import { LastPolaroidWidget } from '@features/polaroid';
+import { loveNoteFor, useLovePhrases } from '@features/love';
 import { sendLoveBurst } from '../shell/love-channel';
 
 /** Our pet names by role: him (a) is Katito, her (b) is Katita. */
@@ -39,47 +40,6 @@ function compactAgo(iso: string): string {
   if (h < 24) return `${h} hr${h === 1 ? '' : 's'} ago`;
   const d = Math.floor(h / 24);
   return `${d} day${d === 1 ? '' : 's'} ago`;
-}
-
-/**
- * Twenty sweet-nothings, agreement-matched to the partner's gender. One is
- * picked at random each time you send love, so the ping is never the same twice.
- */
-function loveNotes(name: string, g: 'm' | 'f'): string[] {
-  const pol = g === 'f' ? 'polola' : 'pololo';
-  // his line for her: polola/katita + bonita/guapa/hermosa/preciosa/linda
-  const adj =
-    g === 'f'
-      ? ['bonita', 'guapa', 'hermosa', 'preciosa', 'linda']
-      : ['bonito', 'guapo', 'hermoso', 'precioso', 'lindo'];
-  const beloved = g === 'f' ? 'любимая' : 'любимый'; // Cyrillic "beloved"
-  return [
-    // — our words, kept in their own tongue —
-    'Liubimonkey 🐵❤️',
-    'любиминки 🤍',
-    'Liubimonkeykaya 🥰',
-    'Liubimonkeykayita 💞',
-    `${beloved} 🤍`,
-    'My sunshine ☀️',
-    `Mi ${pol} ${adj[0]} ❤️`,
-    `${name} ${adj[1]} 🌙`,
-    `Mi ${pol} ${adj[2]} 🌹`,
-    `${name} ${adj[3]} ✨`,
-    `Mi ${name} ${adj[4]} 😍`,
-    // — everything else in English, the way we actually talk —
-    `I love you, ${name} 💕`,
-    'You’re the love of my life 💖',
-    'Thinking of you 💭',
-    'Miss you across the miles 🌍',
-    'Counting down to you 📆',
-    'Can’t stop thinking about you 🤍',
-    'Close even when you’re far 🩵',
-    'I love you more every day 💞',
-    'Sending you a kiss 😘',
-    `You’re my home, ${name} 🏡`,
-    `My love, my ${name} 💝`,
-    `${name}, you’re my everything 🌟`,
-  ];
 }
 
 /** "2 years · 3 months · 1 week · 4 days", trimming leading zero units. */
@@ -135,14 +95,18 @@ function useMonthsversary(): { count: number } | null {
 function Greeting() {
   const { self, partner } = usePartner();
   const { online } = usePartnerPresence();
+  const { data: phrases } = useLovePhrases();
   const partnerName = petNameOf(partner?.role);
   const [sent, setSent] = useState(false);
 
   const sendLove = async () => {
     if (sent) return; // debounce: ignore taps during the "sent" window
     setSent(true);
-    const notes = loveNotes(partnerName, genderOf(partner?.role));
-    const note = notes[Math.floor(Math.random() * notes.length)];
+    // Only phrases addressed to the person receiving them. The old pool mixed
+    // feminine-only lines in with the rest, so she kept sending him "любимая".
+    const note =
+      loveNoteFor(phrases ?? [], genderOf(partner?.role), partnerName) ??
+      `I love you, ${partnerName} 💕`;
     // Play the on-screen love burst instantly (here) and on the partner's
     // screen (broadcast) — the native push below still fires for when their
     // app is closed.
