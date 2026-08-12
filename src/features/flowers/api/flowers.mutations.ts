@@ -4,7 +4,7 @@ import { useUserId } from '@kernel/auth';
 import { BUCKETS, proxyPath, usePhotoUpload } from '@kernel/storage';
 import { notifyPartner } from '@kernel/push';
 import { qk } from '@kernel/query';
-import { monthKey } from '../lib/months';
+import { currentMonthUtc, monthKey } from '../lib/months';
 
 /**
  * Put a bouquet in a month (or replace the one that's there).
@@ -54,12 +54,18 @@ export function useUpsertFlower() {
       void qc.invalidateQueries({ queryKey: qk.flowers.list() });
       void qc.invalidateQueries({ queryKey: ['signed-url'] });
       void qc.invalidateQueries({ queryKey: ['signed-urls'] });
-      void notifyPartner({
-        kind: 'wishlist',
-        title: '💐 A new bouquet',
-        body: `One for ${occasion.slice(0, 7)}`,
-        url: '/flowers',
-      });
+
+      // Only THIS month's bouquet is news. Backfilling last spring is tidying
+      // up an album, and a phone buzzing for each one would be noise — the
+      // exact reason most of the app's other pings were muted for months.
+      if (occasion.slice(0, 7) === currentMonthUtc()) {
+        void notifyPartner({
+          kind: 'flower',
+          title: '💐 A new bouquet',
+          body: 'One for this month',
+          url: '/flowers',
+        });
+      }
     },
   });
 }
