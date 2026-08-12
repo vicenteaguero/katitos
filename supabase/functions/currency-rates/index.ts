@@ -4,7 +4,9 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders, json } from '../_shared/cors.ts';
 
-const CURRENCIES = ['USD', 'CLP', 'RUB', 'GEL'];
+// Must match RATE_CODES in src/app/shell/cache-warmer.tsx — the client is what
+// actually keeps these fresh; this function is the manual/scheduled fallback.
+const CURRENCIES = ['USD', 'CLP', 'RUB', 'GEL', 'TRY', 'EUR'];
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
