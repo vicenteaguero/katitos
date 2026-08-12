@@ -15,7 +15,6 @@ import {
 import { notifyPartner } from '@kernel/push';
 import { toast, useTopBarAction } from '@kernel/ui';
 import { usePartnerPresence } from '@features/presence';
-import { SummerCountdownWidget } from '@features/summer';
 import { TodayQuestionsWidget } from '@features/know-me';
 import { LastPolaroidWidget } from '@features/polaroid';
 import { sendLoveBurst } from '../shell/love-channel';
@@ -370,7 +369,6 @@ export function HomeRoute() {
       style={{ '--i': 0 } as CSSProperties}
     >
       <Greeting />
-      <SummerCountdownWidget />
       <TogetherHero />
       <TodayQuestionsWidget />
       <LastPolaroidWidget />
