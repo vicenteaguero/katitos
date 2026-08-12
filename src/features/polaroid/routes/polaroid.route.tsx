@@ -5,12 +5,13 @@ import { DateTime } from 'luxon';
 import { usePartner } from '@kernel/auth';
 import { qk } from '@kernel/query';
 import { useTableSync } from '@kernel/realtime';
-import { BUCKETS, useSignedUrls } from '@kernel/storage';
+import { BUCKETS, usePrefetchImages, useSignedUrls } from '@kernel/storage';
 import {
   Button,
   Empty,
   IconButton,
   Input,
+  PolaroidPlate,
   Skeleton,
   SquareCropper,
   toast,
@@ -67,6 +68,10 @@ export function PolaroidRoute() {
     BUCKETS.polaroids,
     rows.map((r) => r.image_path)
   );
+  // Pull the whole page's thumbnails down at once. You opened the album to
+  // scroll it, so the scroll should never be waiting on a network round-trip —
+  // at ~20 KB each this is a few hundred KB once, then cached by the worker.
+  usePrefetchImages(urls?.values());
 
   const today = days.find((d) => d.day === myToday) ?? {
     day: myToday,
@@ -323,22 +328,20 @@ function Gallery({
                 </figcaption>
                 {d.isLegacy && d.shared ? (
                   // Days from when we lived the same day: one plate, ours.
-                  <button
-                    type="button"
-                    onClick={() => onOpen(d.shared!)}
-                    className="marble lift-press mx-auto block w-full max-w-[22rem] rounded-lg p-3 pb-5 shadow-loge"
-                  >
-                    <PolaroidImage
-                      path={d.shared.image_path}
-                      src={urls?.get(d.shared.image_path)}
-                      className="aspect-square w-full"
-                    />
-                    {d.shared.caption && (
-                      <span className="mt-3 block px-1 text-center font-display text-lg italic leading-snug text-brown">
-                        {d.shared.caption}
-                      </span>
-                    )}
-                  </button>
+                  <div className="mx-auto w-full max-w-[22rem]">
+                    <PolaroidPlate
+                      caption={d.shared.caption ?? undefined}
+                      captionTone="note"
+                      onClick={() => onOpen(d.shared!)}
+                      label={d.day}
+                    >
+                      <PolaroidImage
+                        path={d.shared.image_path}
+                        src={urls?.get(d.shared.image_path)}
+                        className="h-full w-full"
+                      />
+                    </PolaroidPlate>
+                  </div>
                 ) : (
                   <DoublePolaroid
                     day={d}
