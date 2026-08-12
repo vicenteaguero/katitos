@@ -124,7 +124,7 @@ function MiniPlate({
       style={
         {
           '--rest-rotate': mine ? '-5deg' : '4deg',
-          '--push': mine ? '-10px' : '10px',
+          '--push': mine ? '-6px' : '6px',
           boxShadow: '0 14px 30px -16px rgba(0,0,0,.7)',
         } as React.CSSProperties
       }
