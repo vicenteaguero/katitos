@@ -1,12 +1,11 @@
 import { useEffect, useState, type CSSProperties } from 'react';
-import { Plus } from 'lucide-react';
 import { useUserId } from '@kernel/auth';
 import { qk } from '@kernel/query';
 import { useTableSync } from '@kernel/realtime';
 import {
   Button,
   Empty,
-  Fab,
+  TopBarAdd,
   Field,
   Input,
   LoadingScreen,
@@ -151,9 +150,7 @@ export function DecisionsListRoute() {
         )}
       </section>
 
-      <Fab label="Add decision" onClick={() => setCreating(true)}>
-        <Plus />
-      </Fab>
+      <TopBarAdd label="Add decision" onClick={() => setCreating(true)} />
 
       <Sheet
         open={creating}
