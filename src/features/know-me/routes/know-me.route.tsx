@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { Plus } from 'lucide-react';
 import { usePartner } from '@kernel/auth';
 import { useNow } from '@kernel/hooks';
 import { coupleDay } from '@kernel/lib';
@@ -8,7 +7,7 @@ import { qk } from '@kernel/query';
 import {
   Button,
   Empty,
-  Fab,
+  TopBarAdd,
   LoadingScreen,
   PageHeader,
   Segmented,
@@ -121,9 +120,7 @@ export function KnowMeRoute() {
         </>
       )}
 
-      <Fab label="Write a question" onClick={() => setAuthoring(true)}>
-        <Plus />
-      </Fab>
+      <TopBarAdd label="Write a question" onClick={() => setAuthoring(true)} />
 
       <AuthorQuestionSheet
         open={authoring}
