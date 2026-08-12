@@ -83,6 +83,95 @@ export function useAddCard() {
   });
 }
 
+/**
+ * Edit a card that already exists.
+ *
+ * Until now the only way to fix a typo was to delete the card and retype it —
+ * which also threw away every review of it. For a teacher maintaining a real
+ * course, that was the single most irritating gap in the feature.
+ */
+export function useUpdateCard() {
+  const qc = useQueryClient();
+  return useMutation({
+    onError: (e: Error) => toast.error(e.message),
+    mutationFn: async (input: {
+      id: string;
+      deckId: string;
+      text?: string;
+      translation?: string | null;
+      transliteration?: string | null;
+      example?: string | null;
+      notes?: string | null;
+    }) => {
+      const { id, deckId: _deckId, ...patch } = input;
+      const { error } = await supabase
+        .from('phrases')
+        .update(patch)
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, v) =>
+      qc.invalidateQueries({ queryKey: deckKeys.cards(v.deckId) }),
+  });
+}
+
+/**
+ * Paste a whole lesson at once.
+ *
+ * One card per line, `russian | meaning | sounds-like`, the last two optional.
+ * Typing thirty cards through a sheet is not something anyone does twice.
+ */
+export function useBulkAddCards() {
+  const qc = useQueryClient();
+  return useMutation({
+    onError: (e: Error) => toast.error(e.message),
+    mutationFn: async (input: {
+      deckId: string;
+      language: Lang;
+      raw: string;
+    }) => {
+      const rows = parseBulk(input.raw).map((r) => ({
+        deck_id: input.deckId,
+        language: input.language,
+        text: r.text,
+        translation: r.translation,
+        transliteration: r.transliteration,
+      }));
+      if (rows.length === 0) throw new Error('Nothing to add');
+      const { error } = await supabase.from('phrases').insert(rows);
+      if (error) throw error;
+      return rows.length;
+    },
+    onSuccess: (_d, v) => {
+      void qc.invalidateQueries({ queryKey: deckKeys.cards(v.deckId) });
+      void qc.invalidateQueries({ queryKey: deckKeys.list(v.language) });
+    },
+  });
+}
+
+/** `word | meaning | sounds-like` per line; blank lines ignored. */
+export function parseBulk(raw: string): {
+  text: string;
+  translation: string | null;
+  transliteration: string | null;
+}[] {
+  return raw
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [text, translation, transliteration] = line
+        .split('|')
+        .map((p) => p.trim());
+      return {
+        text,
+        translation: translation || null,
+        transliteration: transliteration || null,
+      };
+    })
+    .filter((r) => !!r.text);
+}
+
 export function useDeleteCard() {
   const qc = useQueryClient();
   return useMutation({
