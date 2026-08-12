@@ -22,12 +22,10 @@ export function useUpsertFlower() {
     mutationFn: async ({
       month,
       blob,
-      note,
     }: {
       /** Any date in the month; normalized to the first. */
       month: string;
       blob: Blob;
-      note?: string | null;
     }) => {
       const occasion = monthKey(month);
       // Versioned path so replacing a bouquet never overwrites the bytes of
@@ -39,7 +37,6 @@ export function useUpsertFlower() {
         {
           occasion_date: occasion,
           image_path: path,
-          note: note ?? null,
           ...(userId ? { uploaded_by: userId } : {}),
         },
         { onConflict: 'occasion_date' }
