@@ -1,4 +1,4 @@
-import { ThumbsUp } from 'lucide-react';
+import { Gift } from 'lucide-react';
 import { defineFeature } from '@kernel/registry';
 
 export const wishlistsFeature = defineFeature({
@@ -21,5 +21,5 @@ export const wishlistsFeature = defineFeature({
         })),
     },
   ],
-  nav: [{ label: 'Wishlists', icon: ThumbsUp, to: '/wishlists', order: 210 }],
+  nav: [{ label: 'Wishlists', icon: Gift, to: '/wishlists', order: 210 }],
 });
