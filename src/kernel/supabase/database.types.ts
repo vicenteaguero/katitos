@@ -7,10 +7,30 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -527,6 +547,7 @@ export type Database = {
           currency_from: string | null
           display_name: string
           emoji: string | null
+          is_admin: boolean
           last_seen_at: string | null
           lat: number | null
           learning_language: string | null
@@ -545,6 +566,7 @@ export type Database = {
           currency_from?: string | null
           display_name: string
           emoji?: string | null
+          is_admin?: boolean
           last_seen_at?: string | null
           lat?: number | null
           learning_language?: string | null
@@ -563,6 +585,7 @@ export type Database = {
           currency_from?: string | null
           display_name?: string
           emoji?: string | null
+          is_admin?: boolean
           last_seen_at?: string | null
           lat?: number | null
           learning_language?: string | null
@@ -2153,6 +2176,7 @@ export type Database = {
       }
     }
     Functions: {
+      is_admin: { Args: never; Returns: boolean }
       is_member: { Args: never; Returns: boolean }
       know_me_ensure_today: {
         Args: never
@@ -2340,7 +2364,11 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },
 } as const
+
