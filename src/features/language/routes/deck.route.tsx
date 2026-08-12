@@ -10,6 +10,7 @@ import {
   Card,
   Empty,
   Field,
+  FieldRow,
   IconButton,
   Input,
   LoadingScreen,
@@ -236,7 +237,7 @@ export function DeckRoute() {
               className="font-display text-lg"
             />
           </Field>
-          <div className="grid grid-cols-2 gap-3">
+          <FieldRow>
             <Field label="Meaning">
               <Input
                 value={editForm.translation}
@@ -256,7 +257,7 @@ export function DeckRoute() {
                 }
               />
             </Field>
-          </div>
+          </FieldRow>
           <Field label="Teaching note">
             <Textarea
               rows={2}
@@ -305,7 +306,7 @@ export function DeckRoute() {
               placeholder={{ ru: 'Я тебя люблю', es: 'Te amo' }[lang]}
             />
           </Field>
-          <div className="grid grid-cols-2 gap-3">
+          <FieldRow>
             <Field label="Meaning">
               <Input
                 value={form.translation}
@@ -324,7 +325,7 @@ export function DeckRoute() {
                 placeholder="ya tebya…"
               />
             </Field>
-          </div>
+          </FieldRow>
           <Field
             label="A teaching note (optional)"
             hint="Grammar, a case, where the stress falls — shown with the answer."
