@@ -16,8 +16,8 @@ export function WishlistsListRoute() {
   const { data: members } = useMembers();
   const userId = useUserId();
 
-  const nameFor = (ownerId: string | null) =>
-    members?.find((m) => m.user_id === ownerId)?.display_name ?? null;
+  const emojiFor = (ownerId: string | null) =>
+    members?.find((m) => m.user_id === ownerId)?.emoji ?? null;
 
   if (isLoading) {
     return (
@@ -39,7 +39,6 @@ export function WishlistsListRoute() {
       {(lists ?? []).map((list, i) => {
         const c = counts?.get(list.id);
         const forMe = list.owner_user_id === userId;
-        const owner = nameFor(list.owner_user_id);
         return (
           <Link
             key={list.id}
@@ -48,25 +47,23 @@ export function WishlistsListRoute() {
             className="lift-press flex items-center gap-4 rounded-lg rounded-br-[1.75rem] bg-surface-2 px-5 py-4 shadow-loge"
           >
             <span className="text-3xl" aria-hidden="true">
-              {list.emoji ?? '🎁'}
+              {emojiFor(list.owner_user_id) ?? list.emoji ?? '🎁'}
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate font-display text-xl font-semibold text-fg">
                 {list.title}
               </span>
+              {/* One line under the name, not two. The title already says
+                  whose list it is; "ideas for Vicente" underneath it was the
+                  same fact a third time. */}
               <span className="block font-sans text-xs text-muted">
                 {c?.total
                   ? `${c.total} ${c.total === 1 ? 'wish' : 'wishes'}${
                       c.got ? ` · ${c.got} done` : ''
                     }`
-                  : 'nothing on it yet'}
-              </span>
-              <span className="mt-0.5 block font-sans text-[0.6rem] uppercase tracking-[0.14em] text-copper">
-                {forMe
-                  ? 'what you wish for'
-                  : owner
-                    ? `ideas for ${owner}`
-                    : 'ours'}
+                  : forMe
+                    ? 'nothing on it yet — add what you want'
+                    : 'nothing on it yet'}
               </span>
             </span>
             <ChevronRight className="h-4 w-4 shrink-0 text-muted" />
