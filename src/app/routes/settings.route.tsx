@@ -8,11 +8,13 @@ import {
   Input,
   LoadingScreen,
   Select,
+  Sheet,
   Switch,
   toast,
 } from '@kernel/ui';
 import { CURRENCIES } from '@kernel/lib';
 import { PhraseEditor } from '@features/love';
+import { ChangelogHistory } from '../shell/changelog-modal';
 
 // Imported, never re-listed: this file used to keep its own copy, so adding a
 // currency meant remembering two places and EUR would have been missing here.
@@ -130,6 +132,35 @@ function NotificationsRow() {
   );
 }
 
+/** The same changelog the modal shows, readable any time she wants it. */
+function WhatsNew() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="lift-press flex w-full items-center justify-between gap-3 rounded-lg bg-surface px-4 py-3 text-left"
+      >
+        <span className="min-w-0">
+          <span className="block font-sans text-sm font-semibold text-fg">
+            What&apos;s new
+          </span>
+          <span className="block font-sans text-xs text-muted">
+            Everything your Katito has added
+          </span>
+        </span>
+        <span aria-hidden="true" className="text-lg">
+          ✨
+        </span>
+      </button>
+      <Sheet open={open} onClose={() => setOpen(false)} title="What's new">
+        <ChangelogHistory />
+      </Sheet>
+    </>
+  );
+}
+
 export function SettingsRoute() {
   const { signOut, isLocal } = useAuth();
   const { self, isLoading } = usePartner();
@@ -142,6 +173,7 @@ export function SettingsRoute() {
         <NotificationsRow />
         {/* Admin only — she receives the sweet nothings, he writes them. */}
         {self?.is_admin && <PhraseEditor />}
+        <WhatsNew />
         {!isLocal && (
           <Button full variant="ghost" onClick={() => void signOut()}>
             Sign out
