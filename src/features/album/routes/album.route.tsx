@@ -1,10 +1,13 @@
+import { useParams } from 'react-router';
 import { PhotoBook3D } from '../components/photo-book/photo-book-3d';
 
 /**
- * Pololini — our life-long photo book. The old sticker-slot album has been
- * replaced by the shared 3D book engine (the same one powers Summer Panini per
- * trip). Sticker tables/queries stay in place for the progress widget.
+ * One album, open. The id comes from the shelf; the two legacy books
+ * (Pololini, Summer Panini) resolve by scope elsewhere and land on the same
+ * engine.
  */
 export function AlbumRoute() {
-  return <PhotoBook3D scope="life" title="Pololini" />;
+  const { bookId } = useParams<{ bookId: string }>();
+  if (!bookId) return <PhotoBook3D scope="life" title="Pololini" />;
+  return <PhotoBook3D bookId={bookId} />;
 }
