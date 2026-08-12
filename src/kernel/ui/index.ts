@@ -7,6 +7,8 @@ export { Skeleton, SkeletonText, SkeletonList } from './skeleton';
 export { Empty } from './empty';
 export { Badge } from './badge';
 export { Input, Textarea, Select, Field } from './field';
+export { FieldRow } from './field-row';
+export { PolaroidPlate } from './polaroid-plate';
 export { Sheet } from './sheet';
 export { Switch } from './switch';
 export { Checkbox } from './check-box';
@@ -19,7 +21,7 @@ export {
   useTopBarSlot,
   useTopBarAction,
 } from './top-bar-slot';
-export { Fab } from './fab';
+export { TopBarAdd } from './top-bar-add';
 export { FilePickerButton } from './file-picker-button';
 export type { FilePickerButtonProps } from './file-picker-button';
 export { Toaster } from './toaster';
@@ -28,6 +30,7 @@ export type { ToastTone, ToastItem } from './toast';
 export { CameraCapture } from './camera/camera-capture';
 export type { CameraCaptureProps } from './camera/camera-capture';
 export { SquareCropper } from './square-cropper';
+export { PhotoPicker } from './photo-picker';
 export type { SquareCropperProps } from './square-cropper';
 export { AudioRecorder } from './audio/audio-recorder';
 export { AudioFromPath } from './audio/audio-player';
