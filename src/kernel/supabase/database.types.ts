@@ -1403,8 +1403,10 @@ export type Database = {
           day: string
           id: string
           image_path: string
+          is_shared: boolean
           taken_by: string
           updated_at: string
+          user_id: string
         }
         Insert: {
           caption?: string | null
@@ -1412,8 +1414,10 @@ export type Database = {
           day: string
           id?: string
           image_path: string
+          is_shared?: boolean
           taken_by?: string
           updated_at?: string
+          user_id?: string
         }
         Update: {
           caption?: string | null
@@ -1421,8 +1425,10 @@ export type Database = {
           day?: string
           id?: string
           image_path?: string
+          is_shared?: boolean
           taken_by?: string
           updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -2213,6 +2219,8 @@ export type Database = {
         Returns: undefined
       }
       partner_id: { Args: never; Returns: string }
+      polaroid_day_open: { Args: { d: string }; Returns: boolean }
+      safe_tz: { Args: { tz: string }; Returns: string }
       water_tree: {
         Args: never
         Returns: {
