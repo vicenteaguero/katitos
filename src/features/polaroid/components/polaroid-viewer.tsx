@@ -51,7 +51,11 @@ export function PolaroidViewer({
   const plateRef = useRef<HTMLElement>(null);
 
   const current = photos[index];
-  const { fullUrl } = useProxiedUrl(BUCKETS.polaroids, current?.image_path);
+  // Only the original: the viewer downloads and shares full resolution, and
+  // the plate itself renders through PolaroidImage.
+  const { fullUrl } = useProxiedUrl(BUCKETS.polaroids, current?.image_path, {
+    proxy: false,
+  });
 
   // Lock the page behind the immersive overlay; restore on close.
   useEffect(() => {
