@@ -1076,6 +1076,7 @@ export type Database = {
           image_path: string | null
           note: string | null
           occasion_date: string
+          uploaded_by: string | null
         }
         Insert: {
           created_at?: string
@@ -1084,6 +1085,7 @@ export type Database = {
           image_path?: string | null
           note?: string | null
           occasion_date: string
+          uploaded_by?: string | null
         }
         Update: {
           created_at?: string
@@ -1092,6 +1094,7 @@ export type Database = {
           image_path?: string | null
           note?: string | null
           occasion_date?: string
+          uploaded_by?: string | null
         }
         Relationships: []
       }
@@ -2260,6 +2263,7 @@ export type Database = {
       }
     }
     Functions: {
+      can_upload_flowers: { Args: never; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
       is_member: { Args: never; Returns: boolean }
       know_me_ensure_today: {
