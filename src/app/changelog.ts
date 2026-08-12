@@ -33,6 +33,12 @@ export const CHANGELOG: ChangelogEntry[] = [
       'Adding a wish is simpler: paste the link, add a picture, done.',
       'The plus button moved up to the top bar, out of the way of what you are reading.',
       'The nightly questions are resting for a while — that one still needs some love before it deserves you.',
+      'The days-together number appears the instant you open the app. It used to blink 0 at you first, which was a horrible thing to read.',
+      'Our two polaroids overlap now, yours resting on mine. Tap the one underneath and it slides to the front.',
+      'On the wall you can finally push a note all the way to the edge. To rub one out, tap it — it lights up gold — then tap the bin at the top.',
+      'The flowers appear newest first, and every month is already waiting there while they load.',
+      'The converter opens at zero instead of a dash.',
+      'The gift lists carry our own names and our own little faces now.',
     ],
   },
   {
