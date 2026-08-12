@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react';
-import { Plus } from 'lucide-react';
 import { qk } from '@kernel/query';
 import { useTableSync } from '@kernel/realtime';
 import {
   Empty,
-  Fab,
+  TopBarAdd,
   LoadingScreen,
   PageHeader,
   Segmented,
@@ -86,9 +85,7 @@ export function BabyNamesListRoute() {
         )}
       </section>
 
-      <Fab label="Propose name" onClick={() => setCreating(true)}>
-        <Plus />
-      </Fab>
+      <TopBarAdd label="Propose name" onClick={() => setCreating(true)} />
 
       <Sheet
         open={creating}
