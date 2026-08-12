@@ -63,7 +63,13 @@ export default defineConfig({
         ],
       },
       injectManifest: {
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // webp so the Wall's slate ships with the shell instead of being a cold
+        // network fetch on every first visit to a primary tab. Workbox
+        // revision-hashes each entry, so the cost is once per file change.
+        // NOT jpg: the old 150 KB chalkboard.jpg has to stay on disk for the
+        // one session an old bundle still asks for it, but precaching it would
+        // hand every install 150 KB nobody will ever look at again.
+        globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2}'],
         // iOS reads launch images directly at startup — no need to precache the
         // large splash PNGs into the runtime cache.
         globIgnores: ['**/icons/splash/**'],
