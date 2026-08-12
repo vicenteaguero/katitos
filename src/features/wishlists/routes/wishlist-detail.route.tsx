@@ -1,12 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 import { Check, ExternalLink, EyeOff, Plus } from 'lucide-react';
 import { useUserId } from '@kernel/auth';
 import { BUCKETS, useSignedUrls } from '@kernel/storage';
-import { cn, formatAmount } from '@kernel/lib';
+import { cn } from '@kernel/lib';
 import {
   Empty,
-  Fab,
+  IconButton,
   Sheet,
   Skeleton,
   toast,
@@ -55,12 +55,29 @@ export function WishlistDetailRoute() {
     [rows]
   );
 
+  // The top bar has ONE slot, so the hidden-count and the add button are
+  // injected together — two separate useTopBarAction calls would overwrite
+  // each other and whichever unmounted last would clear the bar entirely.
+  const openNew = useRef(() => {});
+  openNew.current = () => {
+    setEditing(null);
+    setSheetOpen(true);
+  };
   useTopBarAction(
-    hiddenCount > 0 ? (
-      <span className="flex items-center gap-1 font-sans text-[0.7rem] text-muted">
-        <EyeOff className="h-3.5 w-3.5" /> {hiddenCount} hidden
-      </span>
-    ) : null,
+    <div className="flex items-center gap-1.5">
+      {hiddenCount > 0 && (
+        <span className="flex items-center gap-1 font-sans text-[0.7rem] text-muted">
+          <EyeOff className="h-3.5 w-3.5" /> {hiddenCount} hidden
+        </span>
+      )}
+      <IconButton
+        label="Add a wish"
+        className="h-9 w-9"
+        onClick={() => openNew.current()}
+      >
+        <Plus className="h-5 w-5" />
+      </IconButton>
+    </div>,
     [hiddenCount]
   );
 
@@ -71,8 +88,6 @@ export function WishlistDetailRoute() {
       title: draft.title,
       description: draft.description,
       link: draft.link,
-      price: draft.price ? Number(draft.price) : null,
-      currency: draft.price ? draft.currency : null,
       visible: draft.visible,
       image: draft.image,
     };
@@ -83,8 +98,6 @@ export function WishlistDetailRoute() {
           title: payload.title.trim(),
           description: payload.description.trim() || null,
           link: payload.link.trim() || null,
-          price: payload.price,
-          currency: payload.currency,
           visible: payload.visible,
         },
         { onError: (e) => toast.error(e.message) }
@@ -134,16 +147,6 @@ export function WishlistDetailRoute() {
           ))}
         </div>
       )}
-
-      <Fab
-        label="Add a wish"
-        onClick={() => {
-          setEditing(null);
-          setSheetOpen(true);
-        }}
-      >
-        <Plus />
-      </Fab>
 
       <ItemSheet
         open={sheetOpen}
@@ -198,12 +201,6 @@ export function WishlistDetailRoute() {
             {!detail.visible && (
               <p className="flex items-center gap-1.5 font-sans text-xs text-gold">
                 <EyeOff className="h-3.5 w-3.5" /> Only you can see this one
-              </p>
-            )}
-            {detail.price != null && (
-              <p className="font-display text-2xl text-fg">
-                {formatAmount(detail.price, detail.currency ?? 'CLP')}{' '}
-                <span className="text-base text-muted">{detail.currency}</span>
               </p>
             )}
             {detail.description && (
@@ -287,11 +284,6 @@ function ItemCard({
               />
             )}
           </span>
-          {item.price != null && (
-            <span className="block font-sans text-xs tabular-nums text-copper">
-              {formatAmount(item.price, item.currency ?? 'CLP')} {item.currency}
-            </span>
-          )}
           {item.description && (
             <span className="mt-0.5 block truncate font-sans text-xs text-muted">
               {item.description}
