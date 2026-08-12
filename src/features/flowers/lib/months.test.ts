@@ -55,8 +55,8 @@ describe('groupByYear — reading', () => {
     const years = groupByYear(flowers, { editing: false, now: AUG_2026 });
     expect(years.map((y) => y.year)).toEqual([2026, 2025]);
     expect(years[0].slots.map((s) => s.label)).toEqual([
-      'Apr 2026',
       'Jul 2026',
+      'Apr 2026',
     ]);
   });
 
@@ -78,7 +78,8 @@ describe('groupByYear — editing', () => {
     const years = groupByYear([], { editing: true, now: AUG_2026 });
     const first = years[years.length - 1];
     expect(first.year).toBe(2025);
-    expect(first.slots[0].label).toBe('Jun 2025');
+    // Bottom of the last section, bottom of the page.
+    expect(first.slots[first.slots.length - 1].label).toBe('Jun 2025');
     expect(first.slots).toHaveLength(7); // Jun..Dec
   });
 
@@ -86,7 +87,7 @@ describe('groupByYear — editing', () => {
     const years = groupByYear([], { editing: true, now: AUG_2026 });
     const y2026 = years.find((y) => y.year === 2026)!;
     expect(y2026.slots).toHaveLength(12);
-    expect(y2026.slots[11].label).toBe('Dec 2026');
+    expect(y2026.slots[0].label).toBe('Dec 2026');
   });
 
   it('stops at the current year until December', () => {
@@ -119,5 +120,75 @@ describe('groupByYear — editing', () => {
   it('newest year first — this year is what you look at', () => {
     const years = groupByYear([], { editing: true, now: AUG_2026 });
     expect(years[0].year).toBeGreaterThan(years[1].year);
+  });
+});
+
+describe('groupByYear — a photo is never hidden', () => {
+  // The bug this covers: the June-2025 floor was applied as a DISPLAY filter,
+  // so a bouquet stored before it existed in the database and simply never
+  // rendered — and if it was the only one that year, the whole year vanished.
+  it('shows a bouquet from before June 2025', () => {
+    const years = groupByYear([flower('2025-03-01')], {
+      editing: false,
+      now: AUG_2026,
+    });
+    expect(years.map((y) => y.year)).toEqual([2025]);
+    expect(years[0].slots.map((s) => s.label)).toEqual(['Mar 2025']);
+  });
+
+  it('shows it while editing too, so it can be changed or removed', () => {
+    const years = groupByYear([flower('2025-03-01')], {
+      editing: true,
+      now: AUG_2026,
+    });
+    const y2025 = years.find((y) => y.year === 2025)!;
+    expect(y2025.slots.map((s) => s.label)).toContain('Mar 2025');
+    // Still does not OFFER the empty months before June.
+    expect(y2025.slots.map((s) => s.label)).not.toContain('Feb 2025');
+    expect(y2025.slots.map((s) => s.label)).toContain('Jun 2025');
+  });
+
+  it('shows a bouquet from beyond the year we would offer', () => {
+    const years = groupByYear([flower('2030-05-01')], {
+      editing: true,
+      now: AUG_2026,
+    });
+    expect(years[0].year).toBe(2030);
+    expect(years[0].slots.map((s) => s.label)).toEqual(['May 2030']);
+  });
+
+  it('never offers an empty month outside the window', () => {
+    const years = groupByYear([], { editing: true, now: AUG_2026 });
+    const labels = years.flatMap((y) => y.slots.map((s) => s.label));
+    expect(labels).not.toContain('May 2025');
+    expect(labels).not.toContain('Jan 2027');
+    expect(labels[labels.length - 1]).toBe('Jun 2025');
+  });
+});
+
+describe('groupByYear — order', () => {
+  it('walks straight back in time down the page', () => {
+    const years = groupByYear([], { editing: true, now: AUG_2026 });
+    const labels = years.flatMap((y) => y.slots.map((s) => s.key));
+    // Every step down is older than the one above it — no zigzag at the
+    // year boundary, which is what reading Jan..Dec inside a descending list
+    // of years used to produce.
+    for (let i = 1; i < labels.length; i++) {
+      expect(labels[i] < labels[i - 1]).toBe(true);
+    }
+    expect(labels[0]).toBe('2026-12-01');
+    expect(labels[labels.length - 1]).toBe('2025-06-01');
+  });
+
+  it('keeps that order when only some months are filled', () => {
+    const years = groupByYear(
+      [flower('2025-07-01'), flower('2026-02-01'), flower('2026-09-01')],
+      { editing: false, now: AUG_2026 }
+    );
+    expect(years.flatMap((y) => y.slots.map((s) => s.key))).toEqual([
+      '2026-09-01',
+      '2026-02-01',
+      '2025-07-01',
+    ]);
   });
 });
