@@ -6,7 +6,6 @@ import {
   ChevronLeft,
   ExternalLink,
   MapPin,
-  Plus,
   Trash2,
   Wallet,
 } from 'lucide-react';
@@ -17,7 +16,7 @@ import {
   Badge,
   Card,
   Empty,
-  Fab,
+  TopBarAdd,
   IconButton,
   LoadingScreen,
   Sheet,
@@ -244,9 +243,7 @@ export function TripDetailRoute() {
         </div>
       )}
 
-      <Fab label="Add item" onClick={() => setAdding(true)}>
-        <Plus />
-      </Fab>
+      <TopBarAdd label="Add item" onClick={() => setAdding(true)} />
 
       <Sheet open={adding} onClose={() => setAdding(false)} title="Add item">
         <TripItemForm tripId={tripId} onDone={() => setAdding(false)} />
