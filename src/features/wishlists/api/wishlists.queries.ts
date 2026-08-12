@@ -89,13 +89,18 @@ export function useWishlistCounts() {
   const userId = useUserId();
   return useQuery({
     queryKey: [...qk.wishlists.all(), 'counts', userId] as const,
-    queryFn: async (): Promise<Map<string, { total: number; got: number }>> => {
+    // Rows from the queryFn, Map in `select` — query data is persisted to
+    // localStorage, and a Map does not survive that round-trip.
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('wishlist_items')
         .select('list_id, got');
       if (error) throw error;
+      return data ?? [];
+    },
+    select: (rows) => {
       const out = new Map<string, { total: number; got: number }>();
-      for (const row of data ?? []) {
+      for (const row of rows) {
         const cur = out.get(row.list_id) ?? { total: 0, got: 0 };
         cur.total += 1;
         if (row.got) cur.got += 1;
