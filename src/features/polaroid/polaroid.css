@@ -50,37 +50,39 @@
   animation: pair-to-back 420ms var(--ease-settle) both;
 }
 
-/* Coming forward: it swings OUT first and then settles into place, so the
- * change reads as a hand moving a photo rather than the two of them blinking
- * past each other. --push points away from the centre, per side. */
+/* Coming forward: it eases OUT a little and then settles, so the change reads
+ * as a hand moving a photo rather than the two of them blinking past each
+ * other. The front plate never grows past its natural size — an overshoot
+ * above 1 pushed the outer edge off the side of the phone. --push points away
+ * from the centre, per side. */
 @keyframes pair-to-front {
   0% {
-    transform: translateX(0) rotate(var(--rest-rotate, 0deg)) scale(0.94);
-    opacity: 0.6;
+    transform: translateX(0) rotate(var(--rest-rotate, 0deg)) scale(0.9);
+    opacity: 0.62;
   }
   55% {
-    transform: translateX(calc(var(--push, 0px) * 1.5)) rotate(0deg) scale(1.05);
+    transform: translateX(var(--push, 0px)) rotate(0deg) scale(0.99);
     opacity: 1;
   }
   100% {
-    transform: translateX(0) rotate(0deg) scale(1.02);
+    transform: translateX(0) rotate(0deg) scale(1);
     opacity: 1;
   }
 }
 
-/* Going behind: it slides back under, taking its tilt again. */
+/* Going behind: big to small, sliding back under and taking its tilt again. */
 @keyframes pair-to-back {
   0% {
-    transform: translateX(0) rotate(0deg) scale(1.02);
+    transform: translateX(0) rotate(0deg) scale(1);
     opacity: 1;
   }
   55% {
-    transform: translateX(calc(var(--push, 0px) * 0.6))
-      rotate(calc(var(--rest-rotate, 0deg) * 0.6)) scale(0.96);
-    opacity: 0.75;
+    transform: translateX(calc(var(--push, 0px) * 0.45))
+      rotate(calc(var(--rest-rotate, 0deg) * 0.5)) scale(0.95);
+    opacity: 0.8;
   }
   100% {
-    transform: translateX(0) rotate(var(--rest-rotate, 0deg)) scale(0.94);
+    transform: translateX(0) rotate(var(--rest-rotate, 0deg)) scale(0.9);
     opacity: 0.62;
   }
 }
@@ -104,7 +106,7 @@
     opacity: 1 !important;
   }
   .pair-plate--back {
-    transform: rotate(var(--rest-rotate, 0deg)) scale(0.94) !important;
+    transform: rotate(var(--rest-rotate, 0deg)) scale(0.9) !important;
     opacity: 0.62 !important;
   }
 }
