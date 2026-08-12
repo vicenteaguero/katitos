@@ -100,12 +100,14 @@ const modules: FeatureModule[] = [
 const GATED = true;
 const OPEN = new Set([
   'polaroid',
-  'summer', // Summer Travel — Türkiye → Georgia (Panini is the live book)
+  'album', // "Albums" — one book per era of ours; took Summer's nav slot
   'language',
   'chalkboard', // "The wall"
   'know-me',
   'currency',
-  'scavenger', // "Date cards" — the Georgia envelope deck
+  // 'summer'   — Türkiye/Georgia is over. Locked, NOT deleted: the code, the
+  //              tables and the photos all stay, so the next trip is one line.
+  // 'scavenger' — "Date cards" frozen as-is until we rethink it.
 ]);
 
 export const features: FeatureModule[] = modules.map((m) => ({
