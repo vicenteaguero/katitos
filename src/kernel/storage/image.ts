@@ -11,6 +11,53 @@ export function proxyPath(path: string): string {
   return `thumbs/${path}`;
 }
 
+/** A decoded image plus the bookkeeping needed to draw and release it. */
+export interface DecodedImage {
+  width: number;
+  height: number;
+  source: CanvasImageSource;
+  release: () => void;
+}
+
+/**
+ * Decode an image Blob into something a canvas can draw.
+ *
+ * `createImageBitmap` is the fast path, but older iOS Safari throws on HEIC —
+ * so we fall back to an `<img>` + object URL, which the system decoder handles.
+ * Every caller that touches user photos needs this fallback; without it the
+ * iPhone camera roll silently fails on exactly the photos we care about.
+ */
+export async function decodeImage(blob: Blob): Promise<DecodedImage> {
+  try {
+    const bitmap = await createImageBitmap(blob);
+    return {
+      width: bitmap.width,
+      height: bitmap.height,
+      source: bitmap,
+      release: () => bitmap.close?.(),
+    };
+  } catch {
+    const url = URL.createObjectURL(blob);
+    try {
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const el = new Image();
+        el.onload = () => resolve(el);
+        el.onerror = () => reject(new Error('Image decode failed'));
+        el.src = url;
+      });
+      return {
+        width: img.naturalWidth,
+        height: img.naturalHeight,
+        source: img,
+        release: () => URL.revokeObjectURL(url),
+      };
+    } catch (e) {
+      URL.revokeObjectURL(url);
+      throw e;
+    }
+  }
+}
+
 interface DownscaleOptions {
   /** Longest edge of the proxy, in px. */
   maxDim?: number;
