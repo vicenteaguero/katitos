@@ -37,6 +37,7 @@ export function useSubmitAnswer(dayId: string | undefined) {
       });
       if (error) throw error;
       void notifyPartner({
+        kind: 'know-me',
         title: 'Katitos ❤️',
         body: `${self?.display_name ?? 'Your love'} answered — see how you did`,
         url: '/know-me',
