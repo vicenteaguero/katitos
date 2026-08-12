@@ -31,7 +31,7 @@ export function useSignedUrls(
     enabled: wanted.length > 0,
     // Refresh a minute before the signatures actually lapse.
     staleTime: Math.max(0, (expiresIn - 60) * 1000),
-    queryFn: async (): Promise<Map<string, string>> => {
+    queryFn: async (): Promise<Array<[string, string]>> => {
       const targets = proxy ? wanted.map(proxyPath) : wanted;
       const { data, error } = await supabase.storage
         .from(bucket)
@@ -47,13 +47,16 @@ export function useSignedUrls(
       // existed simply has no `thumbs/` object. That's an expected miss, not a
       // failure — it comes back as an absent map entry and the consumer falls
       // back to the original.
-      const out = new Map<string, string>();
+      // Entries, not a Map: query data must stay JSON-serializable (the cache
+      // is snapshotted to localStorage). `select` turns it back into a Map.
+      const out: Array<[string, string]> = [];
       for (const row of data ?? []) {
         if (!row?.signedUrl || !row.path) continue;
         const original = backToOriginal.get(row.path);
-        if (original) out.set(original, row.signedUrl);
+        if (original) out.push([original, row.signedUrl]);
       }
       return out;
     },
+    select: (entries) => new Map(entries),
   });
 }
