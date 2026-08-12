@@ -9,6 +9,8 @@ export interface FilePickerButtonProps {
   disabled?: boolean;
   /** MIME accept filter; defaults to any image. */
   accept?: string;
+  /** Drop all built-in styling — the caller supplies the whole appearance. */
+  bare?: boolean;
 }
 
 /**
@@ -24,6 +26,7 @@ export function FilePickerButton({
   className,
   disabled,
   accept = 'image/*',
+  bare = false,
 }: FilePickerButtonProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -34,7 +37,17 @@ export function FilePickerButton({
         disabled={disabled}
         onClick={() => inputRef.current?.click()}
         className={cn(
-          'inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-surface-2 px-4 py-2 text-fg transition active:opacity-80 disabled:opacity-50',
+          // `bare` hands the whole appearance to the caller — used where the
+          // picker IS the thing you tap (a polaroid slot), not a button beside
+          // it. `cn` only joins classes, so a caller cannot reliably override
+          // ours; opting out is the honest way to do this.
+          bare
+            ? 'lift-press block w-full disabled:opacity-50'
+            : // Otherwise: the same quiet lifted panel as Button's `secondary`.
+              // Separated by tone, never by a line — this was the one kernel
+              // control with a literal border, so it never matched its
+              // neighbours.
+              'lift-press inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-surface-2 px-6 font-sans text-sm font-semibold text-fg transition hover:brightness-110 disabled:opacity-50',
           className
         )}
       >
