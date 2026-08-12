@@ -57,6 +57,9 @@ export function convert(
   rates: Map<string, number>
 ): number | null {
   if (from === to) return amount;
+  // Zero needs no rate. Without this the converter opens reading "—" until the
+  // rates land — which looks like it is broken, not like it is empty.
+  if (amount === 0) return 0;
   const direct = rates.get(`${from}/${to}`);
   if (direct != null) return amount * direct;
 
