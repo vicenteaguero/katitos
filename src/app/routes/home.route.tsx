@@ -225,9 +225,16 @@ function SilverDome() {
           }}
         />
       </span>
+      {/* WebP at a third of the PNG's weight, with its real dimensions so the
+          hero never reflows once it decodes. It is the first thing on Home, so
+          it is worth fetching eagerly. */}
       <img
-        src="/novat.png"
+        src="/novat.webp"
         alt="The Novosibirsk Opera"
+        width={680}
+        height={351}
+        decoding="async"
+        fetchPriority="high"
         className="relative mx-auto w-full drop-shadow-[0_10px_22px_rgba(0,0,0,0.5)]"
       />
     </div>
