@@ -4,6 +4,7 @@ import {
   countdownTo,
   daysBetween,
   daysTogether,
+  daysTogetherNow,
   nextMonthsversary,
 } from './datetime';
 
@@ -41,5 +42,35 @@ describe('datetime', () => {
   it('includes today when it is the day', () => {
     const now = DateTime.fromISO('2026-03-15T08:00:00');
     expect(nextMonthsversary(15, now).month).toBe(3);
+  });
+});
+
+describe('daysTogetherNow', () => {
+  const at = (iso: string) => DateTime.fromISO(iso, { setZone: true });
+
+  it('is 0 on the very first hour, not negative', () => {
+    expect(daysTogetherNow(at('2025-06-15T03:30:00+07:00'))).toBe(0);
+    expect(daysTogetherNow(at('2025-06-15T02:00:00+07:00'))).toBe(0);
+  });
+
+  it('rolls over at 3am Novosibirsk, not at midnight', () => {
+    expect(daysTogetherNow(at('2025-06-16T02:59:00+07:00'))).toBe(0);
+    expect(daysTogetherNow(at('2025-06-16T03:01:00+07:00'))).toBe(1);
+  });
+
+  it('gives the same answer from Curicó as from Novosibirsk', () => {
+    // The same instant, written in each of our zones.
+    const novo = at('2026-08-12T12:00:00+07:00');
+    const curico = at('2026-08-12T01:00:00-04:00');
+    expect(+novo).toBe(+curico);
+    expect(daysTogetherNow(novo)).toBe(daysTogetherNow(curico));
+  });
+
+  it('counts a plain year correctly', () => {
+    expect(daysTogetherNow(at('2026-06-15T12:00:00+07:00'))).toBe(365);
+  });
+
+  it('needs no arguments and no database', () => {
+    expect(daysTogetherNow()).toBeGreaterThan(400);
   });
 });
