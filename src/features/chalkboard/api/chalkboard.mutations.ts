@@ -41,35 +41,30 @@ export function useMoveNote() {
   });
 }
 
-export function useRotateNote() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ id, rotation }: { id: string; rotation: number }) => {
-      const { error } = await supabase
-        .from('chalkboard_notes')
-        .update({ rotation })
-        .eq('id', id);
-      if (error) throw error;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: qk.chalkboard.notes() }),
-  });
-}
-
-export function useResizeNote() {
+/**
+ * Scale, rotation and width in ONE write.
+ *
+ * A single pinch produces all three at once, so sending them as two separate
+ * mutations meant two round-trips and two full refetches per gesture — and a
+ * window where the note was half-updated on the other screen.
+ */
+export function useTransformNote() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({
       id,
       scale,
+      rotation,
       width,
     }: {
       id: string;
       scale: number;
+      rotation: number;
       width: number | null;
     }) => {
       const { error } = await supabase
         .from('chalkboard_notes')
-        .update({ scale, width })
+        .update({ scale, rotation, width })
         .eq('id', id);
       if (error) throw error;
     },
