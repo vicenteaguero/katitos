@@ -86,6 +86,7 @@ export function PolaroidRoute() {
     () => new Set(days.filter((d) => d.mine != null).map((d) => d.day)),
     [days]
   );
+  const openSet = useMemo(() => new Set(eligible), [eligible]);
 
   // The middle nav button deep-links here with ?shoot=1 → straight to camera.
   useEffect(() => {
@@ -145,6 +146,8 @@ export function PolaroidRoute() {
             focus={todayFocus}
             onFocusChange={setTodayFocus}
             onOpen={setViewer}
+            isToday
+            stillOpen
             onShoot={() => setCamOpen(true)}
           />
         )}
@@ -208,6 +211,8 @@ export function PolaroidRoute() {
             urls={urls}
             partnerName={partnerName}
             partnerZone={partner?.timezone}
+            openSet={openSet}
+            onCatchUp={() => setCatchUpOpen(true)}
             onOpen={setViewer}
             hasMore={!!hasNextPage}
             loadingMore={isFetchingNextPage}
@@ -271,6 +276,8 @@ function Gallery({
   urls,
   partnerName,
   partnerZone,
+  openSet,
+  onCatchUp,
   onOpen,
   hasMore,
   loadingMore,
@@ -280,6 +287,9 @@ function Gallery({
   urls?: Map<string, string>;
   partnerName: string;
   partnerZone: string | null | undefined;
+  /** Days still writable from here — my love's today included. */
+  openSet: Set<string>;
+  onCatchUp: () => void;
   onOpen: (p: Polaroid) => void;
   hasMore: boolean;
   loadingMore: boolean;
@@ -335,6 +345,13 @@ function Gallery({
                     urls={urls}
                     partnerName={partnerName}
                     partnerZone={partnerZone}
+                    stillOpen={openSet.has(d.day)}
+                    onShoot={
+                      // Her today, still fillable from here — but only via the
+                      // deliberate path, never the camera (which is always
+                      // "now", and now is a different date).
+                      openSet.has(d.day) ? onCatchUp : undefined
+                    }
                     onOpen={onOpen}
                   />
                 )}
