@@ -28,20 +28,61 @@
 
 /* ── The pair ─────────────────────────────────────────────────────────────── */
 
-/* Two plates leaning together, straightening as one is picked up. The resting
- * tilt is per-plate (--rest-rotate), so the two lean toward each other. */
+/* Two photos of the same day, one resting on top of the other like they were
+ * dropped there. There is no "neither is on top" state: one of them is always
+ * in front, so a tap is never ambiguous and the caption below always belongs
+ * to something. */
 .pair-plate {
-  transform: rotate(var(--rest-rotate, 0deg));
-  transform-origin: 50% 90%;
-  transition:
-    transform 420ms var(--ease-settle),
-    opacity 260ms var(--ease-settle);
+  transform-origin: 50% 92%;
   will-change: transform;
 }
 
-/* Picked up: straightened, lifted, and slightly larger than its partner. */
-.pair-plate--focused {
-  transform: rotate(0deg) translateY(-6px) scale(1.06);
+/* The one in front: square to the page, lifted, slightly larger. */
+.pair-plate--front {
+  z-index: 2;
+  animation: pair-to-front 420ms var(--ease-settle) both;
+}
+
+/* The one behind: tilted away, a little smaller, dimmed so the front reads
+ * as the one you are looking at. */
+.pair-plate--back {
+  z-index: 1;
+  animation: pair-to-back 420ms var(--ease-settle) both;
+}
+
+/* Coming forward: it swings OUT first and then settles into place, so the
+ * change reads as a hand moving a photo rather than the two of them blinking
+ * past each other. --push points away from the centre, per side. */
+@keyframes pair-to-front {
+  0% {
+    transform: translateX(0) rotate(var(--rest-rotate, 0deg)) scale(0.94);
+    opacity: 0.6;
+  }
+  55% {
+    transform: translateX(calc(var(--push, 0px) * 1.5)) rotate(0deg) scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0) rotate(0deg) scale(1.02);
+    opacity: 1;
+  }
+}
+
+/* Going behind: it slides back under, taking its tilt again. */
+@keyframes pair-to-back {
+  0% {
+    transform: translateX(0) rotate(0deg) scale(1.02);
+    opacity: 1;
+  }
+  55% {
+    transform: translateX(calc(var(--push, 0px) * 0.6))
+      rotate(calc(var(--rest-rotate, 0deg) * 0.6)) scale(0.96);
+    opacity: 0.75;
+  }
+  100% {
+    transform: translateX(0) rotate(var(--rest-rotate, 0deg)) scale(0.94);
+    opacity: 0.62;
+  }
 }
 
 /* The waiting half: same shape, no shadow weight, faintly hatched so it reads
@@ -51,27 +92,20 @@
   box-shadow: inset 0 0 0 1px rgba(228, 195, 106, 0.16);
 }
 
-/* Both plates settle in together the first time the day appears. */
-@keyframes pair-settle {
-  from {
-    opacity: 0;
-    transform: rotate(var(--rest-rotate, 0deg)) translateY(10px) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: rotate(var(--rest-rotate, 0deg));
-  }
-}
-.pair-stage .pair-plate {
-  animation: pair-settle 420ms var(--ease-settle) both;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .pair-plate,
-  .pair-plate--focused {
+  /* No swing — the plates just take their places. The z-order still changes,
+     so the interaction still works, it simply does not travel. */
+  .pair-plate--front,
+  .pair-plate--back {
     animation: none !important;
-    transition: opacity 200ms ease !important;
+  }
+  .pair-plate--front {
     transform: none !important;
+    opacity: 1 !important;
+  }
+  .pair-plate--back {
+    transform: rotate(var(--rest-rotate, 0deg)) scale(0.94) !important;
+    opacity: 0.62 !important;
   }
 }
 
