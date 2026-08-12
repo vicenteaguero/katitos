@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { Plus, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { qk } from '@kernel/query';
 import { useTableSync } from '@kernel/realtime';
 import {
   Badge,
   Empty,
-  Fab,
+  TopBarAdd,
   IconButton,
   LoadingScreen,
   PageHeader,
@@ -83,9 +83,7 @@ export function QuizzesListRoute() {
         </div>
       )}
 
-      <Fab label="New quiz" onClick={() => setBuilding(true)}>
-        <Plus />
-      </Fab>
+      <TopBarAdd label="New quiz" onClick={() => setBuilding(true)} />
 
       <Sheet
         open={building}
