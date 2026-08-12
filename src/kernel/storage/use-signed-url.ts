@@ -55,5 +55,11 @@ export function useProxiedUrl(
     proxyUrl: proxyQ.data,
     fullUrl: fullQ.data,
     isLoading: proxyQ.isLoading || fullQ.isLoading,
+    /**
+     * The proxy doesn't exist (a photo taken before proxies, or one whose
+     * downscale failed). Consumers must fall back to the original — otherwise
+     * the photo silently never renders.
+     */
+    proxyMissing: proxy && !!path && proxyQ.isError,
   };
 }
