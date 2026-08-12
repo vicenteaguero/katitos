@@ -16,7 +16,6 @@ import {
 import { notifyPartner } from '@kernel/push';
 import { toast, useTopBarAction } from '@kernel/ui';
 import { usePartnerPresence } from '@features/presence';
-import { TodayQuestionsWidget } from '@features/know-me';
 import { LastPolaroidWidget } from '@features/polaroid';
 import { loveNoteFor, useLovePhrases } from '@features/love';
 import { sendLoveBurst } from '../shell/love-channel';
@@ -394,7 +393,6 @@ export function HomeRoute() {
     >
       <Greeting />
       <TogetherHero />
-      <TodayQuestionsWidget />
       <LastPolaroidWidget />
     </div>
   );
