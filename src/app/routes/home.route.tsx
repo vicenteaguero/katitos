@@ -9,6 +9,7 @@ import {
   durationBreakdown,
   formatDistance,
   haversineKm,
+  monthsversaryCount,
   timeInZone,
   type DurationParts,
 } from '@kernel/lib';
@@ -94,9 +95,40 @@ function fmtBreakdown(b: DurationParts): string {
 }
 
 /**
+ * Is it the monthsversary right now — for either of us?
+ *
+ * Deliberately the UNION of our two timezones, not `coupleDay`'s MIN: the day
+ * we celebrate should be lit for both of us across the whole eleven-hour
+ * spread, not blink out for one while the other is still in it.
+ */
+function useMonthsversary(): { count: number } | null {
+  const { self, partner } = usePartner();
+  const { data: couple } = useCouple();
+  // Re-checked every minute so the banner actually appears at midnight instead
+  // of waiting for the next navigation.
+  const now = useNow(60_000);
+
+  const target = couple?.anniversary_day ?? 15;
+  const isDay = [self?.timezone, partner?.timezone].some((zone) => {
+    if (!zone) return false;
+    const local = now.setZone(zone);
+    // Clamp for short months, matching nextMonthsversary()'s behaviour.
+    const day = Math.min(target, local.daysInMonth ?? 28);
+    return local.day === day;
+  });
+  if (!isDay) return null;
+
+  return {
+    count: couple?.relationship_start_date
+      ? monthsversaryCount(couple.relationship_start_date, now)
+      : 0,
+  };
+}
+
+/**
  * Home — the "Bolshoi Nocturne" overture. Whether your love is here, the kept
- * hero (days together, both clocks, the leagues between), the Georgia
- * countdown, tonight's questions, and the last photo you took.
+ * hero (days together, both clocks, the leagues between), tonight's questions,
+ * and the last photo you took.
  */
 
 /** The greeting — about your love's presence, with a "loves you" pulse. */
@@ -140,17 +172,38 @@ function Greeting() {
     window.setTimeout(() => setSent(false), 2200);
   };
 
+  // On the 15th — in EITHER of our timezones, so it shows across both our
+  // days — the presence line gives way to the monthsversary.
+  const monthsversary = useMonthsversary();
+
   // The presence one-liner lives in the top bar now (out of the hero).
+  // Note there is no "is away" fallback any more: when we have nothing kind to
+  // report, we say nothing.
   useTopBarAction(
-    <span className="truncate font-sans text-xs text-muted">
-      <span className="font-semibold text-fg">{partnerName}</span>{' '}
-      {online
-        ? 'is here now'
-        : partner?.last_seen_at
-          ? `was here ${compactAgo(partner.last_seen_at)}`
-          : 'is away'}
-    </span>,
-    [partnerName, online, partner?.last_seen_at]
+    monthsversary ? (
+      <span className="truncate font-sans text-xs text-gold">
+        <span className="candle-flicker mr-1" aria-hidden="true">
+          ❤️‍🩹
+        </span>
+        Happy Monthversary my{' '}
+        <span className="font-semibold">{partnerName}</span>!
+        {monthsversary.count > 0 && (
+          <span className="ml-1 text-muted">
+            · {monthsversary.count} months
+          </span>
+        )}
+      </span>
+    ) : online ? (
+      <span className="truncate font-sans text-xs text-muted">
+        <span className="font-semibold text-fg">{partnerName}</span> is here now
+      </span>
+    ) : partner?.last_seen_at ? (
+      <span className="truncate font-sans text-xs text-muted">
+        <span className="font-semibold text-fg">{partnerName}</span> was here{' '}
+        {compactAgo(partner.last_seen_at)}
+      </span>
+    ) : null,
+    [partnerName, online, partner?.last_seen_at, monthsversary?.count]
   );
 
   return (
