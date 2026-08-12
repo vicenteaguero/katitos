@@ -20,7 +20,7 @@ import {
 } from '@kernel/ui';
 import { useFlowers } from '../api/flowers.queries';
 import { useDeleteFlower, useUpsertFlower } from '../api/flowers.mutations';
-import { groupByYear, type MonthSlot } from '../lib/months';
+import { groupByYear, skeletonYears, type MonthSlot } from '../lib/months';
 
 /**
  * A bouquet for every month, three across, each on its own instant photo with
@@ -55,30 +55,51 @@ export function FlowersRoute() {
     [flowers, editing, canUpload]
   );
 
-  const paths = useMemo(
-    () => (flowers ?? []).map((f) => f.image_path),
-    [flowers]
-  );
-  const { data: urls } = useSignedUrls(BUCKETS.flowers, paths);
-  const { data: fullUrls } = useSignedUrls(BUCKETS.flowers, paths, {
-    proxy: false,
-  });
-  usePrefetchImages(urls?.values());
-
-  // Newest first, so paging in the viewer matches the order on the page.
-  const viewable: ViewerPhoto[] = useMemo(
+  // Newest first — and this order matters far more than it looks. It is the
+  // order the URLs are signed in, the order the browser is told to fetch, and
+  // therefore the order the pictures appear in. Left in the query's own
+  // ascending order, the page filled itself from June 2025 upwards while the
+  // months you actually came to see sat blank at the top.
+  const newestFirst = useMemo(
     () =>
       [...(flowers ?? [])]
-        .sort((a, b) => (a.occasion_date < b.occasion_date ? 1 : -1))
         .filter((f) => f.image_path)
-        .map((f) => ({
-          id: f.id,
-          previewUrl: urls?.get(f.image_path!),
-          fullUrl: fullUrls?.get(f.image_path!),
-          eyebrow: DateTime.fromISO(f.occasion_date).toFormat('LLLL yyyy'),
-          fileName: `flowers-${f.occasion_date.slice(0, 7)}.jpg`,
-        })),
-    [flowers, urls, fullUrls]
+        .sort((a, b) => (a.occasion_date < b.occasion_date ? 1 : -1)),
+    [flowers]
+  );
+
+  const paths = useMemo(
+    () => newestFirst.map((f) => f.image_path!),
+    [newestFirst]
+  );
+  const { data: urls } = useSignedUrls(BUCKETS.flowers, paths);
+  // Warm them newest-first. `useSignedUrls` sorts its paths for a stable cache
+  // key, so its Map is alphabetical — walking it directly would fetch June 2025
+  // before this month, which is exactly the order we're trying to avoid.
+  const warm = useMemo(
+    () => paths.map((p) => urls?.get(p)).filter((u): u is string => !!u),
+    [paths, urls]
+  );
+  usePrefetchImages(warm);
+
+  // The originals are 7 MB between them and nothing on this page shows one.
+  // Sign them only once a photo is actually open — the lightbox has the proxy
+  // to show in the meantime, so nobody waits for this.
+  const { data: fullUrls } = useSignedUrls(BUCKETS.flowers, paths, {
+    proxy: false,
+    enabled: viewerIndex !== null,
+  });
+
+  const viewable: ViewerPhoto[] = useMemo(
+    () =>
+      newestFirst.map((f) => ({
+        id: f.id,
+        previewUrl: urls?.get(f.image_path!),
+        fullUrl: fullUrls?.get(f.image_path!),
+        eyebrow: DateTime.fromISO(f.occasion_date).toFormat('LLLL yyyy'),
+        fileName: `flowers-${f.occasion_date.slice(0, 7)}.jpg`,
+      })),
+    [newestFirst, urls, fullUrls]
   );
 
   useTopBarAction(
@@ -107,15 +128,28 @@ export function FlowersRoute() {
       }
     );
 
+  // Every month we could possibly have, laid out exactly as the real page lays
+  // them out, so loading is the picture arriving rather than the page rebuilding
+  // itself underneath you.
   if (isLoading) {
     return (
-      <div className="curtain-reveal space-y-4">
-        <Skeleton className="h-4 w-28" />
-        <div className="grid grid-cols-3 gap-2">
-          {Array.from({ length: 6 }, (_, i) => (
-            <Skeleton key={i} className="aspect-[4/5] w-full" rounded="md" />
-          ))}
-        </div>
+      <div className="curtain-reveal space-y-7">
+        {skeletonYears().map((y) => (
+          <section key={y.year} className="space-y-3">
+            <h2 className="text-center font-sans text-[0.625rem] font-semibold uppercase tracking-[0.3em] text-copper/80">
+              {y.year}
+            </h2>
+            <div className="grid grid-cols-3 gap-2">
+              {y.months.map((m) => (
+                <Skeleton
+                  key={m}
+                  className="aspect-[4/5] w-full"
+                  rounded="md"
+                />
+              ))}
+            </div>
+          </section>
+        ))}
       </div>
     );
   }
@@ -225,6 +259,9 @@ function MonthPlate({
   /** Only present while editing a month that actually holds a bouquet. */
   onDelete?: () => void;
 }) {
+  // A month that HAS a bouquet whose URL is still being signed shows a
+  // shimmering plate, not an empty one — otherwise the grid reads as a row of
+  // months she never filled.
   const photo = url ? (
     <img
       src={url}
@@ -232,6 +269,8 @@ function MonthPlate({
       decoding="async"
       className="h-full w-full object-cover"
     />
+  ) : slot.flower ? (
+    <Skeleton className="h-full w-full" rounded="none" />
   ) : null;
 
   // Just looking → tap the plate to see the whole photo.
