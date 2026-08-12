@@ -17,6 +17,8 @@ export const qk = {
     all: () => ['polaroids'] as const,
     byDay: (day: string) => ['polaroids', 'day', day] as const,
     list: () => ['polaroids', 'list'] as const,
+    /** The paginated album. Separate from `list` so warming can't evict it. */
+    pages: () => ['polaroids', 'pages'] as const,
   },
   deck: {
     all: () => ['deck'] as const,
