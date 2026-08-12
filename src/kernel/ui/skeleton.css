@@ -1,0 +1,46 @@
+/* ──────────────────────────────────────────────────────────────────────────
+ * Skeleton — the "it's already here, just developing" placeholder.
+ *
+ * Deliberately quieter than `.gold-shimmer` (which is a 4s decorative gilt
+ * sweep for *loaded* content): this is a faint warm band travelling once per
+ * 1.6s over a surface-2 plate, so a loading list reads as furniture arriving
+ * rather than as a light show.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+.kx-skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--color-surface-2);
+  border-radius: var(--radius);
+}
+
+.kx-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(228, 195, 106, 0.09) 45%,
+    rgba(255, 241, 201, 0.14) 50%,
+    rgba(228, 195, 106, 0.09) 55%,
+    transparent 100%
+  );
+  animation: kx-skeleton-sweep 1600ms ease-in-out infinite;
+}
+
+@keyframes kx-skeleton-sweep {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* Still legible as "loading" without motion — the plate just sits there. */
+@media (prefers-reduced-motion: reduce) {
+  .kx-skeleton::after {
+    animation: none !important;
+    transform: none !important;
+    opacity: 0.5;
+  }
+}
