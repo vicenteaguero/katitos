@@ -6,8 +6,11 @@ import type { Wishlist, WishlistItem } from '../types';
 
 /** Him → "For Katito", her → "For Katita". */
 function giftListTitle(role: string | null | undefined): string {
-  return role === 'a' ? 'For Katito' : 'For Katita';
+  return role === 'a' ? "Katito's wishes" : "Katita's wishes";
 }
+
+/** The titles earlier versions provisioned, which we quietly rename. */
+const OLD_TITLES = new Set(['For Katito', 'For Katita']);
 
 /**
  * The gift lists — one per person, self-provisioned on first open.
@@ -46,12 +49,45 @@ export function useWishlists() {
           missing.map((m, i) => ({
             title: giftListTitle(m.role),
             owner_user_id: m.user_id,
-            emoji: m.role === 'a' ? '🧉' : '🐻‍❄️',
+            // Whatever each of us picked in Settings — one face per person
+            // everywhere in the app, rather than a second hardcoded one here.
+            emoji: m.emoji,
             position: i,
           }))
         );
         // 23505 = someone else got there first; just re-read.
         if (error && error.code !== '23505') throw error;
+        lists = await read();
+      }
+
+      // Heal the lists we provisioned under the old names, and follow whatever
+      // face each of us has chosen since. Only ever touches a list still
+      // carrying a title we wrote ourselves — a list either of us renamed by
+      // hand is left completely alone.
+      const stale = lists.filter((l) => {
+        const owner = (members ?? []).find(
+          (m) => m.user_id === l.owner_user_id
+        );
+        if (!owner) return false;
+        const wanted = giftListTitle(owner.role);
+        const renamable = OLD_TITLES.has(l.title) || l.title === wanted;
+        return renamable && (l.title !== wanted || l.emoji !== owner.emoji);
+      });
+      if (stale.length > 0) {
+        await Promise.all(
+          stale.map((l) => {
+            const owner = (members ?? []).find(
+              (m) => m.user_id === l.owner_user_id
+            );
+            return supabase
+              .from('wishlists')
+              .update({
+                title: giftListTitle(owner?.role),
+                emoji: owner?.emoji,
+              })
+              .eq('id', l.id);
+          })
+        );
         lists = await read();
       }
       return lists;
