@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
 import { qk } from '@kernel/query';
 import { useTableSync } from '@kernel/realtime';
 import {
   Empty,
-  Fab,
+  TopBarAdd,
   LoadingScreen,
   PageHeader,
   Segmented,
@@ -91,9 +90,7 @@ export function IdeaBankListRoute() {
         )}
       </section>
 
-      <Fab label="Add idea" onClick={() => setEditing(null)}>
-        <Plus />
-      </Fab>
+      <TopBarAdd label="Add idea" onClick={() => setEditing(null)} />
 
       <Sheet
         open={editing !== undefined}
