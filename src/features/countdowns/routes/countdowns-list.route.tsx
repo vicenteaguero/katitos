@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
 import { useNow } from '@kernel/hooks';
 import { countdownTo } from '@kernel/lib';
 import { qk } from '@kernel/query';
 import { useTableSync } from '@kernel/realtime';
 import {
   Empty,
-  Fab,
+  TopBarAdd,
   LoadingScreen,
   PageHeader,
   Sheet,
@@ -85,9 +84,7 @@ export function CountdownsListRoute() {
         )}
       </section>
 
-      <Fab label="Add countdown" onClick={() => setEditing(null)}>
-        <Plus />
-      </Fab>
+      <TopBarAdd label="Add countdown" onClick={() => setEditing(null)} />
 
       <Sheet
         open={editing !== undefined}
