@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { nanoid } from 'nanoid';
 import { supabase } from '@kernel/supabase';
-import { useUserId } from '@kernel/auth';
+import { usePartner, useUserId } from '@kernel/auth';
+import { notifyPartner } from '@kernel/push';
 import { BUCKETS, usePhotoUpload } from '@kernel/storage';
 import { qk } from '@kernel/query';
 
@@ -46,6 +47,8 @@ function invalidate(qc: ReturnType<typeof useQueryClient>) {
 export function useUpsertPolaroid() {
   const qc = useQueryClient();
   const userId = useUserId();
+  const { self } = usePartner();
+  const selfName = self?.role === 'a' ? 'Katito' : 'Katita';
   const { uploadPhoto } = usePhotoUpload();
 
   return useMutation({
@@ -84,11 +87,20 @@ export function useUpsertPolaroid() {
       }
       return { path };
     },
-    onSuccess: () => {
+    onSuccess: (_data, vars) => {
       invalidate(qc);
       // Bust the signed-url caches so the new photo actually reloads.
       void qc.invalidateQueries({ queryKey: ['signed-url'] });
       void qc.invalidateQueries({ queryKey: ['signed-urls'] });
+
+      // The nudge that makes the daily habit work: your love learns their day
+      // is up, and — if theirs isn't — that it's their turn.
+      void notifyPartner({
+        kind: 'polaroid',
+        title: `📸 ${selfName ?? 'Your love'}'s day is up`,
+        body: vars.caption?.trim() || 'Your turn 🤍',
+        url: '/polaroid',
+      });
     },
   });
 }
