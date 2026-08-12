@@ -19,7 +19,7 @@ import {
 } from '@kernel/ui';
 import { PolaroidCamera } from '../components/polaroid-camera';
 import { PolaroidViewer } from '../components/polaroid-viewer';
-import { DoublePolaroid, type Focus } from '../components/double-polaroid';
+import { DoublePolaroid } from '../components/double-polaroid';
 import { CatchUpSheet } from '../components/catch-up-sheet';
 import { PolaroidImage } from '../components/polaroid-image';
 import { usePolaroidPages } from '../api/polaroid.queries';
@@ -28,7 +28,13 @@ import {
   useSetPolaroidCaption,
   useUpsertPolaroid,
 } from '../api/polaroid.mutations';
-import { groupByDay, localDay, openDays } from '../lib/polaroid-days';
+import {
+  frontOf,
+  groupByDay,
+  localDay,
+  openDays,
+  type Focus,
+} from '../lib/polaroid-days';
 import type { PolaroidDay } from '../lib/polaroid-days';
 import type { Polaroid } from '../types';
 
@@ -52,7 +58,8 @@ export function PolaroidRoute() {
     null
   );
   const [viewer, setViewer] = useState<Polaroid | null>(null);
-  const [todayFocus, setTodayFocus] = useState<Focus>(null);
+  // Her day sits on top when you open the app. Tapping mine brings it forward.
+  const [todayFocus, setTodayFocus] = useState<Focus>('theirs');
   const [params, setParams] = useSearchParams();
 
   const selfId = self?.user_id ?? null;
@@ -122,12 +129,9 @@ export function PolaroidRoute() {
       }
     );
 
-  const focusedPhoto =
-    todayFocus === 'mine'
-      ? today.mine
-      : todayFocus === 'theirs'
-        ? today.theirs
-        : null;
+  // Whichever plate is actually in front — that's the caption you can write on.
+  const frontSide = frontOf(today, todayFocus);
+  const focusedPhoto = frontSide === 'mine' ? today.mine : today.theirs;
 
   return (
     <div className="curtain-reveal space-y-8">
@@ -163,7 +167,7 @@ export function PolaroidRoute() {
             key={focusedPhoto.id}
             defaultValue={focusedPhoto.caption ?? ''}
             placeholder={
-              todayFocus === 'mine'
+              frontSide === 'mine'
                 ? 'Say something about your day…'
                 : `Write something on ${partnerName}'s…`
             }
