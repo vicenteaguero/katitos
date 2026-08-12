@@ -190,20 +190,30 @@ values
    'Toast with Georgian wine and a heartfelt cheers', 2, 2,
    '22222222-2222-2222-2222-222222222222');
 
--- Language phrases.
-insert into public.phrases (language, text, translation, transliteration, example, added_by)
+-- Language decks + phrases.
+-- Phrases MUST belong to a deck: every screen filters by deck_id, so a phrase
+-- with a null deck is invisible the moment it is created.
+insert into public.language_decks (id, language, title, emoji, description, created_by)
 values
-  ('ru', 'Я тебя люблю', 'I love you', 'Ya tebya lyublyu', 'Я тебя люблю, котёнок',
+  ('dddddddd-0000-0000-0000-000000000001', 'ru', 'Sweet nothings', '🤍',
+   'The words I want you to know by heart', '22222222-2222-2222-2222-222222222222'),
+  ('dddddddd-0000-0000-0000-000000000002', 'es', 'Lo básico', '🧉',
+   'Para que me entiendas en Curicó', '11111111-1111-1111-1111-111111111111')
+on conflict (id) do nothing;
+
+insert into public.phrases (deck_id, language, text, translation, transliteration, example, added_by)
+values
+  ('dddddddd-0000-0000-0000-000000000001', 'ru', 'Я тебя люблю', 'I love you', 'Ya tebya lyublyu', 'Я тебя люблю, котёнок',
    '22222222-2222-2222-2222-222222222222'),
-  ('ru', 'Спасибо большое', 'Thank you very much', 'Spasibo bolshoye', null,
+  ('dddddddd-0000-0000-0000-000000000001', 'ru', 'Спасибо большое', 'Thank you very much', 'Spasibo bolshoye', null,
    '22222222-2222-2222-2222-222222222222'),
-  ('ru', 'Доброе утро', 'Good morning', 'Dobroye utro', null,
+  ('dddddddd-0000-0000-0000-000000000001', 'ru', 'Доброе утро', 'Good morning', 'Dobroye utro', null,
    '22222222-2222-2222-2222-222222222222'),
-  ('ru', 'Скучаю по тебе', 'I miss you', 'Skuchayu po tebe', null,
+  ('dddddddd-0000-0000-0000-000000000001', 'ru', 'Скучаю по тебе', 'I miss you', 'Skuchayu po tebe', null,
    '22222222-2222-2222-2222-222222222222'),
-  ('es', 'Te amo', 'I love you', null, 'Te amo, mi vida',
+  ('dddddddd-0000-0000-0000-000000000002', 'es', 'Te amo', 'I love you', null, 'Te amo, mi vida',
    '11111111-1111-1111-1111-111111111111'),
-  ('es', 'Buenos días', 'Good morning', null, null,
+  ('dddddddd-0000-0000-0000-000000000002', 'es', 'Buenos días', 'Good morning', null, null,
    '11111111-1111-1111-1111-111111111111');
 
 -- ── The wall (chalkboard notes) ──
