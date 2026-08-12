@@ -165,7 +165,7 @@ function PairPlate({
   // outward on its way past the other one.
   const style = {
     '--rest-rotate': mine ? '-5deg' : '4deg',
-    '--push': mine ? '-12px' : '12px',
+    '--push': mine ? '-7px' : '7px',
   } as CSSProperties;
 
   // They overlap: 62% each with a 24% bite taken out of the gap between them.
