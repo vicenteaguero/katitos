@@ -15,6 +15,10 @@ interface NotifyBody {
   body?: string;
   url?: string;
   tag?: string;
+  /** A picture for the notification (Android only; iOS ignores it). */
+  image?: string;
+  /** Per-kind buzz pattern. */
+  vibrate?: number[];
   /** Optional explicit target; defaults to the caller's partner. */
   toUserId?: string;
 }
@@ -75,6 +79,8 @@ Deno.serve(async (req) => {
     body: payload.body ?? '',
     url: payload.url ?? '/',
     tag: payload.tag,
+    image: payload.image,
+    vibrate: payload.vibrate,
   });
 
   let sent = 0;
