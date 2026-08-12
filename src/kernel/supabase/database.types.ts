@@ -36,26 +36,41 @@ export type Database = {
     Tables: {
       album_books: {
         Row: {
+          archived: boolean
+          cover_path: string | null
           created_at: string
           created_by: string | null
+          ends_on: string | null
           id: string
+          position: number
           scope: string
+          starts_on: string | null
           title: string
           trip_id: string | null
         }
         Insert: {
+          archived?: boolean
+          cover_path?: string | null
           created_at?: string
           created_by?: string | null
+          ends_on?: string | null
           id?: string
+          position?: number
           scope?: string
+          starts_on?: string | null
           title?: string
           trip_id?: string | null
         }
         Update: {
+          archived?: boolean
+          cover_path?: string | null
           created_at?: string
           created_by?: string | null
+          ends_on?: string | null
           id?: string
+          position?: number
           scope?: string
+          starts_on?: string | null
           title?: string
           trip_id?: string | null
         }
