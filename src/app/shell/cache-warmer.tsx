@@ -3,12 +3,13 @@ import { supabase } from '@kernel/supabase';
 import { BUCKETS, proxyPath } from '@kernel/storage';
 import { usePolaroids } from '@features/polaroid';
 import { useChalkNotes } from '@features/chalkboard';
-import { useTodayQuestions, useEnsureToday } from '@features/know-me';
 
-// Warm enough recent photos that travel + polaroid feel instant on flaky
-// internet. The service worker (sw.ts) caches each fetched image under a
-// token-agnostic key, so warmed photos also survive a cold boot offline.
-const PRELOAD = 24;
+// On open, warm only the handful you'd actually see first. The Polaroid route
+// prefetches the rest of the page the moment you arrive, so pulling two dozen
+// here just competes with whatever the couple actually tapped.
+// The service worker (sw.ts) caches each fetched image under a token-agnostic
+// key, so warmed photos survive a cold boot offline too.
+const PRELOAD = 5;
 
 // Every in-app currency. One USD fetch yields all cross rates.
 const RATE_CODES = ['USD', 'CLP', 'RUB', 'GEL', 'TRY', 'EUR'] as const;
@@ -135,21 +136,6 @@ function useImagePreload(
 export function CacheWarmer() {
   const { data: polaroids } = usePolaroids();
   useChalkNotes();
-  useTodayQuestions();
-
-  // Provision today's Know-Me questions on open (idempotent), so Home shows
-  // tonight's prompts without first having to visit the Know-Me tab.
-  const ensure = useEnsureToday();
-  const fired = useRef(false);
-  useEffect(() => {
-    if (fired.current) return;
-    fired.current = true;
-    // Push the provisioning RPC off the synchronous mount path so it doesn't
-    // contend with the first render.
-    const t = window.setTimeout(() => ensure.mutate(), 0);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Quietly keep FX fresh on open — a tiny staleness check, and only an actual
   // fetch+upsert when the rates are ≥8h old. Background, no perf hit.
