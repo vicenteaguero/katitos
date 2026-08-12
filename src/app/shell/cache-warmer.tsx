@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '@kernel/supabase';
 import { BUCKETS, proxyPath } from '@kernel/storage';
-import { useSummerTrip, useSummerPhotos } from '@features/summer';
 import { usePolaroids } from '@features/polaroid';
 import { useChalkNotes } from '@features/chalkboard';
 import { useTodayQuestions, useEnsureToday } from '@features/know-me';
@@ -12,8 +11,10 @@ import { useTodayQuestions, useEnsureToday } from '@features/know-me';
 const PRELOAD = 24;
 
 // Every in-app currency. One USD fetch yields all cross rates.
-const RATE_CODES = ['USD', 'CLP', 'RUB', 'GEL', 'TRY'] as const;
+const RATE_CODES = ['USD', 'CLP', 'RUB', 'GEL', 'TRY', 'EUR'] as const;
 const RATE_STALE_MS = 8 * 60 * 60 * 1000; // refresh only when ≥8h old
+/** Directed pairs we expect to exist: every ordered (from, to), from ≠ to. */
+const EXPECTED_PAIRS = RATE_CODES.length * (RATE_CODES.length - 1);
 
 /**
  * Refresh the WHOLE FX matrix from one free, keyless USD fetch — but only when
@@ -24,18 +25,29 @@ const RATE_STALE_MS = 8 * 60 * 60 * 1000; // refresh only when ≥8h old
  */
 async function refreshRatesIfStale(): Promise<void> {
   try {
-    // Check the OLDEST rate — if ANY pair is stale (e.g. seeded cross-rates that
-    // a prior USD-only refresh never touched), refresh the whole matrix.
-    const { data: oldest } = await supabase
-      .from('currency_rates')
-      .select('fetched_at')
-      .order('fetched_at', { ascending: true })
-      .limit(1)
-      .maybeSingle();
+    // TWO reasons to refresh, and both matter:
+    //  • age — the OLDEST pair, so seeded cross-rates a prior USD-only refresh
+    //    never touched still force a run (the d12db8f fix).
+    //  • COUNT — adding a currency to RATE_CODES creates pairs that have never
+    //    existed. Age alone would early-return while every existing row is
+    //    fresh, and the new currency would silently never appear. That is
+    //    exactly how EUR would have shipped dead.
+    const [{ data: oldest }, { count }] = await Promise.all([
+      supabase
+        .from('currency_rates')
+        .select('fetched_at')
+        .order('fetched_at', { ascending: true })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from('currency_rates')
+        .select('*', { count: 'exact', head: true }),
+    ]);
     const age = oldest?.fetched_at
       ? Date.now() - new Date(oldest.fetched_at).getTime()
       : Infinity;
-    if (age < RATE_STALE_MS) return;
+    const complete = (count ?? 0) >= EXPECTED_PAIRS;
+    if (age < RATE_STALE_MS && complete) return;
 
     const res = await fetch('https://open.er-api.com/v6/latest/USD');
     const json = (await res.json()) as {
@@ -68,7 +80,13 @@ async function refreshRatesIfStale(): Promise<void> {
   }
 }
 
-/** Sign each path's proxy and pull it into the browser image cache. */
+/**
+ * Sign a batch of proxies in ONE request and pull them into the image cache.
+ *
+ * This used to be a `for … await createSignedUrl` loop — 24 sequential
+ * round-trips on every cold open, competing with whatever the couple actually
+ * tapped. `createSignedUrls` signs the lot at once.
+ */
 function useImagePreload(
   bucket: (typeof BUCKETS)[keyof typeof BUCKETS],
   paths: string[]
@@ -79,21 +97,21 @@ function useImagePreload(
     let cancelled = false;
     const start = () =>
       void (async () => {
-        for (const path of key.split('|')) {
-          if (cancelled) return;
-          const { data } = await supabase.storage
-            .from(bucket)
-            .createSignedUrl(proxyPath(path), 3600);
-          if (cancelled) return;
-          if (data?.signedUrl) {
-            // Warm the HTTP cache; a 404 (legacy photo, no proxy) is harmless.
-            const img = new Image();
-            img.src = data.signedUrl;
-          }
+        const targets = key.split('|').map(proxyPath);
+        const { data } = await supabase.storage
+          .from(bucket)
+          .createSignedUrls(targets, 3600);
+        if (cancelled || !data) return;
+        for (const row of data) {
+          // A missing proxy (legacy photo) comes back with a null url, not a
+          // throw — skip it and let the full image load on demand.
+          if (!row?.signedUrl) continue;
+          const img = new Image();
+          img.src = row.signedUrl;
         }
       })();
-    // Defer warming until after first paint — these signed-url round-trips must
-    // not compete with the content the couple actually opened.
+    // Defer warming until after first paint — this must not compete with the
+    // content the couple actually opened.
     const t = window.setTimeout(start, 400);
     return () => {
       cancelled = true;
@@ -105,15 +123,17 @@ function useImagePreload(
 /**
  * Opens the app warm. The moment we're authenticated, quietly fetch the data
  * behind the screens the couple is most likely to open next — the wall,
- * tonight's questions, the trip, the polaroids — and pull recent photo proxies
- * into the image cache, so tapping in paints instantly instead of spinning.
- * Renders nothing; it just primes the React-Query cache (and, via the
- * persister, the next cold boot too).
+ * tonight's questions, the polaroids — and pull recent photo proxies into the
+ * image cache, so tapping in paints instantly instead of spinning. Renders
+ * nothing; it just primes the React-Query cache (and, via the persister, the
+ * next cold boot too).
+ *
+ * The Summer trip + its photos used to be warmed here. That trip is over and
+ * the feature is locked, so it was two wasted queries and a signed-URL sweep on
+ * every single boot.
  */
 export function CacheWarmer() {
-  const { data: trip } = useSummerTrip();
   const { data: polaroids } = usePolaroids();
-  const { data: tripPhotos } = useSummerPhotos(trip?.id);
   useChalkNotes();
   useTodayQuestions();
 
@@ -144,10 +164,6 @@ export function CacheWarmer() {
   useImagePreload(
     BUCKETS.polaroids,
     (polaroids ?? []).map((p) => p.image_path)
-  );
-  useImagePreload(
-    BUCKETS.georgiaAlbum,
-    (tripPhotos ?? []).map((p) => p.image_path)
   );
 
   return null;
