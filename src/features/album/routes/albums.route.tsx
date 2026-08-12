@@ -7,6 +7,7 @@ import {
   Button,
   Empty,
   Field,
+  FieldRow,
   Input,
   Sheet,
   Skeleton,
@@ -105,7 +106,7 @@ export function AlbumsRoute() {
               placeholder="Georgia &amp; Türkiye 2026"
             />
           </Field>
-          <div className="grid grid-cols-2 gap-3">
+          <FieldRow>
             <Field label="From">
               <Input
                 type="date"
@@ -124,7 +125,7 @@ export function AlbumsRoute() {
                 }
               />
             </Field>
-          </div>
+          </FieldRow>
           <Button full onClick={submit} disabled={create.isPending}>
             Start it
           </Button>
