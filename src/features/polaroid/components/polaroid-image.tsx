@@ -31,15 +31,19 @@ export function PolaroidImage({
 
   // Sign on our own ONLY when we have to: no batched URL was handed down, we
   // need the full-resolution original, or the batched one failed to load.
-  const wantFull = full || forceFull;
+  const [proxyGone, setProxyGone] = useState(false);
+  const wantFull = full || forceFull || proxyGone;
   const needsOwnUrl = !presigned || wantFull;
-  const { proxyUrl, fullUrl, isLoading } = useProxiedUrl(
+  const { proxyUrl, fullUrl, isLoading, proxyMissing } = useProxiedUrl(
     BUCKETS.polaroids,
     needsOwnUrl ? path : undefined,
     // A thumbnail never needs the original signed, and a hero never needs the
-    // proxy — asking for both was half the album's request count.
+    // proxy — asking for both was half the album's request count. But if the
+    // proxy turns out not to exist, we MUST go get the original: a photo from
+    // before proxies would otherwise never appear at all.
     { proxy: !wantFull, full: wantFull }
   );
+  if (proxyMissing && !proxyGone) setProxyGone(true);
   // Default to the lightweight proxy; on a full view (or when a legacy photo
   // has no proxy and the proxy URL errors) we show the original instead.
   const src = full || forceFull ? fullUrl : (presigned ?? proxyUrl ?? fullUrl);
