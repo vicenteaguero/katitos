@@ -1,11 +1,11 @@
 import { Link } from 'react-router';
-import { useCouple } from '@kernel/couple';
-import { daysTogether } from '@kernel/lib';
+import { daysTogetherNow } from '@kernel/lib';
 import { Card, CardTitle } from '@kernel/ui';
 
 export function DaysTogetherWidget() {
-  const { data: couple } = useCouple();
-  const days = daysTogether(couple?.relationship_start_date);
+  // Straight arithmetic — see `daysTogetherNow`. This used to wait on a
+  // query and show 0 until it arrived.
+  const days = daysTogetherNow();
   return (
     <Link to="/together">
       <Card className="lift-press flex h-full flex-col">
