@@ -22,6 +22,7 @@ export function PresenceRoute() {
 
   const poke = async () => {
     await notifyPartner({
+      kind: 'presence',
       title: 'Katitos 👉',
       body: `${self?.display_name ?? 'Someone'} poked you`,
     });
