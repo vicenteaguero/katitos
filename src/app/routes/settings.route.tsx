@@ -12,6 +12,7 @@ import {
   toast,
 } from '@kernel/ui';
 import { CURRENCIES } from '@kernel/lib';
+import { PhraseEditor } from '@features/love';
 
 // Imported, never re-listed: this file used to keep its own copy, so adding a
 // currency meant remembering two places and EUR would have been missing here.
@@ -131,7 +132,7 @@ function NotificationsRow() {
 
 export function SettingsRoute() {
   const { signOut, isLocal } = useAuth();
-  const { isLoading } = usePartner();
+  const { self, isLoading } = usePartner();
   if (isLoading) return <LoadingScreen />;
 
   return (
@@ -139,6 +140,8 @@ export function SettingsRoute() {
       <div className="curtain-stagger space-y-4">
         <MeCard />
         <NotificationsRow />
+        {/* Admin only — she receives the sweet nothings, he writes them. */}
+        {self?.is_admin && <PhraseEditor />}
         {!isLocal && (
           <Button full variant="ghost" onClick={() => void signOut()}>
             Sign out
