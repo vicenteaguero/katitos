@@ -14,6 +14,8 @@ import { CacheWarmer } from './cache-warmer';
 import { SplashScreen } from './splash-screen';
 import { LoveBurst } from './love-burst';
 import { NotificationPrompt } from './notification-prompt';
+import { ChangelogModal } from './changelog-modal';
+import { useAnnounceRelease } from './use-announce-release';
 import { featureRegistry } from '../features.registry';
 
 /** The name of the screen we're on — drives the quiet top-bar title. */
@@ -97,6 +99,8 @@ export function AppShell() {
   // Heal this device's push subscription on every launch (no prompt) so loves
   // keep landing as real notifications even after the browser rotates it.
   useEnsurePushSubscription();
+  // Tell her once when a release lands (admin device only).
+  useAnnounceRelease();
 
   const loading = status === 'loading';
 
@@ -121,6 +125,7 @@ export function AppShell() {
             <BottomNav />
             <LoveBurst />
             <NotificationPrompt />
+            <ChangelogModal />
           </div>
         </TopBarSlotProvider>
       )}
