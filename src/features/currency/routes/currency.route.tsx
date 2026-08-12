@@ -7,11 +7,11 @@ import {
   Pencil,
   Trash2,
 } from 'lucide-react';
-import { convert, formatMoney, indexRates } from '@kernel/lib';
+import { convert, formatAmount, indexRates } from '@kernel/lib';
 import { usePartner } from '@kernel/auth';
 import { Button, Empty, Input, Sheet, useTopBarAction } from '@kernel/ui';
 import { useRates } from '../api/currency.queries';
-import { CURRENCIES, isCode, meta, type Code } from '../currencies';
+import { ANCHORS, CURRENCIES, isCode, meta, type Code } from '../currencies';
 
 // Shrink the figure as it grows so it never wraps or clips — tool, not poster.
 const fit = (s: string) =>
@@ -77,7 +77,7 @@ function freshness(updatedAt: number | null) {
 }
 
 export function CurrencyRoute() {
-  const { data: rates } = useRates();
+  const { data: rates, refetch: refetchRates, isRefetching } = useRates();
   const index = useMemo(() => indexRates(rates ?? []), [rates]);
   const { self, isLoading: partnerLoading } = usePartner();
 
@@ -100,30 +100,45 @@ export function CurrencyRoute() {
   const n = Number(amount) || 0;
   const result = convert(n, from, to, index);
   const shown = amount === '' ? '0' : amount;
-  const resultText = result != null ? formatMoney(result, to) : '—';
+  // The figure ONLY. The code is rendered once, after it — `formatMoney` used
+  // to prefix the code and the markup appended it again ("CLP 123.4 CLP").
+  const resultText = result != null ? formatAmount(result, to) : '—';
 
+  // Whichever of our two everyday currencies isn't already on screen, shown
+  // small underneath — so the number we need to tell each other is always
+  // there without converting twice.
+  const crossRates = ANCHORS.filter((c) => c !== from && c !== to).map(
+    (code) => ({ code, value: convert(n, from, code, index) })
+  );
+
+  // The OLDEST pair, not the newest: one freshly-written row would otherwise
+  // make a table full of stale rates look current — and the rate you're
+  // reading right now might be one of the stale ones.
   const updatedAt = useMemo(() => {
-    let max = 0;
+    let min = Infinity;
     for (const r of rates ?? []) {
       const t = Date.parse(r.fetched_at);
-      if (t > max) max = t;
+      if (t < min) min = t;
     }
-    return max || null;
+    return Number.isFinite(min) ? min : null;
   }, [rates]);
   const fresh = freshness(updatedAt);
 
   // Freshness lives quietly in the top bar (right), not under the figures.
+  // Tap it to force a refresh — otherwise rates only heal on an 8h-stale open.
   useTopBarAction(
     fresh ? (
-      <span
+      <button
+        type="button"
+        onClick={() => void refetchRates()}
         className={`font-sans text-[0.7rem] tracking-[0.02em] ${
           fresh.stale ? 'text-gold/80' : 'text-muted/70'
         }`}
       >
-        {fresh.text}
-      </span>
+        {isRefetching ? 'refreshing…' : fresh.text}
+      </button>
     ) : null,
-    [fresh?.text, fresh?.stale]
+    [fresh?.text, fresh?.stale, isRefetching]
   );
 
   // Persist the kept (named) entries whenever they change.
@@ -319,6 +334,25 @@ export function CurrencyRoute() {
         >
           {resultText} <span className="text-2xl text-accent">{to}</span>
         </p>
+
+        {/* The other one's number, always in reach. One line if only CLP or RUB
+            is missing from the pair, two if neither is on screen. */}
+        {crossRates.length > 0 && (
+          <div className="flex items-center justify-center gap-2">
+            {crossRates.map((c) => (
+              <span
+                key={c.code}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-surface-2/60 px-3 py-1.5 font-sans text-xs tabular-nums text-muted"
+              >
+                <span aria-hidden="true">{meta(c.code).flag}</span>
+                <span className="truncate font-semibold text-fg/80">
+                  {c.value != null ? formatAmount(c.value, c.code) : '—'}
+                </span>
+                <span className="text-muted/70">{c.code}</span>
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Numpad — bare figures, generous targets. */}
@@ -476,13 +510,15 @@ function HistoryRow({
                 <Check className="h-3.5 w-3.5 shrink-0 text-success" />
               )}
               <span>
-                {meta(entry.from).flag} {formatMoney(entry.amount, entry.from)}
+                {meta(entry.from).flag} {formatAmount(entry.amount, entry.from)}{' '}
+                {entry.from}
               </span>
               <span className="text-muted/50">→</span>
               <span
                 className={entry.name ? 'text-muted' : 'font-semibold text-fg'}
               >
-                {meta(entry.to).flag} {formatMoney(entry.result, entry.to)}
+                {meta(entry.to).flag} {formatAmount(entry.result, entry.to)}{' '}
+                {entry.to}
               </span>
             </span>
           </button>
