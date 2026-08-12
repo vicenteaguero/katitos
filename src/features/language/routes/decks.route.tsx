@@ -8,6 +8,7 @@ import {
   Card,
   Empty,
   Field,
+  FieldRow,
   Input,
   Segmented,
   Sheet,
@@ -109,7 +110,7 @@ export function DecksRoute() {
         size="half"
       >
         <div className="space-y-3">
-          <div className="grid grid-cols-[4rem_1fr] gap-3">
+          <FieldRow className="[&>*:first-child]:max-w-[4.5rem]">
             <Field label="Emoji">
               <Input
                 value={form.emoji}
@@ -128,7 +129,7 @@ export function DecksRoute() {
                 placeholder="Sweet nothings"
               />
             </Field>
-          </div>
+          </FieldRow>
           <Field label="About">
             <Textarea
               value={form.description}
