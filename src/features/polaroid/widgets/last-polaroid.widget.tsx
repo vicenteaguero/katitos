@@ -7,13 +7,16 @@ import { BUCKETS, useSignedUrls } from '@kernel/storage';
 import { usePolaroids } from '../api/polaroid.queries';
 import { groupByDay } from '../lib/polaroid-days';
 import { PolaroidImage } from '../components/polaroid-image';
+import type { Polaroid } from '../types';
+import '../polaroid.css';
 
 /**
  * Home: the most recent day of us, on cream stock inside a wine frame.
  *
- * Shows the PAIR when the day has one — that's the whole feeling the feature
- * is for: two photos of the same date, leaning together. A day with only one
- * photo shows just that one, at full width, exactly as it always did.
+ * The pair lies overlapped exactly as it does on the Polaroid screen, with your
+ * love's photo on top — the same object in both places, so Home reads as a
+ * glimpse of that screen rather than a different arrangement of the same data.
+ * The whole card is a link, so nothing here is tappable on its own.
  */
 export function LastPolaroidWidget() {
   const { self, partner } = usePartner();
@@ -36,6 +39,7 @@ export function LastPolaroidWidget() {
   );
 
   const partnerName = partner?.role === 'a' ? 'Katito' : 'Katita';
+  const pair = !!day?.mine && !!day?.theirs;
 
   return (
     <Link
@@ -48,7 +52,7 @@ export function LastPolaroidWidget() {
     >
       <div className="flex items-baseline justify-between">
         <span className="font-display text-[1.37rem] font-semibold text-fg">
-          {plates.length > 1 ? 'Our last day' : 'Last polaroid'}
+          Our last Polaroid ❤️
         </span>
         {day && (
           <span className="font-sans text-[10px] uppercase tracking-[0.13em] text-muted">
@@ -57,60 +61,82 @@ export function LastPolaroidWidget() {
         )}
       </div>
 
-      {plates.length > 0 ? (
-        <div
-          className={
-            plates.length > 1
-              ? 'mt-3.5 flex items-start gap-2'
-              : 'mt-3.5 rounded-[10px] bg-[#f3ebdd] px-2.5 pb-3.5 pt-2.5'
-          }
-          style={
-            plates.length > 1
-              ? undefined
-              : { boxShadow: '0 14px 30px -16px rgba(0,0,0,.7)' }
-          }
-        >
-          {plates.length > 1 ? (
-            plates.slice(0, 2).map((p, i) => (
-              <span
-                key={p.id}
-                className="block min-w-0 flex-1 rounded-[10px] bg-[#f3ebdd] px-2 pb-3 pt-2"
-                style={{
-                  boxShadow: '0 14px 30px -16px rgba(0,0,0,.7)',
-                  transform: `rotate(${i === 0 ? -3 : 2.5}deg)`,
-                }}
-              >
-                <PolaroidImage
-                  path={p.image_path}
-                  src={urls?.get(p.image_path)}
-                  className="aspect-square w-full"
-                />
-                <span className="mt-2 block truncate text-center font-sans text-[9px] font-semibold uppercase tracking-[0.16em] text-[#8a5f34]">
-                  {p.user_id === self?.user_id ? 'You' : partnerName}
-                </span>
-              </span>
-            ))
-          ) : (
-            <>
-              <PolaroidImage
-                path={plates[0].image_path}
-                src={urls?.get(plates[0].image_path)}
-                className="aspect-square w-full"
-              />
-              {plates[0].caption && (
-                <p className="m-0 mt-3 text-center font-display text-[19px] italic text-[#6E1423]">
-                  {plates[0].caption}
-                </p>
-              )}
-            </>
-          )}
-        </div>
-      ) : (
+      {plates.length === 0 ? (
         <div className="mt-3 flex flex-col items-center gap-2 py-8 text-center text-muted">
           <Camera className="h-6 w-6 text-gold/70" strokeWidth={1.5} />
           <span className="font-sans text-xs">Take your first photo</span>
         </div>
+      ) : pair ? (
+        // Overlapped, theirs in front — the same geometry as the Polaroid page.
+        <div className="mt-3.5 flex justify-center">
+          <MiniPlate
+            photo={day!.mine!}
+            url={urls?.get(day!.mine!.image_path)}
+            label="You"
+            side="mine"
+          />
+          <MiniPlate
+            photo={day!.theirs!}
+            url={urls?.get(day!.theirs!.image_path)}
+            label={partnerName}
+            side="theirs"
+          />
+        </div>
+      ) : (
+        <div
+          className="mt-3.5 rounded-[10px] bg-[#f3ebdd] px-2.5 pb-3.5 pt-2.5"
+          style={{ boxShadow: '0 14px 30px -16px rgba(0,0,0,.7)' }}
+        >
+          <PolaroidImage
+            path={plates[0].image_path}
+            src={urls?.get(plates[0].image_path)}
+            className="aspect-square w-full"
+          />
+          {plates[0].caption && (
+            <p className="m-0 mt-3 text-center font-display text-[19px] italic text-[#6E1423]">
+              {plates[0].caption}
+            </p>
+          )}
+        </div>
       )}
     </Link>
+  );
+}
+
+/** One half of the overlapped pair, sized for the Home card. */
+function MiniPlate({
+  photo,
+  url,
+  label,
+  side,
+}: {
+  photo: Polaroid;
+  url?: string;
+  label: string;
+  side: 'mine' | 'theirs';
+}) {
+  const mine = side === 'mine';
+  return (
+    <span
+      className={`pair-plate block w-[62%] shrink-0 rounded-[10px] bg-[#f3ebdd] px-2 pb-3 pt-2 ${
+        mine ? 'pair-plate--back' : '-ml-[24%] pair-plate--front'
+      }`}
+      style={
+        {
+          '--rest-rotate': mine ? '-5deg' : '4deg',
+          '--push': mine ? '-10px' : '10px',
+          boxShadow: '0 14px 30px -16px rgba(0,0,0,.7)',
+        } as React.CSSProperties
+      }
+    >
+      <PolaroidImage
+        path={photo.image_path}
+        src={url}
+        className="aspect-square w-full"
+      />
+      <span className="mt-2 block truncate text-center font-sans text-[9px] font-semibold uppercase tracking-[0.16em] text-[#8a5f34]">
+        {label}
+      </span>
+    </span>
   );
 }
