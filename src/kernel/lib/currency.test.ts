@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { convert, indexRates } from './currency';
+import { convert, formatAmount, indexRates } from './currency';
 
 describe('currency.convert', () => {
   const rates = indexRates([
@@ -26,5 +26,38 @@ describe('currency.convert', () => {
 
   it('returns null when impossible', () => {
     expect(convert(1, 'EUR', 'JPY', rates)).toBeNull();
+  });
+});
+
+describe('currency.formatAmount', () => {
+  it('never includes the currency code — the caller places it', () => {
+    // This is the whole bug: Intl's `style: 'currency'` PREFIXED the code and
+    // the UI appended it again, giving "CLP 123.4 CLP".
+    expect(formatAmount(1234.5, 'CLP')).not.toMatch(/CLP/);
+    expect(formatAmount(1234.5, 'USD')).not.toMatch(/USD|\$/);
+  });
+
+  it('counts CLP and RUB whole, the way they are actually spoken', () => {
+    expect(formatAmount(1234.5, 'CLP')).not.toMatch(/[.,]\d\s*$/);
+    expect(formatAmount(1234.5, 'RUB')).not.toMatch(/[.,]\d\s*$/);
+  });
+
+  it('keeps cents for the currencies that have them', () => {
+    expect(formatAmount(12.5, 'USD')).toMatch(/12[.,]50/);
+    expect(formatAmount(12.5, 'EUR')).toMatch(/12[.,]50/);
+  });
+
+  it('groups thousands so a big number stays readable', () => {
+    expect(formatAmount(1234567, 'CLP')).toMatch(/\D/);
+    expect(formatAmount(1234567, 'CLP').replace(/\D/g, '')).toBe('1234567');
+  });
+
+  it('falls back rather than throwing on an unknown code', () => {
+    expect(() => formatAmount(10, 'ZZZ')).not.toThrow();
+  });
+
+  it('rounds instead of truncating', () => {
+    expect(formatAmount(0.6, 'CLP')).toBe('1');
+    expect(formatAmount(999.5, 'RUB').replace(/\D/g, '')).toBe('1000');
   });
 });
