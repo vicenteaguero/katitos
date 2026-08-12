@@ -15,7 +15,7 @@ POOLER_HOST ?= aws-1-eu-central-1.pooler.supabase.com
 POOLER_PORT ?= 5432
 
 .DEFAULT_GOAL := help
-.PHONY: help link db-push db-diff db-pull db-types db-gate db-phase3 functions-deploy deploy \
+.PHONY: help link db-push db-diff db-pull db-types db-gate functions-deploy deploy \
         vercel-link vercel-status vercel-env vercel-deploy vercel-prod
 
 # Source creds (set -a exports them so python sees them) + build the session-pooler
@@ -62,24 +62,15 @@ db-types: ## Regenerate database.types.ts from the CLOUD schema
 # each is therefore the real proof that both phones are running the new code.
 SINCE ?= 2026-08-12 01:46+00
 
-db-gate: ## Is it safe to run the held-back polaroid migration yet?
+# Kept for the next time a migration needs the same treatment: `make db-gate`
+# answers "is everyone actually running the new code yet?".
+db-gate: ## Who is running the newest bundle (used before a breaking migration)
 	@$(dburl) \
 	psql "$$DBURL" -c "select m.display_name, count(o.*) as opens_since, \
 	  case when count(o.*) >= 2 then 'ready' else 'needs another open' end as status \
 	  from public.couple_members m \
 	  left join public.app_opens o on o.user_id = m.user_id and o.opened_at > '$(SINCE)' \
 	  group by m.display_name, m.role order by m.role;"
-
-db-phase3: ## Apply the polaroid migration, but ONLY if the gate passes
-	@$(dburl) \
-	READY=$$(psql "$$DBURL" -tA -c "select count(*) from (select o.user_id from public.app_opens o where o.opened_at > '$(SINCE)' group by o.user_id having count(*) >= 2) t"); \
-	if [ "$$READY" != "2" ]; then \
-	  echo "NOT YET: only $$READY of 2 phones have opened the app twice since $(SINCE)."; \
-	  echo "Run 'make db-gate' to see who. Running now would break their Polaroid screen."; \
-	  exit 1; \
-	fi; \
-	mv supabase/pending/20260813000001_double_polaroid_phase3.sql supabase/migrations/ 2>/dev/null || true; \
-	printf 'y\n' | supabase db push --db-url "$$DBURL"
 
 functions-deploy: ## Deploy edge functions (--use-api = server-side bundle, no Docker)
 	@supabase functions deploy push-notify --use-api
