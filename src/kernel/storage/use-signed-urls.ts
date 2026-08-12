@@ -20,15 +20,18 @@ export function useSignedUrls(
   {
     proxy = true,
     expiresIn = 3600,
-  }: { proxy?: boolean; expiresIn?: number } = {}
+    enabled = true,
+  }: { proxy?: boolean; expiresIn?: number; enabled?: boolean } = {}
 ) {
   // Stable, de-duplicated key: the same photo listed twice is signed once, and
-  // a re-render with an equal list doesn't refetch.
+  // a re-render with an equal list doesn't refetch. NOTE the sort — the
+  // returned Map is in no caller-meaningful order, so anything that cares about
+  // the order photos APPEAR in must order its own prefetch list.
   const wanted = [...new Set(paths.filter((p): p is string => !!p))].sort();
 
   return useQuery({
     queryKey: ['signed-urls', bucket, proxy, wanted],
-    enabled: wanted.length > 0,
+    enabled: enabled && wanted.length > 0,
     // Refresh a minute before the signatures actually lapse.
     staleTime: Math.max(0, (expiresIn - 60) * 1000),
     queryFn: async (): Promise<Array<[string, string]>> => {
