@@ -15,8 +15,6 @@ export const BUCKETS = {
 export type BucketName = (typeof BUCKETS)[keyof typeof BUCKETS];
 
 export const storagePaths = {
-  /** One polaroid per day → overwrite by reusing the same path. */
-  polaroid: (day: string) => `${day}.jpg`,
   /** One bouquet per monthsversary. */
   flower: (occasionDate: string) => `${occasionDate}.jpg`,
   quizImage: (deckId: string, cardId: string) => `${deckId}/${cardId}.jpg`,
