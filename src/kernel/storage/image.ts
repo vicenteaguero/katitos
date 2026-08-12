@@ -102,7 +102,12 @@ export async function downscaleImage(
     const webp = await encode('image/webp', quality);
     if (webp && webp.type === 'image/webp') return webp;
 
-    const jpeg = await encode('image/jpeg', 0.7);
+    // Safari cannot encode WebP from a canvas, so on her iPhone EVERY proxy
+    // takes this path — and at 0.7 those came out around 76 KB against the
+    // 20 KB the WebP ones weigh, which is what made the flowers crawl. JPEG
+    // needs a lower number than WebP to reach the same size; at thumbnail
+    // scale the difference is invisible.
+    const jpeg = await encode('image/jpeg', 0.55);
     if (jpeg && jpeg.type === 'image/jpeg') return jpeg;
 
     // Neither worked. A PNG proxy is worse than no proxy — callers fall back to
