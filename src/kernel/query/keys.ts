@@ -128,5 +128,13 @@ export const qk = {
     book: (scope: string, key: string) =>
       ['album', 'book', scope, key] as const,
     pages: (bookId: string) => ['album', 'book', bookId, 'pages'] as const,
+    /**
+     * The shelf, and a book resolved by id.
+     *
+     * Deliberately NOT ['album','book',id]: that is a PREFIX of `pages(id)`,
+     * so invalidating one would silently wipe the other.
+     */
+    books: () => ['album', 'books'] as const,
+    byId: (id: string) => ['album', 'books', 'byId', id] as const,
   },
 } as const;
