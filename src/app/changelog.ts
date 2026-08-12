@@ -23,6 +23,19 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    title: 'Smoother',
+    date: '2026-08-12',
+    lines: [
+      'Photos load properly now. The little previews were secretly enormous — they are twenty times smaller, and the whole album is ready before you scroll to it.',
+      'Opening a photo shows it straight away instead of making you wait for it.',
+      'The camera should stop asking for permission every single time.',
+      'Flowers now go from June 2025 all the way through this year, and each December the next year opens on its own. Each one sits on a proper little polaroid.',
+      'Adding a wish is simpler: paste the link, add a picture, done.',
+      'The plus button moved up to the top bar, out of the way of what you are reading.',
+      'The nightly questions are resting for a while — that one still needs some love before it deserves you.',
+    ],
+  },
+  {
     title: 'For the distance',
     date: '2026-08-11',
     lines: [
