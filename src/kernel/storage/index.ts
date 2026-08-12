@@ -6,3 +6,4 @@ export { downscaleImage, proxyPath, decodeImage } from './image';
 export type { DecodedImage } from './image';
 export { useSignedUrl, useProxiedUrl } from './use-signed-url';
 export { useSignedUrls } from './use-signed-urls';
+export { usePrefetchImages } from './use-prefetch-images';
