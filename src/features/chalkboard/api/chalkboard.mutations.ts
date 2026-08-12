@@ -18,6 +18,7 @@ export function useAddNote() {
       const { error } = await supabase.from('chalkboard_notes').insert(note);
       if (error) throw error;
       void notifyPartner({
+        kind: 'wall',
         title: 'Katitos ✍️',
         body: 'New note on the wall',
         url: '/wall',
