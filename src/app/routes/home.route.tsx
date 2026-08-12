@@ -5,7 +5,8 @@ import { useCouple } from '@kernel/couple';
 import { useNow } from '@kernel/hooks';
 import {
   cn,
-  daysTogether,
+  daysTogetherNow,
+  TOGETHER_START_ISO,
   durationBreakdown,
   formatDistance,
   haversineKm,
@@ -78,9 +79,7 @@ function useMonthsversary(): { count: number } | null {
   if (!isDay) return null;
 
   return {
-    count: couple?.relationship_start_date
-      ? monthsversaryCount(couple.relationship_start_date, now)
-      : 0,
+    count: monthsversaryCount(TOGETHER_START_ISO, now),
   };
 }
 
@@ -269,12 +268,11 @@ function Clock({
 /** THE KEPT HERO — together for N days, crowned by the dome, clocks + leagues. */
 function TogetherHero() {
   const { self, partner } = usePartner();
-  const { data: couple } = useCouple();
   const now = useNow(30_000);
 
   if (!self || !partner) return null;
-  const days = daysTogether(couple?.relationship_start_date);
-  const breakdown = durationBreakdown(couple?.relationship_start_date);
+  const days = daysTogetherNow();
+  const breakdown = durationBreakdown(TOGETHER_START_ISO);
 
   const km =
     self.lat != null &&
