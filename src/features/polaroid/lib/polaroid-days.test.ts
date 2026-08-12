@@ -3,6 +3,7 @@ import { DateTime } from '@kernel/lib';
 import type { Polaroid } from '../types';
 import {
   dayKind,
+  frontOf,
   groupByDay,
   isDayOpen,
   localDay,
@@ -168,5 +169,49 @@ describe('groupByDay', () => {
       A
     );
     expect(days[0].extras.map((r) => r.id)).toEqual(['3']);
+  });
+});
+
+describe('frontOf', () => {
+  const both = groupByDay(
+    [
+      row({ id: '1', day: '2026-08-11', user_id: A }),
+      row({ id: '2', day: '2026-08-11', user_id: B }),
+    ],
+    A
+  )[0];
+
+  it('puts your love on top by default — that is what you opened it for', () => {
+    expect(frontOf(both, 'theirs')).toBe('theirs');
+  });
+
+  it('brings yours forward when you ask for it', () => {
+    expect(frontOf(both, 'mine')).toBe('mine');
+  });
+
+  it('never fronts a side with no photo', () => {
+    const onlyMine = groupByDay(
+      [row({ id: '1', day: '2026-08-11', user_id: A })],
+      A
+    )[0];
+    expect(frontOf(onlyMine, 'theirs')).toBe('mine');
+
+    const onlyTheirs = groupByDay(
+      [row({ id: '2', day: '2026-08-11', user_id: B })],
+      A
+    )[0];
+    expect(frontOf(onlyTheirs, 'mine')).toBe('theirs');
+  });
+
+  it('leaves the preference alone when neither side has a photo', () => {
+    const empty = {
+      day: '2026-08-11',
+      shared: null,
+      mine: null,
+      theirs: null,
+      extras: [],
+      isLegacy: false,
+    };
+    expect(frontOf(empty, 'theirs')).toBe('theirs');
   });
 });
