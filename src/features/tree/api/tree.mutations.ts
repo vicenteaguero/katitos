@@ -49,6 +49,7 @@ export function useWaterTree(partnerName?: string, selfName?: string) {
     onSuccess: (row) => {
       qc.setQueryData(qk.tree.state(), row);
       void notifyPartner({
+        kind: 'tree',
         title: '🌳',
         body: `${selfName ?? 'Your love'} watered our tree — your turn 💧`,
         url: '/tree',
