@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { Play, Plus, Trash2 } from 'lucide-react';
+import { ClipboardPaste, Pencil, Play, Plus, Trash2 } from 'lucide-react';
 import { BUCKETS } from '@kernel/storage';
 import { useTableSync } from '@kernel/realtime';
 import {
@@ -14,10 +14,16 @@ import {
   Input,
   LoadingScreen,
   Sheet,
+  Textarea,
   toast,
 } from '@kernel/ui';
 import { useDeck, useDeckCards, deckKeys } from '../api/decks.queries';
-import { useAddCard, useDeleteCard } from '../api/decks.mutations';
+import {
+  useAddCard,
+  useBulkAddCards,
+  useDeleteCard,
+  useUpdateCard,
+} from '../api/decks.mutations';
 import { LANG_LABELS, type Lang } from '../types';
 
 export function DeckRoute() {
@@ -26,9 +32,20 @@ export function DeckRoute() {
   useTableSync('phrases', deckKeys.cards(deckId ?? 'none'));
   const { data: cards } = useDeckCards(deckId);
   const addCard = useAddCard();
+  const bulkAdd = useBulkAddCards();
+  const updateCard = useUpdateCard();
   const delCard = useDeleteCard();
 
   const [open, setOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkText, setBulkText] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({
+    text: '',
+    translation: '',
+    transliteration: '',
+    notes: '',
+  });
   const [form, setForm] = useState({
     text: '',
     translation: '',
@@ -87,6 +104,9 @@ export function DeckRoute() {
         <Button full variant="secondary" onClick={() => setOpen(true)}>
           <Plus size={16} /> Add card
         </Button>
+        <Button variant="secondary" onClick={() => setBulkOpen(true)}>
+          <ClipboardPaste size={16} />
+        </Button>
         {list.length > 0 && (
           <Link to={`/language/play/${deck.id}`} className="flex-1">
             <Button full>
@@ -120,12 +140,30 @@ export function DeckRoute() {
                     </p>
                   )}
                 </div>
-                <IconButton
-                  label="Delete"
-                  onClick={() => delCard.mutate({ id: p.id, deckId: deck.id })}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </IconButton>
+                <div className="flex shrink-0 items-center">
+                  <IconButton
+                    label="Edit"
+                    onClick={() => {
+                      setEditingId(p.id);
+                      setEditForm({
+                        text: p.text,
+                        translation: p.translation ?? '',
+                        transliteration: p.transliteration ?? '',
+                        notes: p.notes ?? '',
+                      });
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </IconButton>
+                  <IconButton
+                    label="Delete"
+                    onClick={() =>
+                      delCard.mutate({ id: p.id, deckId: deck.id })
+                    }
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </IconButton>
+                </div>
               </div>
               {p.audio_path && (
                 <AudioFromPath
@@ -139,6 +177,124 @@ export function DeckRoute() {
         </div>
       )}
 
+      {/* Paste a whole lesson at once — typing thirty cards one at a time
+          through a sheet is not something anyone does twice. */}
+      <Sheet
+        open={bulkOpen}
+        onClose={() => setBulkOpen(false)}
+        title="Paste a lesson"
+        size="half"
+      >
+        <div className="space-y-3">
+          <Field
+            label="One card per line"
+            hint="russian | meaning | sounds-like — the last two optional."
+          >
+            <Textarea
+              autoFocus
+              rows={8}
+              value={bulkText}
+              onChange={(e) => setBulkText(e.target.value)}
+              placeholder={'привет | hello | privyet\nпока | bye | paka'}
+            />
+          </Field>
+          <Button
+            full
+            disabled={!bulkText.trim() || bulkAdd.isPending}
+            onClick={() =>
+              bulkAdd.mutate(
+                { deckId: deck.id, language: lang, raw: bulkText },
+                {
+                  onSuccess: (n) => {
+                    toast.success(`${n} cards added 📚`);
+                    setBulkText('');
+                    setBulkOpen(false);
+                  },
+                }
+              )
+            }
+          >
+            Add them all
+          </Button>
+        </div>
+      </Sheet>
+
+      {/* Fixing a typo used to mean deleting the card — and every review of
+          it. Now it's just an edit. */}
+      <Sheet
+        open={!!editingId}
+        onClose={() => setEditingId(null)}
+        title="Edit this card"
+      >
+        <div className="space-y-3">
+          <Field label={`In ${LANG_LABELS[lang]}`}>
+            <Input
+              value={editForm.text}
+              onChange={(e) =>
+                setEditForm((f) => ({ ...f, text: e.target.value }))
+              }
+              className="font-display text-lg"
+            />
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Meaning">
+              <Input
+                value={editForm.translation}
+                onChange={(e) =>
+                  setEditForm((f) => ({ ...f, translation: e.target.value }))
+                }
+              />
+            </Field>
+            <Field label="Sounds like">
+              <Input
+                value={editForm.transliteration}
+                onChange={(e) =>
+                  setEditForm((f) => ({
+                    ...f,
+                    transliteration: e.target.value,
+                  }))
+                }
+              />
+            </Field>
+          </div>
+          <Field label="Teaching note">
+            <Textarea
+              rows={2}
+              value={editForm.notes}
+              onChange={(e) =>
+                setEditForm((f) => ({ ...f, notes: e.target.value }))
+              }
+              placeholder="grammar, stress, a warning…"
+            />
+          </Field>
+          <Button
+            full
+            disabled={!editForm.text.trim() || updateCard.isPending}
+            onClick={() =>
+              editingId &&
+              updateCard.mutate(
+                {
+                  id: editingId,
+                  deckId: deck.id,
+                  text: editForm.text.trim(),
+                  translation: editForm.translation.trim() || null,
+                  transliteration: editForm.transliteration.trim() || null,
+                  notes: editForm.notes.trim() || null,
+                },
+                {
+                  onSuccess: () => {
+                    toast.success('Saved');
+                    setEditingId(null);
+                  },
+                }
+              )
+            }
+          >
+            Save
+          </Button>
+        </div>
+      </Sheet>
+
       <Sheet open={open} onClose={() => setOpen(false)} title="Add a card">
         <div className="space-y-3">
           <Field label={`In ${LANG_LABELS[lang]}`}>
@@ -146,14 +302,7 @@ export function DeckRoute() {
               value={form.text}
               onChange={(e) => setForm((f) => ({ ...f, text: e.target.value }))}
               className="font-display text-lg"
-              placeholder={
-                {
-                  ru: 'Я тебя люблю',
-                  es: 'Te amo',
-                  tr: 'Merhaba',
-                  ka: 'გამარჯობა',
-                }[lang]
-              }
+              placeholder={{ ru: 'Я тебя люблю', es: 'Te amo' }[lang]}
             />
           </Field>
           <div className="grid grid-cols-2 gap-3">
@@ -176,6 +325,18 @@ export function DeckRoute() {
               />
             </Field>
           </div>
+          <Field
+            label="A teaching note (optional)"
+            hint="Grammar, a case, where the stress falls — shown with the answer."
+          >
+            <Input
+              value={form.example}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, example: e.target.value }))
+              }
+              placeholder="accusative after «люблю»"
+            />
+          </Field>
           <Field label="Say it out loud (optional)">
             <AudioRecorder onRecorded={setAudio} />
           </Field>
