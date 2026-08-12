@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ComponentType } from 'react';
-import { NavLink, useLocation } from 'react-router';
+import { NavLink } from 'react-router';
 import type { LucideIcon } from 'lucide-react';
 import {
   Home,
@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { Sheet } from '@kernel/ui';
 import { cn } from '@kernel/lib';
-import { useTodayPolaroid } from '@features/polaroid';
+import { useMyTodayPolaroid } from '@features/polaroid';
 import { featureRegistry } from '../features.registry';
 
 /** Drawer section order; anything untagged falls into 'More'. */
@@ -111,11 +111,13 @@ export function BottomNav() {
   const [moreOpen, setMoreOpen] = useState(false);
   const entries = featureRegistry.navEntries;
   // No portrait taken today → invite it with a magical, twinkling beacon.
-  const { data: todayPhoto, isLoading } = useTodayPolaroid();
-  const { pathname } = useLocation();
-  // The beacon only calls you to action from *within* the Polaroid page now.
-  const needsPhoto =
-    !isLoading && !todayPhoto && pathname.startsWith('/polaroid');
+  // It follows YOUR day, not the couple's: apart, our "todays" are 11 hours
+  // out of step, and the nudge belongs to whoever still owes a photo.
+  const { mine, isLoading } = useMyTodayPolaroid();
+  // Un-gated on purpose. Hiding this inside /polaroid meant the one screen
+  // showing it was the screen you'd already opened — the reminder never
+  // reminded anyone. Now it twinkles wherever you are, until you've posted.
+  const needsPhoto = !isLoading && !mine;
 
   return (
     <>
