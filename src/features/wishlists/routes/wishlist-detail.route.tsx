@@ -1,137 +1,322 @@
-import { useState } from 'react';
-import { Link, useParams } from 'react-router';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { ChevronLeft, Plus } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { useParams } from 'react-router';
+import { Check, ExternalLink, EyeOff, Plus } from 'lucide-react';
 import { useUserId } from '@kernel/auth';
-import { qk } from '@kernel/query';
-import { useTableSync } from '@kernel/realtime';
+import { BUCKETS, useSignedUrls } from '@kernel/storage';
+import { cn, formatAmount } from '@kernel/lib';
 import {
-  Button,
   Empty,
   Fab,
-  Field,
-  Input,
-  LoadingScreen,
-  Segmented,
   Sheet,
-  Textarea,
+  Skeleton,
   toast,
+  useTopBarAction,
 } from '@kernel/ui';
-import type { SegmentOption } from '@kernel/ui';
-import { useWishlistItems } from '../api/wishlists.queries';
-import { useAddItem } from '../api/wishlists.mutations';
-import { SwipeDeck } from '../components/swipe-deck';
-import { Matches } from '../components/matches';
+import { useWishlistItems, useWishlists } from '../api/wishlists.queries';
+import {
+  useAddItem,
+  useDeleteItem,
+  useUpdateItem,
+} from '../api/wishlists.mutations';
+import { ItemSheet, type ItemDraft } from '../components/item-sheet';
+import type { WishlistItem } from '../types';
 
-type Tab = 'swipe' | 'matches';
-
-const tabs: SegmentOption<Tab>[] = [
-  { value: 'swipe', label: 'Swipe' },
-  { value: 'matches', label: 'Matches' },
-];
-
-const schema = z.object({
-  title: z.string().min(1, 'Give it a name'),
-  description: z.string().optional(),
-  link: z.string().optional(),
-});
-type FormValues = z.infer<typeof schema>;
-
+/**
+ * One gift list.
+ *
+ * Reading it is the point — most of the time you're browsing, not editing — so
+ * the cards carry the picture, the price and the link, and everything writes
+ * optimistically so nothing ever waits on a spinner.
+ */
 export function WishlistDetailRoute() {
   const { listId } = useParams<{ listId: string }>();
   const userId = useUserId();
-  const [tab, setTab] = useState<Tab>('swipe');
-  const [adding, setAdding] = useState(false);
+  const { data: lists } = useWishlists();
+  const { data: items, isLoading } = useWishlistItems(listId);
 
-  useTableSync('wishlist_items', qk.wishlists.items(listId ?? ''), {
-    enabled: !!listId,
-  });
-  useTableSync('wishlist_votes', qk.wishlists.items(listId ?? ''), {
-    enabled: !!listId,
-  });
+  const add = useAddItem(listId ?? '');
+  const update = useUpdateItem(listId ?? '');
+  const del = useDeleteItem(listId ?? '');
 
-  const { data, isLoading } = useWishlistItems(listId ?? '');
-  const addItem = useAddItem();
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [editing, setEditing] = useState<WishlistItem | null>(null);
+  const [detail, setDetail] = useState<WishlistItem | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors, isSubmitting },
-  } = useForm<FormValues>({
-    resolver: zodResolver(schema),
-    defaultValues: { title: '', description: '', link: '' },
-  });
+  const list = lists?.find((l) => l.id === listId);
+  const rows = useMemo(() => items ?? [], [items]);
+
+  const { data: urls } = useSignedUrls(
+    BUCKETS.wishlist,
+    rows.map((i) => i.image_path)
+  );
+
+  const hiddenCount = useMemo(
+    () => rows.filter((i) => !i.visible).length,
+    [rows]
+  );
+
+  useTopBarAction(
+    hiddenCount > 0 ? (
+      <span className="flex items-center gap-1 font-sans text-[0.7rem] text-muted">
+        <EyeOff className="h-3.5 w-3.5" /> {hiddenCount} hidden
+      </span>
+    ) : null,
+    [hiddenCount]
+  );
 
   if (!listId) return <Empty icon="❓" title="No list selected" />;
 
-  const submit = handleSubmit(async (v) => {
-    try {
-      await addItem.mutateAsync({
-        listId,
-        title: v.title,
-        description: v.description || null,
-        link: v.link || null,
-      });
-      toast.success('Item added');
-      reset();
-      setAdding(false);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Failed to add');
+  const submit = (draft: ItemDraft) => {
+    const payload = {
+      title: draft.title,
+      description: draft.description,
+      link: draft.link,
+      price: draft.price ? Number(draft.price) : null,
+      currency: draft.price ? draft.currency : null,
+      visible: draft.visible,
+      image: draft.image,
+    };
+    if (editing) {
+      update.mutate(
+        {
+          id: editing.id,
+          title: payload.title.trim(),
+          description: payload.description.trim() || null,
+          link: payload.link.trim() || null,
+          price: payload.price,
+          currency: payload.currency,
+          visible: payload.visible,
+        },
+        { onError: (e) => toast.error(e.message) }
+      );
+    } else {
+      add.mutate(payload, { onError: (e) => toast.error(e.message) });
     }
-  });
-
-  const items = data ?? [];
+    setSheetOpen(false);
+    setEditing(null);
+  };
 
   return (
-    <div className="curtain-reveal space-y-6">
-      <Link
-        to="/wishlists"
-        className="inline-flex items-center gap-1 font-sans text-sm text-muted"
-      >
-        <ChevronLeft size={16} /> All wishlists
-      </Link>
-
-      <p className="eyebrow">
-        {tab === 'swipe' ? 'The Audition' : 'The Programme'}
-      </p>
-
-      <Segmented options={tabs} value={tab} onChange={setTab} />
-
-      {isLoading ? (
-        <LoadingScreen />
-      ) : tab === 'swipe' ? (
-        <SwipeDeck items={items} listId={listId} userId={userId} />
-      ) : (
-        <Matches items={items} />
+    <div className="curtain-reveal space-y-3">
+      {list?.description && (
+        <p className="px-1 font-sans text-sm text-muted">{list.description}</p>
       )}
 
-      <Fab label="Add item" onClick={() => setAdding(true)}>
+      {isLoading ? (
+        <div className="space-y-3">
+          <Skeleton className="h-24 w-full" rounded="lg" />
+          <Skeleton className="h-24 w-full" rounded="lg" />
+          <Skeleton className="h-24 w-full" rounded="lg" />
+        </div>
+      ) : rows.length === 0 ? (
+        <Empty
+          icon="🎁"
+          title="Nothing on this list yet"
+          hint="Tap + to add the first one. New wishes are hidden by default."
+        />
+      ) : (
+        <div className="curtain-stagger space-y-2.5">
+          {rows.map((item, i) => (
+            <ItemCard
+              key={item.id}
+              item={item}
+              index={i}
+              mine={item.added_by === userId}
+              url={item.image_path ? urls?.get(item.image_path) : undefined}
+              onOpen={() => setDetail(item)}
+              onToggleGot={() =>
+                update.mutate(
+                  { id: item.id, got: !item.got },
+                  { onError: (e) => toast.error(e.message) }
+                )
+              }
+            />
+          ))}
+        </div>
+      )}
+
+      <Fab
+        label="Add a wish"
+        onClick={() => {
+          setEditing(null);
+          setSheetOpen(true);
+        }}
+      >
         <Plus />
       </Fab>
 
-      <Sheet open={adding} onClose={() => setAdding(false)} title="Add item">
-        <form onSubmit={submit} className="space-y-3">
-          <Field label="Title" error={errors.title?.message}>
-            <Input placeholder="The Matrix" {...register('title')} />
-          </Field>
-          <Field label="Description">
-            <Textarea placeholder="optional" {...register('description')} />
-          </Field>
-          <Field label="Link">
-            <Input
-              type="url"
-              placeholder="https://… (optional)"
-              {...register('link')}
-            />
-          </Field>
-          <Button full type="submit" disabled={isSubmitting}>
-            Add item
-          </Button>
-        </form>
+      <ItemSheet
+        open={sheetOpen}
+        editing={editing}
+        onClose={() => {
+          setSheetOpen(false);
+          setEditing(null);
+        }}
+        onSubmit={submit}
+        submitting={add.isPending || update.isPending}
+        onDelete={
+          editing
+            ? () => {
+                del.mutate({ id: editing.id, imagePath: editing.image_path });
+                setSheetOpen(false);
+                setEditing(null);
+              }
+            : undefined
+        }
+      />
+
+      {/* The close look: the whole picture, the whole description. */}
+      <Sheet
+        open={!!detail}
+        onClose={() => setDetail(null)}
+        title={detail?.title}
+        headerAction={
+          detail?.added_by === userId ? (
+            <button
+              type="button"
+              onClick={() => {
+                setEditing(detail);
+                setDetail(null);
+                setSheetOpen(true);
+              }}
+              className="lift-press font-sans text-xs font-semibold uppercase tracking-[0.14em] text-gold"
+            >
+              Edit
+            </button>
+          ) : undefined
+        }
+      >
+        {detail && (
+          <div className="space-y-4">
+            {detail.image_path && urls?.get(detail.image_path) && (
+              <img
+                src={urls.get(detail.image_path)}
+                alt=""
+                className="w-full rounded-lg object-cover"
+              />
+            )}
+            {!detail.visible && (
+              <p className="flex items-center gap-1.5 font-sans text-xs text-gold">
+                <EyeOff className="h-3.5 w-3.5" /> Only you can see this one
+              </p>
+            )}
+            {detail.price != null && (
+              <p className="font-display text-2xl text-fg">
+                {formatAmount(detail.price, detail.currency ?? 'CLP')}{' '}
+                <span className="text-base text-muted">{detail.currency}</span>
+              </p>
+            )}
+            {detail.description && (
+              <p className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-muted">
+                {detail.description}
+              </p>
+            )}
+            {detail.link && (
+              <a
+                href={detail.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 font-sans text-sm font-semibold text-copper"
+              >
+                <ExternalLink className="h-4 w-4" /> Open the link
+              </a>
+            )}
+          </div>
+        )}
       </Sheet>
+    </div>
+  );
+}
+
+/** One wish, at a glance. */
+function ItemCard({
+  item,
+  index,
+  mine,
+  url,
+  onOpen,
+  onToggleGot,
+}: {
+  item: WishlistItem;
+  index: number;
+  mine: boolean;
+  url?: string;
+  onOpen: () => void;
+  onToggleGot: () => void;
+}) {
+  return (
+    <div
+      style={{ '--i': index } as React.CSSProperties}
+      className={cn(
+        'flex items-stretch gap-3 overflow-hidden rounded-lg bg-surface-2',
+        item.got && 'opacity-55'
+      )}
+    >
+      <button
+        type="button"
+        onClick={onOpen}
+        className="lift-press flex min-w-0 flex-1 items-center gap-3 text-left"
+      >
+        {url ? (
+          <img
+            src={url}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="h-20 w-20 shrink-0 object-cover"
+          />
+        ) : (
+          <span className="flex h-20 w-20 shrink-0 items-center justify-center bg-surface text-2xl">
+            🎁
+          </span>
+        )}
+        <span className="min-w-0 flex-1 py-2">
+          <span className="flex items-center gap-1.5">
+            <span
+              className={cn(
+                'truncate font-display text-lg text-fg',
+                item.got && 'line-through'
+              )}
+            >
+              {item.title}
+            </span>
+            {!item.visible && (
+              <EyeOff
+                className="h-3.5 w-3.5 shrink-0 text-gold"
+                aria-label="hidden"
+              />
+            )}
+          </span>
+          {item.price != null && (
+            <span className="block font-sans text-xs tabular-nums text-copper">
+              {formatAmount(item.price, item.currency ?? 'CLP')} {item.currency}
+            </span>
+          )}
+          {item.description && (
+            <span className="mt-0.5 block truncate font-sans text-xs text-muted">
+              {item.description}
+            </span>
+          )}
+          {!mine && (
+            <span className="mt-0.5 block font-sans text-[0.6rem] uppercase tracking-[0.14em] text-muted/70">
+              from your love
+            </span>
+          )}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        onClick={onToggleGot}
+        aria-label={item.got ? 'Not got yet' : 'Mark as got'}
+        aria-pressed={item.got}
+        className={cn(
+          'lift-press flex w-12 shrink-0 items-center justify-center',
+          item.got ? 'text-success' : 'text-muted/40'
+        )}
+      >
+        <Check className="h-5 w-5" />
+      </button>
     </div>
   );
 }
