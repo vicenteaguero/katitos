@@ -97,6 +97,7 @@ export function useStickSticker() {
     },
     onSuccess: (data, input) => {
       void notifyPartner({
+        kind: 'album',
         title: `📖 ${input.selfName ?? 'Someone'} added a sticker`,
         body: input.slotTitle ?? 'A new memory',
         url: '/album',
