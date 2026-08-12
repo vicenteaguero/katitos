@@ -1,53 +1,30 @@
-import { Link } from 'react-router';
 import { useCouple } from '@kernel/couple';
 import { useNow } from '@kernel/hooks';
 import {
   countdownTo,
-  daysTogether,
+  daysTogetherNow,
   monthsversaryCount,
   nextMonthsversary,
+  TOGETHER_START_ISO,
 } from '@kernel/lib';
-import {
-  Button,
-  Card,
-  CardTitle,
-  Empty,
-  LoadingScreen,
-  PageHeader,
-} from '@kernel/ui';
+import { Card, CardTitle, PageHeader } from '@kernel/ui';
 
 export function DaysTogetherRoute() {
-  const { data: couple, isLoading } = useCouple();
+  const { data: couple } = useCouple();
   const now = useNow(1000);
 
-  if (isLoading) return <LoadingScreen />;
-  if (!couple?.relationship_start_date) {
-    return (
-      <div className="curtain-reveal">
-        <PageHeader title="Together" />
-        <Empty
-          icon="💞"
-          title="No start date yet"
-          hint="Set when you became you-two in Settings."
-          action={
-            <Link to="/settings">
-              <Button>Open settings</Button>
-            </Link>
-          }
-        />
-      </div>
-    );
-  }
-
-  const start = couple.relationship_start_date;
-  const days = daysTogether(start);
-  const months = monthsversaryCount(start);
-  const next = nextMonthsversary(couple.anniversary_day ?? 15, now);
+  // The start is a constant, so this page has a number to show before any
+  // query resolves — and there is no "no start date yet" state to fall into,
+  // because the date is not something that can be missing.
+  const start = TOGETHER_START_ISO;
+  const days = daysTogetherNow(now);
+  const months = monthsversaryCount(start, now);
+  const next = nextMonthsversary(couple?.anniversary_day ?? 15, now);
   const c = countdownTo(next, now);
 
   return (
     <div className="curtain-reveal space-y-8">
-      <PageHeader title="Together" subtitle={`since ${start}`} />
+      <PageHeader title="Together" subtitle="since 15 June 2025" />
 
       {/* The running tally — a lit tonal stage, the grand gilt numeral. */}
       <section className="space-y-7">
