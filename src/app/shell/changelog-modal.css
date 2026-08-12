@@ -1,0 +1,230 @@
+/* ──────────────────────────────────────────────────────────────────────────
+ * "CHANGES ARE MADE!" — the release reveal.
+ *
+ * Borrows the Date Cards vocabulary (a gilt ray fan, a back-eased slam, a foil
+ * sweep, sparks, a letter-spacing flourish) because that is the one animation
+ * in the app that already feels like an occasion. Everything is transform and
+ * opacity only, and everything stops under reduced motion.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+.cl-reveal {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: max(1.5rem, env(safe-area-inset-top)) 1.25rem
+    max(1.5rem, env(safe-area-inset-bottom));
+  transition: opacity 280ms ease;
+}
+.cl-reveal--out {
+  opacity: 0;
+}
+
+.cl-backdrop {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 50% 42%,
+    rgba(110, 20, 35, 0.95),
+    rgba(16, 4, 8, 0.99) 72%
+  );
+  animation: cl-fade 280ms ease both;
+}
+
+@keyframes cl-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* The gilt ray fan. Scale and spin live on separate elements so the two
+   transforms never fight each other. */
+.cl-rays-wrap {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: 230vmax;
+  height: 230vmax;
+  margin-left: -115vmax;
+  margin-top: -115vmax;
+  pointer-events: none;
+  animation: cl-rays-in 760ms var(--ease-settle) both;
+}
+.cl-rays {
+  width: 100%;
+  height: 100%;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(228, 195, 106, 0.11) 0deg 4deg,
+    transparent 4deg 9deg
+  );
+  -webkit-mask-image: radial-gradient(
+    closest-side,
+    #000 26%,
+    rgba(0, 0, 0, 0.35) 42%,
+    transparent 60%
+  );
+  mask-image: radial-gradient(
+    closest-side,
+    #000 26%,
+    rgba(0, 0, 0, 0.35) 42%,
+    transparent 60%
+  );
+  animation: cl-rays-spin 16s linear infinite;
+}
+@keyframes cl-rays-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes cl-rays-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* The headline, arriving with a letter-spacing flourish. */
+.cl-word {
+  position: relative;
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.05;
+  font-size: clamp(1.9rem, 8.5vw, 2.6rem);
+  background: var(--grad-gilt);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 12px rgba(228, 195, 106, 0.42));
+  animation: cl-word-in 640ms cubic-bezier(0.2, 1.3, 0.3, 1) 180ms both;
+}
+@keyframes cl-word-in {
+  from {
+    opacity: 0;
+    letter-spacing: 0.5em;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    letter-spacing: 0.02em;
+    transform: scale(1);
+  }
+}
+
+/* The card of changes, slamming in with a little overshoot. */
+.cl-card {
+  position: relative;
+  z-index: 2;
+  width: min(92vw, 26rem);
+  max-height: 62vh;
+  overflow-y: auto;
+  border-radius: var(--radius-lg);
+  animation: cl-card-in 720ms cubic-bezier(0.2, 1.3, 0.3, 1) 120ms both;
+}
+@keyframes cl-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.82) rotate(-2.5deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+}
+
+/* A cream highlight sweeping across the card, twice. */
+.cl-foil {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(
+    105deg,
+    transparent 38%,
+    rgba(255, 241, 201, 0.42) 50%,
+    transparent 62%
+  );
+  background-size: 300% 100%;
+  mix-blend-mode: screen;
+  animation: cl-foil 1150ms ease-in-out 520ms 2 both;
+}
+@keyframes cl-foil {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -150% 0;
+  }
+}
+
+/* Sparks flying out behind the card. */
+.cl-spark {
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  border-radius: 999px;
+  pointer-events: none;
+  box-shadow: 0 0 6px rgba(228, 195, 106, 0.6);
+  animation: cl-spark 1100ms ease-out var(--d, 0.5s) both;
+}
+@keyframes cl-spark {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.2);
+  }
+  22% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty)))
+      scale(0.35);
+  }
+}
+
+.cl-line {
+  animation: cl-line-in 420ms var(--ease-settle) both;
+  animation-delay: calc(420ms + var(--i, 0) * 70ms);
+}
+@keyframes cl-line-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cl-sign {
+  animation: cl-fade 500ms ease 900ms both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cl-rays-wrap,
+  .cl-spark,
+  .cl-foil {
+    display: none !important;
+  }
+  .cl-card,
+  .cl-word,
+  .cl-line,
+  .cl-sign {
+    animation: cl-fade 220ms ease both !important;
+    animation-delay: 0ms !important;
+    transform: none !important;
+    letter-spacing: 0.02em !important;
+  }
+}
