@@ -106,6 +106,10 @@ export const qk = {
   currency: {
     rates: () => ['currency', 'rates'] as const,
   },
+  love: {
+    all: () => ['love'] as const,
+    phrases: () => ['love', 'phrases'] as const,
+  },
   tree: {
     all: () => ['tree'] as const,
     state: () => ['tree', 'state'] as const,
