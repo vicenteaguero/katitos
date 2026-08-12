@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { CalendarClock, MapPin, Plus } from 'lucide-react';
+import { CalendarClock, MapPin } from 'lucide-react';
 import { qk } from '@kernel/query';
 import { useTableSync } from '@kernel/realtime';
 import { formatDateTime } from '@kernel/lib';
@@ -8,7 +8,7 @@ import {
   Badge,
   Card,
   Empty,
-  Fab,
+  TopBarAdd,
   LoadingScreen,
   PageHeader,
   Segmented,
@@ -139,9 +139,7 @@ export function DatesListRoute() {
         </div>
       )}
 
-      <Fab label="New date" onClick={() => setCreating(true)}>
-        <Plus />
-      </Fab>
+      <TopBarAdd label="New date" onClick={() => setCreating(true)} />
 
       <Sheet
         open={creating}
