@@ -1397,6 +1397,53 @@ export type Database = {
           },
         ]
       }
+      phrase_reviews: {
+        Row: {
+          due_on: string
+          ease: number
+          interval_days: number
+          lapses: number
+          last_grade: number | null
+          last_seen_at: string | null
+          phrase_id: string
+          reps: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          due_on?: string
+          ease?: number
+          interval_days?: number
+          lapses?: number
+          last_grade?: number | null
+          last_seen_at?: string | null
+          phrase_id: string
+          reps?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          due_on?: string
+          ease?: number
+          interval_days?: number
+          lapses?: number
+          last_grade?: number | null
+          last_seen_at?: string | null
+          phrase_id?: string
+          reps?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phrase_reviews_phrase_id_fkey"
+            columns: ["phrase_id"]
+            isOneToOne: false
+            referencedRelation: "phrases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       phrases: {
         Row: {
           added_by: string
@@ -1407,6 +1454,8 @@ export type Database = {
           example: string | null
           id: string
           language: string
+          notes: string | null
+          position: number
           text: string
           translation: string | null
           transliteration: string | null
@@ -1420,6 +1469,8 @@ export type Database = {
           example?: string | null
           id?: string
           language: string
+          notes?: string | null
+          position?: number
           text: string
           translation?: string | null
           transliteration?: string | null
@@ -1433,6 +1484,8 @@ export type Database = {
           example?: string | null
           id?: string
           language?: string
+          notes?: string | null
+          position?: number
           text?: string
           translation?: string | null
           transliteration?: string | null
