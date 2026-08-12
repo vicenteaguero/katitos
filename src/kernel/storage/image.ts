@@ -73,7 +73,7 @@ interface DownscaleOptions {
  */
 export async function downscaleImage(
   blob: Blob,
-  { maxDim = 400, quality = 0.72 }: DownscaleOptions = {}
+  { maxDim = 512, quality = 0.72 }: DownscaleOptions = {}
 ): Promise<Blob> {
   const bitmap = await createImageBitmap(blob);
   try {
@@ -89,21 +89,25 @@ export async function downscaleImage(
     if (!ctx) throw new Error('no 2d context');
     ctx.drawImage(bitmap, 0, 0, w, h);
 
-    return await new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob(
-        (out) => {
-          if (out) return resolve(out);
-          // Engine can't encode WebP (older Safari) → fall back to JPEG.
-          canvas.toBlob(
-            (jpg) => (jpg ? resolve(jpg) : reject(new Error('toBlob failed'))),
-            'image/jpeg',
-            0.7
-          );
-        },
-        'image/webp',
-        quality
+    const encode = (type: string, q: number) =>
+      new Promise<Blob | null>((resolve) =>
+        canvas.toBlob((out) => resolve(out), type, q)
       );
-    });
+
+    // `toBlob` does NOT return null for an unsupported type — per spec it
+    // silently falls back to PNG. Safari did exactly that for years, so every
+    // "thumbnail" it made was a ~300 KB PNG: three times heavier than the JPEG
+    // it was supposed to shrink, which is what made the album crawl. Check what
+    // actually came back, and re-encode as JPEG if it isn't WebP.
+    const webp = await encode('image/webp', quality);
+    if (webp && webp.type === 'image/webp') return webp;
+
+    const jpeg = await encode('image/jpeg', 0.7);
+    if (jpeg && jpeg.type === 'image/jpeg') return jpeg;
+
+    // Neither worked. A PNG proxy is worse than no proxy — callers fall back to
+    // the original, which is smaller than a lossless re-encode of it.
+    throw new Error('no usable proxy encoding');
   } finally {
     bitmap.close?.();
   }
