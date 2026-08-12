@@ -20,10 +20,18 @@ export function usePhotoUpload() {
       });
       try {
         const proxy = await downscaleImage(blob);
-        await supabase.storage.from(bucket).upload(proxyPath(path), proxy, {
-          upsert: true,
-          contentType: 'image/jpeg',
-        });
+        // A proxy that isn't smaller than what it replaces is not a proxy.
+        // Skipping it makes readers fall back to the original, which is the
+        // better of the two — this is how ~300 KB PNG "thumbnails" used to get
+        // stored and then dutifully downloaded on every scroll.
+        if (proxy.size < blob.size) {
+          await supabase.storage.from(bucket).upload(proxyPath(path), proxy, {
+            upsert: true,
+            // The REAL type. Storing WebP bytes labelled image/jpeg happened to
+            // work through content sniffing, but it is a lie to every cache.
+            contentType: proxy.type || 'image/webp',
+          });
+        }
       } catch {
         // No proxy this time — the original is enough to display correctly.
       }
