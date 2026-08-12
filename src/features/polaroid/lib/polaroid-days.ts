@@ -135,3 +135,23 @@ export function groupByDay(
     };
   });
 }
+
+/**
+ * Which plate is in front. There is no third "neither" state: one of the two
+ * is always on top, so a tap always means something and the caption below
+ * always belongs to a photo.
+ */
+export type Focus = 'mine' | 'theirs';
+
+/**
+ * Whose photo is actually in front, given what exists.
+ *
+ * Your love's sits on top by default — the point of opening the app is to see
+ * their day. A side with no photo can never be the front one, so the caption
+ * editor never ends up pointing at nothing.
+ */
+export function frontOf(day: PolaroidDay, preferred: Focus): Focus {
+  if (preferred === 'mine' && !day.mine && day.theirs) return 'theirs';
+  if (preferred === 'theirs' && !day.theirs && day.mine) return 'mine';
+  return preferred;
+}
