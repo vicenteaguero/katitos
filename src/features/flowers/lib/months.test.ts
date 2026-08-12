@@ -3,6 +3,8 @@ import { DateTime } from '@kernel/lib';
 import type { Flower } from '../types';
 import {
   currentMonthUtc,
+  allMonthsToNow,
+  skeletonYears,
   groupByYear,
   lastYear,
   monthKey,
@@ -216,5 +218,43 @@ describe('currentMonthUtc', () => {
     expect(currentMonthUtc(DateTime.fromISO('2026-08-12T12:00:00Z'))).toBe(
       '2026-08'
     );
+  });
+});
+
+describe('allMonthsToNow', () => {
+  const at = (iso: string) => DateTime.fromISO(iso);
+
+  it('starts at June 2025 and ends at the current month', () => {
+    const months = allMonthsToNow(at('2026-08-12'));
+    expect(months[months.length - 1]).toBe('2025-06-01');
+    expect(months[0]).toBe('2026-08-01');
+  });
+
+  it('runs newest to oldest, with no month missing', () => {
+    const months = allMonthsToNow(at('2026-08-12'));
+    // Jun 2025 → Aug 2026 inclusive.
+    expect(months).toHaveLength(15);
+    const sorted = [...months].sort().reverse();
+    expect(months).toEqual(sorted);
+  });
+
+  it('is just the first month on the day we started', () => {
+    expect(allMonthsToNow(at('2025-06-15'))).toEqual(['2025-06-01']);
+  });
+});
+
+describe('skeletonYears', () => {
+  it('groups newest year first, months descending inside', () => {
+    const years = skeletonYears(DateTime.fromISO('2026-08-12'));
+    expect(years.map((y) => y.year)).toEqual([2026, 2025]);
+    expect(years[0].months[0]).toBe('2026-08-01');
+    expect(years[1].months[years[1].months.length - 1]).toBe('2025-06-01');
+  });
+
+  it('covers every month exactly once', () => {
+    const years = skeletonYears(DateTime.fromISO('2026-08-12'));
+    const flat = years.flatMap((y) => y.months);
+    expect(flat).toHaveLength(15);
+    expect(new Set(flat).size).toBe(15);
   });
 });
