@@ -9,25 +9,40 @@ export function PolaroidImage({
   alt,
   className,
   full = false,
+  src: presigned,
 }: {
   path: string;
   alt?: string;
   className?: string;
   /** Load the full-resolution original (zoom/download); default is the proxy. */
   full?: boolean;
+  /**
+   * A URL the parent already signed in a batch. When present we skip this
+   * component's own round-trips entirely — which is the whole point: a gallery
+   * of N photos used to open 2N signed-URL requests from inside its children.
+   */
+  src?: string;
 }) {
-  const { proxyUrl, fullUrl, isLoading } = useProxiedUrl(
-    BUCKETS.polaroids,
-    path
-  );
-  // Default to the lightweight proxy; on a full view (or when a legacy photo
-  // has no proxy and the proxy URL errors) we show the original instead.
-  const [forceFull, setForceFull] = useState(false);
-  const src = full || forceFull ? fullUrl : (proxyUrl ?? fullUrl);
-
   // Presentation-only: the emulsion "fixes" once the bytes arrive, driving the
   // develop reveal. No data/behavior change — purely the instant-photo effect.
   const [developed, setDeveloped] = useState(false);
+  // Proxy missing (a photo from before proxies) → fall back to the original.
+  const [forceFull, setForceFull] = useState(false);
+
+  // Sign on our own ONLY when we have to: no batched URL was handed down, we
+  // need the full-resolution original, or the batched one failed to load.
+  const wantFull = full || forceFull;
+  const needsOwnUrl = !presigned || wantFull;
+  const { proxyUrl, fullUrl, isLoading } = useProxiedUrl(
+    BUCKETS.polaroids,
+    needsOwnUrl ? path : undefined,
+    // A thumbnail never needs the original signed, and a hero never needs the
+    // proxy — asking for both was half the album's request count.
+    { proxy: !wantFull, full: wantFull }
+  );
+  // Default to the lightweight proxy; on a full view (or when a legacy photo
+  // has no proxy and the proxy URL errors) we show the original instead.
+  const src = full || forceFull ? fullUrl : (presigned ?? proxyUrl ?? fullUrl);
 
   if (!src) {
     return (
