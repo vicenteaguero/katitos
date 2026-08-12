@@ -86,6 +86,31 @@ export function daysTogether(
 }
 
 /**
+ * The hour it started: about 3 a.m. on 15 June 2025, Novosibirsk time.
+ *
+ * A constant, deliberately. This used to be read from `couple.relationship_
+ * start_date`, which meant the number on the home screen was the result of a
+ * network round-trip — and until it landed, `daysTogether(undefined)` returned
+ * **0**, so the first thing the screen said was that we had been together for
+ * no days at all. Nothing about this figure needs a database: it is one
+ * subtraction, and the answer is the same on both our phones.
+ */
+export const TOGETHER_START_ISO = '2025-06-15T03:00:00+07:00';
+
+/**
+ * Whole days since it started — instant, offline, no query.
+ *
+ * Counted as elapsed time rather than calendar dates, so it rolls over at 3
+ * a.m. in Novosibirsk wherever either of us is standing, and the two phones
+ * never disagree. Both sides of the subtraction are instants, so no timezone
+ * conversion is involved at all.
+ */
+export function daysTogetherNow(now: DateTime = DateTime.now()): number {
+  const start = DateTime.fromISO(TOGETHER_START_ISO);
+  return Math.max(0, Math.floor(now.diff(start, 'days').days));
+}
+
+/**
  * The next monthsversary (e.g. the 15th). Returns the upcoming occurrence,
  * including today if today is the day.
  */
