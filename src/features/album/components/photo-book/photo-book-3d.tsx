@@ -31,7 +31,7 @@ import {
   useTopBarAction,
 } from '@kernel/ui';
 import { type AlbumPageWithPhotos, type BookScope } from '../../types';
-import { useBook, usePages } from '../../api/photo-book.queries';
+import { useBook, useBookById, usePages } from '../../api/photo-book.queries';
 import { useAddPage, useAddPhoto } from '../../api/photo-book.mutations';
 import { PageFace } from './page-face';
 import { SlotSheet } from './slot-sheet';
@@ -69,11 +69,13 @@ function NavBtn({
   );
 }
 
-export interface PhotoBook3DProps {
-  scope: BookScope;
-  tripId?: string;
-  title?: string;
-}
+/**
+ * Either open a book by id (the shelf), or resolve one of the two legacy books
+ * by scope (Pololini, the trip's Panini). Both paths land on the same engine.
+ */
+export type PhotoBook3DProps =
+  | { bookId: string; scope?: never; tripId?: never; title?: never }
+  | { bookId?: never; scope: BookScope; tripId?: string; title?: string };
 
 interface FlipApi {
   flipNext: () => void;
@@ -106,8 +108,17 @@ const FlipPage = forwardRef<
  * The two never fight — ownership is decided by which half the touch starts on.
  * `read` shows the book; `arrange` swaps it for a single-page editor.
  */
-export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
-  const { data: book, isLoading: bookLoading } = useBook(scope, tripId, title);
+export function PhotoBook3D(props: PhotoBook3DProps) {
+  // Exactly one of these two resolves; the other is disabled by `enabled`.
+  const byScope = useBook(
+    props.scope ?? 'life',
+    props.tripId,
+    props.title,
+    !props.bookId
+  );
+  const byId = useBookById(props.bookId);
+  const book = props.bookId ? byId.data : byScope.data;
+  const bookLoading = props.bookId ? byId.isLoading : byScope.isLoading;
   const bookId = book?.id;
   const { data: pages, isLoading: pagesLoading } = usePages(bookId);
 
@@ -332,16 +343,16 @@ export function PhotoBook3D({ scope, tripId, title }: PhotoBook3DProps) {
     [mode]
   );
 
-  if ((scope === 'life' && bookLoading) || (scope === 'trip' && !tripId)) {
-    if (scope === 'trip' && !tripId) {
-      return (
-        <Empty
-          icon={<BookOpen />}
-          title="No trip yet"
-          hint="Pick a trip to start its book."
-        />
-      );
-    }
+  if (props.scope === 'trip' && !props.tripId) {
+    return (
+      <Empty
+        icon={<BookOpen />}
+        title="No trip yet"
+        hint="Pick a trip to start its book."
+      />
+    );
+  }
+  if (bookLoading) {
     return <LoadingScreen />;
   }
   if (bookLoading || pagesLoading || !pages || count === 0 || !bookId) {
