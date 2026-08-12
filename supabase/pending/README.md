@@ -22,16 +22,17 @@ reads today's polaroid with `.maybeSingle()` and upserts with
   breaks the Polaroid route **and** the Home widget;
 - `on_conflict=day` throws `42P10`, so taking a photo fails outright.
 
-**How to check the gate:**
+**How to check the gate — and apply it safely:**
 
-```sql
-select display_name, last_seen_at from public.couple_members order by role;
+```sh
+make db-gate     # who is on the new bundle yet
+make db-phase3   # applies it, but ONLY if both phones are ready
 ```
 
-Both `last_seen_at` values must be later than the deploy of the release that
-contains the new polaroid client. (`select max(opened_at) from public.app_opens
-group by user_id` works too.) When both have opened the app since that deploy,
-they are on the new bundle and this is safe.
+`db-phase3` refuses to run unless BOTH have opened the app at least **twice**
+since the release. Twice, not once: the service worker never calls
+`skipWaiting`, so the first open only _installs_ the new bundle — it starts
+running on the launch after that. One open looks like an upgrade and isn't.
 
 Until then the app is fully functional — it just holds one photo per day, and
 the second person to shoot gets a clean "already taken today" instead of
@@ -40,36 +41,10 @@ the one it replaces.
 
 ---
 
-## `20260814000001_wishlist_hidden_by_default.sql`
+## Already applied
 
-**Gate: same one — both phones on the new bundle.**
-
-`wishlist_items.visible` shipped defaulting to TRUE so that adding the column
-didn't retroactively hide every existing item from the other person. The new
-add-sheet always sends `visible` explicitly (closed by default), so once both
-are upgraded the database default can match the UI.
-
-Harmless to run late. Only affects rows inserted without the column.
-
----
-
-## `20260814000002_language_ru_es_only.sql`
-
-**Gate: decide what happens to the trip decks first — this DELETES them.**
-
-The Turkish and Georgian decks were created by migration `20260630000003`, so
-they exist on production. The UI no longer offers those languages, but the rows
-are still there and the CHECK constraints still permit them.
-
-Before running:
-
-```sql
-select d.title, count(p.id) as cards
-  from public.language_decks d
-  left join public.phrases p on p.deck_id = d.id
- where d.language in ('tr','ka')
- group by d.title;
-```
-
-If any of those cards are worth keeping, move them onto a Russian or Spanish
-deck first. There is no rush — leaving this unrun costs nothing.
+- `20260814000001_wishlist_hidden_by_default.sql` — applied 2026-08-12.
+  `wishlist_items` was empty, so nothing changed meaning.
+- `20260814000002_language_ru_es_only.sql` — applied 2026-08-12. Removed the two
+  seeded travel decks (Türkiye and Georgia, 28 cards from 2026-06-30, none of
+  them hand-written) and tightened both language CHECKs to `('ru','es')`.
