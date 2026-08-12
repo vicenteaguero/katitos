@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
 import { qk } from '@kernel/query';
 import { useTableSync } from '@kernel/realtime';
 import {
   Empty,
-  Fab,
+  TopBarAdd,
   LoadingScreen,
   PageHeader,
   Sheet,
@@ -55,9 +54,7 @@ export function CuteWordsListRoute() {
         </div>
       )}
 
-      <Fab label="Add word" onClick={() => setOpen(true)}>
-        <Plus />
-      </Fab>
+      <TopBarAdd label="Add word" onClick={() => setOpen(true)} />
 
       <Sheet open={open} onClose={() => setOpen(false)} title="New word">
         <CuteWordForm onDone={() => setOpen(false)} />
