@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
 import { qk } from '@kernel/query';
 import { useTableSync } from '@kernel/realtime';
 import {
   Empty,
-  Fab,
+  TopBarAdd,
   LoadingScreen,
   PageHeader,
   Sheet,
@@ -100,9 +99,7 @@ export function PunitoListRoute() {
         )}
       </section>
 
-      <Fab label="Add puñito" onClick={() => setEditing(null)}>
-        <Plus />
-      </Fab>
+      <TopBarAdd label="Add puñito" onClick={() => setEditing(null)} />
 
       <Sheet
         open={editing !== undefined}
