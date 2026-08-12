@@ -26,6 +26,55 @@
   will-change: transform, opacity;
 }
 
+/* ── The pair ─────────────────────────────────────────────────────────────── */
+
+/* Two plates leaning together, straightening as one is picked up. The resting
+ * tilt is per-plate (--rest-rotate), so the two lean toward each other. */
+.pair-plate {
+  transform: rotate(var(--rest-rotate, 0deg));
+  transform-origin: 50% 90%;
+  transition:
+    transform 420ms var(--ease-settle),
+    opacity 260ms var(--ease-settle);
+  will-change: transform;
+}
+
+/* Picked up: straightened, lifted, and slightly larger than its partner. */
+.pair-plate--focused {
+  transform: rotate(0deg) translateY(-6px) scale(1.06);
+}
+
+/* The waiting half: same shape, no shadow weight, faintly hatched so it reads
+ * as an empty slot in the album rather than a broken image. */
+.pair-plate--empty {
+  background-color: rgba(243, 235, 221, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(228, 195, 106, 0.16);
+}
+
+/* Both plates settle in together the first time the day appears. */
+@keyframes pair-settle {
+  from {
+    opacity: 0;
+    transform: rotate(var(--rest-rotate, 0deg)) translateY(10px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(var(--rest-rotate, 0deg));
+  }
+}
+.pair-stage .pair-plate {
+  animation: pair-settle 420ms var(--ease-settle) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pair-plate,
+  .pair-plate--focused {
+    animation: none !important;
+    transition: opacity 200ms ease !important;
+    transform: none !important;
+  }
+}
+
 /* ── The lightbox ─────────────────────────────────────────────────────────── */
 
 /* The house dims to black behind the held photo. */
