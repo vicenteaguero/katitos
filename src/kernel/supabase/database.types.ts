@@ -1317,6 +1317,39 @@ export type Database = {
         }
         Relationships: []
       }
+      love_phrases: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          gender: string
+          id: string
+          position: number
+          text: string
+          updated_at: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          gender?: string
+          id?: string
+          position?: number
+          text: string
+          updated_at?: string
+          weight?: number
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          gender?: string
+          id?: string
+          position?: number
+          text?: string
+          updated_at?: string
+          weight?: number
+        }
+        Relationships: []
+      }
       packing_items: {
         Row: {
           assigned_to: string | null
