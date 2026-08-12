@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { DateTime } from '@kernel/lib';
 import type { Flower } from '../types';
-import { groupByYear, lastYear, monthKey, monthLabel } from './months';
+import {
+  currentMonthUtc,
+  groupByYear,
+  lastYear,
+  monthKey,
+  monthLabel,
+} from './months';
 
 const AUG_2026 = DateTime.fromISO('2026-08-11T12:00:00Z', { zone: 'utc' });
 const DEC_2026 = DateTime.fromISO('2026-12-03T12:00:00Z', { zone: 'utc' });
@@ -190,5 +196,25 @@ describe('groupByYear — order', () => {
       '2026-02-01',
       '2025-07-01',
     ]);
+  });
+});
+
+describe('currentMonthUtc', () => {
+  it('is the month in UTC, not in whichever zone you are standing in', () => {
+    // 23:30 on the 31st in Novosibirsk (UTC+7) is still the 31st in UTC, but
+    // 04:00 on the 1st there is the previous month in UTC. Only one answer is
+    // allowed, or the two of us would disagree about whether a bouquet is news.
+    expect(currentMonthUtc(DateTime.fromISO('2026-09-01T04:00:00+07:00'))).toBe(
+      '2026-08'
+    );
+    expect(currentMonthUtc(DateTime.fromISO('2026-08-31T20:00:00-04:00'))).toBe(
+      '2026-09'
+    );
+  });
+
+  it('reads as YYYY-MM so it compares straight against a stored date', () => {
+    expect(currentMonthUtc(DateTime.fromISO('2026-08-12T12:00:00Z'))).toBe(
+      '2026-08'
+    );
   });
 });
