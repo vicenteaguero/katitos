@@ -26,6 +26,8 @@ export function DoublePolaroid({
   partnerZone,
   onOpen,
   onShoot,
+  stillOpen = false,
+  isToday = false,
   focus: controlledFocus,
   onFocusChange,
 }: {
@@ -37,6 +39,14 @@ export function DoublePolaroid({
   onOpen: (photo: Polaroid) => void;
   /** Offered on your own empty half, when the day is still open to you. */
   onShoot?: () => void;
+  /**
+   * This day is still writable for me. True for my today, and ALSO for my
+   * love's today while we're on different dates — that day isn't gone, it just
+   * hasn't happened here yet.
+   */
+  stillOpen?: boolean;
+  /** This is my own today — the only day the camera can shoot for. */
+  isToday?: boolean;
   /** Controlled focus — today's card lifts it so it can edit that caption. */
   focus?: Focus;
   onFocusChange?: (next: Focus) => void;
@@ -67,8 +77,17 @@ export function DoublePolaroid({
           empty={
             <EmptyPlate
               title="Your photo"
-              hint="Take today's"
-              icon
+              // Three different truths, and calling a still-open day "missed"
+              // would be the unkind one: while it's already tomorrow where she
+              // is, that date is still perfectly fillable from here.
+              hint={
+                isToday
+                  ? "Take today's"
+                  : stillOpen
+                    ? 'still open — add one'
+                    : 'you missed this one'
+              }
+              icon={isToday || stillOpen}
               onClick={onShoot}
             />
           }
