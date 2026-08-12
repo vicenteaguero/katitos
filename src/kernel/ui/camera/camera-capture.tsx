@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, RefreshCw, RotateCcw, X } from 'lucide-react';
+import { acquireCamera, releaseCamera } from './camera-stream';
 import { Button } from '../button';
 import { IconButton } from '../icon-button';
 
@@ -38,9 +39,13 @@ export function CameraCapture({
     null
   );
 
+  // Hand the stream back to the shared holder rather than killing the tracks:
+  // on iOS a fresh getUserMedia means another permission prompt, so stopping it
+  // here is what made the app ask every single time the camera was opened.
   const stop = useCallback(() => {
-    streamRef.current?.getTracks().forEach((t) => t.stop());
+    if (!streamRef.current) return;
     streamRef.current = null;
+    releaseCamera();
   }, []);
 
   const attach = useCallback(async () => {
@@ -57,14 +62,10 @@ export function CameraCapture({
       return;
     }
     try {
-      // Reuse the live stream if we already have one. iOS PWAs re-prompt on
-      // every fresh getUserMedia, so we acquire ONCE and keep it alive across
-      // capture/retake — only switching cameras (facing) gets a new stream.
+      // The shared holder keeps one stream alive for the whole session, so
+      // this only prompts on the first camera of a launch.
       if (!streamRef.current) {
-        streamRef.current = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: facing },
-          audio: false,
-        });
+        streamRef.current = await acquireCamera(facing);
       }
       await attach();
     } catch {
