@@ -105,6 +105,7 @@ const OPEN = new Set([
   'chalkboard', // "The wall"
   'know-me',
   'currency',
+  'wishlists', // gift lists, each item with its own eye
   // 'summer'   — Türkiye/Georgia is over. Locked, NOT deleted: the code, the
   //              tables and the photos all stay, so the next trip is one line.
   // 'scavenger' — "Date cards" frozen as-is until we rethink it.
