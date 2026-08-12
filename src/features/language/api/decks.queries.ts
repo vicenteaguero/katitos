@@ -46,6 +46,26 @@ export function useDeck(deckId: string | undefined) {
 }
 
 /** The cards (phrases) in a deck, in authored order. */
+/**
+ * Every card in a language, across all decks — what the study session draws
+ * from. Practice shouldn't care which deck a word happened to be filed in.
+ */
+export function useAllPhrases(language: Lang) {
+  return useQuery({
+    queryKey: ['language-phrases', language] as const,
+    queryFn: async (): Promise<Phrase[]> => {
+      const { data, error } = await supabase
+        .from('phrases')
+        .select('*')
+        .eq('language', language)
+        .not('deck_id', 'is', null)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
 export function useDeckCards(deckId: string | undefined) {
   return useQuery({
     queryKey: deckKeys.cards(deckId ?? 'none'),
