@@ -9,6 +9,7 @@ export const BUCKETS = {
   datesAlbum: 'dates-album',
   avatars: 'avatars',
   album: 'album',
+  wishlist: 'wishlist',
 } as const;
 
 export type BucketName = (typeof BUCKETS)[keyof typeof BUCKETS];
@@ -37,6 +38,12 @@ export const storagePaths = {
   /** One sticker photo per slot half (solo|a|b) — swap overwrites in place. */
   albumSticker: (chapterId: string, slotId: string, half: string) =>
     `${chapterId}/${slotId}-${half}.jpg`,
+  /**
+   * A wishlist item's photo. Owner-prefixed on purpose: storage RLS reads the
+   * first path segment to keep a hidden gift's picture unreadable by the very
+   * person it is hidden from.
+   */
+  wishlistItem: (userId: string, fileId: string) => `${userId}/${fileId}.jpg`,
   /** Know-Me reveal reaction selfie, one per day per user. */
   knowMeReaction: (dayId: string, userId: string) =>
     `know-me/${dayId}/${userId}.jpg`,
