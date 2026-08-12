@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BUCKETS, useProxiedUrl } from '@kernel/storage';
 import { Spinner } from '@kernel/ui';
 import { cn } from '@kernel/lib';
@@ -14,7 +14,11 @@ export function PolaroidImage({
   path: string;
   alt?: string;
   className?: string;
-  /** Load the full-resolution original (zoom/download); default is the proxy. */
+  /**
+   * A full view (the lightbox). Shows the small proxy at once and swaps in the
+   * original behind it — waiting on the full file first meant a blank plate
+   * every time you tapped a photo.
+   */
   full?: boolean;
   /**
    * A URL the parent already signed in a batch. When present we skip this
@@ -27,26 +31,45 @@ export function PolaroidImage({
   // develop reveal. No data/behavior change — purely the instant-photo effect.
   const [developed, setDeveloped] = useState(false);
   // Proxy missing (a photo from before proxies) → fall back to the original.
-  const [forceFull, setForceFull] = useState(false);
-
-  // Sign on our own ONLY when we have to: no batched URL was handed down, we
-  // need the full-resolution original, or the batched one failed to load.
   const [proxyGone, setProxyGone] = useState(false);
-  const wantFull = full || forceFull || proxyGone;
-  const needsOwnUrl = !presigned || wantFull;
+  // The original has finished downloading and can replace the proxy.
+  const [fullReady, setFullReady] = useState(false);
+
+  // Sign what we actually need. A thumbnail never needs the original; a full
+  // view wants both, so it can show something immediately.
+  const needsOwnProxy = !presigned && !proxyGone;
   const { proxyUrl, fullUrl, isLoading, proxyMissing } = useProxiedUrl(
     BUCKETS.polaroids,
-    needsOwnUrl ? path : undefined,
-    // A thumbnail never needs the original signed, and a hero never needs the
-    // proxy — asking for both was half the album's request count. But if the
-    // proxy turns out not to exist, we MUST go get the original: a photo from
-    // before proxies would otherwise never appear at all.
-    { proxy: !wantFull, full: wantFull }
+    path,
+    { proxy: needsOwnProxy, full: full || proxyGone }
   );
   if (proxyMissing && !proxyGone) setProxyGone(true);
-  // Default to the lightweight proxy; on a full view (or when a legacy photo
-  // has no proxy and the proxy URL errors) we show the original instead.
-  const src = full || forceFull ? fullUrl : (presigned ?? proxyUrl ?? fullUrl);
+
+  const small = presigned ?? proxyUrl;
+
+  // Quietly fetch the original behind the proxy, then swap. The browser has it
+  // cached by the time we change `src`, so there is no flash.
+  useEffect(() => {
+    if (!full || !fullUrl) return;
+    setFullReady(false);
+    let cancelled = false;
+    const img = new Image();
+    img.decoding = 'async';
+    img.onload = () => {
+      if (!cancelled) setFullReady(true);
+    };
+    img.src = fullUrl;
+    return () => {
+      cancelled = true;
+      img.src = '';
+    };
+  }, [full, fullUrl]);
+
+  const src = full
+    ? fullReady
+      ? fullUrl
+      : (small ?? fullUrl)
+    : (small ?? fullUrl);
 
   if (!src) {
     return (
@@ -81,10 +104,11 @@ export function PolaroidImage({
         src={src}
         alt={alt ?? 'polaroid'}
         decoding="async"
-        loading="lazy"
+        // Not lazy: the gallery prefetches its whole page, so by the time this
+        // mounts the bytes are already in cache. Lazy only delayed them.
         onLoad={() => setDeveloped(true)}
-        // Proxy missing (a photo from before proxies) → fall back to the full one.
-        onError={() => !forceFull && !full && setForceFull(true)}
+        // The proxy 404'd (a photo from before proxies) → go get the original.
+        onError={() => !proxyGone && setProxyGone(true)}
         className={cn(
           'h-full w-full rounded-md object-cover',
           developed ? 'polaroid-develop' : 'opacity-0'
