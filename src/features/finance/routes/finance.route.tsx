@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
 import { qk } from '@kernel/query';
 import { useTableSync } from '@kernel/realtime';
-import { Empty, Fab, LoadingScreen, PageHeader, Sheet } from '@kernel/ui';
+import { Empty, LoadingScreen, PageHeader, Sheet, TopBarAdd } from '@kernel/ui';
 import { useGoals } from '../api/finance.queries';
 import { GoalCard } from '../components/goal-card';
 import { GoalForm } from '../components/goal-form';
@@ -51,9 +50,7 @@ export function FinanceRoute() {
         )}
       </section>
 
-      <Fab label="New goal" onClick={() => setCreating(true)}>
-        <Plus />
-      </Fab>
+      <TopBarAdd label="New goal" onClick={() => setCreating(true)} />
 
       <Sheet
         open={creating}
