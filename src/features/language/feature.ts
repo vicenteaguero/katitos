@@ -19,6 +19,13 @@ export const languageFeature = defineFeature({
         import('./routes/deck.route').then((m) => ({ Component: m.DeckRoute })),
     },
     {
+      path: 'study',
+      lazy: () =>
+        import('./routes/study.route').then((m) => ({
+          Component: m.StudyRoute,
+        })),
+    },
+    {
       path: 'play/:deckId',
       lazy: () =>
         import('./routes/play.route').then((m) => ({ Component: m.PlayRoute })),
