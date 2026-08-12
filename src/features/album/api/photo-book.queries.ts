@@ -160,16 +160,21 @@ export function useBookById(id: string | undefined) {
 export function useAlbumPhotoCounts() {
   return useQuery({
     queryKey: [...qk.album.books(), 'counts'] as const,
-    queryFn: async (): Promise<Map<string, number>> => {
+    // Plain rows from the queryFn; the Map is built in `select`. A Map in query
+    // data would rehydrate from localStorage as {} and break every caller.
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('album_pages')
         .select('book_id, album_photos(count)');
       if (error) throw error;
-      const out = new Map<string, number>();
-      for (const row of (data ?? []) as {
+      return (data ?? []) as {
         book_id: string;
         album_photos: { count: number }[];
-      }[]) {
+      }[];
+    },
+    select: (rows) => {
+      const out = new Map<string, number>();
+      for (const row of rows) {
         const n = row.album_photos?.[0]?.count ?? 0;
         out.set(row.book_id, (out.get(row.book_id) ?? 0) + n);
       }
