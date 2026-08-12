@@ -533,6 +533,7 @@ export type Database = {
       couple: {
         Row: {
           anniversary_day: number
+          changelog_announced_key: string | null
           created_at: string
           id: boolean
           relationship_start_date: string | null
@@ -540,6 +541,7 @@ export type Database = {
         }
         Insert: {
           anniversary_day?: number
+          changelog_announced_key?: string | null
           created_at?: string
           id?: boolean
           relationship_start_date?: string | null
@@ -547,6 +549,7 @@ export type Database = {
         }
         Update: {
           anniversary_day?: number
+          changelog_announced_key?: string | null
           created_at?: string
           id?: boolean
           relationship_start_date?: string | null
@@ -556,6 +559,7 @@ export type Database = {
       }
       couple_members: {
         Row: {
+          changelog_seen_key: string | null
           city: string | null
           country: string | null
           created_at: string
@@ -575,6 +579,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          changelog_seen_key?: string | null
           city?: string | null
           country?: string | null
           created_at?: string
@@ -594,6 +599,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          changelog_seen_key?: string | null
           city?: string | null
           country?: string | null
           created_at?: string
