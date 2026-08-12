@@ -1,115 +1,78 @@
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Plus } from 'lucide-react';
-import { qk } from '@kernel/query';
-import { useTableSync } from '@kernel/realtime';
-import {
-  Button,
-  Empty,
-  Fab,
-  Field,
-  Input,
-  LoadingScreen,
-  PageHeader,
-  Sheet,
-  Textarea,
-  toast,
-} from '@kernel/ui';
-import { useWishlists } from '../api/wishlists.queries';
-import { useCreateWishlist } from '../api/wishlists.mutations';
-import { WishlistCard } from '../components/wishlist-card';
+import { Link } from 'react-router';
+import { ChevronRight } from 'lucide-react';
+import { useMembers, useUserId } from '@kernel/auth';
+import { Empty, Skeleton } from '@kernel/ui';
+import { useWishlistCounts, useWishlists } from '../api/wishlists.queries';
 
-const schema = z.object({
-  title: z.string().min(1, 'Give it a name'),
-  category: z.string().optional(),
-  description: z.string().optional(),
-});
-type FormValues = z.infer<typeof schema>;
-
+/**
+ * The two gift lists.
+ *
+ * They provision themselves on first open, so there is nothing to set up — you
+ * arrive and both are already here, one with each of our names on it.
+ */
 export function WishlistsListRoute() {
-  useTableSync('wishlists', qk.wishlists.list());
-  const { data, isLoading, isError } = useWishlists();
-  const create = useCreateWishlist();
-  const [creating, setCreating] = useState(false);
+  const { data: lists, isLoading, isError } = useWishlists();
+  const { data: counts } = useWishlistCounts();
+  const { data: members } = useMembers();
+  const userId = useUserId();
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors, isSubmitting },
-  } = useForm<FormValues>({
-    resolver: zodResolver(schema),
-    defaultValues: { title: '', category: '', description: '' },
-  });
+  const nameFor = (ownerId: string | null) =>
+    members?.find((m) => m.user_id === ownerId)?.display_name ?? null;
 
-  const submit = handleSubmit(async (v) => {
-    try {
-      await create.mutateAsync({
-        title: v.title,
-        category: v.category || null,
-        description: v.description || null,
-      });
-      toast.success('List created');
-      reset();
-      setCreating(false);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Failed to create');
-    }
-  });
+  if (isLoading) {
+    return (
+      <div className="curtain-reveal space-y-3">
+        <Skeleton className="h-24 w-full" rounded="lg" />
+        <Skeleton className="h-24 w-full" rounded="lg" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Empty icon="⚠️" title="Couldn't load" hint="Try again in a moment." />
+    );
+  }
 
   return (
-    <div className="curtain-reveal">
-      <PageHeader
-        title="Wishlists"
-        subtitle="A registry of things we wish for"
-      />
-
-      <p className="eyebrow mb-8">The Registry</p>
-
-      {isLoading ? (
-        <LoadingScreen />
-      ) : isError ? (
-        <Empty icon="⚠️" title="Couldn't load" hint="Try again in a moment." />
-      ) : !data || data.length === 0 ? (
-        <Empty
-          icon="🕮"
-          title="An empty registry"
-          hint="Tap + to begin a curated list you'll swipe through together."
-        />
-      ) : (
-        <div className="curtain-stagger space-y-6">
-          {data.map((list) => (
-            <WishlistCard key={list.id} list={list} />
-          ))}
-        </div>
-      )}
-
-      <Fab label="New wishlist" onClick={() => setCreating(true)}>
-        <Plus />
-      </Fab>
-
-      <Sheet
-        open={creating}
-        onClose={() => setCreating(false)}
-        title="New wishlist"
-      >
-        <form onSubmit={submit} className="space-y-3">
-          <Field label="Title" error={errors.title?.message}>
-            <Input placeholder="Movies to watch" {...register('title')} />
-          </Field>
-          <Field label="Category">
-            <Input placeholder="optional" {...register('category')} />
-          </Field>
-          <Field label="Description">
-            <Textarea placeholder="optional" {...register('description')} />
-          </Field>
-          <Button full type="submit" disabled={isSubmitting}>
-            Create list
-          </Button>
-        </form>
-      </Sheet>
+    <div className="curtain-stagger space-y-3">
+      {(lists ?? []).map((list, i) => {
+        const c = counts?.get(list.id);
+        const forMe = list.owner_user_id === userId;
+        const owner = nameFor(list.owner_user_id);
+        return (
+          <Link
+            key={list.id}
+            to={`/wishlists/${list.id}`}
+            style={{ '--i': i } as React.CSSProperties}
+            className="lift-press flex items-center gap-4 rounded-lg rounded-br-[1.75rem] bg-surface-2 px-5 py-4 shadow-loge"
+          >
+            <span className="text-3xl" aria-hidden="true">
+              {list.emoji ?? '🎁'}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate font-display text-xl font-semibold text-fg">
+                {list.title}
+              </span>
+              <span className="block font-sans text-xs text-muted">
+                {c?.total
+                  ? `${c.total} ${c.total === 1 ? 'wish' : 'wishes'}${
+                      c.got ? ` · ${c.got} done` : ''
+                    }`
+                  : 'nothing on it yet'}
+              </span>
+              <span className="mt-0.5 block font-sans text-[0.6rem] uppercase tracking-[0.14em] text-copper">
+                {forMe
+                  ? 'what you wish for'
+                  : owner
+                    ? `ideas for ${owner}`
+                    : 'ours'}
+              </span>
+            </span>
+            <ChevronRight className="h-4 w-4 shrink-0 text-muted" />
+          </Link>
+        );
+      })}
     </div>
   );
 }
