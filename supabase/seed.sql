@@ -82,6 +82,10 @@ on conflict (user_id) do nothing;
 
 -- A recent last-seen so the offline state reads "last here 2 hours ago"
 -- (rather than a bare "offline") before live presence kicks in.
+-- The migration that adds is_admin runs BEFORE this seed, so it has no rows to
+-- flag. Set it here or local dev has no admin at all.
+update public.couple_members set is_admin = true where role = 'a';
+
 update public.couple_members set last_seen_at = now() - interval '2 hours';
 
 -- ── Currency rates ──
