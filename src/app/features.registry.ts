@@ -103,12 +103,12 @@ const OPEN = new Set([
   'album', // "Albums" — one book per era of ours; took Summer's nav slot
   'language',
   'chalkboard', // "The wall"
-  'know-me',
   'currency',
   'wishlists', // gift lists, each item with its own eye
   'flowers', // a bouquet a month, hers to fill
   // 'summer'   — Türkiye/Georgia is over. Locked, NOT deleted: the code, the
   //              tables and the photos all stay, so the next trip is one line.
+  // 'know-me'  — the daily questions still need some love before she sees them.
   // 'scavenger' — "Date cards" frozen as-is until we rethink it.
 ]);
 
