@@ -96,7 +96,11 @@ export function PolaroidImage({
   return (
     <span
       className={cn(
-        'relative block overflow-hidden rounded-md bg-brown',
+        // No background of its own. The photo's corners are rounded, so
+        // whatever sits behind them shows through — and a colour here meant
+        // that was four dark notches of "app background" punched into the
+        // cream film. Let the plate underneath show instead.
+        'relative block overflow-hidden rounded-md',
         className
       )}
     >
@@ -110,7 +114,9 @@ export function PolaroidImage({
         // The proxy 404'd (a photo from before proxies) → go get the original.
         onError={() => !proxyGone && setProxyGone(true)}
         className={cn(
-          'h-full w-full rounded-md object-cover',
+          // Exactly the container's radius, never more: a photo rounded harder
+          // than the window it sits in cuts its own corners off.
+          'h-full w-full rounded-[inherit] object-cover',
           developed ? 'polaroid-develop' : 'opacity-0'
         )}
       />
