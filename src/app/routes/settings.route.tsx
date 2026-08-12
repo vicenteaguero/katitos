@@ -11,14 +11,10 @@ import {
   Switch,
   toast,
 } from '@kernel/ui';
+import { CURRENCIES } from '@features/currency';
 
-const CURRENCIES = [
-  { code: 'USD', label: '🇺🇸 USD' },
-  { code: 'CLP', label: '🇨🇱 CLP' },
-  { code: 'RUB', label: '🇷🇺 RUB' },
-  { code: 'GEL', label: '🇬🇪 GEL' },
-  { code: 'TRY', label: '🇹🇷 TRY' },
-];
+// Imported, never re-listed: this file used to keep its own copy, so adding a
+// currency meant remembering two places and EUR would have been missing here.
 
 /** Just my emoji + the default converter pair (from → to). Everything else
  *  (name, place, timezone, languages) lives in the DB — only two of us. */
@@ -60,7 +56,7 @@ function MeCard() {
           >
             {CURRENCIES.map((c) => (
               <option key={c.code} value={c.code}>
-                {c.label}
+                {c.flag} {c.code}
               </option>
             ))}
           </Select>
@@ -72,7 +68,7 @@ function MeCard() {
           >
             {CURRENCIES.map((c) => (
               <option key={c.code} value={c.code}>
-                {c.label}
+                {c.flag} {c.code}
               </option>
             ))}
           </Select>
