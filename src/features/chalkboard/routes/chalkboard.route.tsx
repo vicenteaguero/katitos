@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Check, Pencil, Plus } from 'lucide-react';
+import { Check, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import { cn } from '@kernel/lib';
@@ -39,6 +39,18 @@ export function ChalkboardRoute() {
   const [adding, setAdding] = useState(false);
   const [body, setBody] = useState('');
   const [color, setColor] = useState<string>(CHALK_COLORS[0]);
+  // The note the top-bar trash would rub out. Picked by tapping it; dropped by
+  // tapping the slate. The old per-note × was a 24px target sitting on the
+  // corner of a draggable object — half the taps moved the note instead, and
+  // the other half deleted the wrong one.
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const selected = selectedId
+    ? (notes ?? []).find((n) => n.id === selectedId)
+    : undefined;
+  // A note deleted on the other phone must not leave a live trash button
+  // pointing at nothing.
+  if (selectedId && notes && !selected) setSelectedId(null);
 
   const count = notes?.length ?? 0;
   const atMax = count >= MAX_NOTES;
@@ -81,14 +93,31 @@ export function ChalkboardRoute() {
       <span className="font-sans text-xs tabular-nums text-muted">
         {count}/{MAX_NOTES}
       </span>
-      {editing && (
-        <IconButton label="Add note" onClick={openAdd} className="h-9 w-9">
-          <Plus className="h-5 w-5" />
-        </IconButton>
-      )}
+      {/* One slot, two jobs: with a note picked out it becomes the trash, so
+          deleting is a deliberate two-step and never a stray tap. */}
+      {editing &&
+        (selected ? (
+          <IconButton
+            label={`Rub out "${selected.body.slice(0, 20)}"`}
+            onClick={() => {
+              del.mutate(selected.id);
+              setSelectedId(null);
+            }}
+            className="h-9 w-9 bg-accent text-accent-fg"
+          >
+            <Trash2 className="h-5 w-5" />
+          </IconButton>
+        ) : (
+          <IconButton label="Add note" onClick={openAdd} className="h-9 w-9">
+            <Plus className="h-5 w-5" />
+          </IconButton>
+        ))}
       <IconButton
         label={editing ? 'Done' : 'Edit wall'}
-        onClick={() => setEditing((e) => !e)}
+        onClick={() => {
+          setEditing((e) => !e);
+          setSelectedId(null);
+        }}
         className={cn('h-9 w-9', editing && 'bg-accent text-accent-fg')}
       >
         {editing ? (
@@ -98,7 +127,7 @@ export function ChalkboardRoute() {
         )}
       </IconButton>
     </div>,
-    [editing, atMax, count]
+    [editing, atMax, count, selected?.id, selected?.body]
   );
 
   // One fixed blackboard: this route never scrolls. The matte-slate board takes
@@ -112,6 +141,11 @@ export function ChalkboardRoute() {
           'relative min-h-0 flex-1 overflow-hidden rounded-lg transition-shadow',
           editing && 'ring-1 ring-gold/30'
         )}
+        onPointerDown={(e) => {
+          // Only a tap on the slate itself — a tap that lands on a note is the
+          // note's own business.
+          if (e.target === e.currentTarget) setSelectedId(null);
+        }}
         style={{
           backgroundColor: '#1a1d1f',
           // Three layers, in paint order: the darkening wash, the real slate,
@@ -135,14 +169,14 @@ export function ChalkboardRoute() {
             note={n}
             boardRef={boardRef}
             editing={editing}
-            canDelete
+            selected={selectedId === n.id}
+            onSelect={() => setSelectedId((id) => (id === n.id ? null : n.id))}
             onMove={(x, y) => move.mutate({ id: n.id, x, y })}
             onTransform={({ scale, rotation, width }) =>
               // One write, not two: a pinch used to fire a resize AND a rotate
               // mutation, each followed by its own invalidation and refetch.
               transform.mutate({ id: n.id, scale, rotation, width })
             }
-            onDelete={() => del.mutate(n.id)}
           />
         ))}
       </div>
