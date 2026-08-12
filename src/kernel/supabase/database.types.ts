@@ -2029,32 +2029,53 @@ export type Database = {
         Row: {
           added_by: string
           created_at: string
+          currency: string | null
           description: string | null
+          got: boolean
           id: string
           image_path: string | null
           link: string | null
           list_id: string
+          position: number
+          price: number | null
+          priority: number
           title: string
+          updated_at: string
+          visible: boolean
         }
         Insert: {
           added_by?: string
           created_at?: string
+          currency?: string | null
           description?: string | null
+          got?: boolean
           id?: string
           image_path?: string | null
           link?: string | null
           list_id: string
+          position?: number
+          price?: number | null
+          priority?: number
           title: string
+          updated_at?: string
+          visible?: boolean
         }
         Update: {
           added_by?: string
           created_at?: string
+          currency?: string | null
           description?: string | null
+          got?: boolean
           id?: string
           image_path?: string | null
           link?: string | null
           list_id?: string
+          position?: number
+          price?: number | null
+          priority?: number
           title?: string
+          updated_at?: string
+          visible?: boolean
         }
         Relationships: [
           {
@@ -2101,7 +2122,10 @@ export type Database = {
           created_at: string
           created_by: string
           description: string | null
+          emoji: string | null
           id: string
+          owner_user_id: string | null
+          position: number
           title: string
         }
         Insert: {
@@ -2109,7 +2133,10 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string | null
+          emoji?: string | null
           id?: string
+          owner_user_id?: string | null
+          position?: number
           title: string
         }
         Update: {
@@ -2117,7 +2144,10 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string | null
+          emoji?: string | null
           id?: string
+          owner_user_id?: string | null
+          position?: number
           title?: string
         }
         Relationships: []
