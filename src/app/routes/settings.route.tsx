@@ -11,7 +11,7 @@ import {
   Switch,
   toast,
 } from '@kernel/ui';
-import { CURRENCIES } from '@features/currency';
+import { CURRENCIES } from '@kernel/lib';
 
 // Imported, never re-listed: this file used to keep its own copy, so adding a
 // currency meant remembering two places and EUR would have been missing here.
