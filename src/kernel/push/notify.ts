@@ -11,6 +11,7 @@ export type NotifyKind =
   | 'wall' // a new note on the wall
   | 'album' // a photo added to a book
   | 'wishlist' // something added to a gift list
+  | 'flower' // this month's bouquet arrived
   | 'know-me' // tonight's answers are ready
   | 'monthsversary' // the 15th, wherever either of us is
   | 'update' // a new version, with a changelog to read
@@ -30,6 +31,7 @@ const DELIVERED: ReadonlySet<NotifyKind> = new Set<NotifyKind>([
   'wall',
   'album',
   'wishlist',
+  'flower',
   'know-me',
   'monthsversary',
   'update',
@@ -43,6 +45,7 @@ const PRESENTATION: Record<NotifyKind, { tag: string; vibrate?: number[] }> = {
   wall: { tag: 'wall', vibrate: [0, 25] },
   album: { tag: 'album' },
   wishlist: { tag: 'wishlist' },
+  flower: { tag: 'flower', vibrate: [0, 30, 40, 30] },
   'know-me': { tag: 'know-me' },
   monthsversary: { tag: 'monthsversary', vibrate: [0, 50, 80, 50, 80, 50] },
   update: { tag: 'update', vibrate: [0, 30, 40, 30] },
