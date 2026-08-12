@@ -23,21 +23,37 @@ export function useSignedUrl(
   });
 }
 
+interface ProxiedOptions {
+  /** Sign the small `thumbs/` proxy. */
+  proxy?: boolean;
+  /** Sign the full-resolution original. */
+  full?: boolean;
+}
+
 /**
- * Signed URLs for both the small proxy and the full original. Thumbnails use
+ * Signed URLs for the small proxy and/or the full original. Thumbnails use
  * `proxyUrl` (fast); a full-screen view or download uses `fullUrl`. If a photo
  * predates proxies, the proxy URL simply fails to load and the consumer falls
  * back to `fullUrl`.
+ *
+ * Both halves default to on for backwards compatibility, but callers should say
+ * what they need: a list view that only ever renders thumbnails was signing the
+ * full-resolution original for every single photo and throwing it away, which
+ * doubled the request count of the slowest screen in the app.
  */
 export function useProxiedUrl(
   bucket: BucketName,
-  path: string | null | undefined
+  path: string | null | undefined,
+  { proxy = true, full = true }: ProxiedOptions = {}
 ) {
-  const proxy = useSignedUrl(bucket, path ? proxyPath(path) : undefined);
-  const full = useSignedUrl(bucket, path);
+  const proxyQ = useSignedUrl(
+    bucket,
+    path && proxy ? proxyPath(path) : undefined
+  );
+  const fullQ = useSignedUrl(bucket, path && full ? path : undefined);
   return {
-    proxyUrl: proxy.data,
-    fullUrl: full.data,
-    isLoading: proxy.isLoading || full.isLoading,
+    proxyUrl: proxyQ.data,
+    fullUrl: fullQ.data,
+    isLoading: proxyQ.isLoading || fullQ.isLoading,
   };
 }
