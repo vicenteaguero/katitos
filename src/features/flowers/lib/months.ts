@@ -43,6 +43,45 @@ export interface MonthSlot {
   flower: Flower | null;
 }
 
+/**
+ * Every month from June 2025 to this one, newest first — the shape the page has
+ * before anything has loaded.
+ *
+ * The loading state used to be six anonymous tiles, so the page jumped from a
+ * short block to a tall one the moment the rows landed. Laying out the real
+ * months up front means the skeleton IS the page, and only the photos fade in.
+ */
+export function allMonthsToNow(now: DateTime = DateTime.now()): string[] {
+  const keys: string[] = [];
+  let cursor = DateTime.fromObject({
+    year: FIRST_MONTH.year,
+    month: FIRST_MONTH.month,
+    day: 1,
+  });
+  const end = now.startOf('month');
+  while (cursor <= end) {
+    keys.push(cursor.toFormat('yyyy-MM-01'));
+    cursor = cursor.plus({ months: 1 });
+  }
+  return keys.reverse();
+}
+
+/** Those months grouped into years, newest year first — skeleton scaffolding. */
+export function skeletonYears(
+  now: DateTime = DateTime.now()
+): { year: number; months: string[] }[] {
+  const byYear = new Map<number, string[]>();
+  for (const key of allMonthsToNow(now)) {
+    const year = Number(key.slice(0, 4));
+    const list = byYear.get(year);
+    if (list) list.push(key);
+    else byYear.set(year, [key]);
+  }
+  return [...byYear.entries()]
+    .sort((a, b) => b[0] - a[0])
+    .map(([year, months]) => ({ year, months }));
+}
+
 export interface FlowerYear {
   year: number;
   /** In edit mode every month in range; otherwise only the filled ones. */
