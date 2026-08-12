@@ -75,64 +75,9 @@
   }
 }
 
-/* ── The lightbox ─────────────────────────────────────────────────────────── */
-
-/* The house dims to black behind the held photo. */
-@keyframes viewer-backdrop-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-.viewer-backdrop-in {
-  animation: viewer-backdrop-in 240ms var(--ease-settle) both;
-}
-
-/* The instant photo lifts off the wall into the hand. */
-@keyframes viewer-plate-in {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-.viewer-plate-in {
-  animation: viewer-plate-in 340ms var(--ease-settle) both;
-}
-
-/* The header/footer chrome fades up a beat after the photo. */
-@keyframes viewer-chrome-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-.viewer-chrome-in {
-  animation: viewer-chrome-in 320ms var(--ease-settle) both;
-  animation-delay: 120ms;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .polaroid-sheen {
     animation: none !important;
     opacity: 0 !important;
-  }
-  .viewer-plate-in {
-    animation: viewer-backdrop-in 200ms ease both !important;
-    transform: none !important;
-  }
-  .viewer-chrome-in {
-    animation: viewer-backdrop-in 200ms ease both !important;
-    animation-delay: 0ms !important;
-    transform: none !important;
   }
 }
