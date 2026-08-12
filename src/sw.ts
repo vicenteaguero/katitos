@@ -124,6 +124,10 @@ interface PushPayload {
   body?: string;
   url?: string;
   tag?: string;
+  /** A picture (Android renders it; iOS ignores the field). */
+  image?: string;
+  /** Per-kind buzz pattern, so a love ping feels different to a wall note. */
+  vibrate?: number[];
 }
 
 self.addEventListener('push', (event) => {
@@ -140,8 +144,13 @@ self.addEventListener('push', (event) => {
       tag: payload.tag,
       icon: '/icons/icon-192.png',
       badge: '/icons/icon-192.png',
+      // A second ping of the same kind should replace the first quietly rather
+      // than stack — except it still needs to buzz, hence renotify.
+      renotify: !!payload.tag,
+      ...(payload.image ? { image: payload.image } : {}),
+      ...(payload.vibrate ? { vibrate: payload.vibrate } : {}),
       data: { url: payload.url ?? '/' },
-    })
+    } as NotificationOptions)
   );
 });
 
