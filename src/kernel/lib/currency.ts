@@ -61,3 +61,42 @@ export function formatMoney(amount: number, currency: CurrencyCode): string {
     return `${amount.toFixed(1)} ${currency}`;
   }
 }
+
+/**
+ * How many decimals a currency is actually spoken in.
+ *
+ * Nobody says "one thousand two hundred point four pesos" — CLP and RUB are
+ * counted whole. The others carry cents.
+ */
+const DECIMALS: Record<string, number> = {
+  CLP: 0,
+  RUB: 0,
+  USD: 2,
+  EUR: 2,
+  GEL: 2,
+  TRY: 2,
+};
+
+/**
+ * Just the number, grouped and rounded the way that currency is spoken —
+ * no symbol, no code.
+ *
+ * `formatMoney` uses Intl's `style: 'currency'`, which PREFIXES the code
+ * ("CLP 1.234,5"). Every screen then appended the code again, which is where
+ * "CLP 123.4 CLP" came from. Callers pair this with their own code label so
+ * the code appears exactly once, after the figure.
+ *
+ * `formatMoney` is deliberately left alone: locked features still compile
+ * against it, and this release does not touch them.
+ */
+export function formatAmount(amount: number, currency: CurrencyCode): string {
+  const digits = DECIMALS[currency] ?? 2;
+  try {
+    return new Intl.NumberFormat(undefined, {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    }).format(amount);
+  } catch {
+    return amount.toFixed(digits);
+  }
+}
