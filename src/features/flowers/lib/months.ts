@@ -9,6 +9,17 @@ export function monthKey(date: string): string {
   return `${date.slice(0, 7)}-01`;
 }
 
+/**
+ * This month, as 'YYYY-MM', in UTC.
+ *
+ * Deliberately UTC and not either of our zones: it decides whether adding a
+ * bouquet is news worth a notification, and that answer should not depend on
+ * which of us is holding the phone.
+ */
+export function currentMonthUtc(now: DateTime = DateTime.utc()): string {
+  return now.toUTC().toFormat('yyyy-MM');
+}
+
 /** 'Apr 2026' — the caption printed on the polaroid's chin. */
 export function monthLabel(date: string): string {
   return DateTime.fromISO(date).toFormat('LLL yyyy');
