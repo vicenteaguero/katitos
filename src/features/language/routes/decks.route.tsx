@@ -17,6 +17,8 @@ import {
 import { useDecks, deckKeys } from '../api/decks.queries';
 import { useCreateDeck } from '../api/decks.mutations';
 import { LANG_LABELS, type Lang } from '../types';
+import { StudyBanner } from '../components/study-banner';
+import { WrongList } from '../components/wrong-list';
 
 /** Deck browser — "a course your love built for you", per language. */
 export function DecksRoute() {
@@ -61,10 +63,10 @@ export function DecksRoute() {
         options={[
           { value: 'ru', label: LANG_LABELS.ru },
           { value: 'es', label: LANG_LABELS.es },
-          { value: 'tr', label: LANG_LABELS.tr },
-          { value: 'ka', label: LANG_LABELS.ka },
         ]}
       />
+
+      {lang === 'ru' && <StudyBanner />}
 
       <Button full variant="secondary" onClick={() => setOpen(true)}>
         <Plus size={16} /> Build a deck for your love
@@ -97,6 +99,8 @@ export function DecksRoute() {
           ))}
         </div>
       )}
+
+      {lang === 'ru' && <WrongList />}
 
       <Sheet
         open={open}
