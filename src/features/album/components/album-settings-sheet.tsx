@@ -3,6 +3,7 @@ import { Trash2 } from 'lucide-react';
 import {
   Button,
   FieldRow,
+  Fieldset,
   Input,
   PhotoPicker,
   Sheet,
@@ -92,24 +93,30 @@ export function AlbumSettingsSheet({
           placeholder="What this album is called"
           className="font-display text-lg"
         />
-        {/* From / until, side by side and nothing else — the dates read as a
-            range without a word saying so. */}
-        <FieldRow>
-          <Input
-            type="date"
-            aria-label="From"
-            value={startsOn}
-            onChange={(e) => setStartsOn(e.target.value)}
-          />
-          <Input
-            type="date"
-            aria-label="Until"
-            value={endsOn}
-            onChange={(e) => setEndsOn(e.target.value)}
-          />
-        </FieldRow>
+        {/* One caption for the pair, because two identical date boxes side by
+            side with nothing said about either is a riddle, not a saving. */}
+        <Fieldset label="From — until">
+          <FieldRow>
+            <Input
+              type="date"
+              aria-label="From"
+              value={startsOn}
+              onChange={(e) => setStartsOn(e.target.value)}
+            />
+            <Input
+              type="date"
+              aria-label="Until"
+              value={endsOn}
+              onChange={(e) => setEndsOn(e.target.value)}
+            />
+          </FieldRow>
+        </Fieldset>
 
-        <div className="flex items-center gap-3 rounded-lg bg-surface px-3 py-2">
+        {/* Two settings, one shape: what it is on the left, the control on the
+            right. The archive toggle used to sit on its own with no words at
+            all next to it — a switch for nothing in particular. */}
+        <div className="flex items-center justify-between gap-3 rounded-lg bg-surface px-3 py-2">
+          <span className="font-sans text-sm text-fg">Cover</span>
           <PhotoPicker
             value={cover}
             onChange={(blob) => {
@@ -117,23 +124,30 @@ export function AlbumSettingsSheet({
               if (blob) setCover.mutate({ id: book.id, blob });
             }}
           />
-          <span className="font-sans text-sm text-fg">Cover</span>
         </div>
 
-        <Switch
-          checked={book.archived}
-          onChange={(next) => update.mutate({ id: book.id, archived: next })}
-          label="Put it away"
-        />
+        <div className="flex items-center justify-between gap-3 rounded-lg bg-surface px-3 py-2">
+          <span className="min-w-0 font-sans text-sm text-fg">
+            Put it away
+            <span className="block font-sans text-xs text-muted">
+              off the shelf, nothing lost
+            </span>
+          </span>
+          <Switch
+            checked={book.archived}
+            onChange={(next) => update.mutate({ id: book.id, archived: next })}
+            label="Put it away"
+          />
+        </div>
 
         {page && (
-          <div className="space-y-2 pt-1">
+          <Fieldset label={`Page ${pageNumber}`}>
             <FieldRow>
               <Input
                 value={pageTitle}
-                aria-label={`Page ${pageNumber}`}
+                aria-label={`What page ${pageNumber} is`}
                 onChange={(e) => setPageTitle(e.target.value)}
-                placeholder={`Page ${pageNumber}`}
+                placeholder="the morning we missed the boat"
               />
               <Input
                 type="date"
@@ -142,7 +156,7 @@ export function AlbumSettingsSheet({
                 onChange={(e) => setPageDate(e.target.value)}
               />
             </FieldRow>
-          </div>
+          </Fieldset>
         )}
 
         <Button full onClick={save} disabled={update.isPending}>
