@@ -15,13 +15,12 @@ import {
   handleTransform,
   MAX_SCALE,
   MIN_SCALE,
+  stickerWidth,
   type HandleBase,
 } from './sticker-math';
 
 const clamp = (n: number, lo: number, hi: number) =>
   Math.min(hi, Math.max(lo, n));
-/** Photo-sticker width as a % of the page, at scale 1. */
-export const BASE_W = 42;
 
 interface Transform {
   x: number;
@@ -293,7 +292,13 @@ function Sticker({
               fontWeight: sticker.font_weight,
               maxWidth: '80%',
             }
-          : { width: `${BASE_W * view.scale}%` }),
+          : {
+              width: `${
+                stickerWidth(sticker.photo?.width, sticker.photo?.height) *
+                100 *
+                view.scale
+              }%`,
+            }),
       }}
     >
       {isText ? (
