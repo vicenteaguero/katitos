@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { compareBuilds, type BuildStamp } from './build-status';
+import {
+  compareBuilds,
+  shouldAutoUpdate,
+  type BuildStamp,
+} from './build-status';
 
 const stamp = (over: Partial<BuildStamp> = {}): BuildStamp => ({
   sha: 'a'.repeat(40),
@@ -61,5 +65,39 @@ describe('compareBuilds', () => {
     const local = stamp({ dirty: true });
     expect(compareBuilds(local, stamp({ sha: 'd'.repeat(40) }))).toBe('dirty');
     expect(compareBuilds(local, null, { checking: true })).toBe('dirty');
+  });
+});
+
+/**
+ * Updating without being asked.
+ *
+ * The danger is not being too eager, it is looping: a build that installs but
+ * never takes over would reload the app forever, and on a phone that looks
+ * exactly like the app being broken.
+ */
+describe('shouldAutoUpdate', () => {
+  const server = stamp({ sha: 'b'.repeat(40) });
+
+  it('takes a version it has not tried yet', () => {
+    expect(shouldAutoUpdate('stale', server, null)).toBe(true);
+  });
+
+  it('never tries the same version twice', () => {
+    expect(shouldAutoUpdate('stale', server, server.sha)).toBe(false);
+  });
+
+  it('tries again when the server moves on to another one', () => {
+    expect(shouldAutoUpdate('stale', server, 'c'.repeat(40))).toBe(true);
+  });
+
+  it('does nothing while up to date, checking, or offline', () => {
+    expect(shouldAutoUpdate('current', server, null)).toBe(false);
+    expect(shouldAutoUpdate('checking', null, null)).toBe(false);
+    expect(shouldAutoUpdate('unknown', null, null)).toBe(false);
+  });
+
+  it('leaves a build with uncommitted work alone', () => {
+    // That is someone's own build in their hands; do not yank it away.
+    expect(shouldAutoUpdate('dirty', server, null)).toBe(false);
   });
 });
