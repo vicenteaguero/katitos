@@ -10,6 +10,13 @@ import type {
   UnitWithLessons,
 } from '../types';
 
+/** Stable reference: an inline arrow re-runs `select` on every render. */
+const progressByLesson = (rows: LessonProgress[]) => {
+  const out = new Map<string, LessonProgress>();
+  for (const row of rows) out.set(row.lesson_id, row);
+  return out;
+};
+
 /** Every course, newest arrangement first. */
 export function useCourses(target?: TargetLang) {
   return useQuery({
@@ -105,11 +112,7 @@ export function useMyProgress() {
       if (error) throw error;
       return data ?? [];
     },
-    select: (rows) => {
-      const out = new Map<string, LessonProgress>();
-      for (const row of rows) out.set(row.lesson_id, row);
-      return out;
-    },
+    select: progressByLesson,
   });
 }
 
