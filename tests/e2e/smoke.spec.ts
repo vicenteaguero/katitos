@@ -1,4 +1,19 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+/**
+ * Get the "What's new" modal out of the way.
+ *
+ * It re-arms itself on every release — that is the point of it — so any test
+ * that clicks something would otherwise start failing the moment a changelog
+ * entry is written, which is exactly what happened.
+ */
+async function dismissChangelog(page: Page) {
+  const showMe = page.getByRole('button', { name: 'Show me' });
+  if (await showMe.isVisible().catch(() => false)) {
+    await showMe.click();
+    await expect(showMe).toBeHidden();
+  }
+}
 
 // Every feature's basePath + the core routes. Visiting each must render the
 // authed shell with no uncaught exceptions.
@@ -18,6 +33,9 @@ const ROUTES = [
   '/scavenger',
   '/wishlists',
   '/language',
+  '/language/dictionary',
+  '/language/alphabet',
+  '/language/study',
   '/together',
   '/distance',
   '/timezone',
@@ -62,6 +80,8 @@ test('chalkboard — write a note and see it on the wall', async ({ page }) => {
     timeout: 20_000,
   });
 
+  await dismissChangelog(page);
+
   const text = `e2e ${Date.now()}`;
   // Adding lives in edit mode now (the header pencil → +), no FAB over the board.
   await page.getByRole('button', { name: 'Edit wall' }).click();
@@ -74,7 +94,7 @@ test('chalkboard — write a note and see it on the wall', async ({ page }) => {
   }
 
   await page.getByRole('button', { name: 'Add note' }).click();
-  await page.getByPlaceholder('te amo…').fill(text);
+  await page.getByPlaceholder('Write here…').fill(text);
   await page.getByRole('button', { name: 'Add to wall' }).click();
 
   await expect(page.getByText(text)).toBeVisible({ timeout: 10_000 });
