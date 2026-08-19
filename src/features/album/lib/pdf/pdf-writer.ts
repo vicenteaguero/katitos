@@ -80,7 +80,13 @@ export class PdfDoc {
       at += bytes.length;
     };
 
-    push('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+    // The second line must be a comment of RAW bytes above 127 — it is how a
+    // PDF tells every tool downstream "this file is binary, do not line-ending
+    // convert it". Written as bytes, not through `TextEncoder`: encoding the
+    // string '\xE2\xE3\xCF\xD3' as UTF-8 turns four characters into eight
+    // bytes, which is not the marker at all.
+    push('%PDF-1.4\n');
+    push(new Uint8Array([0x25, 0xe2, 0xe3, 0xcf, 0xd3, 0x0a]));
     this.objects.forEach((obj, i) => {
       offsets[i] = at;
       // Every page needs its parent, which only exists once the tree is built.
