@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import { Check, RotateCcw, Volume2 } from 'lucide-react';
 import { BUCKETS } from '@kernel/storage';
 import { cn } from '@kernel/lib';
-import { AudioFromPath, Button, Empty, Input, LoadingScreen } from '@kernel/ui';
+import { PlayButton, Button, Empty, Input, LoadingScreen } from '@kernel/ui';
 import { useAllPhrases } from '../api/decks.queries';
 import { useGradePhrase, useMyReviews } from '../api/reviews';
 import { buildSession, type Grade } from '../lib/srs';
@@ -131,7 +131,7 @@ export function StudyRoute() {
             <div className="space-y-3">
               <Volume2 className="mx-auto h-6 w-6 text-brown/60" />
               {card.audio_path ? (
-                <AudioFromPath
+                <PlayButton
                   bucket={BUCKETS.languageAudio}
                   path={card.audio_path}
                   className="h-9 w-full"
