@@ -184,6 +184,21 @@ function MediaBlock({ media }: { media: Media }) {
   if (media.kind === 'youtube' && media.url) return <YouTube media={media} />;
   if (media.kind === 'image' && media.storage_path)
     return <StoredImage path={media.storage_path} title={media.title} />;
+  // A recording she attached should play here, not open in another app.
+  if (media.kind === 'audio' && media.storage_path) {
+    return (
+      <div className="flex items-center gap-2.5 rounded-lg bg-surface-2 px-3 py-2">
+        <PlayButton
+          bucket={BUCKETS.languageMedia}
+          path={media.storage_path}
+          size="sm"
+        />
+        <span className="min-w-0 flex-1 truncate font-sans text-sm text-fg">
+          {media.title ?? 'Listen'}
+        </span>
+      </div>
+    );
+  }
   return <FileCard media={media} />;
 }
 
