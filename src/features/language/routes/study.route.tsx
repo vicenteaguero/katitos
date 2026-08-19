@@ -6,11 +6,11 @@ import { cn } from '@kernel/lib';
 import { PlayButton, Button, Empty, Input, LoadingScreen } from '@kernel/ui';
 import { useAllVocab, useGradeVocab, useMyReviews } from '../api/vocab';
 import { buildSession, type Grade } from '../lib/srs';
-import { CyrillicKeys } from '../components/cyrillic-keys';
+import { LetterKeys } from '../components/letter-keys';
 import { answerMatches } from '../lib/answer-match';
-import { useLangPrefs } from '../lib/lang-prefs';
-import { headword, meaningOf } from '../lib/pick';
-import type { Vocab } from '../types';
+import { useLanguages } from '../lib/languages';
+import { headword, meaningOf, noteOf, termOf, termLangOf } from '../lib/pick';
+import { LANG_NATIVE_LABELS, type Vocab } from '../types';
 
 /** The four ways a card can be asked. */
 type Mode = 'recall' | 'choice' | 'type' | 'listen';
@@ -23,10 +23,10 @@ type Mode = 'recall' | 'choice' | 'type' | 'listen';
  * forgot everything the moment you left.
  */
 export function StudyRoute() {
-  const { data: words, isLoading } = useAllVocab('ru');
+  const { native: support, learning } = useLanguages();
+  const { data: words, isLoading } = useAllVocab(learning);
   const { data: reviews } = useMyReviews();
   const grade = useGradeVocab();
-  const support = useLangPrefs((s) => s.supportLang);
 
   const [i, setI] = useState(0);
   const [revealed, setRevealed] = useState(false);
@@ -165,23 +165,23 @@ export function StudyRoute() {
             </>
           ) : (
             <p className="font-display text-3xl font-semibold text-brown">
-              {meaningOf(card, support) || card.ru}
+              {meaningOf(card, support) || headword(card)}
             </p>
           )}
 
           {revealed && (
             <div className="km-reveal mt-5 space-y-1 border-t border-brown/15 pt-4">
               <p className="font-display text-2xl text-brown">
-                {mode === 'recall' ? meaningOf(card, support) : card.ru}
+                {mode === 'recall' ? meaningOf(card, support) : headword(card)}
               </p>
               {card.transliteration && mode !== 'recall' && (
                 <p className="font-display text-sm italic text-copper">
                   {card.transliteration}
                 </p>
               )}
-              {(support === 'es' ? card.notes_es : card.notes_en) && (
+              {noteOf(card, support) && (
                 <p className="font-sans text-xs italic text-brown/70">
-                  {support === 'es' ? card.notes_es : card.notes_en}
+                  {noteOf(card, support)}
                 </p>
               )}
             </div>
@@ -204,7 +204,7 @@ export function StudyRoute() {
                   picked === c.id && 'ring-1 ring-gold'
                 )}
               >
-                {c.ru}
+                {headword(c)}
               </button>
             ))}
           </div>
@@ -215,10 +215,11 @@ export function StudyRoute() {
             <Input
               value={typed}
               readOnly
-              placeholder="type it in Russian…"
+              placeholder={`type it in ${LANG_NATIVE_LABELS[termLangOf(card)]}…`}
               className="text-center font-display text-xl"
             />
-            <CyrillicKeys
+            <LetterKeys
+              lang={termLangOf(card)}
               onKey={(ch) => setTyped((t) => t + ch)}
               onBackspace={() => setTyped((t) => t.slice(0, -1))}
             />
@@ -238,10 +239,12 @@ export function StudyRoute() {
           <p
             className={cn(
               'text-center font-sans text-sm',
-              answerMatches(typed, card.ru) ? 'text-success' : 'text-danger'
+              answerMatches(typed, termOf(card))
+                ? 'text-success'
+                : 'text-danger'
             )}
           >
-            {answerMatches(typed, card.ru)
+            {answerMatches(typed, termOf(card))
               ? 'Exactly right 🌟'
               : `You wrote "${typed}"`}
           </p>
@@ -274,14 +277,16 @@ function modeFor(card: Vocab, index: number): Mode {
   const wheel: Mode[] = ['recall', 'choice', 'type', 'recall', 'listen'];
   const want = wheel[index % wheel.length];
   if (want === 'listen' && !card.audio_path) return 'recall';
-  if (want === 'choice' && !card.en && !card.es) return 'recall';
-  if (want === 'type' && card.ru.length > 24) return 'recall';
+  // A card with nothing but the word itself can only be recalled — asking
+  // "which of these means it" with no meaning to show is a blank screen.
+  if (want === 'choice' && !meaningOf(card, 'en')) return 'recall';
+  if (want === 'type' && termOf(card).length > 24) return 'recall';
   return want;
 }
 
 /** Three wrong answers and the right one, stable for a given card. */
 function choicesFor(card: Vocab, all: Vocab[], seed: number): Vocab[] {
-  const others = all.filter((p) => p.id !== card.id && p.ru);
+  const others = all.filter((p) => p.id !== card.id && termOf(p));
   const picked: Vocab[] = [];
   for (let k = 0; k < others.length && picked.length < 3; k++) {
     // Deterministic stride so the options don't reshuffle on every render.
