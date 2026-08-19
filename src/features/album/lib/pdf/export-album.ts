@@ -5,6 +5,7 @@ import { mapWithConcurrency } from '../upload-queue';
 import {
   filmLayout,
   layoutSticker,
+  offsetInFrame,
   PAGE_H,
   PAGE_W,
   stickerMatrix,
@@ -223,10 +224,13 @@ export async function buildAlbumPdf(
         };
         ops += fillRect(0, 0, 1, 1, [0.992, 0.98, 0.957], stickerMatrix(plate));
         const window: Box = {
-          cx:
-            box.cx + (film.window.x + film.window.size / 2 - film.plate.w / 2),
-          cy:
-            box.cy + (film.window.y + film.window.size / 2 - film.plate.h / 2),
+          // Offset along the PLATE's axes, not the page's — a tilted polaroid
+          // used to print with its photograph slid off the frame.
+          ...offsetInFrame(
+            box,
+            film.window.x + film.window.size / 2 - film.plate.w / 2,
+            film.window.y + film.window.size / 2 - film.plate.h / 2
+          ),
           w: film.window.size,
           h: film.window.size,
           rotation: box.rotation,
@@ -250,11 +254,11 @@ export async function buildAlbumPdf(
           images.push({ name: capName, ref: capRef });
           // Fit the words to the photo's width, but never stretch them past it.
           const capW = Math.min(box.w * 0.92, img.width / TEXT_OVERSAMPLE);
+          const capH = (capW * img.height) / img.width;
           const capBox: Box = {
-            cx: box.cx,
-            cy: box.cy - box.h / 2 - (capW * img.height) / img.width,
+            ...offsetInFrame(box, 0, -box.h / 2 - capH),
             w: capW,
-            h: (capW * img.height) / img.width,
+            h: capH,
             rotation: box.rotation,
           };
           ops += drawImage(capName, stickerMatrix(capBox));
