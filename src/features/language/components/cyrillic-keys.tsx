@@ -51,6 +51,17 @@ export function CyrillicKeys({
         >
           ё
         </button>
+        {/* The combining acute. She marks where the stress falls — за́мок is a
+            castle, замо́к is a lock — and there is no other way to type it on a
+            phone. Tap it straight after the vowel it belongs to. */}
+        <button
+          type="button"
+          onClick={() => onKey('\u0301')}
+          aria-label="Stress the letter before"
+          className="lift-press h-9 w-10 rounded-md bg-surface-2 font-sans text-sm text-fg active:bg-accent active:text-accent-fg"
+        >
+          {'\u25CC\u0301'}
+        </button>
         <button
           type="button"
           onClick={() => onKey(' ')}
