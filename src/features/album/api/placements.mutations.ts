@@ -13,7 +13,12 @@ import type {
   StickerFont,
   StickerFrame,
 } from '../types';
-import { nextZBack, nextZFront } from '../components/photo-book/sticker-math';
+import {
+  needsNormalize,
+  nextZBack,
+  nextZFront,
+  normalizeZ,
+} from '../components/photo-book/sticker-math';
 
 type Pages = AlbumPageWithPhotos[];
 
@@ -110,7 +115,28 @@ export function useRestack() {
       // write and picked a depth one higher — so the screen and the database
       // quietly disagreed, and every tap inflated `z` twice as fast as it should.
       const zs = depthsOnPage(qc, v.bookId, v.pageId);
-      const z = v.to === 'front' ? nextZFront(zs) : nextZBack(zs);
+
+      // Depths only ever grow apart — front, back, front — so after enough
+      // fiddling the range drifts. Tidy the page back to 0..n-1 before it gets
+      // silly; nothing moves, the order is exactly what it was.
+      if (needsNormalize(zs)) {
+        const pages = qc.getQueryData<Pages>(qk.album.pages(v.bookId));
+        const page = pages?.find((p) => p.id === v.pageId);
+        if (page) {
+          await Promise.all(
+            normalizeZ(page.stickers).map((row) =>
+              supabase
+                .from('album_placements')
+                .update({ z: row.z })
+                .eq('id', row.id)
+            )
+          );
+          await qc.invalidateQueries({ queryKey: qk.album.pages(v.bookId) });
+        }
+      }
+
+      const fresh = depthsOnPage(qc, v.bookId, v.pageId);
+      const z = v.to === 'front' ? nextZFront(fresh) : nextZBack(fresh);
       const previous = patchSticker(qc, v.bookId, v.id, { z });
       const { error } = await supabase
         .from('album_placements')
