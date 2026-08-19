@@ -29,7 +29,10 @@ export function useVocab(target?: TargetLang, search?: string) {
       let q = supabase.from('lang_vocab').select('*');
       if (target) q = q.eq('term_lang', target);
       if (search?.trim()) {
-        const term = `%${search.trim()}%`;
+        // Quoted and escaped. PostgREST's `or=()` is a comma-separated list,
+        // so an unescaped comma in what she types — "мама, папа" — split the
+        // filter into nonsense and the whole query came back 400.
+        const term = `"%${search.trim().replace(/["\\]/g, '\\$&')}%"`;
         q = q.or(`ru.ilike.${term},en.ilike.${term},es.ilike.${term}`);
       }
       const { data, error } = await q
@@ -74,6 +77,16 @@ export function useAddVocab() {
       tags?: string[];
       audio?: AudioClip | null;
     }) => {
+      // One entry per word is the promise this table makes, and the quickest
+      // way to break it is the add-without-leaving-the-lesson shortcut.
+      const { data: existing } = await supabase
+        .from('lang_vocab')
+        .select('id')
+        .eq('term_lang', v.termLang)
+        .ilike('ru', v.ru.trim())
+        .limit(1);
+      if (existing?.length) return existing[0].id as string;
+
       const { data, error } = await supabase
         .from('lang_vocab')
         .insert({
