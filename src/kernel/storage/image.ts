@@ -75,19 +75,23 @@ export async function downscaleImage(
   blob: Blob,
   { maxDim = 512, quality = 0.72 }: DownscaleOptions = {}
 ): Promise<Blob> {
-  const bitmap = await createImageBitmap(blob);
+  // Through `decodeImage`, NOT `createImageBitmap` directly: older iOS Safari
+  // throws on HEIC, and HEIC is exactly what her camera roll hands us. Calling
+  // the raw API here meant every proxy for an iPhone photo quietly failed and
+  // the full-size original got served instead.
+  const img = await decodeImage(blob);
   try {
-    const longest = Math.max(bitmap.width, bitmap.height) || 1;
+    const longest = Math.max(img.width, img.height) || 1;
     const scale = Math.min(1, maxDim / longest);
-    const w = Math.max(1, Math.round(bitmap.width * scale));
-    const h = Math.max(1, Math.round(bitmap.height * scale));
+    const w = Math.max(1, Math.round(img.width * scale));
+    const h = Math.max(1, Math.round(img.height * scale));
 
     const canvas = document.createElement('canvas');
     canvas.width = w;
     canvas.height = h;
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('no 2d context');
-    ctx.drawImage(bitmap, 0, 0, w, h);
+    ctx.drawImage(img.source, 0, 0, w, h);
 
     const encode = (type: string, q: number) =>
       new Promise<Blob | null>((resolve) =>
@@ -114,6 +118,18 @@ export async function downscaleImage(
     // the original, which is smaller than a lossless re-encode of it.
     throw new Error('no usable proxy encoding');
   } finally {
-    bitmap.close?.();
+    img.release();
+  }
+}
+
+/** Natural pixel size of a photo, for laying it out without cropping it. */
+export async function imageSize(
+  blob: Blob
+): Promise<{ width: number; height: number }> {
+  const img = await decodeImage(blob);
+  try {
+    return { width: img.width, height: img.height };
+  } finally {
+    img.release();
   }
 }
