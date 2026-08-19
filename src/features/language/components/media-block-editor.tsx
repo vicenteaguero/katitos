@@ -9,7 +9,7 @@ import {
   Sheet,
   Spinner,
 } from '@kernel/ui';
-import { useAddLink, useUploadMedia } from '../api/media';
+import { useAddLink, useDeleteMedia, useUploadMedia } from '../api/media';
 import type { Media } from '../types';
 
 /**
@@ -39,6 +39,7 @@ export function MediaBlockEditor({
 }) {
   const upload = useUploadMedia();
   const addLink = useAddLink();
+  const removeMedia = useDeleteMedia();
   const [mode, setMode] = useState<'file' | 'link'>('file');
   const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
@@ -82,6 +83,10 @@ export function MediaBlockEditor({
               type="button"
               aria-label="Take it off"
               onClick={() => {
+                // Delete the attachment itself, not just the block's pointer to
+                // it — otherwise every swap leaves an unreachable file sitting
+                // in storage forever.
+                removeMedia.mutate({ media: current, courseId });
                 onDetach();
                 onClose();
               }}
