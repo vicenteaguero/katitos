@@ -6,7 +6,7 @@ export { Spinner, LoadingScreen } from './spinner';
 export { Skeleton, SkeletonText, SkeletonList } from './skeleton';
 export { Empty } from './empty';
 export { Badge } from './badge';
-export { Input, Textarea, Select, Field } from './field';
+export { Input, Textarea, Select, Field, Fieldset } from './field';
 export { FieldRow } from './field-row';
 export { PolaroidPlate } from './polaroid-plate';
 export { Sheet } from './sheet';
