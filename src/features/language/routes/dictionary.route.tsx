@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { BUCKETS, useSignedUrls } from '@kernel/storage';
 import {
@@ -22,18 +22,29 @@ import {
   useUpdateVocab,
   useVocab,
 } from '../api/vocab';
-import { useLangPrefs } from '../lib/lang-prefs';
-import { headword, meaningOf } from '../lib/pick';
-import type { SupportLang, Vocab } from '../types';
+import { useLanguages, supportLangs } from '../lib/languages';
+import { headword, meaningOf, termLangOf } from '../lib/pick';
+import {
+  LANG_LABELS,
+  LANG_NATIVE_LABELS,
+  type Lang,
+  type Vocab,
+} from '../types';
 
 /**
- * Every word we have ever been taught, and a way to add the next one.
+ * Every word either of us has ever been taught, and a way to add the next one.
  *
- * One entry per word, so a correction here reaches every lesson that word
- * appears in — the reason this stopped being a pile of per-deck cards.
+ * Two dictionaries in one, because there are two languages being learned here.
+ * The switch at the top says which one you are looking at — it used to say
+ * EN / ES, which was not the language of the words at all but the language they
+ * were explained in, and it left every Spanish word we own unreachable.
  */
 export function DictionaryRoute() {
   useWideLayout();
+  const { native, learning } = useLanguages();
+  const [lang, setLang] = useState<Lang>(learning);
+  useEffect(() => setLang(learning), [learning]);
+
   const [search, setSearch] = useState('');
   // What the QUERY sees, a beat behind the box. Typing "привет" used to fire
   // six separate `limit 500` searches and keep all six in the cache.
@@ -42,9 +53,8 @@ export function DictionaryRoute() {
     const t = setTimeout(() => setTerm(search), 250);
     return () => clearTimeout(t);
   }, [search]);
-  const support = useLangPrefs((s) => s.supportLang);
-  const setSupport = useLangPrefs((s) => s.setSupport);
-  const { data: words } = useVocab('ru', term);
+
+  const { data: words } = useVocab(lang, term);
   const del = useDeleteVocab();
 
   const [editing, setEditing] = useState<Vocab | 'new' | null>(null);
@@ -52,11 +62,11 @@ export function DictionaryRoute() {
   useTopBarAction(
     <div className="flex items-center gap-1.5">
       <Segmented
-        value={support}
-        onChange={(v) => setSupport(v as SupportLang)}
+        value={lang}
+        onChange={(v) => setLang(v as Lang)}
         options={[
-          { value: 'en', label: 'EN' },
-          { value: 'es', label: 'ES' },
+          { value: learning, label: LANG_NATIVE_LABELS[learning] },
+          { value: native, label: LANG_NATIVE_LABELS[native] },
         ]}
       />
       <button
@@ -69,7 +79,7 @@ export function DictionaryRoute() {
         <Plus className="h-4 w-4" />
       </button>
     </div>,
-    [support]
+    [lang, learning, native]
   );
 
   const list = words ?? [];
@@ -97,8 +107,10 @@ export function DictionaryRoute() {
       {list.length === 0 ? (
         <Empty
           icon="📖"
-          title={term ? 'Nothing like that' : 'The dictionary is empty'}
-          hint={term ? undefined : 'Add the first word.'}
+          title={term ? 'Nothing like that' : 'Nothing here yet'}
+          hint={
+            term ? undefined : `Add the first word in ${LANG_LABELS[lang]}.`
+          }
         />
       ) : (
         <ul className="divide-y divide-fg/5 rounded-lg bg-surface px-3 md:columns-2 md:gap-4 md:[&>li]:break-inside-avoid">
@@ -114,7 +126,7 @@ export function DictionaryRoute() {
                   )}
                 </span>
                 <span className="block truncate font-sans text-xs text-muted">
-                  {meaningOf(w, support)}
+                  {meaningOf(w, native)}
                 </span>
               </span>
               {w.audio_path && (
@@ -144,6 +156,7 @@ export function DictionaryRoute() {
       {editing && (
         <WordSheet
           word={editing === 'new' ? null : editing}
+          lang={editing === 'new' ? lang : termLangOf(editing)}
           onClose={() => setEditing(null)}
         />
       )}
@@ -153,24 +166,43 @@ export function DictionaryRoute() {
 
 function WordSheet({
   word,
+  lang,
   onClose,
 }: {
   word: Vocab | null;
+  /** The language the headword is written in. */
+  lang: Lang;
   onClose: () => void;
 }) {
-  const support = useLangPrefs((s) => s.supportLang);
+  const { native } = useLanguages();
   const add = useAddVocab();
   const update = useUpdateVocab();
-  const [ru, setRu] = useState(word?.ru ?? '');
-  const [en, setEn] = useState(word?.en ?? '');
-  const [es, setEs] = useState(word?.es ?? '');
+
+  // The three columns, always all three — which one is the word and which two
+  // are its translations is decided by `lang`, not by the column's name.
+  const [text, setText] = useState<Record<Lang, string>>({
+    ru: word?.ru ?? '',
+    en: word?.en ?? '',
+    es: word?.es ?? '',
+  });
   const [translit, setTranslit] = useState(word?.transliteration ?? '');
   const [stress, setStress] = useState(word?.stress ?? '');
-  const [notes, setNotes] = useState(
-    (support === 'es' ? word?.notes_es : word?.notes_en) ?? ''
-  );
   const [tags, setTags] = useState((word?.tags ?? []).join(', '));
   const [audio, setAudio] = useState<AudioClip | null>(null);
+
+  // A note is written FOR the person learning, so it is offered in the two
+  // languages that are not the word itself — for a Spanish word that includes
+  // Russian, which the old screen had no column for at all.
+  const noteLangs = useMemo(() => supportLangs(lang, native), [lang, native]);
+  const [noteLang, setNoteLang] = useState<Lang>(noteLangs[0]);
+  const [notes, setNotes] = useState<Record<Lang, string>>({
+    ru: word?.notes_ru ?? '',
+    en: word?.notes_en ?? '',
+    es: word?.notes_es ?? '',
+  });
+
+  const set = (l: Lang, v: string) => setText((t) => ({ ...t, [l]: v }));
+  const setNote = (l: Lang, v: string) => setNotes((n) => ({ ...n, [l]: v }));
 
   const tagList = tags
     .split(',')
@@ -178,21 +210,24 @@ function WordSheet({
     .filter(Boolean);
 
   const submit = () => {
-    if (!ru.trim()) return;
+    if (!text[lang].trim()) return;
+    const shared = {
+      ru: text.ru || null,
+      en: text.en || null,
+      es: text.es || null,
+      transliteration: translit || null,
+      stress: lang === 'ru' ? stress || null : null,
+      tags: tagList,
+    };
     if (word) {
       update.mutate(
         {
           id: word.id,
           patch: {
-            ru,
-            en: en || null,
-            es: es || null,
-            transliteration: translit || null,
-            stress: stress || null,
-            ...(support === 'es'
-              ? { notes_es: notes || null }
-              : { notes_en: notes || null }),
-            tags: tagList,
+            ...shared,
+            notes_ru: notes.ru || null,
+            notes_en: notes.en || null,
+            notes_es: notes.es || null,
           },
           audio,
         },
@@ -201,14 +236,11 @@ function WordSheet({
     } else {
       add.mutate(
         {
-          termLang: 'ru',
-          ru,
-          en,
-          es,
-          transliteration: translit,
-          stress,
-          ...(support === 'es' ? { notesEs: notes } : { notesEn: notes }),
-          tags: tagList,
+          termLang: lang,
+          ...shared,
+          notesRu: notes.ru,
+          notesEn: notes.en,
+          notesEs: notes.es,
           audio,
         },
         { onSuccess: onClose }
@@ -220,59 +252,68 @@ function WordSheet({
     <Sheet
       open
       onClose={onClose}
-      title={word ? 'This word' : 'A new word'}
+      title={word ? 'This word' : `A new word in ${LANG_LABELS[lang]}`}
       size="half"
     >
       <div className="space-y-3">
-        <Field label="In Russian">
+        <Field label={`In ${LANG_LABELS[lang]}`}>
           <Input
-            value={ru}
-            onChange={(e) => setRu(e.target.value)}
+            value={text[lang]}
+            onChange={(e) => set(lang, e.target.value)}
             className="font-display text-lg"
             autoFocus
           />
         </Field>
         <FieldRow>
-          <Field label="English">
-            <Input value={en} onChange={(e) => setEn(e.target.value)} />
-          </Field>
-          <Field label="Español">
-            <Input value={es} onChange={(e) => setEs(e.target.value)} />
-          </Field>
+          {noteLangs.map((l) => (
+            <Field key={l} label={LANG_NATIVE_LABELS[l]}>
+              <Input value={text[l]} onChange={(e) => set(l, e.target.value)} />
+            </Field>
+          ))}
         </FieldRow>
-        <FieldRow>
-          <Field label="Sounds like">
-            <Input
-              value={translit}
-              onChange={(e) => setTranslit(e.target.value)}
-              placeholder="spasibo"
-            />
-          </Field>
-          <Field label="With the stress" hint="Hold a vowel on the keys below">
-            <Input
-              value={stress}
-              onChange={(e) => setStress(e.target.value)}
-              className="font-display text-lg"
-              placeholder="спаси́бо"
-            />
-          </Field>
-        </FieldRow>
+        {/* Russian stress is phonemic and unwritten; Spanish writes its own. */}
+        {lang === 'ru' && (
+          <FieldRow>
+            <Field label="Sounds like">
+              <Input
+                value={translit}
+                onChange={(e) => setTranslit(e.target.value)}
+                placeholder="spasibo"
+              />
+            </Field>
+            <Field
+              label="With the stress"
+              hint="Hold a vowel on the keys below"
+            >
+              <Input
+                value={stress}
+                onChange={(e) => setStress(e.target.value)}
+                className="font-display text-lg"
+                placeholder="спаси́бо"
+              />
+            </Field>
+          </FieldRow>
+        )}
+
         {/* The escape hatch for a word with no clean one-word translation —
-            успеть, тоска, давай. Written in the language she is explaining in. */}
-        <Field
-          label={support === 'es' ? 'Una nota' : 'A note'}
-          hint="When a translation is not enough"
-        >
-          <Textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={2}
-            placeholder={
-              support === 'es'
-                ? 'se usa cuando…'
-                : 'used when you finally manage to…'
-            }
-          />
+            успеть, тоска, давай, or "bacán". */}
+        <Field label="A note" hint="When a translation is not enough">
+          <div className="space-y-1.5">
+            <Segmented
+              value={noteLang}
+              onChange={(v) => setNoteLang(v as Lang)}
+              options={noteLangs.map((l) => ({
+                value: l,
+                label: LANG_NATIVE_LABELS[l],
+              }))}
+            />
+            <Textarea
+              value={notes[noteLang]}
+              onChange={(e) => setNote(noteLang, e.target.value)}
+              rows={2}
+              placeholder="used when you finally manage to…"
+            />
+          </div>
         </Field>
 
         <Field label="Tags" hint="Separate with commas — food, verbs, lesson 8">
@@ -288,7 +329,7 @@ function WordSheet({
         <Button
           full
           onClick={submit}
-          disabled={!ru.trim() || add.isPending || update.isPending}
+          disabled={!text[lang].trim() || add.isPending || update.isPending}
         >
           {word ? 'Save' : 'Add to the dictionary'}
         </Button>
