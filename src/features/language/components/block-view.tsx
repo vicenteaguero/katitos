@@ -52,8 +52,11 @@ export function BlockView({
       return (
         <div className="space-y-1">
           {/* The Russian above, the explanation below — the shape of a page in
-              any textbook, and it survives the language switch untouched. */}
-          {block.body_ru && support !== 'en' && block.body_ru !== body && (
+              any textbook, and it survives the language switch untouched.
+              It is shown in EVERY support language: hiding it for English
+              readers hid it from the person learning Russian, since English is
+              the default. */}
+          {block.body_ru && block.body_ru !== body && (
             <p className="font-display text-lg leading-snug text-fg">
               {block.body_ru}
             </p>
