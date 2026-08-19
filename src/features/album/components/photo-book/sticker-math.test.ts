@@ -54,11 +54,18 @@ describe('z depths', () => {
     expect(nextZBack([])).toBe(0);
   });
 
-  it('front-then-back repeatedly keeps the newest choice on top', () => {
+  it('front, then back, then front again keeps moving in the right direction', () => {
+    // The old version asserted `max([...zs, front]) === front`, which holds
+    // for any implementation returning at least the maximum — including one
+    // that forgets to add 1.
     let zs = [0, 1, 2];
-    const front = nextZFront(zs);
-    zs = [...zs, front];
-    expect(Math.max(...zs)).toBe(front);
+    const a = nextZFront(zs);
+    expect(a).toBe(3);
+    zs = [...zs, a];
+    const b = nextZBack(zs);
+    expect(b).toBe(-1);
+    zs = [...zs, b];
+    expect(nextZFront(zs)).toBe(4);
   });
 });
 
@@ -108,6 +115,23 @@ describe('the corner handle', () => {
       { ...base, rotation: 0 }
     );
     expect(rotation).toBeCloseTo(90);
+  });
+
+  it('turns by the CHANGE in angle, not by where the finger happens to be', () => {
+    // Grabbing the handle at 45° and dragging to 90° is a 45° turn. Every
+    // other rotation test starts at 0°, where forgetting to subtract the grab
+    // angle makes no difference at all — so this is the one that catches it.
+    const { rotation } = handleTransform(
+      centre,
+      { x: 100, y: 150 },
+      {
+        scale: 1,
+        rotation: 10,
+        radius: 50,
+        angle: 45,
+      }
+    );
+    expect(rotation).toBeCloseTo(55);
   });
 
   it('does not divide by a grab that started on the centre', () => {
