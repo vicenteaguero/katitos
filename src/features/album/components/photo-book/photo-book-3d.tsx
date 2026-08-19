@@ -78,6 +78,9 @@ const MIN_PEEK = 40; // smallest sliver of the facing page kept visible
 const CURL_PAD = 16;
 /** A stable empty map, so a page without photos never gets a fresh identity. */
 const EMPTY_URLS: Map<string, string> = new Map();
+/** `style` is required by react-pageflip's props; a literal here would defeat
+ *  its own `React.memo` on every render. */
+const NO_STYLE: CSSProperties = {};
 
 /** A round, gilt-edged page-nav button. */
 function NavBtn({
@@ -273,12 +276,12 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
           out.push(st.photo.image_path);
       }
     }
-    for (const photo of library ?? []) {
-      if (photo.source === 'upload' && photo.image_path)
-        out.push(photo.image_path);
-    }
     return out;
-  }, [pages, library]);
+    // The LIBRARY is deliberately not in here. Folding it in put every
+    // uploaded photo into the book's query key, so adding one — thirty times
+    // over during a bulk upload — changed the key, changed the data, and
+    // re-initialised the whole flip book each time.
+  }, [pages]);
 
   const polaroidPaths = useMemo(() => {
     const out: string[] = [];
@@ -288,16 +291,24 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
           out.push(st.photo.image_path);
       }
     }
-    for (const photo of library ?? []) {
-      if (photo.source === 'polaroid' && photo.image_path)
-        out.push(photo.image_path);
-    }
     return out;
-  }, [pages, library]);
+  }, [pages]);
 
   const albumUrls = useSignedUrls(BUCKETS.album, albumPaths, { proxy: true });
   const polaroidUrls = useSignedUrls(BUCKETS.polaroids, polaroidPaths, {
     proxy: true,
+  });
+
+  // The strip's own thumbnails, signed separately and only while it is on
+  // screen — it is hidden while reading, so there is nothing to sign then.
+  const libraryPaths = useMemo(
+    () =>
+      (library ?? []).map((p) => p.image_path).filter((p): p is string => !!p),
+    [library]
+  );
+  const stripUrls = useSignedUrls(BUCKETS.album, libraryPaths, {
+    proxy: true,
+    enabled: mode === 'arrange',
   });
 
   const urlFor = useCallback(
@@ -332,14 +343,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pages, albumUrls.data, polaroidUrls.data]);
 
-  const libraryUrls = useMemo(() => {
-    const m = new Map<string, string>();
-    for (const photo of library ?? []) {
-      const url = urlFor(photo);
-      if (url && photo.image_path) m.set(photo.image_path, url);
-    }
-    return m;
-  }, [library, urlFor]);
+  const libraryUrls = stripUrls.data ?? EMPTY_URLS;
 
   /**
    * Warm the pages either side of the one being read.
@@ -607,7 +611,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
                 <HTMLFlipBook
                   ref={bookRef}
                   className="pb-book"
-                  style={{}}
+                  style={NO_STYLE}
                   startPage={focused}
                   width={pageW}
                   height={pageH}
