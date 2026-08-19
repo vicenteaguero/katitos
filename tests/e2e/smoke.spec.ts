@@ -1,4 +1,34 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, request, type Page } from '@playwright/test';
+
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL ?? 'http://127.0.0.1:54321';
+const ANON =
+  process.env.VITE_SUPABASE_ANON_KEY ??
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
+
+/**
+ * Rub out the notes previous runs left behind.
+ *
+ * The wall holds ten, and a test that adds one without removing it eventually
+ * fills the board and breaks every later run. Done over the API rather than
+ * through the UI because selecting a note is a use-gesture tap, which a
+ * synthetic tap does not reliably satisfy.
+ */
+async function clearE2ENotes() {
+  const api = await request.newContext({ baseURL: SUPABASE_URL });
+  const auth = await api.post('/auth/v1/token?grant_type=password', {
+    headers: { apikey: ANON, 'Content-Type': 'application/json' },
+    data: { email: 'vicente@katitos.local', password: 'katitos123' },
+  });
+  if (!auth.ok()) {
+    await api.dispose();
+    return;
+  }
+  const { access_token } = await auth.json();
+  await api.delete('/rest/v1/chalkboard_notes?body=like.e2e%20*', {
+    headers: { apikey: ANON, Authorization: `Bearer ${access_token}` },
+  });
+  await api.dispose();
+}
 
 /**
  * Get the "What's new" modal out of the way.
@@ -75,6 +105,7 @@ test.describe('smoke — every route renders in the authed shell', () => {
 });
 
 test('chalkboard — write a note and see it on the wall', async ({ page }) => {
+  await clearE2ENotes();
   await page.goto('/wall');
   await expect(page.getByRole('navigation')).toBeVisible({
     timeout: 20_000,
@@ -86,16 +117,12 @@ test('chalkboard — write a note and see it on the wall', async ({ page }) => {
   // Adding lives in edit mode now (the header pencil → +), no FAB over the board.
   await page.getByRole('button', { name: 'Edit wall' }).click();
 
-  // The wall holds max 3 notes — clear my own first to guarantee room to add.
-  const del = page.getByRole('button', { name: 'Delete note' });
-  for (let n = await del.count(); n > 0; n--) {
-    await del.first().click();
-    await expect(del).toHaveCount(n - 1, { timeout: 10_000 });
-  }
-
   await page.getByRole('button', { name: 'Add note' }).click();
   await page.getByPlaceholder('Write here…').fill(text);
   await page.getByRole('button', { name: 'Add to wall' }).click();
 
   await expect(page.getByText(text)).toBeVisible({ timeout: 10_000 });
+
+  // …and leave the board as we found it.
+  await clearE2ENotes();
 });
