@@ -4,12 +4,13 @@ import { Check, RotateCcw, Volume2 } from 'lucide-react';
 import { BUCKETS } from '@kernel/storage';
 import { cn } from '@kernel/lib';
 import { PlayButton, Button, Empty, Input, LoadingScreen } from '@kernel/ui';
-import { useAllPhrases } from '../api/decks.queries';
-import { useGradePhrase, useMyReviews } from '../api/reviews';
+import { useAllVocab, useGradeVocab, useMyReviews } from '../api/vocab';
 import { buildSession, type Grade } from '../lib/srs';
 import { CyrillicKeys } from '../components/cyrillic-keys';
 import { answerMatches } from '../lib/answer-match';
-import type { Phrase } from '../types';
+import { useLangPrefs } from '../lib/lang-prefs';
+import { meaningOf } from '../lib/pick';
+import type { Vocab } from '../types';
 
 /** The four ways a card can be asked. */
 type Mode = 'recall' | 'choice' | 'type' | 'listen';
@@ -22,9 +23,10 @@ type Mode = 'recall' | 'choice' | 'type' | 'listen';
  * forgot everything the moment you left.
  */
 export function StudyRoute() {
-  const { data: phrases, isLoading } = useAllPhrases('ru');
+  const { data: words, isLoading } = useAllVocab('ru');
   const { data: reviews } = useMyReviews();
-  const grade = useGradePhrase();
+  const grade = useGradeVocab();
+  const support = useLangPrefs((s) => s.supportLang);
 
   const [i, setI] = useState(0);
   const [revealed, setRevealed] = useState(false);
@@ -37,9 +39,9 @@ export function StudyRoute() {
   // under your feet.
   const [sessionKey, setSessionKey] = useState(0);
   const session = useMemo(
-    () => buildSession(phrases ?? [], reviews ?? new Map()),
+    () => buildSession(words ?? [], reviews ?? new Map()),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [phrases, sessionKey]
+    [words, sessionKey]
   );
 
   if (isLoading) return <LoadingScreen />;
@@ -60,11 +62,11 @@ export function StudyRoute() {
 
   const card = session[Math.min(i, session.length - 1)];
   const mode = modeFor(card, i);
-  const choices = mode === 'choice' ? choicesFor(card, phrases ?? [], i) : [];
+  const choices = mode === 'choice' ? choicesFor(card, words ?? [], i) : [];
 
   const answer = (g: Grade) => {
     grade.mutate({
-      phraseId: card.id,
+      vocabId: card.id,
       grade: g,
       prev: reviews?.get(card.id) ?? null,
     });
@@ -144,7 +146,7 @@ export function StudyRoute() {
           ) : mode === 'recall' ? (
             <>
               <p className="font-display text-4xl font-semibold leading-tight text-accent">
-                {card.text}
+                {card.ru}
               </p>
               {card.transliteration && (
                 <p className="mt-2 font-display text-base italic text-copper">
@@ -154,28 +156,28 @@ export function StudyRoute() {
             </>
           ) : (
             <p className="font-display text-3xl font-semibold text-brown">
-              {card.translation ?? card.text}
+              {meaningOf(card, support) || card.ru}
             </p>
           )}
 
           {revealed && (
             <div className="km-reveal mt-5 space-y-1 border-t border-brown/15 pt-4">
               <p className="font-display text-2xl text-brown">
-                {mode === 'recall' ? card.translation : card.text}
+                {mode === 'recall' ? meaningOf(card, support) : card.ru}
               </p>
               {card.transliteration && mode !== 'recall' && (
                 <p className="font-display text-sm italic text-copper">
                   {card.transliteration}
                 </p>
               )}
-              {card.example && (
+              {(support === 'es' ? card.notes_es : card.notes_en) && (
                 <p className="font-sans text-xs italic text-brown/70">
-                  {card.example}
+                  {support === 'es' ? card.notes_es : card.notes_en}
                 </p>
               )}
-              {card.notes && (
+              {card.stress && (
                 <p className="mt-2 rounded-md bg-brown/10 px-3 py-2 text-left font-sans text-xs leading-relaxed text-brown">
-                  {card.notes}
+                  stress: {card.stress}
                 </p>
               )}
             </div>
@@ -198,7 +200,7 @@ export function StudyRoute() {
                   picked === c.id && 'ring-1 ring-gold'
                 )}
               >
-                {c.text}
+                {c.ru}
               </button>
             ))}
           </div>
@@ -232,10 +234,10 @@ export function StudyRoute() {
           <p
             className={cn(
               'text-center font-sans text-sm',
-              answerMatches(typed, card.text) ? 'text-success' : 'text-danger'
+              answerMatches(typed, card.ru) ? 'text-success' : 'text-danger'
             )}
           >
-            {answerMatches(typed, card.text)
+            {answerMatches(typed, card.ru)
               ? 'Exactly right 🌟'
               : `You wrote "${typed}"`}
           </p>
@@ -264,19 +266,19 @@ export function StudyRoute() {
  * A card with no audio is never asked by ear; one with no translation can only
  * be recalled.
  */
-function modeFor(card: Phrase, index: number): Mode {
+function modeFor(card: Vocab, index: number): Mode {
   const wheel: Mode[] = ['recall', 'choice', 'type', 'recall', 'listen'];
   const want = wheel[index % wheel.length];
   if (want === 'listen' && !card.audio_path) return 'recall';
-  if (want === 'choice' && !card.translation) return 'recall';
-  if (want === 'type' && card.text.length > 24) return 'recall';
+  if (want === 'choice' && !card.en && !card.es) return 'recall';
+  if (want === 'type' && card.ru.length > 24) return 'recall';
   return want;
 }
 
 /** Three wrong answers and the right one, stable for a given card. */
-function choicesFor(card: Phrase, all: Phrase[], seed: number): Phrase[] {
-  const others = all.filter((p) => p.id !== card.id && p.text);
-  const picked: Phrase[] = [];
+function choicesFor(card: Vocab, all: Vocab[], seed: number): Vocab[] {
+  const others = all.filter((p) => p.id !== card.id && p.ru);
+  const picked: Vocab[] = [];
   for (let k = 0; k < others.length && picked.length < 3; k++) {
     // Deterministic stride so the options don't reshuffle on every render.
     const idx = (seed * 7 + k * 13) % others.length;
