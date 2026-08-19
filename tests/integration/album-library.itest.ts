@@ -180,7 +180,9 @@ describe('Album library + placements (local stack)', () => {
     const { error: badErr } = await a
       .from('album_placements')
       .insert({ page_id: pageId, kind: 'photo' });
-    expect(badErr).not.toBeNull();
+    // 23514 = check constraint, so a future NOT NULL can't quietly stand in
+    // for the rule we actually mean to test.
+    expect(badErr?.code).toBe('23514');
 
     const { error: textErr } = await a
       .from('album_placements')
@@ -210,12 +212,18 @@ describe('Album library + placements (local stack)', () => {
       .select('id')
       .single();
 
-    // The album belongs to both of us — she must be able to move what he put down.
-    const { error } = await b
+    // The album belongs to both of us — she must be able to move what he put
+    // down. Asserting only `error === null` proved NOTHING: an update a policy
+    // refuses comes back 204 with no error and no rows changed. The write has
+    // to be read back.
+    const { data, error } = await b
       .from('album_placements')
       .update({ x: 0.2, y: 0.8, z: 9 })
-      .eq('id', placement!.id);
+      .eq('id', placement!.id)
+      .select('x, y, z');
     expect(error).toBeNull();
+    expect(data).toHaveLength(1);
+    expect(data![0]).toMatchObject({ x: 0.2, y: 0.8, z: 9 });
 
     await a.from('album_books').delete().eq('id', bookId);
   });
