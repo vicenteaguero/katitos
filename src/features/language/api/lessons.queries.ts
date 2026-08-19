@@ -45,32 +45,38 @@ export function useLesson(lessonId: string | undefined) {
         (a, b) => a.position - b.position
       );
 
-      // The words in this lesson's vocab blocks, in the order she arranged
-      // them. One request for the whole lesson, not one per block.
-      const vocabByBlock: Record<string, Vocab[]> = {};
+      // The words and the attachments are fetched TOGETHER, not one after the
+      // other: neither depends on the other, and a lesson that opens in two
+      // round-trips instead of three is a third faster on a phone.
       const vocabBlockIds = blocks
         .filter((b) => b.kind === 'vocab')
         .map((b) => b.id);
-      if (vocabBlockIds.length) {
-        const { data: links } = await supabase
-          .from('lang_block_vocab')
-          .select('block_id, position, vocab:lang_vocab(*)')
-          .in('block_id', vocabBlockIds)
-          .order('position', { ascending: true });
-        for (const link of (links ?? []) as unknown as {
-          block_id: string;
-          vocab: Vocab | null;
-        }[]) {
-          if (!link.vocab) continue;
-          (vocabByBlock[link.block_id] ??= []).push(link.vocab);
-        }
-      }
 
-      const { data: media } = await supabase
-        .from('lang_media')
-        .select('*')
-        .eq('lesson_id', lessonId as string)
-        .order('created_at', { ascending: false });
+      const [links, media] = await Promise.all([
+        vocabBlockIds.length
+          ? supabase
+              .from('lang_block_vocab')
+              .select('block_id, position, vocab:lang_vocab(*)')
+              .in('block_id', vocabBlockIds)
+              .order('position', { ascending: true })
+              .then((r) => r.data)
+          : Promise.resolve([]),
+        supabase
+          .from('lang_media')
+          .select('*')
+          .eq('lesson_id', lessonId as string)
+          .order('created_at', { ascending: false })
+          .then((r) => r.data),
+      ]);
+
+      const vocabByBlock: Record<string, Vocab[]> = {};
+      for (const link of (links ?? []) as unknown as {
+        block_id: string;
+        vocab: Vocab | null;
+      }[]) {
+        if (!link.vocab) continue;
+        (vocabByBlock[link.block_id] ??= []).push(link.vocab);
+      }
 
       return {
         ...row,
