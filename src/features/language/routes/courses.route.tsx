@@ -8,6 +8,7 @@ import {
   Empty,
   Field,
   FieldRow,
+  Fieldset,
   Input,
   Segmented,
   Sheet,
@@ -143,7 +144,7 @@ export function CoursesRoute() {
         size="half"
       >
         <div className="space-y-3">
-          <Field label="This course teaches">
+          <Fieldset label="This course teaches">
             <Segmented
               full
               value={lang}
@@ -153,7 +154,7 @@ export function CoursesRoute() {
                 { value: 'es', label: LANG_NATIVE_LABELS.es },
               ]}
             />
-          </Field>
+          </Fieldset>
           <FieldRow className="[&>*:first-child]:max-w-[4.5rem]">
             <Field label="Emoji">
               <Input
