@@ -154,3 +154,33 @@ test('a written question can accept more than one right answer', async ({
   await page.getByRole('button', { name: 'Check' }).click();
   await expect(page.getByText('1 of 1 right')).toBeVisible({ timeout: 10_000 });
 });
+
+test('a declension table can be typed and reads as a table', async ({
+  page,
+}) => {
+  const label = `d${Date.now() % 100000}`;
+  await newLesson(page, label);
+
+  await page.getByRole('button', { name: /^\s*table/ }).click();
+  // Typed the way she would write it on paper: headings, then a row per case.
+  await page
+    .getByPlaceholder(', singular, plural')
+    .fill(
+      ', singular, plural\nnominative, стол, столы\ngenitive, стола, столов'
+    );
+  await page.getByPlaceholder('What the table is (optional)').click();
+
+  await page.goBack();
+  await expect(
+    page.getByRole('heading', { name: `${label} lesson` })
+  ).toBeVisible({ timeout: 10_000 });
+
+  // It renders as a real table, so a screen reader and a human both read it
+  // as a grid rather than as a run-on sentence.
+  const table = page.getByRole('table');
+  await expect(table).toBeVisible({ timeout: 10_000 });
+  await expect(
+    table.getByRole('columnheader', { name: 'plural' })
+  ).toBeVisible();
+  await expect(table.getByRole('cell', { name: 'столов' })).toBeVisible();
+});
