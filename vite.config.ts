@@ -32,7 +32,9 @@ export default defineConfig({
         theme_color: '#100408',
         background_color: '#100408',
         display: 'standalone',
-        orientation: 'portrait',
+        // NOT locked to portrait: she authors lessons on a tablet, and a
+        // locked-portrait installed PWA simply refuses to turn.
+        orientation: 'any',
         start_url: '/',
         scope: '/',
         icons: [
