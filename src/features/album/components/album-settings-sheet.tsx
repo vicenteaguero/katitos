@@ -53,16 +53,21 @@ export function AlbumSettingsSheet({
   const [pageDate, setPageDate] = useState(page?.on_date ?? '');
   const [cover, setCoverBlob] = useState<Blob | null>(null);
 
+  // Seeded on IDENTITY, not on the object: `book` and `page` come out of a
+  // live query, so a refetch — the partner moving a sticker is enough —
+  // replaced whatever she was in the middle of typing.
   useEffect(() => {
     setTitle(book.title);
     setStartsOn(book.starts_on ?? '');
     setEndsOn(book.ends_on ?? '');
-  }, [book]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [book.id]);
 
   useEffect(() => {
     setPageTitle(page?.title ?? '');
     setPageDate(page?.on_date ?? '');
-  }, [page]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page?.id]);
 
   const save = () => {
     update.mutate({ id: book.id, title, startsOn, endsOn });
