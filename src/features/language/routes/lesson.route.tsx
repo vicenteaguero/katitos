@@ -11,6 +11,7 @@ import {
   toast,
   useTopBarAction,
 } from '@kernel/ui';
+import { useMyProgress } from '../api/courses.queries';
 import { useLesson, useMyAttempts } from '../api/lessons.queries';
 import { useAnswerExercise, useSaveProgress } from '../api/lessons.mutations';
 import { useLangPrefs } from '../lib/lang-prefs';
@@ -35,9 +36,23 @@ export function LessonRoute() {
   const support = useLangPrefs((s) => s.supportLang);
   useTableSync('lang_blocks', qk.lang.lesson(lessonId ?? 'none'));
 
+  const { data: progress } = useMyProgress();
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
   const [grades, setGrades] = useState<Record<string, Grade>>({});
-  const [submitted, setSubmitted] = useState(false);
+  const [handedIn, setHandedIn] = useState(false);
+
+  /**
+   * An exam stays handed in across a reload.
+   *
+   * This used to live only in component state, so refreshing offered the
+   * "Hand it in" button again on an empty form — and pressing it wrote a
+   * second set of answers and overwrote the real score with zero.
+   */
+  const submitted =
+    handedIn ||
+    ['submitted', 'graded'].includes(
+      progress?.get(lessonId ?? '')?.status ?? ''
+    );
 
   useTopBarAction(
     lessonId ? (
@@ -76,12 +91,26 @@ export function LessonRoute() {
   const markOne = (ex: Exercise) => {
     const given = answers[ex.id];
     const grade = gradeAnswer(ex, given);
-    setGrades((g) => ({ ...g, [ex.id]: grade }));
+    const next = { ...grades, [ex.id]: grade };
+    setGrades(next);
     answer.mutate({
       exercise: ex,
       lessonId: lesson.id,
       answer: given ?? null,
       attemptNo: (priorAttempts.get(ex.id) ?? 0) + 1,
+    });
+
+    // Homework has to record that it was done, or it sits on the home screen
+    // forever getting later — only exams were writing a progress row.
+    const done = exercises.every((x) => next[x.id]);
+    const total = exercises.reduce(
+      (sum, x) => sum + (next[x.id]?.score ?? 0),
+      0
+    );
+    saveProgress.mutate({
+      lessonId: lesson.id,
+      status: done ? 'submitted' : 'in_progress',
+      score: done && exercises.length ? total / exercises.length : null,
     });
   };
 
@@ -104,7 +133,7 @@ export function LessonRoute() {
       return [ex.id, grade] as const;
     });
     setGrades(Object.fromEntries(marks));
-    setSubmitted(true);
+    setHandedIn(true);
     const total = marks.reduce((sum, [, g]) => sum + g.score, 0);
     saveProgress.mutate({
       lessonId: lesson.id,
