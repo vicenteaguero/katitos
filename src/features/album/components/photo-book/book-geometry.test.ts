@@ -47,6 +47,20 @@ describe('computeLayout', () => {
     expect(viewportH).toBeLessThanOrEqual(availH);
   });
 
+  it('uses the height it is given, right up to the edge', () => {
+    // A real boundary rather than a case with slack in it: this must come out
+    // at exactly the budget, so a change that overshoots by a pixel fails.
+    expect(computeLayout(1000, 600, M, MIN_PEEK, 16).viewportH).toBe(600);
+  });
+
+  it('never overflows a short screen — a phone turned sideways', () => {
+    // The old 200px floor beat the height budget here and the book was clipped.
+    for (const availH of [200, 260, 300, 340]) {
+      const { viewportH } = computeLayout(640, availH, M, MIN_PEEK, 16);
+      expect(viewportH).toBeLessThanOrEqual(availH);
+    }
+  });
+
   it('is height-driven when height is the tighter constraint', () => {
     const elW = 1000; // very wide
     const { pageW } = computeLayout(elW, 400, M, MIN_PEEK);
