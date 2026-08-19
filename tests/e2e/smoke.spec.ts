@@ -82,3 +82,26 @@ test('chalkboard — write a note and see it on the wall', async ({ page }) => {
   // …and leave the board as we found it.
   await cleanup(['notes']);
 });
+
+/**
+ * The version row is the one screen element whose failure mode is silence: if
+ * the stamp is missing or the fetch is wrong it renders something plausible
+ * and reassuring, which is worse than nothing. Pin that a real commit shows.
+ */
+test('settings — the version row says which commit this is', async ({
+  page,
+}) => {
+  await page.goto('/settings');
+  await expect(page.getByRole('navigation')).toBeVisible({ timeout: 20_000 });
+  await dismissChangelog(page);
+
+  await expect(page.getByText('Version', { exact: true })).toBeVisible();
+  // "1.1.0 · fbbc12a · 19 Aug, 07:51" — version, short sha, when.
+  await expect(
+    page.getByText(/\d+\.\d+\.\d+ · [0-9a-f]{7}\+? · /)
+  ).toBeVisible();
+  // Same origin, so dev serves its own stamp: it must agree with itself.
+  await expect(
+    page.getByText(/newest version|not committed|Checking/)
+  ).toBeVisible({ timeout: 10_000 });
+});
