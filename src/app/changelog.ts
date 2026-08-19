@@ -64,6 +64,7 @@ export const ALL_ENTRIES: ChangelogEntry[] = [
       'The page curl is not cut off at the top and bottom any more.',
       'The album opens much faster, and the pages you are about to turn to are ready before you get there.',
       'Every album can have its own name, its dates and its cover, and each page can be titled.',
+      'Settings now tells you exactly which version of the app you are holding — and if your phone is still on an older one, a button to take the newest right away.',
     ],
   },
   {
