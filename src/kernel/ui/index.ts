@@ -35,11 +35,8 @@ export { PhotoViewer } from './photo-viewer';
 export type { ViewerPhoto } from './photo-viewer';
 export type { SquareCropperProps } from './square-cropper';
 export { AudioRecorder } from './audio/audio-recorder';
-export {
-  AudioFromPath,
-  PlayButton,
-  stopSharedAudio,
-} from './audio/audio-player';
+export { AudioFromPath, PlayButton } from './audio/audio-player';
+export { stopSharedAudio } from './audio/shared-audio';
 export {
   useAudioRecorder,
   extForMime,
