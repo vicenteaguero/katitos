@@ -33,7 +33,7 @@ import {
   useUpdateBlock,
   useUpdateLesson,
 } from '../api/lessons.mutations';
-import { useLangPrefs } from '../lib/lang-prefs';
+import { supportLangs, useLanguages } from '../lib/languages';
 import { isMissing, pick } from '../lib/pick';
 import { formatTable, parseTable } from '../lib/table-block';
 import { ExerciseEditor } from '../components/exercises/exercise-editor';
@@ -47,10 +47,11 @@ import type {
   LessonKind,
   Media,
   MediaBlockData,
-  SupportLang,
+  Lang,
   TableBlockData,
   Vocab,
 } from '../types';
+import { LANG_NATIVE_LABELS } from '../types';
 
 /**
  * Where she builds the lesson.
@@ -69,8 +70,15 @@ export function BuildRoute() {
   const reorder = useReorderBlocks();
   const updateLesson = useUpdateLesson();
   const deleteExercise = useDeleteExercise();
-  const support = useLangPrefs((s) => s.supportLang);
-  const setSupport = useLangPrefs((s) => s.setSupport);
+  const { native } = useLanguages();
+  // The two languages this lesson can be EXPLAINED in — everything except the
+  // one it teaches. A Russian lesson offers Español and English; a Spanish one
+  // offers Русский and English. It used to offer EN / ES to both, which meant
+  // she could never write a word of Russian explanation for the Spanish she
+  // teaches him — the one language she actually thinks in.
+  const langs = supportLangs(lesson?.targetLang ?? 'ru', native);
+  const [chosen, setSupport] = useState<Lang>(native);
+  const support = langs.includes(chosen) ? chosen : langs[0];
 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [editing, setEditing] = useState<Exercise | 'new' | null>(null);
@@ -81,11 +89,11 @@ export function BuildRoute() {
     <div className="flex items-center gap-1.5">
       <Segmented
         value={support}
-        onChange={(v) => setSupport(v as SupportLang)}
-        options={[
-          { value: 'en', label: 'EN' },
-          { value: 'es', label: 'ES' },
-        ]}
+        onChange={(v) => setSupport(v as Lang)}
+        options={langs.map((l) => ({
+          value: l,
+          label: LANG_NATIVE_LABELS[l],
+        }))}
       />
       <button
         type="button"
@@ -266,6 +274,7 @@ export function BuildRoute() {
           blockId={wordsFor.id}
           lessonId={lesson.id}
           selected={lesson.vocabByBlock[wordsFor.id] ?? []}
+          target={lesson.targetLang}
           onClose={() => setWordsFor(null)}
         />
       )}
@@ -329,7 +338,7 @@ function BlockEditor({
   onSaveData,
 }: {
   block: Block;
-  support: SupportLang;
+  support: Lang;
   first: boolean;
   last: boolean;
   /** What this block currently holds, so the row can say so. */
