@@ -1892,8 +1892,9 @@ export type Database = {
           legacy_phrase_id: string | null
           notes_en: string | null
           notes_es: string | null
+          notes_ru: string | null
           part_of_speech: string | null
-          ru: string
+          ru: string | null
           stress: string | null
           tags: string[]
           term_lang: string
@@ -1910,8 +1911,9 @@ export type Database = {
           legacy_phrase_id?: string | null
           notes_en?: string | null
           notes_es?: string | null
+          notes_ru?: string | null
           part_of_speech?: string | null
-          ru: string
+          ru?: string | null
           stress?: string | null
           tags?: string[]
           term_lang?: string
@@ -1928,8 +1930,9 @@ export type Database = {
           legacy_phrase_id?: string | null
           notes_en?: string | null
           notes_es?: string | null
+          notes_ru?: string | null
           part_of_speech?: string | null
-          ru?: string
+          ru?: string | null
           stress?: string | null
           tags?: string[]
           term_lang?: string
