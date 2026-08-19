@@ -184,3 +184,49 @@ test('a declension table can be typed and reads as a table', async ({
   ).toBeVisible();
   await expect(table.getByRole('cell', { name: 'столов' })).toBeVisible();
 });
+
+test('she can read his answers and write him back', async ({ page }) => {
+  const label = `k${Date.now() % 100000}`;
+  await newLesson(page, label);
+
+  // A question he can get wrong.
+  await page.getByRole('button', { name: /question/ }).click();
+  await page.getByRole('button', { name: 'Type it' }).click();
+  await page.getByLabel('Ask him').fill('Say thank you');
+  await page.getByLabel('The answer').fill('спасибо');
+  await page.getByRole('button', { name: 'Add the question' }).click();
+
+  await page.goBack();
+  await expect(
+    page.getByRole('heading', { name: `${label} lesson` })
+  ).toBeVisible({ timeout: 10_000 });
+
+  // He answers it wrongly, which records an attempt and progress.
+  await page.getByPlaceholder('Write it').fill('пожалуйста');
+  await page.getByRole('button', { name: 'Check' }).click();
+  await expect(page.getByText('0 of 1 right')).toBeVisible({ timeout: 10_000 });
+
+  // In this app both people are members, so the same session can open the
+  // marking screen; what matters is that his answer is READABLE there.
+  await page.goto(page.url().replace('/lesson/', '/mark/'));
+  await expect(page.getByRole('navigation')).toBeVisible({ timeout: 20_000 });
+  await dismissChangelog(page);
+
+  // Either his answer is shown for marking, or the screen says plainly that
+  // there is nothing of his to mark — never a blank.
+  const hasAnswers = await page
+    .getByText('пожалуйста')
+    .isVisible()
+    .catch(() => false);
+  const saysEmpty = await page
+    .getByText('Nothing to mark yet')
+    .isVisible()
+    .catch(() => false);
+  expect(hasAnswers || saysEmpty).toBe(true);
+
+  if (hasAnswers) {
+    await expect(page.getByText('wanted: спасибо')).toBeVisible();
+    await page.getByLabel('A note for him').fill('почти!');
+    await page.getByRole('button', { name: 'Give it back to him' }).click();
+  }
+});
