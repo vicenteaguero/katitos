@@ -4,6 +4,7 @@ export const BUCKETS = {
   flowers: 'flowers',
   quizMedia: 'quiz-media',
   languageAudio: 'language-audio',
+  languageMedia: 'language-media',
   scavengerProof: 'scavenger-proof',
   georgiaAlbum: 'georgia-album',
   datesAlbum: 'dates-album',
@@ -18,8 +19,17 @@ export const storagePaths = {
   /** One bouquet per monthsversary. */
   flower: (occasionDate: string) => `${occasionDate}.jpg`,
   quizImage: (deckId: string, cardId: string) => `${deckId}/${cardId}.jpg`,
-  quizAudio: (deckId: string, cardId: string) => `${deckId}/${cardId}.webm`,
-  languageAudio: (phraseId: string) => `${phraseId}.webm`,
+  quizAudio: (deckId: string, cardId: string, ext = 'webm') =>
+    `${deckId}/${cardId}.${ext}`,
+  /**
+   * A pronunciation clip. The extension is whatever the recorder actually
+   * produced — iOS makes MP4/AAC, Chrome makes WebM — because a clip stored
+   * under the wrong name is a clip the other phone silently refuses to play.
+   */
+  languageAudio: (id: string, ext = 'webm') => `${id}.${ext}`,
+  /** A lesson attachment: a PDF, a doc, an image, a video she uploaded. */
+  languageMedia: (courseId: string, fileId: string, ext: string) =>
+    `${courseId}/${fileId}.${ext}`,
   scavengerProof: (cardId: string) => `${cardId}.jpg`,
   /** Photo of the physical date-card (same bucket, distinct prefix). */
   scavengerCardImage: (cardId: string) => `card/${cardId}.jpg`,
