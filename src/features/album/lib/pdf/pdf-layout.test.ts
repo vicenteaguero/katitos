@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   BASE_W,
   filmLayout,
+  offsetInFrame,
   layoutSticker,
   PAGE_H,
   PAGE_W,
@@ -97,6 +98,31 @@ describe('stickerMatrix', () => {
     const b = apply(m, 1, 0);
     expect(b.x - a.x).toBeCloseTo(Math.SQRT1_2 * 100);
     expect(b.y - a.y).toBeCloseTo(Math.SQRT1_2 * 100);
+  });
+});
+
+describe('offsetInFrame', () => {
+  it('is a plain shift when the sticker is level', () => {
+    const out = offsetInFrame({ cx: 100, cy: 100, rotation: 0 }, 10, 20);
+    expect(out).toEqual({ cx: 110, cy: 120 });
+  });
+
+  it('turns the offset with the sticker', () => {
+    // A quarter turn sends "10 to the right" straight up the page.
+    const out = offsetInFrame({ cx: 0, cy: 0, rotation: 90 }, 10, 0);
+    expect(out.cx).toBeCloseTo(0);
+    expect(out.cy).toBeCloseTo(10);
+  });
+
+  it('keeps the photo on its plate at an everyday tilt', () => {
+    // The distance from the plate's centre must not change when it tilts —
+    // that is precisely what slid the photograph off the frame.
+    const level = offsetInFrame({ cx: 0, cy: 0, rotation: 0 }, 12, -30);
+    const tilted = offsetInFrame({ cx: 0, cy: 0, rotation: 7 }, 12, -30);
+    expect(Math.hypot(tilted.cx, tilted.cy)).toBeCloseTo(
+      Math.hypot(level.cx, level.cy)
+    );
+    expect(tilted.cx).not.toBeCloseTo(level.cx);
   });
 });
 
