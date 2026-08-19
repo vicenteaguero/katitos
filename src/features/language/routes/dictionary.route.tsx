@@ -7,6 +7,7 @@ import {
   Empty,
   Field,
   FieldRow,
+  Fieldset,
   Input,
   PlayButton,
   Segmented,
@@ -296,8 +297,9 @@ function WordSheet({
         )}
 
         {/* The escape hatch for a word with no clean one-word translation —
-            успеть, тоска, давай, or "bacán". */}
-        <Field label="A note" hint="When a translation is not enough">
+            успеть, тоска, давай, or "bacán". Written in whichever language the
+            person reading it actually thinks in. */}
+        <Fieldset label="A note">
           <div className="space-y-1.5">
             <Segmented
               value={noteLang}
@@ -314,7 +316,7 @@ function WordSheet({
               placeholder="used when you finally manage to…"
             />
           </div>
-        </Field>
+        </Fieldset>
 
         <Field label="Tags" hint="Separate with commas — food, verbs, lesson 8">
           <Input value={tags} onChange={(e) => setTags(e.target.value)} />
