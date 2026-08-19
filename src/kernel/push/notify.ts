@@ -15,6 +15,7 @@ export type NotifyKind =
   | 'know-me' // tonight's answers are ready
   | 'monthsversary' // the 15th, wherever either of us is
   | 'update' // a new version, with a changelog to read
+  | 'lesson' // a new lesson or homework is waiting
   | 'tree' // the tree was watered
   | 'presence'; // your love opened the app
 
@@ -36,6 +37,7 @@ const DELIVERED: ReadonlySet<NotifyKind> = new Set<NotifyKind>([
   'monthsversary',
   'update',
   'tree',
+  'lesson',
 ]);
 
 /** Per-kind presentation, so a lock screen says what kind of thing arrived. */
@@ -50,6 +52,7 @@ const PRESENTATION: Record<NotifyKind, { tag: string; vibrate?: number[] }> = {
   monthsversary: { tag: 'monthsversary', vibrate: [0, 50, 80, 50, 80, 50] },
   update: { tag: 'update', vibrate: [0, 30, 40, 30] },
   tree: { tag: 'tree' },
+  lesson: { tag: 'lesson', vibrate: [0, 30] },
   presence: { tag: 'presence' },
 };
 
