@@ -109,3 +109,31 @@ test('a video can be attached and plays only when tapped', async ({ page }) => {
   await poster.click();
   await expect(page.locator('iframe')).toHaveCount(1, { timeout: 10_000 });
 });
+
+test('a put-in-order question does not hand over the answer', async ({
+  page,
+}) => {
+  const label = `o${Date.now() % 100000}`;
+  await newLesson(page, label);
+
+  await page.getByRole('button', { name: /question/ }).click();
+  await page.getByRole('button', { name: 'Put in order' }).click();
+  await page.getByLabel('Ask him').fill('Put it in order');
+  await page
+    .getByLabel('The sentence, in the right order')
+    .fill('я тебя очень люблю');
+  await page.getByRole('button', { name: 'Add the question' }).click();
+
+  await page.goBack();
+  await expect(
+    page.getByRole('heading', { name: `${label} lesson` })
+  ).toBeVisible({ timeout: 10_000 });
+
+  // The words he is offered must NOT already be in the answer's order,
+  // otherwise the exercise is solved by tapping left to right.
+  const pool = page.locator('button', { hasText: /^(я|тебя|очень|люблю)$/ });
+  await expect(pool).toHaveCount(4, { timeout: 10_000 });
+  const shown = await pool.allInnerTexts();
+  expect(shown).not.toEqual(['я', 'тебя', 'очень', 'люблю']);
+  expect([...shown].sort()).toEqual(['люблю', 'очень', 'тебя', 'я'].sort());
+});
