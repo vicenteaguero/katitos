@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DateTime } from '@kernel/lib';
-import type { PhraseReview } from './srs';
+import type { ReviewState } from './srs';
 import { buildSession, isDue, mastery, schedule, type Schedule } from './srs';
 
 const TODAY = DateTime.fromISO('2026-08-11T12:00:00Z', { zone: 'utc' });
@@ -16,10 +16,8 @@ function sched(over: Partial<Schedule> = {}): Schedule {
   };
 }
 
-function review(over: Partial<PhraseReview> = {}): PhraseReview {
+function review(over: Partial<ReviewState> = {}): ReviewState {
   return {
-    phrase_id: 'p',
-    user_id: 'u',
     ease: 2.5,
     interval_days: 0,
     due_on: '2026-08-11',
@@ -27,9 +25,8 @@ function review(over: Partial<PhraseReview> = {}): PhraseReview {
     lapses: 0,
     last_grade: null,
     last_seen_at: null,
-    updated_at: '2026-08-11T00:00:00Z',
     ...over,
-  } as PhraseReview;
+  } as ReviewState;
 }
 
 describe('schedule', () => {
@@ -129,21 +126,17 @@ describe('buildSession', () => {
     { id: 'steady' },
     { id: 'not-yet' },
   ];
-  const reviews = new Map<string, PhraseReview>([
+  const reviews = new Map<string, ReviewState>([
     [
       'forgotten',
       review({
-        phrase_id: 'forgotten',
         reps: 4,
         lapses: 2,
         due_on: '2026-08-01',
       }),
     ],
-    ['steady', review({ phrase_id: 'steady', reps: 4, due_on: '2026-08-10' })],
-    [
-      'not-yet',
-      review({ phrase_id: 'not-yet', reps: 4, due_on: '2026-09-01' }),
-    ],
+    ['steady', review({ reps: 4, due_on: '2026-08-10' })],
+    ['not-yet', review({ reps: 4, due_on: '2026-09-01' })],
   ]);
 
   it('leaves out what is not due yet', () => {
@@ -167,9 +160,7 @@ describe('buildSession', () => {
   });
 
   it('returns nothing when everything is scheduled ahead', () => {
-    const ahead = new Map([
-      ['a', review({ phrase_id: 'a', due_on: '2026-12-01' })],
-    ]);
+    const ahead = new Map([['a', review({ due_on: '2026-12-01' })]]);
     expect(buildSession([{ id: 'a' }], ahead, { today: TODAY })).toEqual([]);
   });
 });
