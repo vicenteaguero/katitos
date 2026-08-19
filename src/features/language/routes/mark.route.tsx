@@ -15,7 +15,7 @@ import {
 import { useProgress } from '../api/courses.queries';
 import { useAttemptsForMarking, useLesson } from '../api/lessons.queries';
 import { useSaveProgress } from '../api/lessons.mutations';
-import { useLangPrefs } from '../lib/lang-prefs';
+import { useLanguages } from '../lib/languages';
 import { acceptedForms } from '../lib/exercise-schema';
 import { pick } from '../lib/pick';
 import type { Attempt } from '../types';
@@ -49,7 +49,7 @@ export function MarkRoute() {
   const { data: progress } = useProgress();
   const { partner } = usePartner();
   const saveProgress = useSaveProgress();
-  const support = useLangPrefs((s) => s.supportLang);
+  const { native: support } = useLanguages();
   const navigate = useNavigate();
 
   const [score, setScore] = useState('');
