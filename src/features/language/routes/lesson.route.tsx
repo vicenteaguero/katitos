@@ -34,7 +34,12 @@ export function LessonRoute() {
   const answer = useAnswerExercise();
   const saveProgress = useSaveProgress();
   const support = useLangPrefs((s) => s.supportLang);
-  useTableSync('lang_blocks', qk.lang.lesson(lessonId ?? 'none'));
+  // Filtered to THIS lesson: unfiltered, editing any lesson anywhere re-ran
+  // this one's whole read.
+  useTableSync('lang_blocks', qk.lang.lesson(lessonId ?? 'none'), {
+    filter: lessonId ? `lesson_id=eq.${lessonId}` : undefined,
+    enabled: !!lessonId,
+  });
 
   const { data: progress } = useMyProgress();
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
