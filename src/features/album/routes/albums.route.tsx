@@ -8,10 +8,12 @@ import {
   Empty,
   Field,
   FieldRow,
+  Fieldset,
   Input,
   Sheet,
   Skeleton,
   toast,
+  useTopBarAction,
 } from '@kernel/ui';
 import { useAlbumPhotoCounts, useAlbums } from '../api/photo-book.queries';
 import { useCreateAlbum } from '../api/albums.mutations';
@@ -56,12 +58,20 @@ export function AlbumsRoute() {
     );
   };
 
-  return (
-    <div className="curtain-reveal space-y-4">
-      <Button full variant="secondary" onClick={() => setOpen(true)}>
-        <Plus size={16} /> Start a new album
-      </Button>
+  useTopBarAction(
+    <button
+      type="button"
+      onClick={() => setOpen(true)}
+      aria-label="Start a new album"
+      className="lift-press flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-fg shadow-loge"
+    >
+      <Plus className="h-4 w-4" />
+    </button>,
+    []
+  );
 
+  return (
+    <div className="curtain-reveal space-y-3">
       {isLoading ? (
         <div className="space-y-3">
           <Skeleton className="h-28 w-full" rounded="lg" />
@@ -106,26 +116,26 @@ export function AlbumsRoute() {
               placeholder="Georgia &amp; Türkiye 2026"
             />
           </Field>
-          <FieldRow>
-            <Field label="From">
+          <Fieldset label="From — until">
+            <FieldRow>
               <Input
                 type="date"
+                aria-label="From"
                 value={form.startsOn}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, startsOn: e.target.value }))
                 }
               />
-            </Field>
-            <Field label="Until">
               <Input
                 type="date"
+                aria-label="Until"
                 value={form.endsOn}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, endsOn: e.target.value }))
                 }
               />
-            </Field>
-          </FieldRow>
+            </FieldRow>
+          </Fieldset>
           <Button full onClick={submit} disabled={create.isPending}>
             Start it
           </Button>
@@ -147,15 +157,25 @@ function AlbumSpine({
   photos: number;
   coverUrl?: string;
 }) {
+  const meta = [span(book), photos ? `${photos} photos` : 'empty'].filter(
+    Boolean
+  );
   return (
     <Link
       to={`/album/${book.id}`}
       style={{ '--i': index } as React.CSSProperties}
       className="lift-press flex items-stretch gap-3 overflow-hidden rounded-lg rounded-tr-[1.75rem] bg-surface-2 shadow-loge"
     >
+      {/* The wine board and its gilt line, so the shelf is made of the same
+          book you open — it used to be a flat brown rectangle. */}
       <span
-        className="relative w-24 shrink-0 overflow-hidden bg-brown"
+        className="relative w-20 shrink-0 overflow-hidden"
         aria-hidden="true"
+        style={{
+          background: coverUrl
+            ? undefined
+            : 'linear-gradient(150deg, #6e1423 0%, #4d0d18 100%)',
+        }}
       >
         {coverUrl ? (
           <img
@@ -167,25 +187,23 @@ function AlbumSpine({
           />
         ) : (
           <span className="flex h-full w-full items-center justify-center">
-            <BookHeart className="h-7 w-7 text-gold/50" strokeWidth={1.5} />
+            <BookHeart className="h-6 w-6 text-gold/60" strokeWidth={1.5} />
           </span>
         )}
-        {/* The gilt edge where the spine meets the page block. */}
         <span
-          className="absolute inset-y-0 right-0 w-px"
-          style={{ background: 'rgba(228,195,106,.45)' }}
+          className="absolute inset-y-1.5 right-0 w-px"
+          style={{ background: 'rgba(228,195,106,.5)' }}
         />
       </span>
 
-      <span className="flex min-w-0 flex-1 flex-col justify-center gap-1 py-4 pr-4">
+      <span className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 py-3 pr-4">
         <span className="truncate font-display text-xl font-semibold text-fg">
           {book.title}
         </span>
-        <span className="font-sans text-[0.7rem] text-muted">{span(book)}</span>
-        <span className="font-sans text-[0.65rem] uppercase tracking-[0.14em] text-copper">
-          {photos === 0
-            ? 'empty — start filling it'
-            : `${photos} ${photos === 1 ? 'photo' : 'photos'}`}
+        {/* One quiet line. It used to be two, the second of them shouting
+            EMPTY — START FILLING IT in capitals at you. */}
+        <span className="truncate font-sans text-xs text-muted">
+          {meta.join(' · ')}
         </span>
       </span>
     </Link>
@@ -202,5 +220,6 @@ function span(book: AlbumBook): string {
   }
   if (book.starts_on) return `from ${fmt(book.starts_on)}`;
   if (book.ends_on) return `until ${fmt(book.ends_on)}`;
-  return 'no dates yet';
+  // Nothing at all beats "no dates yet" sitting under every new album.
+  return '';
 }
