@@ -7,6 +7,7 @@ import type {
   PhotoSource,
 } from '../../types';
 import { useMoveSticker } from '../../api/placements.mutations';
+import { useHealPhotoSize } from '../../api/library.mutations';
 import { SlotPhoto } from './slot-photo';
 import {
   angleOf,
@@ -54,6 +55,7 @@ function PageFaceImpl({
   onSelect?: (id: string | null) => void;
 }) {
   const move = useMoveSticker();
+  const heal = useHealPhotoSize(bookId);
 
   return (
     <div
@@ -80,6 +82,11 @@ function PageFaceImpl({
             onSelect?.(selectedId === sticker.id ? null : sticker.id)
           }
           onTransform={(t) => move.mutate({ id: sticker.id, bookId, ...t })}
+          onMeasured={(size) =>
+            sticker.photo &&
+            !sticker.photo.width &&
+            heal(sticker.photo.id, size)
+          }
         />
       ))}
     </div>
@@ -115,6 +122,7 @@ function Sticker({
   url,
   onSelect,
   onTransform,
+  onMeasured,
 }: {
   sticker: PlacedSticker;
   interactive: boolean;
@@ -123,6 +131,7 @@ function Sticker({
   url?: string;
   onSelect: () => void;
   onTransform: (t: Transform) => void;
+  onMeasured: (size: { width: number; height: number }) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const busyRef = useRef(false);
@@ -315,6 +324,7 @@ function Sticker({
               path={sticker.photo?.image_path ?? null}
               url={url}
               alt={sticker.caption ?? 'Album photo'}
+              onMeasured={onMeasured}
             />
           </div>
           {sticker.caption && (
