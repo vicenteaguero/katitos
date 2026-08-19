@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@kernel/supabase';
 import { BUCKETS, storagePaths, useUpload } from '@kernel/storage';
+import type { AudioClip } from '@kernel/ui';
 import { qk } from '@kernel/query';
 import type {
   DeckCardOption,
@@ -37,7 +38,7 @@ export interface AddCardInput {
   text?: string;
   options?: DeckCardOption[];
   imageBlob?: Blob | null;
-  audioBlob?: Blob | null;
+  audio?: AudioClip | null;
   /** quiz mode: the correct answer value, e.g. { optionId } or { text }. */
   correct?: unknown;
 }
@@ -73,10 +74,14 @@ export function useAddCard() {
         prompt.imagePath = path;
         media = true;
       }
-      if (input.audioBlob) {
-        const path = storagePaths.quizAudio(input.deckId, cardId);
-        await upload(BUCKETS.quizMedia, path, input.audioBlob, {
-          contentType: 'audio/webm',
+      if (input.audio) {
+        const path = storagePaths.quizAudio(
+          input.deckId,
+          cardId,
+          input.audio.ext
+        );
+        await upload(BUCKETS.quizMedia, path, input.audio.blob, {
+          contentType: input.audio.mime,
         });
         prompt.audioPath = path;
         media = true;
