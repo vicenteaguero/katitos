@@ -25,7 +25,10 @@ const local = {
   sha: git('rev-parse HEAD'),
   ref: git('rev-parse --abbrev-ref HEAD'),
   subject: git('log -1 --format=%s'),
-  dirty: git('status --porcelain').length > 0,
+  // Same scope as the stamp: only what the bundle is built from counts.
+  dirty:
+    git('status --porcelain -- src public index.html vite.config.ts package.json')
+      .length > 0,
 };
 
 let prod;
