@@ -7,6 +7,13 @@ import { toast, type AudioClip } from '@kernel/ui';
 import type { TargetLang, Vocab } from '../types';
 import { schedule, type Grade, type Schedule } from '../lib/srs';
 
+/** Stable reference: an inline arrow re-runs `select` on every render. */
+const reviewsByVocab = (rows: VocabReview[]) => {
+  const out = new Map<string, VocabReview>();
+  for (const row of rows) out.set(row.vocab_id, row);
+  return out;
+};
+
 /**
  * The dictionary — every word either of us has ever been taught.
  *
@@ -203,11 +210,7 @@ export function useMyReviews() {
       if (error) throw error;
       return (data ?? []) as VocabReview[];
     },
-    select: (rows) => {
-      const out = new Map<string, VocabReview>();
-      for (const row of rows) out.set(row.vocab_id, row);
-      return out;
-    },
+    select: reviewsByVocab,
   });
 }
 
