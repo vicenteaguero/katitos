@@ -124,6 +124,24 @@ export const qk = {
     history: () => ['know-me', 'history'] as const,
     stats: () => ['know-me', 'stats'] as const,
   },
+  lang: {
+    all: () => ['lang'] as const,
+    courses: () => ['lang', 'courses'] as const,
+    course: (id: string) => ['lang', 'course', id] as const,
+    units: (courseId: string) => ['lang', 'course', courseId, 'units'] as const,
+    lesson: (id: string) => ['lang', 'lesson', id] as const,
+    blocks: (lessonId: string) =>
+      ['lang', 'lesson', lessonId, 'blocks'] as const,
+    exercises: (lessonId: string) =>
+      ['lang', 'lesson', lessonId, 'exercises'] as const,
+    attempts: (lessonId: string) =>
+      ['lang', 'lesson', lessonId, 'attempts'] as const,
+    progress: () => ['lang', 'progress'] as const,
+    vocab: () => ['lang', 'vocab'] as const,
+    vocabReviews: () => ['lang', 'vocab', 'reviews'] as const,
+    media: (courseId: string) => ['lang', 'course', courseId, 'media'] as const,
+    alphabet: () => ['lang', 'alphabet'] as const,
+  },
   album: {
     all: () => ['album'] as const,
     book: (scope: string, key: string) =>
