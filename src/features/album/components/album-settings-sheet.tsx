@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import {
   Button,
-  Field,
   FieldRow,
   Input,
   PhotoPicker,
@@ -21,9 +20,10 @@ import { useDeletePage, useUpdatePage } from '../api/pages.mutations';
 /**
  * Everything about the book itself, and about the page you have open.
  *
- * All of this existed as unwired mutations — renaming a book, giving it a
- * cover, archiving it — with nowhere to call it from. One sheet off the top
- * bar, no extra chrome on the page.
+ * Six things to change, so six controls — no captions under them explaining
+ * what a title is. Every field here used to carry a little uppercase label AND
+ * a grey line of help beneath it, which made a short form look like a tax
+ * return. What a box is for is written inside it.
  */
 export function AlbumSettingsSheet({
   open,
@@ -79,34 +79,37 @@ export function AlbumSettingsSheet({
         onDate: pageDate,
       });
     }
-    toast.success('Saved');
+    toast.success('Saved', { key: 'album-saved' });
     onClose();
   };
 
   return (
-    <Sheet open={open} onClose={onClose} title="This album" size="full">
-      <div className="space-y-3">
-        <Field label="Called">
-          <Input value={title} onChange={(e) => setTitle(e.target.value)} />
-        </Field>
+    <Sheet open={open} onClose={onClose} title="This album" size="half">
+      <div className="space-y-2">
+        <Input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="What this album is called"
+          className="font-display text-lg"
+        />
+        {/* From / until, side by side and nothing else — the dates read as a
+            range without a word saying so. */}
         <FieldRow>
-          <Field label="From">
-            <Input
-              type="date"
-              value={startsOn}
-              onChange={(e) => setStartsOn(e.target.value)}
-            />
-          </Field>
-          <Field label="Until">
-            <Input
-              type="date"
-              value={endsOn}
-              onChange={(e) => setEndsOn(e.target.value)}
-            />
-          </Field>
+          <Input
+            type="date"
+            aria-label="From"
+            value={startsOn}
+            onChange={(e) => setStartsOn(e.target.value)}
+          />
+          <Input
+            type="date"
+            aria-label="Until"
+            value={endsOn}
+            onChange={(e) => setEndsOn(e.target.value)}
+          />
         </FieldRow>
 
-        <Field label="Cover" hint="The picture on the shelf">
+        <div className="flex items-center gap-3 rounded-lg bg-surface px-3 py-2">
           <PhotoPicker
             value={cover}
             onChange={(blob) => {
@@ -114,33 +117,41 @@ export function AlbumSettingsSheet({
               if (blob) setCover.mutate({ id: book.id, blob });
             }}
           />
-        </Field>
+          <span className="font-sans text-sm text-fg">Cover</span>
+        </div>
 
         <Switch
           checked={book.archived}
           onChange={(next) => update.mutate({ id: book.id, archived: next })}
-          label="Put it away (keeps everything)"
+          label="Put it away"
         />
 
         {page && (
-          <>
-            <p className="eyebrow pt-2">Page {pageNumber}</p>
+          <div className="space-y-2 pt-1">
             <FieldRow>
-              <Field label="This page is">
-                <Input
-                  value={pageTitle}
-                  onChange={(e) => setPageTitle(e.target.value)}
-                  placeholder="the morning we missed the boat"
-                />
-              </Field>
-              <Field label="On">
-                <Input
-                  type="date"
-                  value={pageDate}
-                  onChange={(e) => setPageDate(e.target.value)}
-                />
-              </Field>
+              <Input
+                value={pageTitle}
+                aria-label={`Page ${pageNumber}`}
+                onChange={(e) => setPageTitle(e.target.value)}
+                placeholder={`Page ${pageNumber}`}
+              />
+              <Input
+                type="date"
+                aria-label="The day this page is about"
+                value={pageDate}
+                onChange={(e) => setPageDate(e.target.value)}
+              />
             </FieldRow>
+          </div>
+        )}
+
+        <Button full onClick={save} disabled={update.isPending}>
+          Save
+        </Button>
+
+        {/* Destructive, and therefore quiet and last. */}
+        <div className="flex gap-2">
+          {page && (
             <Button
               variant="ghost"
               full
@@ -150,27 +161,21 @@ export function AlbumSettingsSheet({
                 onClose();
               }}
             >
-              <Trash2 size={15} /> Tear out this page
+              <Trash2 size={15} /> This page
             </Button>
-          </>
-        )}
-
-        <Button full onClick={save} disabled={update.isPending}>
-          Save
-        </Button>
-
-        {book.scope === 'era' && (
-          <Button
-            variant="danger"
-            full
-            onClick={() => {
-              remove.mutate(book.id, { onSuccess: onDeleted });
-            }}
-            disabled={remove.isPending}
-          >
-            <Trash2 size={15} /> Delete this album
-          </Button>
-        )}
+          )}
+          {book.scope === 'era' && (
+            <Button
+              variant="ghost"
+              full
+              className="text-danger"
+              onClick={() => remove.mutate(book.id, { onSuccess: onDeleted })}
+              disabled={remove.isPending}
+            >
+              <Trash2 size={15} /> The album
+            </Button>
+          )}
+        </div>
       </div>
     </Sheet>
   );
