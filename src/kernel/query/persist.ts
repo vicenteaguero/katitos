@@ -8,11 +8,15 @@ import { dehydrate, hydrate, type QueryClient } from '@tanstack/react-query';
  * them on boot, so a reload paints last-known data instantly and revalidates in
  * the background.
  */
-// v2: the Long-Distance release changed cached shapes (polaroids gained
-// user_id/is_shared and regroup by day, album books gained columns). A stale v1
-// snapshot would hydrate old structures into new code, so the key moves with
-// the schema.
-const KEY = 'katitos:rq-cache:v2';
+// The key MOVES WITH THE SHAPE of what we cache, because hydration bypasses
+// the queryFn entirely: a stale snapshot is painted straight into new code.
+//   v2 — the Long-Distance release (polaroids gained user_id/is_shared and
+//        regroup by day; album books gained columns).
+//   v3 — the album's pages stopped carrying `photos` and now carry `stickers`
+//        (placements). A v2 snapshot would paint a page with no `stickers`
+//        array at all, and the book iterates it during render — so the first
+//        open after the update would throw instead of showing the album.
+const KEY = 'katitos:rq-cache:v3';
 const MAX_AGE = 24 * 60 * 60 * 1000; // a day — older snapshots are dropped
 const WRITE_DEBOUNCE = 1000;
 
