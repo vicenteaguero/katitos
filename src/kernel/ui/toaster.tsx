@@ -25,22 +25,39 @@ export function Toaster() {
       {toasts.map((t) => {
         const Icon = toneIcon[t.tone];
         return (
-          <button
+          <div
             key={t.id}
-            onClick={() => dismiss(t.id)}
-            className="curtain-reveal pointer-events-auto inline-flex max-w-app items-center gap-2.5 rounded-full bg-surface-2/95 py-2 pl-2 pr-4 text-left font-sans text-[0.84rem] font-medium tracking-[0.01em] text-fg shadow-loge backdrop-blur-md"
+            className="curtain-reveal pointer-events-auto inline-flex max-w-app items-center gap-2.5 rounded-full bg-surface-2/95 py-2 pl-2 pr-2 text-left font-sans text-[0.84rem] font-medium tracking-[0.01em] text-fg shadow-loge backdrop-blur-md"
             style={{ border: '1px solid rgba(201,162,75,.24)' }}
           >
-            <span
-              className={cn(
-                'grid h-6 w-6 shrink-0 place-items-center rounded-full',
-                toneChip[t.tone]
-              )}
+            <button
+              type="button"
+              onClick={() => dismiss(t.id)}
+              className="inline-flex min-w-0 items-center gap-2.5 pr-2 text-left"
             >
-              <Icon size={13} strokeWidth={2.75} />
-            </span>
-            <span className="min-w-0">{t.message}</span>
-          </button>
+              <span
+                className={cn(
+                  'grid h-6 w-6 shrink-0 place-items-center rounded-full',
+                  toneChip[t.tone]
+                )}
+              >
+                <Icon size={13} strokeWidth={2.75} />
+              </span>
+              <span className="min-w-0">{t.message}</span>
+            </button>
+            {t.action && (
+              <button
+                type="button"
+                onClick={() => {
+                  t.action?.onClick();
+                  dismiss(t.id);
+                }}
+                className="lift-press shrink-0 rounded-full bg-gold px-3 py-1 text-[0.78rem] font-semibold text-bg"
+              >
+                {t.action.label}
+              </button>
+            )}
+          </div>
         );
       })}
     </div>
