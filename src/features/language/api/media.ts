@@ -59,20 +59,29 @@ export function useUploadMedia() {
       await upload(BUCKETS.languageMedia, path, v.file, {
         contentType: v.file.type || undefined,
       });
-      const { error } = await supabase.from('lang_media').insert({
-        course_id: v.courseId,
-        lesson_id: v.lessonId ?? null,
-        kind: kindForFile(v.file),
-        title: v.title?.trim() || v.file.name,
-        storage_path: path,
-        mime: v.file.type || null,
-        size_bytes: v.file.size,
-      });
+      const { data, error } = await supabase
+        .from('lang_media')
+        .insert({
+          course_id: v.courseId,
+          lesson_id: v.lessonId ?? null,
+          kind: kindForFile(v.file),
+          title: v.title?.trim() || v.file.name,
+          storage_path: path,
+          mime: v.file.type || null,
+          size_bytes: v.file.size,
+        })
+        // The row comes back so the block can be told which attachment it owns.
+        .select('*')
+        .single();
       if (error) throw error;
+      return data as Media;
     },
     onError: (e: Error) => toast.error(e.message),
-    onSuccess: (_d, v) =>
-      void qc.invalidateQueries({ queryKey: qk.lang.media(v.courseId) }),
+    onSuccess: (_d, v) => {
+      void qc.invalidateQueries({ queryKey: qk.lang.media(v.courseId) });
+      if (v.lessonId)
+        void qc.invalidateQueries({ queryKey: qk.lang.lesson(v.lessonId) });
+    },
   });
 }
 
@@ -107,21 +116,29 @@ export function useAddLink() {
       title?: string;
     }) => {
       const id = youtubeId(v.url);
-      const { error } = await supabase.from('lang_media').insert({
-        course_id: v.courseId,
-        lesson_id: v.lessonId ?? null,
-        kind: id ? 'youtube' : 'link',
-        title: v.title?.trim() || null,
-        url: v.url.trim(),
-        // The still frame, so a lesson full of videos still opens instantly —
-        // the player itself is only loaded when someone taps it.
-        poster_path: id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : null,
-      });
+      const { data, error } = await supabase
+        .from('lang_media')
+        .insert({
+          course_id: v.courseId,
+          lesson_id: v.lessonId ?? null,
+          kind: id ? 'youtube' : 'link',
+          title: v.title?.trim() || null,
+          url: v.url.trim(),
+          // The still frame, so a lesson full of videos still opens instantly —
+          // the player itself is only loaded when someone taps it.
+          poster_path: id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : null,
+        })
+        .select('*')
+        .single();
       if (error) throw error;
+      return data as Media;
     },
     onError: (e: Error) => toast.error(e.message),
-    onSuccess: (_d, v) =>
-      void qc.invalidateQueries({ queryKey: qk.lang.media(v.courseId) }),
+    onSuccess: (_d, v) => {
+      void qc.invalidateQueries({ queryKey: qk.lang.media(v.courseId) });
+      if (v.lessonId)
+        void qc.invalidateQueries({ queryKey: qk.lang.lesson(v.lessonId) });
+    },
   });
 }
 
