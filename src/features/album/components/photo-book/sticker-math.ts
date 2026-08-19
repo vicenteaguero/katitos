@@ -124,3 +124,73 @@ export function handleTransform(
     ),
   };
 }
+
+/**
+ * Where the next sticker should land.
+ *
+ * Everything was dropped at dead centre, so putting four photos on a page made
+ * a perfect stack and looked exactly like three of them had failed to appear.
+ * They come down beside each other instead, spiralling gently outwards, and
+ * each one is tilted a little — a page you then tidy up, rather than a pile.
+ *
+ * Deterministic in the number already on the page: both phones computing it at
+ * once agree, and there is nothing random to make a test flaky.
+ */
+const RING: ReadonlyArray<readonly [number, number]> = [
+  [0, 0],
+  [0.17, -0.11],
+  [-0.17, 0.11],
+  [0.16, 0.15],
+  [-0.16, -0.15],
+  [0, 0.21],
+  [0, -0.21],
+];
+
+/** Degrees of tilt, cycling so neighbours lean opposite ways. */
+const TILTS = [-3, 2.5, -1.5, 3.5, -2.5, 1.5] as const;
+
+export function dropSpot(placedCount: number): {
+  x: number;
+  y: number;
+  rotation: number;
+} {
+  const n = Math.max(0, Math.floor(placedCount));
+  const [dx, dy] = RING[n % RING.length];
+  // Each full lap pushes a little further out, so a busy page keeps spreading
+  // instead of landing back on the first ring.
+  const lap = Math.floor(n / RING.length);
+  const drift = 1 + lap * 0.28;
+  return {
+    x: clamp01(0.5 + dx * drift),
+    y: clamp01(0.5 + dy * drift),
+    rotation: TILTS[n % TILTS.length],
+  };
+}
+
+/** Never against the very edge, where a sticker is half off the paper. */
+function clamp01(v: number): number {
+  return Math.min(0.82, Math.max(0.18, v));
+}
+
+/** A sticker at scale 1, as a fraction of the page width. */
+export const BASE_W = 0.42;
+
+/**
+ * How wide a photo should sit on the page.
+ *
+ * Every sticker used to be 42% of the page WIDE whatever shape it was, so a
+ * portrait photo came out towering over the landscape one beside it — same
+ * width, nearly twice the height, and the page looked lopsided. Matching the
+ * AREA instead makes the two read as a pair: a wide photo is wider and shorter,
+ * a tall one narrower and taller, and both take up the same amount of paper.
+ */
+export function stickerWidth(
+  width?: number | null,
+  height?: number | null
+): number {
+  if (!width || !height) return BASE_W;
+  const ratio = width / height;
+  // sqrt, because area is width × height and height is width ÷ ratio.
+  const w = BASE_W * Math.sqrt(ratio);
+  return Math.min(0.72, Math.max(0.22, w));
+}
