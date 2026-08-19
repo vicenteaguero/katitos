@@ -1,8 +1,15 @@
 import { useState } from 'react';
 import { ExternalLink, FileText, Play } from 'lucide-react';
+import { cn } from '@kernel/lib';
 import { BUCKETS, useSignedUrl } from '@kernel/storage';
 import { PlayButton } from '@kernel/ui';
-import type { Block, Media, SupportLang, Vocab } from '../types';
+import type {
+  Block,
+  Media,
+  SupportLang,
+  TableBlockData,
+  Vocab,
+} from '../types';
 import { meaningOf, pick } from '../lib/pick';
 import { youtubeId } from '../api/media';
 
@@ -25,6 +32,15 @@ export function BlockView({
 
     case 'vocab':
       return <VocabBlock words={vocab ?? []} support={support} />;
+
+    case 'table':
+      return (
+        <TableBlock
+          data={(block.data ?? {}) as TableBlockData}
+          caption={pick(block, 'body', support)}
+          support={support}
+        />
+      );
 
     case 'media':
       return media ? <MediaBlock media={media} /> : null;
@@ -49,6 +65,78 @@ export function BlockView({
       );
     }
   }
+}
+
+/**
+ * The endings, in a grid.
+ *
+ * Scrolls sideways inside itself rather than pushing the page wide — six cases
+ * will not fit across a phone, and a lesson you have to pan horizontally to
+ * read is worse than one you swipe a table in.
+ */
+function TableBlock({
+  data,
+  caption,
+  support,
+}: {
+  data: TableBlockData;
+  caption: string;
+  support: SupportLang;
+}) {
+  const headings = data.headings ?? [];
+  const rows = data.rows ?? [];
+  if (!rows.length) return null;
+
+  const label = (h: { ru?: string; en?: string; es?: string }) =>
+    (support === 'es' ? h.es : h.en) || h.en || h.es || h.ru || '';
+
+  return (
+    <figure className="m-0 space-y-1">
+      {caption && (
+        <figcaption className="font-sans text-xs text-muted">
+          {caption}
+        </figcaption>
+      )}
+      <div className="overflow-x-auto rounded-lg bg-surface">
+        <table className="w-full border-collapse text-left">
+          {headings.length > 0 && (
+            <thead>
+              <tr>
+                {headings.map((h, i) => (
+                  <th
+                    key={i}
+                    scope="col"
+                    className="whitespace-nowrap px-2.5 py-1.5 font-sans text-[0.62rem] uppercase tracking-[0.12em] text-gold"
+                  >
+                    {label(h)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+          )}
+          <tbody>
+            {rows.map((row, r) => (
+              <tr key={r} className="border-t border-fg/5">
+                {row.map((cell, c) => (
+                  <td
+                    key={c}
+                    className={cn(
+                      'whitespace-nowrap px-2.5 py-1.5 font-display text-[0.95rem]',
+                      // The first column is the label of the row (the case, the
+                      // person); the rest are the forms being taught.
+                      c === 0 ? 'text-muted' : 'text-fg'
+                    )}
+                  >
+                    {cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </figure>
+  );
 }
 
 function VocabBlock({
