@@ -105,28 +105,24 @@ export function useRestack() {
       pageId: string;
       to: 'front' | 'back';
     }) => {
+      // Read the depths and patch the cache in ONE place. Splitting this across
+      // `onMutate` and here meant the second read saw the first one's optimistic
+      // write and picked a depth one higher — so the screen and the database
+      // quietly disagreed, and every tap inflated `z` twice as fast as it should.
       const zs = depthsOnPage(qc, v.bookId, v.pageId);
       const z = v.to === 'front' ? nextZFront(zs) : nextZBack(zs);
+      const previous = patchSticker(qc, v.bookId, v.id, { z });
       const { error } = await supabase
         .from('album_placements')
         .update({ z })
         .eq('id', v.id);
-      if (error) throw error;
+      if (error) {
+        if (previous) qc.setQueryData(qk.album.pages(v.bookId), previous);
+        throw error;
+      }
       return z;
     },
-    onMutate: (v) => {
-      const zs = depthsOnPage(qc, v.bookId, v.pageId);
-      return {
-        previous: patchSticker(qc, v.bookId, v.id, {
-          z: v.to === 'front' ? nextZFront(zs) : nextZBack(zs),
-        }),
-      };
-    },
-    onError: (e: Error, v, ctx) => {
-      if (ctx?.previous)
-        qc.setQueryData(qk.album.pages(v.bookId), ctx.previous);
-      toast.error(e.message);
-    },
+    onError: (e: Error) => toast.error(e.message),
   });
 }
 
