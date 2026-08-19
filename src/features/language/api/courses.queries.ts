@@ -56,8 +56,9 @@ export function useCourse(id: string | undefined) {
  * waterfall of requests is what made the old deck screen feel slow.
  */
 export function useUnits(courseId: string | undefined) {
+  const userId = useUserId();
   return useQuery({
-    queryKey: qk.lang.units(courseId ?? 'none'),
+    queryKey: [...qk.lang.units(courseId ?? 'none'), userId ?? 'anon'] as const,
     enabled: !!courseId,
     staleTime: 30_000,
     queryFn: async (): Promise<UnitWithLessons[]> => {
@@ -69,9 +70,12 @@ export function useUnits(courseId: string | undefined) {
       if (error) throw error;
       return (data ?? []).map((u) => ({
         ...u,
-        lessons: [...((u.lessons ?? []) as Lesson[])].sort(
-          (a, b) => a.position - b.position
-        ),
+        lessons: [...((u.lessons ?? []) as Lesson[])]
+          // A draft belongs to whoever is writing it. The migration says "he
+          // only ever sees published" and nothing enforced it — half-written
+          // lessons appeared in his list and opened.
+          .filter((l) => l.status === 'published' || l.created_by === userId)
+          .sort((a, b) => a.position - b.position),
       }));
     },
   });
