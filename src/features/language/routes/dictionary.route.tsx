@@ -22,7 +22,7 @@ import {
   useVocab,
 } from '../api/vocab';
 import { useLangPrefs } from '../lib/lang-prefs';
-import { meaningOf } from '../lib/pick';
+import { headword, meaningOf } from '../lib/pick';
 import type { SupportLang, Vocab } from '../types';
 
 /**
@@ -105,7 +105,7 @@ export function DictionaryRoute() {
             <li key={w.id} className="flex items-center gap-2 py-2">
               <span className="min-w-0 flex-1">
                 <span className="block font-display text-base text-fg">
-                  {w.ru}
+                  {headword(w)}
                   {w.transliteration && (
                     <span className="ml-2 font-sans text-[0.68rem] text-muted">
                       {w.transliteration}
@@ -231,11 +231,12 @@ function WordSheet({
               placeholder="spasibo"
             />
           </Field>
-          <Field label="Stress" hint="Which syllable">
+          <Field label="With the stress" hint="Hold a vowel on the keys below">
             <Input
               value={stress}
               onChange={(e) => setStress(e.target.value)}
-              placeholder="spaSIbo"
+              className="font-display text-lg"
+              placeholder="спаси́бо"
             />
           </Field>
         </FieldRow>
