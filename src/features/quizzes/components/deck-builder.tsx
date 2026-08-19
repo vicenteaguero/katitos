@@ -3,6 +3,7 @@ import { nanoid } from 'nanoid';
 import { Plus, X } from 'lucide-react';
 import {
   AudioRecorder,
+  type AudioClip,
   Button,
   Field,
   Input,
@@ -30,7 +31,7 @@ export function DeckBuilder({ onDone }: { onDone: () => void }) {
   // card draft
   const [text, setText] = useState('');
   const [imageBlob, setImageBlob] = useState<Blob | null>(null);
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [audio, setAudio] = useState<AudioClip | null>(null);
   const [options, setOptions] = useState<OptionDraft[]>([]);
   const [correctId, setCorrectId] = useState<string | null>(null);
   const [correctText, setCorrectText] = useState('');
@@ -55,7 +56,7 @@ export function DeckBuilder({ onDone }: { onDone: () => void }) {
   const resetCard = () => {
     setText('');
     setImageBlob(null);
-    setAudioBlob(null);
+    setAudio(null);
     setOptions([]);
     setCorrectId(null);
     setCorrectText('');
@@ -63,7 +64,7 @@ export function DeckBuilder({ onDone }: { onDone: () => void }) {
 
   const addTheCard = async () => {
     if (!deckId) return;
-    if (!text.trim() && !imageBlob && !audioBlob && options.length === 0) {
+    if (!text.trim() && !imageBlob && !audio && options.length === 0) {
       return toast.error('Add a prompt or options');
     }
     const correct = isQuiz
@@ -80,7 +81,7 @@ export function DeckBuilder({ onDone }: { onDone: () => void }) {
           ? options.filter((o) => o.label.trim())
           : undefined,
         imageBlob,
-        audioBlob,
+        audio,
         correct,
       });
       setCount((c) => c + 1);
@@ -156,7 +157,7 @@ export function DeckBuilder({ onDone }: { onDone: () => void }) {
       </Field>
 
       <Field label="Audio (optional)">
-        <AudioRecorder onRecorded={setAudioBlob} />
+        <AudioRecorder onRecorded={setAudio} />
       </Field>
 
       <div className="space-y-3">
