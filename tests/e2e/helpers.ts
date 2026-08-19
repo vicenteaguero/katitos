@@ -12,10 +12,17 @@ export const ANON =
  */
 export async function dismissChangelog(page: Page) {
   const showMe = page.getByRole('button', { name: 'Show me' });
+  // It arrives a beat AFTER the shell paints, so asking "is it visible?" the
+  // instant the page loads answers no — and then the backdrop swallows the
+  // next click. Give it a moment to turn up before deciding it isn't there.
+  await showMe.waitFor({ state: 'visible', timeout: 2_000 }).catch(() => {});
   if (await showMe.isVisible().catch(() => false)) {
     await showMe.click();
-    await expect(showMe).toBeHidden();
   }
+  // Either way, nothing may proceed while the backdrop is still over the page.
+  await expect(page.locator('.cl-backdrop')).toHaveCount(0, {
+    timeout: 10_000,
+  });
 }
 
 /** A signed-in REST context, for setting up and tearing down test data. */
