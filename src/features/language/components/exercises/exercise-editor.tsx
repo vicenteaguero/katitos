@@ -2,18 +2,23 @@ import { useEffect, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { nanoid } from 'nanoid';
 import {
+  AudioRecorder,
   Button,
   Field,
   Input,
+  PlayButton,
   Segmented,
   Sheet,
   Textarea,
   toast,
+  type AudioClip,
 } from '@kernel/ui';
+import { BUCKETS, storagePaths, useUpload } from '@kernel/storage';
 import { useSaveExercise } from '../../api/lessons.mutations';
 import { useLangPrefs } from '../../lib/lang-prefs';
 import {
   gapCount,
+  scrambleTokens,
   validateExercise,
   type ExerciseOption,
 } from '../../lib/exercise-schema';
@@ -51,6 +56,7 @@ export function ExerciseEditor({
   onClose: () => void;
 }) {
   const save = useSaveExercise();
+  const { upload, uploading } = useUpload();
   const support = useLangPrefs((s) => s.supportLang);
 
   const [kind, setKind] = useState<ExerciseKind>('choice');
@@ -62,6 +68,8 @@ export function ExerciseEditor({
   const [correct, setCorrect] = useState<string[]>([]);
   const [text, setText] = useState('');
   const [answerText, setAnswerText] = useState('');
+  const [audio, setAudio] = useState<AudioClip | null>(null);
+  const [audioPath, setAudioPath] = useState<string | null>(null);
 
   useEffect(() => {
     if (!exercise) return;
@@ -73,6 +81,7 @@ export function ExerciseEditor({
     );
     const payload = exercise.payload as Record<string, unknown>;
     if (payload?.options) setOptions(payload.options as ExerciseOption[]);
+    setAudioPath((payload?.audioPath as string) ?? null);
     if (payload?.template) setText(String(payload.template));
     if (payload?.tokens) setText((payload.tokens as string[]).join(' '));
     if (Array.isArray(exercise.answer)) {
@@ -86,7 +95,9 @@ export function ExerciseEditor({
   }, [exercise, support]);
 
   /** Turn the form into the shapes `exercise-schema` expects. */
-  const build = (): { payload: unknown; answer: unknown } => {
+  const buildWith = (
+    audioPath: string | null
+  ): { payload: unknown; answer: unknown } => {
     switch (kind) {
       case 'choice':
         return { payload: { options }, answer: correct[0] ?? '' };
@@ -95,7 +106,7 @@ export function ExerciseEditor({
       case 'type':
         return { payload: { placeholder: '' }, answer: answerText.trim() };
       case 'listen':
-        return { payload: { audioPath: null }, answer: answerText.trim() };
+        return { payload: { audioPath }, answer: answerText.trim() };
       case 'complete':
         return {
           payload: { template: text },
@@ -103,7 +114,9 @@ export function ExerciseEditor({
         };
       case 'order': {
         const tokens = text.split(/\s+/).filter(Boolean);
-        return { payload: { tokens }, answer: tokens };
+        // The pool is JUMBLED and the answer keeps her order. Storing both the
+        // same way is what made the exercise solvable by tapping left to right.
+        return { payload: { tokens: scrambleTokens(tokens) }, answer: tokens };
       }
       case 'match': {
         const pairs = text
@@ -117,12 +130,23 @@ export function ExerciseEditor({
         };
       }
       case 'speak':
-        return { payload: { audioPath: null }, answer: null };
+        return { payload: { audioPath }, answer: null };
     }
   };
 
-  const submit = () => {
-    const { payload, answer } = build();
+  const needsAudio = kind === 'listen' || kind === 'speak';
+
+  const submit = async () => {
+    // The recording has to exist in storage before the question can point at it.
+    let path = audioPath;
+    if (needsAudio && audio) {
+      path = storagePaths.languageAudio(`exercise/${nanoid(10)}`, audio.ext);
+      await upload(BUCKETS.languageAudio, path, audio.blob, {
+        contentType: audio.mime,
+      });
+      setAudioPath(path);
+    }
+    const { payload, answer } = buildWith(path);
     const problem = validateExercise({ kind, payload, answer });
     if (problem) {
       toast.error(problem);
@@ -280,6 +304,27 @@ export function ExerciseEditor({
           </Field>
         )}
 
+        {needsAudio && (
+          <Field
+            label={
+              kind === 'listen' ? 'What he will hear' : 'How it should sound'
+            }
+            hint="In your voice — that is the point"
+          >
+            <div className="space-y-2">
+              {audioPath && !audio && (
+                <PlayButton
+                  bucket={BUCKETS.languageAudio}
+                  path={audioPath}
+                  size="sm"
+                  label="What is on it now"
+                />
+              )}
+              <AudioRecorder onRecorded={setAudio} />
+            </div>
+          </Field>
+        )}
+
         {(kind === 'type' || kind === 'listen') && (
           <Field label="The answer">
             <Input
@@ -290,7 +335,11 @@ export function ExerciseEditor({
           </Field>
         )}
 
-        <Button full onClick={submit} disabled={save.isPending}>
+        <Button
+          full
+          onClick={() => void submit()}
+          disabled={save.isPending || uploading}
+        >
           {exercise ? 'Save' : 'Add the question'}
         </Button>
       </div>
