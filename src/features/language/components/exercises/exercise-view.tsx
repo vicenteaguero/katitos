@@ -3,7 +3,7 @@ import { Check, Mic, X } from 'lucide-react';
 import { cn } from '@kernel/lib';
 import { BUCKETS } from '@kernel/storage';
 import { Button, Input, PlayButton } from '@kernel/ui';
-import type { Exercise, SupportLang } from '../../types';
+import type { Exercise, Lang } from '../../types';
 import {
   acceptedForms,
   splitTemplate,
@@ -11,17 +11,19 @@ import {
   type Grade,
 } from '../../lib/exercise-schema';
 import { pick } from '../../lib/pick';
-import { CyrillicKeys } from '../cyrillic-keys';
+import { LetterKeys } from '../letter-keys';
 
 /** An option reads in the language you learn in, falling back like everything else. */
-function optionLabel(o: ExerciseOption, support: SupportLang): string {
+function optionLabel(o: ExerciseOption, support: Lang): string {
   const order = support === 'es' ? [o.es, o.en, o.ru] : [o.en, o.es, o.ru];
   return order.find((v) => v && v.trim()) ?? '';
 }
 
 export interface ExerciseViewProps {
   exercise: Exercise;
-  support: SupportLang;
+  support: Lang;
+  /** The language the lesson teaches — which keyboard a typed answer gets. */
+  target: Lang;
   /** The answer so far. Owned by the runner so it survives a re-render. */
   value: unknown;
   onChange: (value: unknown) => void;
@@ -190,6 +192,7 @@ function MultiView({
 /** Typing Russian on a Latin keyboard is impossible, so the keys come along. */
 function TypeView({
   exercise,
+  target,
   value,
   onChange,
   grade,
@@ -211,8 +214,9 @@ function TypeView({
         spellCheck={false}
       />
       {!disabled && (
-        <CyrillicKeys
-          onKey={(k) => onChange(text + k)}
+        <LetterKeys
+          lang={target}
+          onKey={(k: string) => onChange(text + k)}
           onBackspace={() => onChange(text.slice(0, -1))}
         />
       )}
