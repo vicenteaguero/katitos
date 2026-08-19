@@ -1,7 +1,6 @@
 import { Link } from 'react-router';
 import { GraduationCap } from 'lucide-react';
-import { useAllPhrases } from '../api/decks.queries';
-import { useMyReviews } from '../api/reviews';
+import { useAllVocab, useMyReviews } from '../api/vocab';
 import { buildSession, isDue, mastery } from '../lib/srs';
 
 /**
@@ -11,10 +10,10 @@ import { buildSession, isDue, mastery } from '../lib/srs';
  * "12 waiting for you" is a thing you can act on.
  */
 export function StudyBanner() {
-  const { data: phrases } = useAllPhrases('ru');
+  const { data: words } = useAllVocab('ru');
   const { data: reviews } = useMyReviews();
 
-  const cards = phrases ?? [];
+  const cards = words ?? [];
   const map = reviews ?? new Map();
   const due = cards.filter((c) => isDue(map.get(c.id))).length;
   const known = cards.filter((c) => mastery(map.get(c.id)) === 'known').length;
