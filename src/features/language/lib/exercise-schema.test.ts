@@ -46,11 +46,21 @@ describe('multi', () => {
     expect(gradeAnswer(q, ['a']).score).toBeCloseTo(0.5);
   });
 
-  it('does not reward ticking everything', () => {
+  it('does not reward ticking everything, whatever the shape of the question', () => {
     const wide = ex('multi', { options: OPTIONS }, ['a']);
-    // One right, one wrong: the wrong pick cancels the right one out.
     expect(gradeAnswer(wide, ['a', 'b']).score).toBe(0);
     expect(gradeAnswer(wide, ['a', 'b']).correct).toBe(false);
+
+    // Four options of which three are right: the old formula gave 67% for
+    // simply ticking all four.
+    const four = ex(
+      'multi',
+      { options: [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }] },
+      ['a', 'b', 'c']
+    );
+    expect(gradeAnswer(four, ['a', 'b', 'c', 'd']).score).toBe(0);
+    // …while genuinely getting two of three still earns something.
+    expect(gradeAnswer(four, ['a', 'b']).score).toBeCloseTo(2 / 3);
   });
 
   it('never goes negative', () => {
@@ -154,10 +164,36 @@ describe('order', () => {
     expect(gradeAnswer(q, ['я', 'тебя', 'люблю']).correct).toBe(true);
   });
 
-  it('rejects the wrong order but says how close it was', () => {
+  it('rejects the wrong order but credits how much of it was in order', () => {
+    // Two of the three words are still in sequence, so this is a near miss,
+    // not a near-zero. Scoring by exact position used to give 1/3.
     const grade = gradeAnswer(q, ['я', 'люблю', 'тебя']);
     expect(grade.correct).toBe(false);
-    expect(grade.score).toBeCloseTo(1 / 3);
+    expect(grade.score).toBeCloseTo(2 / 3);
+  });
+
+  it('does not paint the whole sentence red over one displaced word', () => {
+    const four = ex('order', { tokens: ['a', 'b', 'c', 'd'] }, [
+      'a',
+      'b',
+      'c',
+      'd',
+    ]);
+    // One word moved to the front; the rest are still in order.
+    const grade = gradeAnswer(four, ['d', 'a', 'b', 'c']);
+    expect(grade.score).toBeCloseTo(3 / 4);
+    expect(grade.detail).toEqual([false, true, true, true]);
+  });
+
+  it('accepts either word order when she says both are right', () => {
+    // Russian word order is pragmatic: both of these are correct.
+    const either = ex('order', { tokens: ['я', 'тебя', 'люблю'] }, [
+      ['я', 'тебя', 'люблю'],
+      ['я', 'люблю', 'тебя'],
+    ]);
+    expect(gradeAnswer(either, ['я', 'люблю', 'тебя']).correct).toBe(true);
+    expect(gradeAnswer(either, ['я', 'тебя', 'люблю']).correct).toBe(true);
+    expect(gradeAnswer(either, ['люблю', 'тебя', 'я']).correct).toBe(false);
   });
 
   it('does not call a half-finished answer correct', () => {
