@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
+import { DateTime } from 'luxon';
 import { useAuth, usePartner } from '@kernel/auth';
+import { BUILD_STATE_LABEL, useBuildStatus } from '@kernel/build';
 import { useUpdateMember } from '@kernel/couple';
 import { usePushSubscribe } from '@kernel/push';
 import {
@@ -12,7 +14,7 @@ import {
   Switch,
   toast,
 } from '@kernel/ui';
-import { CURRENCIES } from '@kernel/lib';
+import { CURRENCIES, cn } from '@kernel/lib';
 import { PhraseEditor } from '@features/love';
 import { ChangelogHistory } from '../shell/changelog-modal';
 
@@ -161,6 +163,75 @@ function WhatsNew() {
   );
 }
 
+/** A dot you can read across the room. */
+const STATE_DOT: Record<string, string> = {
+  current: 'bg-success',
+  stale: 'bg-gold',
+  dirty: 'bg-copper',
+  checking: 'bg-muted',
+  unknown: 'bg-muted',
+};
+
+/**
+ * Which version am I actually holding?
+ *
+ * An installed PWA hides this completely: the service worker never takes over
+ * mid-session, so a phone can run a bundle from days ago and look perfectly
+ * normal. The commit is written here so either of us can read it out loud and
+ * know we are talking about the same app — and if the server has something
+ * newer, this is where you take it.
+ */
+function VersionRow() {
+  const { local, server, state, update } = useBuildStatus();
+  const stale = state === 'stale';
+  const made = local.committedAt
+    ? DateTime.fromISO(local.committedAt).toFormat('d LLL, HH:mm')
+    : DateTime.fromISO(local.builtAt).toFormat('d LLL, HH:mm');
+
+  return (
+    <div className="rounded-lg bg-surface px-4 py-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-sans text-sm font-semibold text-fg">Version</p>
+          <button
+            type="button"
+            onClick={() => {
+              void navigator.clipboard?.writeText(local.sha);
+              toast.success('Copied');
+            }}
+            className="block truncate font-mono text-xs text-muted"
+          >
+            {local.version} · {local.short}
+            {local.dirty && '+'} · {made}
+          </button>
+        </div>
+        <span
+          aria-hidden="true"
+          className={cn(
+            'mt-1.5 h-2 w-2 shrink-0 rounded-full',
+            STATE_DOT[state] ?? 'bg-muted'
+          )}
+        />
+      </div>
+      <p className="mt-1 font-sans text-xs text-muted">
+        {BUILD_STATE_LABEL[state]}
+        {stale && server ? ` · ${server.short}` : ''}
+      </p>
+      {stale && (
+        <Button
+          full
+          size="sm"
+          variant="secondary"
+          className="mt-2"
+          onClick={() => void update()}
+        >
+          Update now
+        </Button>
+      )}
+    </div>
+  );
+}
+
 export function SettingsRoute() {
   const { signOut, isLocal } = useAuth();
   const { self, isLoading } = usePartner();
@@ -174,6 +245,7 @@ export function SettingsRoute() {
         {/* Admin only — she receives the sweet nothings, he writes them. */}
         {self?.is_admin && <PhraseEditor />}
         <WhatsNew />
+        <VersionRow />
         {!isLocal && (
           <Button full variant="ghost" onClick={() => void signOut()}>
             Sign out
