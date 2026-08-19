@@ -42,6 +42,10 @@ const FLIP_MS = 700; // StPageFlip curl duration
 const SLIDE_MS = 380; // snappier within-spread slide (CSS track transition)
 const M = 10; // wine cover margin around the open pages
 const MIN_PEEK = 40; // smallest sliver of the facing page kept visible
+// Room above and below the paper for the curling leaf and its shadow. The
+// viewport paints into it without occupying it (negative margin in the CSS),
+// so the fold stops being sliced off at the top and bottom edges.
+const CURL_PAD = 16;
 
 /** A round, gilt-edged page-nav button. */
 function NavBtn({
@@ -158,6 +162,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
     restL: 0,
     restR: 0,
     vw: 0,
+    viewportH: 0,
   });
   const teardownRef = useRef<(() => void) | null>(null);
   const setStage = useCallback((el: HTMLDivElement | null) => {
@@ -173,7 +178,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
       const controlsH = controlsRef.current?.offsetHeight ?? 96;
       const availH =
         main.getBoundingClientRect().bottom - padB - top - controlsH - 16;
-      setSize(computeLayout(elW, availH, M, MIN_PEEK));
+      setSize(computeLayout(elW, availH, M, MIN_PEEK, CURL_PAD));
     };
     compute();
     // Re-measure once the curtain-reveal transform settles — the one-shot mount
@@ -361,7 +366,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
 
   const arranging = mode === 'arrange';
   const current = pages[focused];
-  const { pageW, trackW, restL, restR, vw } = size;
+  const { pageW, trackW, restL, restR, vw, viewportH } = size;
   const pageH = Math.round(pageW * (4 / 3));
   const rest = restFor(focused, restL, restR);
   const tx = rest + (drag.active ? drag.dx : 0);
@@ -387,12 +392,13 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
           <div
             ref={vpRef}
             className="pb-viewport"
-            style={{ height: pageH + 2 * M }}
+            style={{ height: viewportH }}
           >
             <div
               className="pb-track"
               style={{
                 width: trackW,
+                top: CURL_PAD,
                 transform: `translateX(${tx}px)`,
                 transition: drag.active
                   ? 'none'
@@ -435,7 +441,11 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
                 native curl. */}
             <div
               className="pb-slide-zone"
-              style={{ ...slideStyle, top: 0, bottom: 0 }}
+              // Inset by the curl padding: the halo the viewport now paints
+              // above and below the paper is not part of the book, and a
+              // gesture zone stretched over it would swallow taps meant for
+              // whatever sits there.
+              style={{ ...slideStyle, top: CURL_PAD, bottom: CURL_PAD }}
               {...slideBind()}
             />
           </div>
