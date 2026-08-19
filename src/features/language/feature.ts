@@ -9,14 +9,44 @@ export const languageFeature = defineFeature({
     {
       index: true,
       lazy: () =>
-        import('./routes/decks.route').then((m) => ({
-          Component: m.DecksRoute,
+        import('./routes/courses.route').then((m) => ({
+          Component: m.CoursesRoute,
         })),
     },
     {
-      path: 'deck/:deckId',
+      path: 'course/:courseId',
       lazy: () =>
-        import('./routes/deck.route').then((m) => ({ Component: m.DeckRoute })),
+        import('./routes/course.route').then((m) => ({
+          Component: m.CourseRoute,
+        })),
+    },
+    {
+      path: 'lesson/:lessonId',
+      lazy: () =>
+        import('./routes/lesson.route').then((m) => ({
+          Component: m.LessonRoute,
+        })),
+    },
+    {
+      path: 'build/:lessonId',
+      lazy: () =>
+        import('./routes/build.route').then((m) => ({
+          Component: m.BuildRoute,
+        })),
+    },
+    {
+      path: 'dictionary',
+      lazy: () =>
+        import('./routes/dictionary.route').then((m) => ({
+          Component: m.DictionaryRoute,
+        })),
+    },
+    {
+      path: 'alphabet',
+      lazy: () =>
+        import('./routes/alphabet.route').then((m) => ({
+          Component: m.AlphabetRoute,
+        })),
     },
     {
       path: 'study',
@@ -24,11 +54,6 @@ export const languageFeature = defineFeature({
         import('./routes/study.route').then((m) => ({
           Component: m.StudyRoute,
         })),
-    },
-    {
-      path: 'play/:deckId',
-      lazy: () =>
-        import('./routes/play.route').then((m) => ({ Component: m.PlayRoute })),
     },
   ],
   nav: [
