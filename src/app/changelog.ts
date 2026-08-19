@@ -23,6 +23,30 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    title: 'Your classroom',
+    date: '2026-08-19',
+    lines: [
+      'Russian is a real course now. You build it the way you would at work: units, lessons inside them, and each lesson can be homework or an exam with a date on it.',
+      'You write a lesson out of pieces — a paragraph, a list of words, a video, a question — and you can move them around until it reads right.',
+      'Eight kinds of question: choose one, choose several, type it, fill the gaps, put the words in order, match the pairs, listen and write, or say it out loud.',
+      'Nothing reaches him until you decide it is ready. When you hand a lesson over, his phone tells him.',
+      'You can see what he answered and what he got wrong, and leave him a note.',
+      'The alphabet is here — all thirty-three letters, what each one sounds like, and a word that uses it. You can record each one in your own voice.',
+      'A dictionary that keeps growing. Every word is written once, so fixing it fixes it everywhere. Search it, hear it, add to it.',
+      'Everything you write can carry English AND Spanish. Write it once with English and it already works; add the Spanish whenever you like and the same lesson teaches you too.',
+      'The recordings finally work. Anything either of us records now plays properly on the other one’s phone — it never really did before.',
+      'Building lessons on a laptop or a tablet has room to breathe now, instead of a narrow phone column. And the app will turn sideways.',
+      'The album has a photo library. Add twenty photos at once, then tap any of them to drop it on the page you have open.',
+      'Taking a photo off a page no longer throws the photo away — it goes back to the strip under the book. And if you did not mean to, there is an Undo.',
+      'You can bring a photo to the front or send it behind the others, whenever you like.',
+      'Any photo can become a polaroid, with your own words underneath, in the size and the lettering you choose.',
+      'Photos keep their real shape instead of being squashed into squares.',
+      'The page curl is not cut off at the top and bottom any more.',
+      'The album opens much faster, and the pages you are about to turn to are ready before you get there.',
+      'Every album can have its own name, its dates and its cover, and each page can be titled.',
+    ],
+  },
+  {
     title: 'Smoother',
     date: '2026-08-12',
     lines: [
