@@ -13,6 +13,13 @@ import { orderStickers } from '../components/photo-book/sticker-math';
 
 type Polaroid = Tables<'polaroids'>;
 
+/** Stable reference: an inline arrow re-runs `select` on every render. */
+const countByBook = (rows: { book_id: string }[]) => {
+  const out = new Map<string, number>();
+  for (const row of rows) out.set(row.book_id, (out.get(row.book_id) ?? 0) + 1);
+  return out;
+};
+
 /** Singleton key for the life book; the trip id otherwise. */
 function bookKey(scope: BookScope, tripId?: string): string {
   return scope === 'life' ? 'life' : (tripId ?? 'none');
@@ -141,8 +148,12 @@ async function adoptLegacyRows(bookId: string): Promise<boolean> {
     return false;
   }
 
-  const { error: insErr } = await supabase.from('album_placements').insert(
+  // Both phones can open the book at once and compute the same orphan set.
+  // A deterministic id means the second one writes the same row rather than a
+  // duplicate sticker.
+  const { error: insErr } = await supabase.from('album_placements').upsert(
     orphans.map((r) => ({
+      id: r.id,
       page_id: r.page_id as string,
       photo_id: r.id,
       kind: r.source === 'text' ? 'text' : 'photo',
@@ -154,12 +165,25 @@ async function adoptLegacyRows(bookId: string): Promise<boolean> {
       caption: r.source === 'text' ? null : r.caption,
       body: r.source === 'text' ? r.caption : null,
       created_by: r.created_by,
-    }))
+    })),
+    { onConflict: 'id', ignoreDuplicates: true }
   );
-  // A race with the partner's device doing the same adoption is fine: their
-  // rows are already there, and a failed heal just retries on the next read.
-  if (!insErr) adopted.add(bookId);
-  return !insErr;
+  if (insErr) return false;
+
+  // Retire the legacy pointer now that a placement owns this photo. Without
+  // this, taking the sticker off the page recreates the very condition the
+  // heal looks for — the realtime echo of your own delete refetches, the heal
+  // runs, and the sticker is back within a second.
+  await supabase
+    .from('album_photos')
+    .update({ page_id: null })
+    .in(
+      'id',
+      orphans.map((r) => r.id)
+    );
+
+  adopted.add(bookId);
+  return true;
 }
 
 /** All pages of a book, ordered, each with its stickers back-to-front. */
@@ -278,13 +302,7 @@ export function useAlbumPhotoCounts() {
       if (error) throw error;
       return (data ?? []) as { book_id: string }[];
     },
-    select: (rows) => {
-      const out = new Map<string, number>();
-      for (const row of rows) {
-        out.set(row.book_id, (out.get(row.book_id) ?? 0) + 1);
-      }
-      return out;
-    },
+    select: countByBook,
   });
 }
 
