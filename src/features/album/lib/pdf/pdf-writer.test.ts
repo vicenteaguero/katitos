@@ -14,7 +14,7 @@ const text = (doc: PdfDoc) =>
 
 describe('readJpegSize', () => {
   it('reads the size out of the JPEG header without decoding it', () => {
-    expect(readJpegSize(TINY_JPEG)).toEqual({ width: 11, height: 7 });
+    expect(readJpegSize(TINY_JPEG)).toMatchObject({ width: 11, height: 7 });
   });
 
   it('says so when the bytes are not a JPEG at all', () => {
@@ -23,6 +23,37 @@ describe('readJpegSize', () => {
 
   it('does not run off the end of a truncated file', () => {
     expect(readJpegSize(TINY_JPEG.slice(0, 6))).toBeNull();
+  });
+
+  it('steps over the padding a real encoder leaves between segments', () => {
+    // 0xFF is legal fill before a marker. Reading it as a segment header
+    // walked into the image data and gave up — and a photo whose size can't
+    // be read is a photo the export silently leaves out of the album.
+    const padded = Uint8Array.from([
+      0xff,
+      0xd8,
+      0xff,
+      0xff,
+      0xff,
+      ...TINY_JPEG.slice(2),
+    ]);
+    expect(readJpegSize(padded)).toMatchObject({ width: 11, height: 7 });
+  });
+
+  it('reports how many channels the photo has', () => {
+    // Three for colour; one for a black-and-white photo, which must NOT be
+    // declared RGB or it prints as noise.
+    expect(readJpegSize(TINY_JPEG)?.components).toBe(3);
+    const grey = Uint8Array.from(TINY_JPEG);
+    grey[grey.indexOf(0xc0) + 8] = 1; // components byte of the SOF0 segment
+    expect(readJpegSize(grey)?.components).toBe(1);
+  });
+
+  it('declares the right colour space for a grey photo', () => {
+    const doc = new PdfDoc(594, 792);
+    doc.addJpeg(TINY_JPEG, 11, 7, 1);
+    doc.addPage('', []);
+    expect(text(doc)).toContain('/ColorSpace /DeviceGray');
   });
 });
 
