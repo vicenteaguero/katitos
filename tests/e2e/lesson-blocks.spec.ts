@@ -130,3 +130,27 @@ test('a put-in-order question does not hand over the answer', async ({
   expect(shown).not.toEqual(['я', 'тебя', 'очень', 'люблю']);
   expect([...shown].sort()).toEqual(['люблю', 'очень', 'тебя', 'я'].sort());
 });
+
+test('a written question can accept more than one right answer', async ({
+  page,
+}) => {
+  const label = `t${Date.now() % 100000}`;
+  await newLesson(page, label);
+
+  await page.getByRole('button', { name: /question/ }).click();
+  await page.getByRole('button', { name: 'Type it' }).click();
+  await page.getByLabel('Ask him').fill('How do you say thank you?');
+  // Russian rarely has exactly one right answer.
+  await page.getByLabel('The answer').fill('спасибо / благодарю');
+  await page.getByRole('button', { name: 'Add the question' }).click();
+
+  await page.goBack();
+  await expect(
+    page.getByRole('heading', { name: `${label} lesson` })
+  ).toBeVisible({ timeout: 10_000 });
+
+  // The second form is accepted just as the first one is.
+  await page.getByPlaceholder('Write it').fill('благодарю');
+  await page.getByRole('button', { name: 'Check' }).click();
+  await expect(page.getByText('1 of 1 right')).toBeVisible({ timeout: 10_000 });
+});
