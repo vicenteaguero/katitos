@@ -32,21 +32,25 @@ export function PlayButton({
   const url = urlProp ?? selfSigned.data ?? null;
   const [playing, setPlaying] = useState(false);
   const firstAutoPlay = useRef(true);
+  // Read in the unmount cleanup, which must not re-run when `playing` changes.
+  const playingRef = useRef(false);
+  playingRef.current = playing;
 
+  /**
+   * Stop the sound if this button is taken off screen mid-clip — and ONLY
+   * then. Watching `playing` here instead meant that handing playback to
+   * another button ran this cleanup a beat AFTER that button had started, and
+   * paused it: tapping a second word left nothing playing at all.
+   */
   useEffect(
     () => () => {
-      if (playing) stopSharedAudio();
+      if (playingRef.current) stopSharedAudio();
     },
-    [playing]
+    []
   );
 
-  const toggle = () => {
+  const start = () => {
     if (!url) return;
-    if (playing) {
-      stopSharedAudio();
-      setPlaying(false);
-      return;
-    }
     const el = claimAudio(() => setPlaying(false));
     el.src = url;
     el.onended = () => setPlaying(false);
@@ -56,13 +60,25 @@ export function PlayButton({
     );
   };
 
+  const toggle = () => {
+    if (!url) return;
+    if (playing) {
+      stopSharedAudio();
+      setPlaying(false);
+      return;
+    }
+    start();
+  };
+
   useEffect(() => {
     if (autoPlayKey === undefined) return;
     if (firstAutoPlay.current) {
       firstAutoPlay.current = false;
       return;
     }
-    if (url) toggle();
+    // Always START — never toggle. A toggle here would PAUSE the clip if the
+    // card happened to be playing when it flipped.
+    if (url) start();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoPlayKey, url]);
 
