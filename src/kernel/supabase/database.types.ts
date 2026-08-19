@@ -1683,6 +1683,13 @@ export type Database = {
             referencedRelation: "lang_lessons"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "lang_exercises_media_id_fkey"
+            columns: ["media_id"]
+            isOneToOne: false
+            referencedRelation: "lang_media"
+            referencedColumns: ["id"]
+          },
         ]
       }
       lang_lesson_progress: {
@@ -3049,6 +3056,10 @@ export type Database = {
       partner_id: { Args: never; Returns: string }
       polaroid_day_open: { Args: { d: string }; Returns: boolean }
       safe_tz: { Args: { tz: string }; Returns: string }
+      set_block_vocab: {
+        Args: { p_block: string; p_vocab: string[] }
+        Returns: undefined
+      }
       water_tree: {
         Args: never
         Returns: {
