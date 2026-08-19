@@ -210,3 +210,41 @@ export function useDeleteFromLibrary() {
     },
   });
 }
+
+/**
+ * Fill in a photo's real pixel size, once, from the browser.
+ *
+ * `width` / `height` arrived with the library, so every picture added before it
+ * has neither — and a sticker with no ratio has no height at all. Rather than a
+ * migration that cannot open a JPEG, the first render that decodes the image
+ * writes what it saw. Fire-and-forget: it must never interrupt looking at the
+ * album, and it is harmless if both phones do it at once.
+ */
+const measured = new Set<string>();
+
+export function useHealPhotoSize(bookId: string | undefined) {
+  const qc = useQueryClient();
+  return useCallback(
+    (photoId: string, size: { width: number; height: number }) => {
+      if (measured.has(photoId)) return;
+      measured.add(photoId);
+      void supabase
+        .from('album_photos')
+        .update({ width: size.width, height: size.height })
+        .eq('id', photoId)
+        .is('width', null)
+        .then(
+          () => {
+            // The book is cached for thirty seconds, so without this the photo
+            // keeps its fallback square for the rest of the session even though
+            // its real shape is now known.
+            if (bookId) {
+              void qc.invalidateQueries({ queryKey: qk.album.pages(bookId) });
+            }
+          },
+          () => measured.delete(photoId)
+        );
+    },
+    [qc, bookId]
+  );
+}
