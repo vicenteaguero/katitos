@@ -124,6 +124,9 @@
 .pb-page {
   position: absolute;
   inset: 0;
+  /* Text stickers size themselves in `cqw`, so the paper is the yardstick:
+     the same words come out the same size on both our phones. */
+  container-type: inline-size;
   padding: 16px;
   border-radius: 11px;
   /* The clip moved down here from `.pb-page-host`: stickers still stop at the
@@ -160,9 +163,10 @@
 }
 
 /* ── Photo stickers (free, draggable) ───────────────────────────────────── */
+/* Depth is set inline from the sorted order — a fixed z-index here is exactly
+   what made stacking depend on who was added first. */
 .pb-sticker {
   position: absolute;
-  z-index: 4;
   transform: translate(-50%, -50%);
   user-select: none;
   pointer-events: none; /* reader: a drag peels the page, not the photo */
@@ -174,9 +178,7 @@
 .pb-sticker--live:active {
   cursor: grabbing;
 }
-.pb-sticker--sel {
-  z-index: 9;
-}
+
 .pb-sticker-frame {
   position: relative;
   background: #fdfaf4;
@@ -190,9 +192,10 @@
     0 0 0 2px var(--pb-gilt),
     0 8px 18px rgba(20, 4, 9, 0.5);
 }
+/* No forced square: a photo keeps its own shape unless it is mounted on film,
+   where the square window is the whole point of the format. */
 .pb-sticker-photo {
   position: relative;
-  aspect-ratio: 1;
   border-radius: 3px;
   overflow: hidden;
   background: rgba(58, 30, 16, 0.06);
@@ -205,6 +208,44 @@
   object-fit: cover;
   background: rgba(58, 30, 16, 0.06);
 }
+/* Instant film: a square window and a chin deeper than the other three edges —
+   the proportions the kernel PolaroidPlate uses everywhere else. */
+.pb-sticker--film {
+  padding: 6px 6px 20px;
+}
+.pb-sticker-photo--square {
+  aspect-ratio: 1;
+}
+.pb-font-display {
+  font-family: var(--font-display);
+  font-style: italic;
+}
+.pb-font-sans {
+  font-family: var(--font-sans);
+  font-style: normal;
+}
+.pb-font-hand {
+  font-family: var(--font-hand, 'Caveat', var(--font-display));
+  font-style: normal;
+}
+
+/* The one-finger resize/turn grip. Big enough to hit with a thumb, offset so it
+   does not sit on top of the photo it is resizing. */
+.pb-sticker-handle {
+  position: absolute;
+  right: -13px;
+  bottom: -13px;
+  z-index: 1001;
+  display: block;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--pb-gilt);
+  box-shadow: 0 2px 6px rgba(20, 4, 9, 0.5);
+  cursor: nwse-resize;
+  touch-action: none;
+}
+
 .pb-sticker-cap {
   display: block;
   padding-top: 5px;
@@ -293,4 +334,102 @@
 .pb-book .stf__block,
 .pb-book .stf__item {
   overflow: visible;
+}
+
+/* ── The library strip: the book's photos, in the room under it ──────────── */
+.pb-strip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.pb-strip::-webkit-scrollbar {
+  display: none;
+}
+.pb-strip-btn {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  background: var(--pb-paper-2, rgba(255, 255, 255, 0.06));
+  color: var(--pb-gilt);
+}
+.pb-strip-item {
+  position: relative;
+  flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: rgba(58, 30, 16, 0.18);
+  scroll-snap-align: start;
+}
+.pb-strip-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* Already standing on the page you're looking at — still tappable, because the
+   same photo twice is a perfectly reasonable thing to want. */
+.pb-strip-item--used::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--pb-gilt);
+  box-shadow: 0 0 0 2px rgba(20, 4, 9, 0.55);
+}
+.pb-strip-skel {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.05);
+}
+.pb-strip-empty {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 6px;
+  font-size: 12px;
+  color: var(--muted, rgba(255, 255, 255, 0.5));
+  white-space: nowrap;
+}
+.pb-strip-menu {
+  position: fixed;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  min-width: 12rem;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--surface-2, #1d0a10);
+  box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.7);
+  transform: translateX(-50%);
+}
+.pb-strip-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  text-align: left;
+}
+
+/* The sticker toolbar stands IN PLACE OF the page nav, so it costs no height. */
+.pb-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
 }
