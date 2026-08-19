@@ -14,7 +14,7 @@ import {
 import { useMyProgress } from '../api/courses.queries';
 import { useLesson, useMyAttempts } from '../api/lessons.queries';
 import { useAnswerExercise, useSaveProgress } from '../api/lessons.mutations';
-import { useLangPrefs } from '../lib/lang-prefs';
+import { useLanguages } from '../lib/languages';
 import { gradeAnswer, type Grade } from '../lib/exercise-schema';
 import { ExerciseView } from '../components/exercises/exercise-view';
 import { BlockView } from '../components/block-view';
@@ -33,7 +33,7 @@ export function LessonRoute() {
   const { data: attempts } = useMyAttempts(lessonId);
   const answer = useAnswerExercise();
   const saveProgress = useSaveProgress();
-  const support = useLangPrefs((s) => s.supportLang);
+  const { native: support } = useLanguages();
   // Filtered to THIS lesson: unfiltered, editing any lesson anywhere re-ran
   // this one's whole read.
   useTableSync('lang_blocks', qk.lang.lesson(lessonId ?? 'none'), {
@@ -212,6 +212,7 @@ export function LessonRoute() {
                   {i + 1} of {exercises.length}
                 </p>
                 <ExerciseView
+                  target={lesson.targetLang}
                   exercise={ex}
                   support={support}
                   value={answers[ex.id]}
