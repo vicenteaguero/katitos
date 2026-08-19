@@ -36,12 +36,17 @@ import {
 import { useLangPrefs } from '../lib/lang-prefs';
 import { isMissing, pick } from '../lib/pick';
 import { ExerciseEditor } from '../components/exercises/exercise-editor';
+import { MediaBlockEditor } from '../components/media-block-editor';
+import { VocabPickerSheet } from '../components/vocab-picker-sheet';
 import type {
   Block,
   BlockKind,
   Exercise,
   LessonKind,
+  Media,
+  MediaBlockData,
   SupportLang,
+  Vocab,
 } from '../types';
 
 /**
@@ -66,6 +71,8 @@ export function BuildRoute() {
 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [editing, setEditing] = useState<Exercise | 'new' | null>(null);
+  const [wordsFor, setWordsFor] = useState<Block | null>(null);
+  const [attachFor, setAttachFor] = useState<Block | null>(null);
 
   useTopBarAction(
     <div className="flex items-center gap-1.5">
@@ -94,6 +101,12 @@ export function BuildRoute() {
   if (!lesson) return <Empty icon="📄" title="No such lesson" />;
 
   const blocks = lesson.blocks;
+
+  /** The attachment a media block points at, if it has one. */
+  const mediaFor = (block: Block) => {
+    const { mediaId } = (block.data ?? {}) as MediaBlockData;
+    return lesson.media.find((m) => m.id === mediaId);
+  };
 
   const move = (index: number, by: -1 | 1) => {
     const next = [...blocks];
@@ -135,9 +148,13 @@ export function BuildRoute() {
               onSave={(patch) =>
                 updateBlock.mutate({ id: block.id, lessonId: lesson.id, patch })
               }
+              words={lesson.vocabByBlock[block.id]}
+              media={mediaFor(block)}
               onDelete={() =>
                 deleteBlock.mutate({ id: block.id, lessonId: lesson.id })
               }
+              onPickWords={() => setWordsFor(block)}
+              onAttach={() => setAttachFor(block)}
             />
           ))}
 
@@ -219,6 +236,40 @@ export function BuildRoute() {
         }
       />
 
+      {wordsFor && (
+        <VocabPickerSheet
+          open
+          blockId={wordsFor.id}
+          lessonId={lesson.id}
+          selected={lesson.vocabByBlock[wordsFor.id] ?? []}
+          onClose={() => setWordsFor(null)}
+        />
+      )}
+
+      {attachFor && (
+        <MediaBlockEditor
+          open
+          courseId={lesson.courseId}
+          lessonId={lesson.id}
+          current={mediaFor(attachFor)}
+          onClose={() => setAttachFor(null)}
+          onAttached={(mediaId) =>
+            updateBlock.mutate({
+              id: attachFor.id,
+              lessonId: lesson.id,
+              patch: { data: { mediaId } },
+            })
+          }
+          onDetach={() =>
+            updateBlock.mutate({
+              id: attachFor.id,
+              lessonId: lesson.id,
+              patch: { data: {} },
+            })
+          }
+        />
+      )}
+
       {editing && (
         <ExerciseEditor
           open
@@ -244,14 +295,21 @@ function BlockEditor({
   support,
   first,
   last,
+  words,
+  media,
   onMove,
   onSave,
   onDelete,
+  onPickWords,
+  onAttach,
 }: {
   block: Block;
   support: SupportLang;
   first: boolean;
   last: boolean;
+  /** What this block currently holds, so the row can say so. */
+  words?: Vocab[];
+  media?: Media;
   onMove: (by: -1 | 1) => void;
   onSave: (patch: {
     body_ru?: string | null;
@@ -259,6 +317,8 @@ function BlockEditor({
     body_es?: string | null;
   }) => void;
   onDelete: () => void;
+  onPickWords: () => void;
+  onAttach: () => void;
 }) {
   const [ru, setRu] = useState(block.body_ru ?? '');
   const [gloss, setGloss] = useState(
@@ -278,6 +338,62 @@ function BlockEditor({
   }
 
   const missing = isMissing(block, 'body', support);
+
+  if (block.kind === 'vocab' || block.kind === 'media') {
+    const isVocab = block.kind === 'vocab';
+    const summary = isVocab
+      ? words?.length
+        ? words.map((w) => w.ru).join(' · ')
+        : 'No words yet — tap to choose them'
+      : (media?.title ?? 'Nothing attached yet — tap to add a file or a link');
+    return (
+      <div className="flex items-center gap-2 rounded-lg bg-surface px-3 py-2.5">
+        <button
+          type="button"
+          onClick={isVocab ? onPickWords : onAttach}
+          className="min-w-0 flex-1 text-left"
+        >
+          <span className="block font-sans text-[0.68rem] uppercase tracking-[0.12em] text-gold">
+            {isVocab ? 'words' : 'material'}
+          </span>
+          <span
+            className={cn(
+              'block truncate font-sans text-sm',
+              (isVocab ? words?.length : media) ? 'text-fg' : 'text-muted'
+            )}
+          >
+            {summary}
+          </span>
+        </button>
+        <button
+          type="button"
+          aria-label="Move up"
+          disabled={first}
+          onClick={() => onMove(-1)}
+          className={cn('text-muted', first && 'opacity-30')}
+        >
+          <ChevronUp className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          aria-label="Move down"
+          disabled={last}
+          onClick={() => onMove(1)}
+          className={cn('text-muted', last && 'opacity-30')}
+        >
+          <ChevronDown className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          aria-label="Delete"
+          onClick={onDelete}
+          className="text-muted"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-1.5 rounded-lg bg-surface px-3 py-2.5">
