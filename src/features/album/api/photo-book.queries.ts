@@ -14,9 +14,9 @@ import { orderStickers } from '../components/photo-book/sticker-math';
 type Polaroid = Tables<'polaroids'>;
 
 /** Stable reference: an inline arrow re-runs `select` on every render. */
-const countByBook = (rows: { book_id: string }[]) => {
+const countByBook = (rows: { book_id: string; photos: number }[]) => {
   const out = new Map<string, number>();
-  for (const row of rows) out.set(row.book_id, (out.get(row.book_id) ?? 0) + 1);
+  for (const row of rows) out.set(row.book_id, Number(row.photos));
   return out;
 };
 
@@ -295,12 +295,11 @@ export function useAlbumPhotoCounts() {
     // Plain rows from the queryFn; the Map is built in `select`. A Map in query
     // data would rehydrate from localStorage as {} and break every caller.
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('album_photos')
-        .select('book_id')
-        .not('book_id', 'is', null);
+      // Counted in the database. Fetching every row to count them in the
+      // client hit PostgREST's 1000-row cap and started under-counting.
+      const { data, error } = await supabase.rpc('album_photo_counts');
       if (error) throw error;
-      return (data ?? []) as { book_id: string }[];
+      return (data ?? []) as { book_id: string; photos: number }[];
     },
     select: countByBook,
   });
