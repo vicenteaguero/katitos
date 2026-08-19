@@ -26,6 +26,27 @@ describe('computeLayout', () => {
     expect(pageW).toBeLessThanOrEqual(elW - MIN_PEEK);
   });
 
+  it('takes the curl padding out of the height budget, not out of thin air', () => {
+    const availH = 600;
+    const plain = computeLayout(1000, availH, M, MIN_PEEK);
+    const padded = computeLayout(1000, availH, M, MIN_PEEK, 16);
+    // Height-limited here, so reserving room for the fold makes the page
+    // smaller rather than making the book overflow the space it was given.
+    expect(padded.pageW).toBeLessThan(plain.pageW);
+  });
+
+  it('reports a viewport tall enough for the page, the cover and both halos', () => {
+    const curlPad = 16;
+    const { pageW, viewportH } = computeLayout(360, 600, M, MIN_PEEK, curlPad);
+    expect(viewportH).toBe(Math.round(pageW * (4 / 3)) + 2 * M + 2 * curlPad);
+  });
+
+  it('still fits the space it was handed once the halo is included', () => {
+    const availH = 600;
+    const { viewportH } = computeLayout(360, availH, M, MIN_PEEK, 16);
+    expect(viewportH).toBeLessThanOrEqual(availH);
+  });
+
   it('is height-driven when height is the tighter constraint', () => {
     const elW = 1000; // very wide
     const { pageW } = computeLayout(elW, 400, M, MIN_PEEK);
