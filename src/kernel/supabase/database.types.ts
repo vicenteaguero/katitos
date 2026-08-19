@@ -47,6 +47,7 @@ export type Database = {
           starts_on: string | null
           title: string
           trip_id: string | null
+          updated_at: string
         }
         Insert: {
           archived?: boolean
@@ -60,6 +61,7 @@ export type Database = {
           starts_on?: string | null
           title?: string
           trip_id?: string | null
+          updated_at?: string
         }
         Update: {
           archived?: boolean
@@ -73,6 +75,7 @@ export type Database = {
           starts_on?: string | null
           title?: string
           trip_id?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -122,19 +125,28 @@ export type Database = {
           book_id: string
           created_at: string
           id: string
+          on_date: string | null
           position: number
+          title: string | null
+          updated_at: string
         }
         Insert: {
           book_id: string
           created_at?: string
           id?: string
+          on_date?: string | null
           position?: number
+          title?: string | null
+          updated_at?: string
         }
         Update: {
           book_id?: string
           created_at?: string
           id?: string
+          on_date?: string | null
           position?: number
+          title?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -148,53 +160,150 @@ export type Database = {
       }
       album_photos: {
         Row: {
+          book_id: string | null
           caption: string | null
           created_at: string
           created_by: string
+          height: number | null
           id: string
           image_path: string | null
-          page_id: string
+          page_id: string | null
           rotation: number
           scale: number
-          slot: number
+          slot: number | null
           source: string
+          updated_at: string
+          width: number | null
           x: number
           y: number
         }
         Insert: {
+          book_id?: string | null
           caption?: string | null
           created_at?: string
           created_by?: string
+          height?: number | null
           id?: string
           image_path?: string | null
-          page_id: string
+          page_id?: string | null
           rotation?: number
           scale?: number
-          slot: number
+          slot?: number | null
           source?: string
+          updated_at?: string
+          width?: number | null
           x?: number
           y?: number
         }
         Update: {
+          book_id?: string | null
           caption?: string | null
           created_at?: string
           created_by?: string
+          height?: number | null
           id?: string
           image_path?: string | null
-          page_id?: string
+          page_id?: string | null
           rotation?: number
           scale?: number
-          slot?: number
+          slot?: number | null
           source?: string
+          updated_at?: string
+          width?: number | null
           x?: number
           y?: number
         }
         Relationships: [
           {
+            foreignKeyName: "album_photos_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "album_books"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "album_photos_page_id_fkey"
             columns: ["page_id"]
             isOneToOne: false
             referencedRelation: "album_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      album_placements: {
+        Row: {
+          body: string | null
+          caption: string | null
+          created_at: string
+          created_by: string
+          font_family: string
+          font_size: number
+          font_weight: number
+          frame: string
+          id: string
+          kind: string
+          page_id: string
+          photo_id: string | null
+          rotation: number
+          scale: number
+          updated_at: string
+          x: number
+          y: number
+          z: number
+        }
+        Insert: {
+          body?: string | null
+          caption?: string | null
+          created_at?: string
+          created_by?: string
+          font_family?: string
+          font_size?: number
+          font_weight?: number
+          frame?: string
+          id?: string
+          kind?: string
+          page_id: string
+          photo_id?: string | null
+          rotation?: number
+          scale?: number
+          updated_at?: string
+          x?: number
+          y?: number
+          z?: number
+        }
+        Update: {
+          body?: string | null
+          caption?: string | null
+          created_at?: string
+          created_by?: string
+          font_family?: string
+          font_size?: number
+          font_weight?: number
+          frame?: string
+          id?: string
+          kind?: string
+          page_id?: string
+          photo_id?: string | null
+          rotation?: number
+          scale?: number
+          updated_at?: string
+          x?: number
+          y?: number
+          z?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "album_placements_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "album_pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "album_placements_photo_id_fkey"
+            columns: ["photo_id"]
+            isOneToOne: false
+            referencedRelation: "album_photos"
             referencedColumns: ["id"]
           },
         ]
