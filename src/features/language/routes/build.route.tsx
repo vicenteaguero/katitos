@@ -153,7 +153,10 @@ export function BuildRoute() {
 
           {blocks.map((block, i) => (
             <BlockEditor
-              key={block.id}
+              // The support language is part of the identity: the editor seeds
+              // its gloss from it, so without this a switch left English in the
+              // box and wrote it into `body_es` on the next blur.
+              key={`${block.id}:${support}`}
               block={block}
               support={support}
               first={i === 0}
