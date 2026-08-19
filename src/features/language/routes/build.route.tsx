@@ -3,10 +3,10 @@ import { useParams } from 'react-router';
 import {
   ChevronDown,
   ChevronUp,
-  Eye,
   Minus,
   Plus,
   Send,
+  SlidersHorizontal,
   Trash2,
   Type,
 } from 'lucide-react';
@@ -91,7 +91,7 @@ export function BuildRoute() {
         className="lift-press flex h-8 w-8 items-center justify-center rounded-full bg-surface-2 text-gold shadow-loge"
         style={{ border: '1px solid rgba(228,195,106,.4)' }}
       >
-        <Eye className="h-4 w-4" />
+        <SlidersHorizontal className="h-4 w-4" />
       </button>
     </div>,
     [support]
@@ -122,9 +122,20 @@ export function BuildRoute() {
         <h1 className="min-w-0 truncate font-display text-xl font-semibold text-fg">
           {lesson.title}
         </h1>
-        <span className="shrink-0 font-sans text-[0.68rem] uppercase tracking-[0.12em] text-muted">
-          {lesson.status === 'published' ? 'live' : 'draft'}
-        </span>
+        {/* The state is also the way to change it: handing a lesson over is the
+            thing she does most, and it was two taps deep behind an icon. */}
+        <button
+          type="button"
+          onClick={() => setSettingsOpen(true)}
+          className={cn(
+            'lift-press shrink-0 rounded-full px-2.5 py-1 font-sans text-[0.68rem] uppercase tracking-[0.12em]',
+            lesson.status === 'published'
+              ? 'bg-accent text-accent-fg'
+              : 'bg-surface-2 text-muted'
+          )}
+        >
+          {lesson.status === 'published' ? 'he has it' : 'not sent yet'}
+        </button>
       </header>
 
       <div className="lg:flex lg:items-start lg:gap-4">
