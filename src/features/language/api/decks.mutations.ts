@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@kernel/supabase';
 import { BUCKETS, storagePaths, useUpload } from '@kernel/storage';
+import type { AudioClip } from '@kernel/ui';
 import { toast } from '@kernel/ui';
 import { deckKeys } from './decks.queries';
 import type { Lang } from '../types';
@@ -47,7 +48,7 @@ export function useAddCard() {
       translation?: string;
       transliteration?: string;
       example?: string;
-      audioBlob?: Blob | null;
+      audio?: AudioClip | null;
     }) => {
       const { data, error } = await supabase
         .from('phrases')
@@ -64,10 +65,10 @@ export function useAddCard() {
       if (error) throw error;
       const id = data.id as string;
 
-      if (input.audioBlob) {
-        const path = storagePaths.languageAudio(id);
-        await upload(BUCKETS.languageAudio, path, input.audioBlob, {
-          contentType: 'audio/webm',
+      if (input.audio) {
+        const path = storagePaths.languageAudio(id, input.audio.ext);
+        await upload(BUCKETS.languageAudio, path, input.audio.blob, {
+          contentType: input.audio.mime,
         });
         const { error: upErr } = await supabase
           .from('phrases')
