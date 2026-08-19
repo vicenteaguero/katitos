@@ -270,9 +270,15 @@ function CompleteView({
               value={answers[i] ?? ''}
               disabled={disabled}
               onChange={(e) => {
-                const next = [...answers];
-                next[i] = e.target.value;
-                onChange(next);
+                // A DENSE array. Writing to index 2 of an empty array left
+                // holes, the answer failed to parse, and filling the second
+                // gap correctly while leaving the first blank scored zero with
+                // both boxes painted red.
+                onChange(
+                  Array.from({ length: parts.length - 1 }, (_, k) =>
+                    k === i ? e.target.value : (answers[k] ?? '')
+                  )
+                );
               }}
               autoComplete="off"
               autoCapitalize="off"
