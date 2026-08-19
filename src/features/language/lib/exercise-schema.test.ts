@@ -226,6 +226,38 @@ describe('match', () => {
   it('handles nothing joined at all', () => {
     expect(gradeAnswer(q, {}).score).toBe(0);
   });
+
+  it('marks the rows in the order they are SHOWN', () => {
+    // JavaScript enumerates integer-like keys first, so before this the
+    // verdicts landed on the wrong rows whenever the left column was numeric.
+    const numeric = ex(
+      'match',
+      {
+        pairs: [
+          { left: '2', right: 'two' },
+          { left: '1', right: 'one' },
+        ],
+      },
+      { '2': 'two', '1': 'one' }
+    );
+    const grade = gradeAnswer(numeric, { '2': 'two', '1': 'wrong' });
+    // Row 0 on screen is "2", and he got that one right.
+    expect(grade.detail).toEqual([true, false]);
+  });
+
+  it('refuses a question whose left column repeats', () => {
+    const dupe = ex(
+      'match',
+      {
+        pairs: [
+          { left: 'да', right: 'yes' },
+          { left: 'да', right: 'aye' },
+        ],
+      },
+      { да: 'yes' }
+    );
+    expect(validateExercise(dupe)).toBe('Two rows say the same thing');
+  });
 });
 
 describe('listen and speak', () => {
