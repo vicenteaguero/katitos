@@ -48,11 +48,9 @@ export function LessonRoute() {
    * "Hand it in" button again on an empty form — and pressing it wrote a
    * second set of answers and overwrote the real score with zero.
    */
+  const mine = progress?.get(lessonId ?? '');
   const submitted =
-    handedIn ||
-    ['submitted', 'graded'].includes(
-      progress?.get(lessonId ?? '')?.status ?? ''
-    );
+    handedIn || ['submitted', 'graded'].includes(mine?.status ?? '');
 
   useTopBarAction(
     lessonId ? (
@@ -165,6 +163,21 @@ export function LessonRoute() {
           <p className="font-sans text-sm text-muted">{lesson.subtitle}</p>
         )}
       </header>
+
+      {/* What she wrote back. The whole point of handing work in. */}
+      {mine?.status === 'graded' && (
+        <section className="space-y-1 rounded-lg bg-surface-2 px-4 py-3">
+          <p className="eyebrow">
+            Marked
+            {mine.score != null ? ` · ${Math.round(mine.score * 100)}%` : ''}
+          </p>
+          {mine.teacher_note && (
+            <p className="font-display text-base italic leading-snug text-fg">
+              {mine.teacher_note}
+            </p>
+          )}
+        </section>
+      )}
 
       {lesson.blocks.map((block) => (
         <BlockView
