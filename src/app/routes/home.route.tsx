@@ -1,6 +1,7 @@
 import { useState, type CSSProperties } from 'react';
 import { Heart } from 'lucide-react';
 import { usePartner } from '@kernel/auth';
+import { isAnnounced } from '../changelog';
 import { useCouple } from '@kernel/couple';
 import { useNow } from '@kernel/hooks';
 import {
@@ -385,6 +386,11 @@ function TogetherHero() {
 }
 
 export function HomeRoute() {
+  const { self } = usePartner();
+  // The classroom is live before she is told about it, and a widget appearing
+  // on her home screen is the loudest way to tell her. It waits for the same
+  // word the changelog waits for; he sees it now, since he is building on it.
+  const classroom = !!self?.is_admin || isAnnounced('2026-08-19');
   return (
     <div
       className="curtain-reveal space-y-5"
@@ -393,7 +399,7 @@ export function HomeRoute() {
       <Greeting />
       <TogetherHero />
       <LastPolaroidWidget />
-      <NextLessonWidget />
+      {classroom && <NextLessonWidget />}
     </div>
   );
 }
