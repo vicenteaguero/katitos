@@ -9,3 +9,5 @@ supabase/.temp
 src/kernel/supabase/database.types.ts
 pnpm-lock.yaml
 package-lock.json
+src/kernel/build/stamp.generated.ts
+public/version.json
