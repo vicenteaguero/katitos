@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@kernel/supabase';
 import type { BucketName } from './buckets';
@@ -14,6 +15,8 @@ import { proxyPath } from './image';
  * Returns a `Map<path, url>` keyed by the ORIGINAL path (not the proxy path),
  * so callers look photos up by the value they already hold.
  */
+const entriesToMap = (entries: Array<[string, string]>) => new Map(entries);
+
 export function useSignedUrls(
   bucket: BucketName,
   paths: Array<string | null | undefined>,
@@ -27,7 +30,14 @@ export function useSignedUrls(
   // a re-render with an equal list doesn't refetch. NOTE the sort — the
   // returned Map is in no caller-meaningful order, so anything that cares about
   // the order photos APPEAR in must order its own prefetch list.
-  const wanted = [...new Set(paths.filter((p): p is string => !!p))].sort();
+  // Memoised: this runs on every render and TanStack then stringifies it to
+  // hash the query key — hundreds of paths, sixty times a second during a
+  // drag.
+  const wanted = useMemo(
+    () => [...new Set(paths.filter((p): p is string => !!p))].sort(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [paths.join('\u0000')]
+  );
 
   return useQuery({
     queryKey: ['signed-urls', bucket, proxy, wanted],
@@ -60,6 +70,11 @@ export function useSignedUrls(
       }
       return out;
     },
-    select: (entries) => new Map(entries),
+    // A STABLE function reference. TanStack only reuses the previous select
+    // result when `options.select === the stored one`, so an inline arrow
+    // re-ran on every render and handed back a brand-new Map — which broke
+    // every `useMemo` and `memo` downstream of it, all the way to the flip
+    // book tearing down and rebuilding its DOM mid-gesture.
+    select: entriesToMap,
   });
 }
