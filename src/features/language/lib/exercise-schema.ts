@@ -41,20 +41,25 @@ export const payloadSchemas = {
       .array(z.object({ left: z.string().min(1), right: z.string().min(1) }))
       .min(2),
   }),
-  /** Hear it, then write what you heard. */
-  listen: z.object({ audioPath: z.string().optional().nullable() }),
+  /**
+   * Hear it, then write what you heard. The recording is the whole exercise,
+   * so it is required — a listening question with nothing to listen to is just
+   * a typing question with no prompt.
+   */
+  listen: z.object({ audioPath: z.string().min(1) }),
   /** Say it out loud and mark yourself — nothing else here would be honest. */
   speak: z.object({ audioPath: z.string().optional().nullable() }),
 } as const;
 
 export const answerSchemas = {
   choice: z.string().min(1),
-  multi: z.array(z.string()),
-  type: z.string(),
+  // At least one right answer, or the question can never be got right.
+  multi: z.array(z.string()).min(1),
+  type: z.string().min(1),
   complete: z.array(z.string()),
   order: z.array(z.string()),
   match: z.record(z.string(), z.string()),
-  listen: z.string(),
+  listen: z.string().min(1),
   speak: z.boolean(),
 } as const;
 
@@ -83,6 +88,31 @@ export function gapCount(template: string): number {
 /** Split a template into the text around its gaps: n gaps gives n+1 pieces. */
 export function splitTemplate(template: string): string[] {
   return template.split(/\{\{\s*\d+\s*\}\}/);
+}
+
+/**
+ * Jumble the words of a put-in-order question.
+ *
+ * Without this the pool is stored — and therefore shown — in the answer's own
+ * order, so the exercise is solved by tapping left to right. Deterministic on
+ * purpose (same sentence, same jumble): the alternative reshuffles under the
+ * learner's fingers on every render, and it could not be tested.
+ */
+export function scrambleTokens(tokens: readonly string[]): string[] {
+  if (tokens.length < 2) return [...tokens];
+  // Interleave from both ends, then rotate: cheap, stable, and for any real
+  // sentence it moves every word off its answer position.
+  const out: string[] = [];
+  for (let i = 0, j = tokens.length - 1; i <= j; i++, j--) {
+    out.push(tokens[j]);
+    if (i !== j) out.push(tokens[i]);
+  }
+  // A two-word sentence can only be swapped; anything longer must not come
+  // back identical to the answer.
+  if (out.join('\u0000') === tokens.join('\u0000')) {
+    return [...tokens.slice(1), tokens[0]];
+  }
+  return out;
 }
 
 /** Is this exercise well-formed enough to be shown and marked? */
