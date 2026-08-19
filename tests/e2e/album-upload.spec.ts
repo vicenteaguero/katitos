@@ -1,5 +1,10 @@
 import { test, expect, type Page } from '@playwright/test';
-import { cleanup, dismissChangelog } from './helpers';
+import {
+  cleanup,
+  dismissChangelog,
+  forgetPhotoSizes,
+  photoSizes,
+} from './helpers';
 
 const WIDE = 'tests/e2e/fixtures/wide.jpg';
 const TALL = 'tests/e2e/fixtures/tall.jpg';
@@ -146,3 +151,92 @@ test('the album prints from the real photographs, not the small copies', async (
   // be this large, so this is the proof it printed the real photograph.
   expect(result.size).toBeGreaterThan(40_000);
 });
+
+/**
+ * The bug he actually hit: a photo added, and nothing on the page but a sliver.
+ *
+ * Every picture from before the library has no stored size, and the sticker was
+ * given its shape from that size alone — no size, no height, nothing to see.
+ * A square is the fallback until the browser reports what it decoded, which it
+ * then writes down so the real shape shows from the next look onwards.
+ */
+test('a photo with no stored size still shows, and learns its shape', async ({
+  page,
+}) => {
+  // Two full reload cycles: an upload, then looking at the book twice.
+  test.setTimeout(120_000);
+  await openFreshBook(page);
+  await page.getByRole('button', { name: 'Arrange stickers' }).click();
+
+  await page.getByRole('button', { name: 'Add photos' }).first().click();
+  await page.locator('input[type="file"]').setInputFiles([WIDE]);
+  await expect(page.getByText('1 of 1 added')).toBeVisible({ timeout: 30_000 });
+  await page.getByRole('button', { name: 'Close' }).last().click();
+
+  // The upload sheet closes with an animation; a tap that lands while it is on
+  // its way out does nothing at all, and then there is no sticker to measure.
+  await expect(page.locator('.pb-strip-item').first()).toBeVisible();
+  await expect
+    .poll(
+      async () => {
+        const placed = await page
+          .locator('.pb-editor .pb-sticker-photo')
+          .count();
+        if (placed) return placed;
+        await page
+          .locator('.pb-strip-item')
+          .first()
+          .click({ force: true })
+          .catch(() => {});
+        return page.locator('.pb-editor .pb-sticker-photo').count();
+      },
+      { timeout: 20_000 }
+    )
+    .toBeGreaterThan(0);
+
+  await forgetPhotoSizes();
+  await reopenArranging(page);
+
+  // Not a sliver: with nothing stored it falls back to a square rather than to
+  // nothing at all — which is what "I add a photo and it does not render" was.
+  await expect
+    .poll(async () => (await shapeOf(page))?.height ?? 0, { timeout: 20_000 })
+    .toBeGreaterThan(40);
+
+  // And looking at it is what teaches it its own shape: the browser knows what
+  // it decoded, so that goes back to the row. Checked at the source rather than
+  // through another reload, which would race the book's own thirty-second cache.
+  await expect
+    .poll(async () => (await photoSizes()).filter((p) => p.width).length, {
+      timeout: 20_000,
+    })
+    .toBeGreaterThan(0);
+  const [size] = (await photoSizes()).filter((p) => p.width);
+  expect(size.width! / size.height!).toBeGreaterThan(1.4);
+});
+
+/** Reload and get back into edit mode, waiting for the book each time. */
+async function reopenArranging(page: Page) {
+  // A launch, not a refresh. The book is kept in localStorage between sessions,
+  // so without this the app happily re-renders the photo with the size it had
+  // BEFORE the test took it away, and proves nothing.
+  await page.evaluate(() => localStorage.removeItem('katitos:rq-cache:v3'));
+  await page.reload();
+  await dismissChangelog(page);
+  await expect(page.locator('.pb-stage')).toBeVisible({ timeout: 20_000 });
+  // The top-bar action mounts a beat after the book does, so asking "is it
+  // visible?" the instant the stage appears answers no — and then nothing ever
+  // enters edit mode and there is no page to measure.
+  const arrange = page.getByRole('button', { name: 'Arrange stickers' });
+  await arrange.waitFor({ state: 'visible', timeout: 20_000 });
+  await arrange.click();
+  await expect(page.locator('.pb-editor')).toBeVisible({ timeout: 20_000 });
+}
+
+async function shapeOf(page: Page) {
+  return page
+    .locator('.pb-editor .pb-sticker-photo')
+    .first()
+    .boundingBox()
+    .catch(() => null);
+}
