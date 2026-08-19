@@ -17,12 +17,26 @@ import { BUCKETS, storagePaths, useUpload } from '@kernel/storage';
 import { useSaveExercise } from '../../api/lessons.mutations';
 import { useLangPrefs } from '../../lib/lang-prefs';
 import {
+  acceptedForms,
   gapCount,
   scrambleTokens,
   validateExercise,
   type ExerciseOption,
 } from '../../lib/exercise-schema';
 import type { Exercise, ExerciseKind } from '../../types';
+
+/**
+ * Read a list of acceptable answers out of one field.
+ *
+ * Russian rarely has exactly one right way to say something, so she can write
+ * the alternatives and every one of them will be marked correct.
+ */
+function splitAnswers(text: string, sep = '/'): string[] {
+  return text
+    .split(sep)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
 
 const KINDS: { value: ExerciseKind; label: string }[] = [
   { value: 'choice', label: 'Choose' },
@@ -84,13 +98,19 @@ export function ExerciseEditor({
     setAudioPath((payload?.audioPath as string) ?? null);
     if (payload?.template) setText(String(payload.template));
     if (payload?.tokens) setText((payload.tokens as string[]).join(' '));
-    if (Array.isArray(exercise.answer)) {
-      const arr = exercise.answer as string[];
-      if (exercise.kind === 'multi') setCorrect(arr);
-      else setAnswerText(arr.join(' | '));
-    } else if (typeof exercise.answer === 'string') {
-      if (exercise.kind === 'choice') setCorrect([exercise.answer]);
-      else setAnswerText(exercise.answer);
+    if (exercise.kind === 'multi') {
+      setCorrect((exercise.answer as string[]) ?? []);
+    } else if (exercise.kind === 'choice') {
+      setCorrect([exercise.answer as string]);
+    } else if (exercise.kind === 'complete') {
+      // Gaps are separated by |, alternatives within a gap by /.
+      setAnswerText(
+        ((exercise.answer as unknown[]) ?? [])
+          .map((gap) => acceptedForms(gap).join(' / '))
+          .join(' | ')
+      );
+    } else {
+      setAnswerText(acceptedForms(exercise.answer).join(' / '));
     }
   }, [exercise, support]);
 
@@ -104,13 +124,16 @@ export function ExerciseEditor({
       case 'multi':
         return { payload: { options }, answer: correct };
       case 'type':
-        return { payload: { placeholder: '' }, answer: answerText.trim() };
+        // No empty placeholder: `??` keeps '' and the field loses its hint.
+        return { payload: {}, answer: splitAnswers(answerText) };
       case 'listen':
-        return { payload: { audioPath }, answer: answerText.trim() };
+        return { payload: { audioPath }, answer: splitAnswers(answerText) };
       case 'complete':
+        // One entry per gap, and each gap may itself offer alternatives —
+        // "живу / проживаю | Москве".
         return {
           payload: { template: text },
-          answer: answerText.split('|').map((s) => s.trim()),
+          answer: answerText.split('|').map((gap) => splitAnswers(gap, '/')),
         };
       case 'order': {
         const tokens = text.split(/\s+/).filter(Boolean);
@@ -271,12 +294,12 @@ export function ExerciseEditor({
             </Field>
             <Field
               label="The answers"
-              hint={`Separate with | — ${gapCount(text)} needed`}
+              hint={`One per gap with | — ${gapCount(text)} needed. Alternatives with /`}
             >
               <Input
                 value={answerText}
                 onChange={(e) => setAnswerText(e.target.value)}
-                placeholder="живу | Москве"
+                placeholder="живу / проживаю | Москве"
               />
             </Field>
           </>
@@ -326,11 +349,14 @@ export function ExerciseEditor({
         )}
 
         {(kind === 'type' || kind === 'listen') && (
-          <Field label="The answer">
+          <Field
+            label="The answer"
+            hint="More than one right way? Separate them with /"
+          >
             <Input
               value={answerText}
               onChange={(e) => setAnswerText(e.target.value)}
-              placeholder="спасибо"
+              placeholder="спасибо / благодарю"
             />
           </Field>
         )}
