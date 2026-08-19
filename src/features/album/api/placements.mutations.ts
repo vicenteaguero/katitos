@@ -202,6 +202,7 @@ export function usePlaceSticker() {
       body?: string;
       x?: number;
       y?: number;
+      rotation?: number;
     }) => {
       const { data, error } = await supabase
         .from('album_placements')
@@ -212,6 +213,7 @@ export function usePlaceSticker() {
           body: v.body ?? null,
           x: v.x ?? 0.5,
           y: v.y ?? 0.5,
+          rotation: v.rotation ?? 0,
           z: nextZFront(depthsOnPage(qc, v.bookId, v.pageId)),
           ...(userId ? { created_by: userId } : {}),
         })
