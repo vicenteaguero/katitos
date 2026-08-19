@@ -252,13 +252,16 @@ export function useReorderBlocks() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (v: { lessonId: string; ids: string[] }) => {
-      // Small lists (a lesson is a screenful), so one round trip each is
-      // simpler than a bulk upsert and just as fast in practice.
-      await Promise.all(
+      // Supabase builders RESOLVE with `{error}` rather than rejecting, so
+      // without this a refused reorder reported success and the list silently
+      // snapped back.
+      const results = await Promise.all(
         v.ids.map((id, position) =>
           supabase.from('lang_blocks').update({ position }).eq('id', id)
         )
       );
+      const failed = results.find((r) => r.error);
+      if (failed?.error) throw failed.error;
     },
     onError: (e: Error) => toast.error(e.message),
     onSuccess: (_d, v) =>
@@ -283,20 +286,38 @@ export function useSaveExercise() {
       payload: unknown;
       answer: unknown;
     }) => {
-      const row = {
-        lesson_id: v.lessonId,
-        block_id: v.blockId ?? null,
-        kind: v.kind,
-        position: v.position,
-        prompt_ru: v.prompt_ru ?? null,
-        prompt_en: v.prompt_en ?? null,
-        prompt_es: v.prompt_es ?? null,
-        payload: v.payload as never,
-        answer: v.answer as never,
-      };
+      // Only the languages the editor actually sent. Writing all three on an
+      // update wiped whichever prompt she wasn't looking at: write the Spanish
+      // and the English was gone, and `prompt_ru` could never be written at
+      // all. Same shape as `useUpdateLesson`.
+      const prompts: Record<string, string | null> = {};
+      if (v.prompt_ru !== undefined) prompts.prompt_ru = v.prompt_ru;
+      if (v.prompt_en !== undefined) prompts.prompt_en = v.prompt_en;
+      if (v.prompt_es !== undefined) prompts.prompt_es = v.prompt_es;
+
       const { error } = v.id
-        ? await supabase.from('lang_exercises').update(row).eq('id', v.id)
-        : await supabase.from('lang_exercises').insert(row);
+        ? await supabase
+            .from('lang_exercises')
+            .update({
+              kind: v.kind,
+              position: v.position,
+              payload: v.payload as never,
+              answer: v.answer as never,
+              ...prompts,
+            })
+            .eq('id', v.id)
+        : await supabase.from('lang_exercises').insert({
+            lesson_id: v.lessonId,
+            block_id: v.blockId ?? null,
+            kind: v.kind,
+            position: v.position,
+            payload: v.payload as never,
+            answer: v.answer as never,
+            prompt_ru: null,
+            prompt_en: null,
+            prompt_es: null,
+            ...prompts,
+          });
       if (error) throw error;
     },
     onError: (e: Error) => toast.error(e.message),
