@@ -2,6 +2,7 @@ import { Link } from 'react-router';
 import { GraduationCap } from 'lucide-react';
 import { Card, CardTitle } from '@kernel/ui';
 import { useDueLessons } from '../api/courses.queries';
+import { useLanguages } from '../lib/languages';
 import { useAllVocab, useMyReviews } from '../api/vocab';
 import { buildSession } from '../lib/srs';
 
@@ -24,8 +25,9 @@ function when(due: string): string {
  * before breakfast.
  */
 export function NextLessonWidget() {
-  const { data: due } = useDueLessons();
-  const { data: words } = useAllVocab('ru');
+  const { learning } = useLanguages();
+  const { data: due } = useDueLessons(learning);
+  const { data: words } = useAllVocab(learning);
   const { data: reviews } = useMyReviews();
 
   const session = buildSession(words ?? [], reviews ?? new Map()).length;
