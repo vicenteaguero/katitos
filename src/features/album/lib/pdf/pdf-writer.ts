@@ -42,10 +42,23 @@ export class PdfDoc {
   /**
    * Register a JPEG. `SMask`-less and un-decoded: the bytes go in as they are.
    */
-  addJpeg(bytes: Uint8Array, width: number, height: number): number {
+  addJpeg(
+    bytes: Uint8Array,
+    width: number,
+    height: number,
+    components = 3
+  ): number {
+    // A JPEG is not always three channels: a black-and-white photo has one,
+    // and declaring it RGB renders it as coloured noise.
+    const space =
+      components === 1
+        ? '/DeviceGray'
+        : components === 4
+          ? '/DeviceCMYK'
+          : '/DeviceRGB';
     return this.add(
       `<< /Type /XObject /Subtype /Image /Width ${width} /Height ${height} ` +
-        `/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode ` +
+        `/ColorSpace ${space} /BitsPerComponent 8 /Filter /DCTDecode ` +
         `/Length ${bytes.length} >>`,
       bytes
     );
@@ -160,7 +173,7 @@ export function fillRect(
 /** The size of a JPEG, read from its own header — no decoding needed. */
 export function readJpegSize(
   bytes: Uint8Array
-): { width: number; height: number } | null {
+): { width: number; height: number; components: number } | null {
   if (bytes[0] !== 0xff || bytes[1] !== 0xd8) return null;
   let i = 2;
   while (i < bytes.length - 9) {
@@ -169,6 +182,18 @@ export function readJpegSize(
       continue;
     }
     const marker = bytes[i + 1];
+    // 0xFF is legal padding before a marker, and these carry no length field.
+    // Treating either as a segment header walked the reader into the middle of
+    // the image and it gave up — and a photo it can't measure is a photo the
+    // export silently drops.
+    if (
+      marker === 0xff ||
+      marker === 0x01 ||
+      (marker >= 0xd0 && marker <= 0xd9)
+    ) {
+      i += marker === 0xff ? 1 : 2;
+      continue;
+    }
     // SOF0..SOF15, minus the four that aren't frame headers.
     if (
       marker >= 0xc0 &&
@@ -180,6 +205,7 @@ export function readJpegSize(
       return {
         height: (bytes[i + 5] << 8) | bytes[i + 6],
         width: (bytes[i + 7] << 8) | bytes[i + 8],
+        components: bytes[i + 9] || 3,
       };
     }
     i += 2 + ((bytes[i + 2] << 8) | bytes[i + 3]);
