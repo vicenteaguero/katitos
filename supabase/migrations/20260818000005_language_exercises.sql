@@ -81,7 +81,11 @@ create policy lang_attempts_write on public.lang_attempts for all
   with check (public.is_member() and user_id = auth.uid());
 
 -- Progress is the one place the TEACHER writes on the student's row: the mark
--- and the note in the margin are hers to leave.
+-- and the note in the margin are hers to leave. That means the uniform policy,
+-- and it also means the student can technically overwrite his own grade —
+-- which is fine here and nowhere else: this app has exactly two users who are
+-- a couple, and the alternative (a policy that lets her write his row but not
+-- him) needs a role check the rest of this schema does not have.
 alter table public.lang_lesson_progress enable row level security;
 drop policy if exists members_all on public.lang_lesson_progress;
 create policy members_all on public.lang_lesson_progress for all
