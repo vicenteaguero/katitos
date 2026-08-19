@@ -6,6 +6,15 @@
  * that has bitten us before (off-by-margin peeks, drag bounce). No React here.
  */
 
+/**
+ * A sanity floor, deliberately far below any real screen.
+ *
+ * It exists so a mis-measurement can't produce a zero-width book — NOT to keep
+ * the book "big enough". A floor high enough to fight the height budget is
+ * what made the book overflow and clip its own fold on a short screen.
+ */
+const MIN_PAGE_W = 80;
+
 export interface BookLayout {
   pageW: number;
   trackW: number;
@@ -39,7 +48,11 @@ export function computeLayout(
   // height budget before the page is sized — not bolted on afterwards, which
   // is how the book ended up taller than the space it was given.
   const byH = Math.floor((availH - 2 * m - 2 * curlPad) * 0.75);
-  const pageW = Math.max(200, Math.min(elW - minPeek, byH));
+  // The height budget WINS. A hard 200px floor could beat it — on a short
+  // screen (a phone turned sideways, which the app now allows) that made the
+  // book taller than the space it was given, and the fold was clipped again.
+  // A small complete book beats a big clipped one.
+  const pageW = Math.max(MIN_PAGE_W, Math.min(elW - minPeek, byH));
   const trackW = 2 * pageW + 2 * m;
   return {
     pageW,
