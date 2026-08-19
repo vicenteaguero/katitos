@@ -8,6 +8,7 @@ import {
   type CSSProperties,
   type ReactNode,
 } from 'react';
+import { useNavigate } from 'react-router';
 import HTMLFlipBook from 'react-pageflip';
 import { useDrag } from '@use-gesture/react';
 import {
@@ -17,6 +18,7 @@ import {
   Plus,
   Pencil,
   Check,
+  Settings2,
   Type,
 } from 'lucide-react';
 import { useTableSync } from '@kernel/realtime';
@@ -56,11 +58,13 @@ import {
   useStyleSticker,
   useUnplaceSticker,
 } from '../../api/placements.mutations';
+import { AlbumSettingsSheet } from '../album-settings-sheet';
 import { PageFace } from './page-face';
 import { LibraryStrip } from './library-strip';
 import { LibraryUploadSheet } from './library-upload-sheet';
 import { StickerToolbar } from './sticker-toolbar';
 import { TextStyleSheet } from './text-style-sheet';
+import { usePdfBridge } from './use-pdf-bridge';
 import { computeLayout, restFor, slideDx, stepCrossing } from './book-geometry';
 import '../../photo-book.css';
 
@@ -168,9 +172,11 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
   // `index` = the page being read; its spread + side decide where the piece sits.
   const [index, setIndex] = useState(0);
   const [mode, setMode] = useState<'read' | 'arrange'>('read');
+  const navigate = useNavigate();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [styleFor, setStyleFor] = useState<PlacedSticker | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [drag, setDrag] = useState<{ active: boolean; dx: number }>({
     active: false,
     dx: 0,
@@ -356,6 +362,8 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
   }, [pages, focused, urlFor]);
   usePrefetchImages(prefetch);
 
+  usePdfBridge(pages, book?.title ?? 'album');
+
   const flipPages = useMemo(
     () =>
       (pages ?? []).map((p) => (
@@ -496,6 +504,15 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
         style={{ border: '1px solid rgba(228,195,106,.4)' }}
       >
         <Type className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        onClick={() => setSettingsOpen(true)}
+        aria-label="Album settings"
+        className="lift-press flex h-8 w-8 items-center justify-center rounded-full bg-surface-2 text-gold shadow-loge outline-none focus-visible:ring-2 focus-visible:ring-gold"
+        style={{ border: '1px solid rgba(228,195,106,.4)' }}
+      >
+        <Settings2 className="h-4 w-4" />
       </button>
       <button
         type="button"
@@ -769,6 +786,20 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
         jobs={bulk.jobs}
         running={bulk.running}
       />
+
+      {book && (
+        <AlbumSettingsSheet
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+          book={book}
+          page={current}
+          pageNumber={focused + 1}
+          onDeleted={() => {
+            setSettingsOpen(false);
+            navigate('/album');
+          }}
+        />
+      )}
 
       <TextStyleSheet
         open={!!styleFor}
