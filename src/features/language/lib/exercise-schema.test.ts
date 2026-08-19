@@ -79,6 +79,42 @@ describe('type', () => {
   });
 });
 
+describe('a written answer with more than one right form', () => {
+  it('accepts any of the forms she is willing to allow', () => {
+    // Russian gives the same sentence two perfectly good shapes.
+    const q = ex('type', {}, ['у меня есть сестра', 'у меня сестра']);
+    expect(gradeAnswer(q, 'у меня сестра').correct).toBe(true);
+    expect(gradeAnswer(q, 'у меня есть сестра').correct).toBe(true);
+  });
+
+  it('still says no to something that is not one of them', () => {
+    const q = ex('type', {}, ['спасибо', 'благодарю']);
+    expect(gradeAnswer(q, 'пожалуйста').correct).toBe(false);
+  });
+
+  it('forgives case and punctuation on every form, not just the first', () => {
+    const q = ex('type', {}, ['спасибо', 'благодарю']);
+    expect(gradeAnswer(q, ' Благодарю! ').correct).toBe(true);
+  });
+
+  it('works the same for a listening question', () => {
+    const q = ex('listen', { audioPath: 'a.m4a' }, ['привет', 'здравствуй']);
+    expect(gradeAnswer(q, 'Здравствуй').correct).toBe(true);
+  });
+
+  it('lets a single gap accept alternatives too', () => {
+    const q = ex('complete', { template: 'Я {{1}} по-русски' }, [
+      ['говорю', 'разговариваю'],
+    ]);
+    expect(gradeAnswer(q, ['разговариваю']).correct).toBe(true);
+    expect(gradeAnswer(q, ['читаю']).correct).toBe(false);
+  });
+
+  it('refuses to save a question whose answer list is empty', () => {
+    expect(validateExercise(ex('type', {}, []))).toBe('The answer is missing');
+  });
+});
+
 describe('complete', () => {
   const q = ex('complete', { template: 'Я {{1}} в {{2}}' }, ['живу', 'Москве']);
 
