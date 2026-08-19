@@ -5,6 +5,7 @@ import { useUserId } from '@kernel/auth';
 import type {
   Attempt,
   Block,
+  Lang,
   Exercise,
   Lesson,
   LessonFull,
@@ -36,6 +37,11 @@ export const latestPerExercise = (rows: Attempt[]): Attempt[] => {
   return [...latest.values()];
 };
 
+/** Narrow whatever the row holds to one of the three we support. */
+function langOf(value: string | null | undefined): Lang {
+  return value === 'es' || value === 'en' ? value : 'ru';
+}
+
 export function useLesson(lessonId: string | undefined) {
   return useQuery({
     queryKey: qk.lang.lesson(lessonId ?? 'none'),
@@ -45,13 +51,16 @@ export function useLesson(lessonId: string | undefined) {
       const { data, error } = await supabase
         .from('lang_lessons')
         .select(
-          '*, unit:lang_units(course_id), blocks:lang_blocks(*), exercises:lang_exercises(*)'
+          '*, unit:lang_units(course_id, course:lang_courses(target_lang)), blocks:lang_blocks(*), exercises:lang_exercises(*)'
         )
         .eq('id', lessonId as string)
         .single();
       if (error) throw error;
       const row = data as Lesson & {
-        unit: { course_id: string } | null;
+        unit: {
+          course_id: string;
+          course: { target_lang: string } | null;
+        } | null;
         blocks: Block[] | null;
         exercises: Exercise[] | null;
       };
@@ -100,6 +109,10 @@ export function useLesson(lessonId: string | undefined) {
       return {
         ...row,
         courseId: row.unit?.course_id ?? '',
+        // Which language this lesson TEACHES. Everything downstream reads it:
+        // which keyboard the typing questions show, which two languages the
+        // builder offers as translations, which column a new word goes in.
+        targetLang: langOf(row.unit?.course?.target_lang),
         blocks,
         exercises: [...(row.exercises ?? [])].sort(
           (a, b) => a.position - b.position
