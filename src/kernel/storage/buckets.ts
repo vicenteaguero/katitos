@@ -43,9 +43,6 @@ export const storagePaths = {
   albumPhoto: (bookId: string, photoId: string) =>
     `book/${bookId}/${photoId}.jpg`,
   avatar: (userId: string) => `${userId}.jpg`,
-  /** One sticker photo per slot half (solo|a|b) — swap overwrites in place. */
-  albumSticker: (chapterId: string, slotId: string, half: string) =>
-    `${chapterId}/${slotId}-${half}.jpg`,
   /**
    * A wishlist item's photo. Owner-prefixed on purpose: storage RLS reads the
    * first path segment to keep a hidden gift's picture unreadable by the very
