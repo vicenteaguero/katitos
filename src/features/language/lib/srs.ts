@@ -1,7 +1,21 @@
 import { DateTime } from '@kernel/lib';
-import type { Tables } from '@kernel/supabase';
 
-export type PhraseReview = Tables<'phrase_reviews'>;
+/**
+ * The scheduling state of one word for one person.
+ *
+ * Structural on purpose: the same maths served the old `phrase_reviews` table
+ * and now serves `lang_vocab_reviews`, and it should keep working for whatever
+ * the next table is called.
+ */
+export interface ReviewState {
+  ease: number;
+  interval_days: number;
+  due_on: string;
+  reps: number;
+  lapses: number;
+  last_grade?: number | null;
+  last_seen_at?: string | null;
+}
 
 /** What you did with a card. Three buttons, not six — this is a phone. */
 export type Grade =
@@ -96,7 +110,7 @@ function clampEase(v: number): number {
 
 /** Is this card waiting to be studied today? An unseen card always is. */
 export function isDue(
-  review: Pick<PhraseReview, 'due_on'> | null | undefined,
+  review: Pick<ReviewState, 'due_on'> | null | undefined,
   today: DateTime = DateTime.now()
 ): boolean {
   if (!review) return true;
@@ -110,7 +124,7 @@ export function isDue(
 export type Mastery = 'new' | 'learning' | 'known';
 
 export function mastery(
-  review: Pick<PhraseReview, 'interval_days' | 'reps'> | null | undefined
+  review: Pick<ReviewState, 'interval_days' | 'reps'> | null | undefined
 ): Mastery {
   if (!review || review.reps === 0) return 'new';
   return review.interval_days >= 7 ? 'known' : 'learning';
@@ -125,7 +139,7 @@ export function mastery(
  */
 export function buildSession<T extends { id: string }>(
   cards: T[],
-  reviews: Map<string, PhraseReview>,
+  reviews: Map<string, ReviewState>,
   {
     limit = 20,
     today = DateTime.now(),
