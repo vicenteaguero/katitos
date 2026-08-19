@@ -104,88 +104,6 @@ export function useBook(
   });
 }
 
-/**
- * Anything the OLD bundle put on a page, adopted into a placement.
- *
- * The service worker does not skipWaiting, so for one session after a release
- * the previous build is still adding photos the only way it knows how: straight
- * onto `album_photos` with a page and a slot. Those rows would otherwise be
- * invisible here. Rather than a database trigger firing on every write, we heal
- * on read — the same idempotent trick `ensurePages` uses — and this whole
- * function can be deleted once both phones have moved on.
- */
-/**
- * Books already healed this session. The adoption only has to happen once per
- * launch — without this it cost two extra round-trips every single time the
- * album was opened, for a migration aid that is temporary anyway.
- */
-const adopted = new Set<string>();
-
-async function adoptLegacyRows(bookId: string): Promise<boolean> {
-  if (adopted.has(bookId)) return false;
-  const { data, error } = await supabase
-    .from('album_photos')
-    .select(
-      'id, page_id, slot, x, y, scale, rotation, source, caption, created_by'
-    )
-    .eq('book_id', bookId)
-    .not('page_id', 'is', null);
-  if (error || !data?.length) return false;
-
-  const { data: placed, error: placedErr } = await supabase
-    .from('album_placements')
-    .select('photo_id')
-    .in(
-      'photo_id',
-      data.map((r) => r.id)
-    );
-  if (placedErr) return false;
-
-  const known = new Set((placed ?? []).map((r) => r.photo_id));
-  const orphans = data.filter((r) => !known.has(r.id));
-  if (!orphans.length) {
-    adopted.add(bookId);
-    return false;
-  }
-
-  // Both phones can open the book at once and compute the same orphan set.
-  // A deterministic id means the second one writes the same row rather than a
-  // duplicate sticker.
-  const { error: insErr } = await supabase.from('album_placements').upsert(
-    orphans.map((r) => ({
-      id: r.id,
-      page_id: r.page_id as string,
-      photo_id: r.id,
-      kind: r.source === 'text' ? 'text' : 'photo',
-      x: r.x,
-      y: r.y,
-      scale: r.scale,
-      rotation: r.rotation,
-      z: r.slot ?? 0,
-      caption: r.source === 'text' ? null : r.caption,
-      body: r.source === 'text' ? r.caption : null,
-      created_by: r.created_by,
-    })),
-    { onConflict: 'id', ignoreDuplicates: true }
-  );
-  if (insErr) return false;
-
-  // Retire the legacy pointer now that a placement owns this photo. Without
-  // this, taking the sticker off the page recreates the very condition the
-  // heal looks for — the realtime echo of your own delete refetches, the heal
-  // runs, and the sticker is back within a second.
-  await supabase
-    .from('album_photos')
-    .update({ page_id: null })
-    .in(
-      'id',
-      orphans.map((r) => r.id)
-    );
-
-  adopted.add(bookId);
-  return true;
-}
-
 /** All pages of a book, ordered, each with its stickers back-to-front. */
 export function usePages(bookId: string | undefined) {
   return useQuery({
@@ -204,9 +122,7 @@ export function usePages(bookId: string | undefined) {
         return data ?? [];
       };
 
-      let rows = await read();
-      if (await adoptLegacyRows(bookId as string)) rows = await read();
-
+      const rows = await read();
       return rows.map((p) => ({
         ...p,
         stickers: orderStickers(
