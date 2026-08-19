@@ -21,6 +21,21 @@ import type {
  * has to fetch its own words, or a media block that has to fetch its own file,
  * is a waterfall in the middle of a page of text.
  */
+/**
+ * The newest answer per question.
+ *
+ * Correct ONLY because the query orders `answered_at` descending — the first
+ * row seen for an exercise is its latest attempt. Hoisted so the reference is
+ * stable across renders.
+ */
+export const latestPerExercise = (rows: Attempt[]): Attempt[] => {
+  const latest = new Map<string, Attempt>();
+  for (const row of rows) {
+    if (!latest.has(row.exercise_id)) latest.set(row.exercise_id, row);
+  }
+  return [...latest.values()];
+};
+
 export function useLesson(lessonId: string | undefined) {
   return useQuery({
     queryKey: qk.lang.lesson(lessonId ?? 'none'),
@@ -116,14 +131,7 @@ export function useMyAttempts(lessonId: string | undefined) {
       if (error) throw error;
       return (data ?? []) as Attempt[];
     },
-    select: (rows) => {
-      // Newest first out of the query, so the first one seen per exercise wins.
-      const latest = new Map<string, Attempt>();
-      for (const row of rows) {
-        if (!latest.has(row.exercise_id)) latest.set(row.exercise_id, row);
-      }
-      return [...latest.values()];
-    },
+    select: latestPerExercise,
   });
 }
 
