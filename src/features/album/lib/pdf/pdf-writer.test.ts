@@ -97,6 +97,9 @@ describe('PdfDoc', () => {
       .slice(out.indexOf('xref'))
       .split('\n')
       .filter((l) => / 00000 n $/.test(l));
+    // Without this the forEach below passes vacuously if the regex ever stops
+    // matching — a test that checks nothing looks exactly like one that passes.
+    expect(rows.length).toBeGreaterThan(0);
     rows.forEach((row, i) => {
       const offset = Number(row.slice(0, 10));
       expect(out.slice(offset).startsWith(`${i + 1} 0 obj`)).toBe(true);
@@ -155,6 +158,9 @@ describe('PdfDoc', () => {
       .slice(out.indexOf('xref'))
       .split('\n')
       .filter((l) => / 00000 n $/.test(l));
+    // Without this the forEach below passes vacuously if the regex ever stops
+    // matching — a test that checks nothing looks exactly like one that passes.
+    expect(rows.length).toBeGreaterThan(0);
     rows.forEach((row, i) => {
       const offset = Number(row.slice(0, 10));
       expect(out.slice(offset).startsWith(`${i + 1} 0 obj`)).toBe(true);
