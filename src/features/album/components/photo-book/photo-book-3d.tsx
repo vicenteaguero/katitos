@@ -165,10 +165,13 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
     filter: bookId ? `book_id=eq.${bookId}` : undefined,
     enabled: !!bookId,
   });
+  // Both filtered to THIS book: unfiltered, any change in any album refetched
+  // whichever book happened to be open.
   useTableSync('album_placements', bookId ? qk.album.pages(bookId) : [], {
     enabled: !!bookId,
   });
   useTableSync('album_photos', bookId ? qk.album.library(bookId) : [], {
+    filter: bookId ? `book_id=eq.${bookId}` : undefined,
     enabled: !!bookId,
   });
 
