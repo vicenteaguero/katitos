@@ -1,4 +1,4 @@
-import type { SupportLang, TableBlockData } from '../types';
+import type { Lang, TableBlockData } from '../types';
 
 /**
  * A table you can type on a phone.
@@ -14,7 +14,7 @@ import type { SupportLang, TableBlockData } from '../types';
  * Leading empty cell on the heading line is normal: the corner of the grid has
  * no title.
  */
-export function parseTable(text: string, support: SupportLang): TableBlockData {
+export function parseTable(text: string, support: Lang): TableBlockData {
   const lines = text
     .split('\n')
     .map((l) => l.trim())
@@ -35,10 +35,7 @@ export function parseTable(text: string, support: SupportLang): TableBlockData {
 }
 
 /** Turn a stored table back into the text she typed, so she can edit it. */
-export function formatTable(
-  data: TableBlockData,
-  support: SupportLang
-): string {
+export function formatTable(data: TableBlockData, support: Lang): string {
   const headings = data.headings ?? [];
   const rows = data.rows ?? [];
   const label = (h: { ru?: string; en?: string; es?: string }) =>
