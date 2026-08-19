@@ -30,14 +30,35 @@
      page 1 to the left padding, page 2 (when slid) to the right padding. */
 }
 .pb-viewport {
+  --pb-curl-pad: 16px;
   position: relative;
   width: 100%;
-  overflow: hidden;
+  /* `clip`, not `hidden`. Per spec, `overflow-y: visible` beside an
+     `overflow-x: hidden` computes to `auto` — a nested scroller that clips the
+     curl anyway AND steals the horizontal drag. `clip` leaves the other axis
+     alone. */
+  overflow-x: clip;
+  overflow-y: visible;
+  /* Padding grows the clip box so the fold can paint above and below the
+     paper; the matching negative margin gives that height straight back, so
+     the book occupies exactly the room it did before. */
+  padding-block: var(--pb-curl-pad);
+  margin-block: calc(-1 * var(--pb-curl-pad));
   /* The slide gesture is OURS — stop the browser eating the horizontal drag. */
   touch-action: none;
 }
+@supports not (overflow-x: clip) {
+  /* Older WebKit: still a hard clip, but the padding above has already made
+     the clip rectangle taller, which is the half that actually mattered. */
+  .pb-viewport {
+    overflow: hidden;
+  }
+}
 .pb-track {
-  position: relative;
+  position: absolute;
+  left: 0;
+}
+.pb-track {
   will-change: transform;
 }
 .pb-case {
@@ -91,9 +112,12 @@
   z-index: 5;
   touch-action: none;
 }
+/* The LEAF must not clip: StPageFlip draws the fold and its shadow outside the
+   page box, and hiding overflow here is what sliced the curl. The paper inside
+   keeps the rounded corners and clips the stickers instead. */
 .pb-page-host {
   border-radius: 11px;
-  overflow: hidden;
+  overflow: visible;
   background: var(--pb-paper-2);
   box-shadow: inset 0 0 0 1px rgba(228, 195, 106, 0.22);
 }
@@ -101,7 +125,10 @@
   position: absolute;
   inset: 0;
   padding: 16px;
-  border-radius: inherit;
+  border-radius: 11px;
+  /* The clip moved down here from `.pb-page-host`: stickers still stop at the
+     edge of the paper, but the leaf around it is free to curl. */
+  overflow: hidden;
   color: var(--pb-ink);
   background:
     radial-gradient(
@@ -258,4 +285,12 @@
   background-clip: text;
   color: transparent;
   text-shadow: 0 1px 0 rgba(20, 4, 9, 0.35);
+}
+
+/* StPageFlip builds its own wrappers around each leaf. If any of them clips,
+   the fold is cut no matter what we do to our own elements. */
+.pb-book .stf__parent,
+.pb-book .stf__block,
+.pb-book .stf__item {
+  overflow: visible;
 }
