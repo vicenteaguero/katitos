@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { isMissing, meaningOf, pick } from './pick';
+import { answerMatches } from './answer-match';
+import { headword, isMissing, meaningOf, pick } from './pick';
 
 const row = {
   body_ru: 'Привет',
@@ -61,5 +62,24 @@ describe('isMissing', () => {
 
   it('does not flag one that is already translated', () => {
     expect(isMissing(row, 'body', 'es')).toBe(false);
+  });
+});
+
+describe('headword', () => {
+  it('shows the accented spelling when she has marked it', () => {
+    expect(headword({ ru: 'страна', stress: 'стра́на' })).toBe('стра́на');
+  });
+
+  it('falls back to the plain spelling when she has not', () => {
+    expect(headword({ ru: 'страна', stress: null })).toBe('страна');
+    expect(headword({ ru: 'страна' })).toBe('страна');
+    expect(headword({ ru: 'страна', stress: '   ' })).toBe('страна');
+  });
+
+  it('is still typeable without the accent', () => {
+    // Stress is shown, never demanded: grading strips combining marks.
+    expect(
+      answerMatches('страна', headword({ ru: 'страна', stress: 'стра́на' }))
+    ).toBe(true);
   });
 });
