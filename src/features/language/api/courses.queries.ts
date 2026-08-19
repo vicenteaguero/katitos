@@ -125,21 +125,28 @@ export function useMyProgress() {
  *
  * Drives the home widget, so it is deliberately small and cheap.
  */
-export function useDueLessons() {
+export function useDueLessons(target: TargetLang) {
   return useQuery({
-    queryKey: [...qk.lang.progress(), 'due'] as const,
+    queryKey: [...qk.lang.progress(), 'due', target] as const,
     staleTime: 60_000,
     queryFn: async (): Promise<Lesson[]> => {
+      // Only the language you are LEARNING. Without this the home screen told
+      // him his own Spanish homework was due — the homework he set for her.
       const { data, error } = await supabase
         .from('lang_lessons')
-        .select('*')
+        .select('*, unit:lang_units(course:lang_courses(target_lang))')
         .eq('status', 'published')
         .in('kind', ['homework', 'exam'])
         .not('due_on', 'is', null)
         .order('due_on', { ascending: true })
-        .limit(5);
+        .limit(20);
       if (error) throw error;
-      return data ?? [];
+      const rows = (data ?? []) as (Lesson & {
+        unit: { course: { target_lang: string } | null } | null;
+      })[];
+      return rows
+        .filter((l) => l.unit?.course?.target_lang === target)
+        .slice(0, 5);
     },
   });
 }
