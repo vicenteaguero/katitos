@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pencil, Plus, Search, Trash2 } from 'lucide-react';
-import { BUCKETS } from '@kernel/storage';
+import { BUCKETS, useSignedUrls } from '@kernel/storage';
 import {
   AudioRecorder,
   Button,
@@ -34,9 +34,16 @@ import type { SupportLang, Vocab } from '../types';
 export function DictionaryRoute() {
   useWideLayout();
   const [search, setSearch] = useState('');
+  // What the QUERY sees, a beat behind the box. Typing "привет" used to fire
+  // six separate `limit 500` searches and keep all six in the cache.
+  const [term, setTerm] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => setTerm(search), 250);
+    return () => clearTimeout(t);
+  }, [search]);
   const support = useLangPrefs((s) => s.supportLang);
   const setSupport = useLangPrefs((s) => s.setSupport);
-  const { data: words } = useVocab('ru', search);
+  const { data: words } = useVocab('ru', term);
   const del = useDeleteVocab();
 
   const [editing, setEditing] = useState<Vocab | 'new' | null>(null);
@@ -66,6 +73,14 @@ export function DictionaryRoute() {
 
   const list = words ?? [];
 
+  // ONE signing request for every recording on the screen, rather than one per
+  // word — this list can be five hundred long.
+  const { data: clips } = useSignedUrls(
+    BUCKETS.languageAudio,
+    list.map((w) => w.audio_path),
+    { proxy: false }
+  );
+
   return (
     <div className="curtain-reveal space-y-2">
       <div className="relative">
@@ -81,8 +96,8 @@ export function DictionaryRoute() {
       {list.length === 0 ? (
         <Empty
           icon="📖"
-          title={search ? 'Nothing like that' : 'The dictionary is empty'}
-          hint={search ? undefined : 'Add the first word.'}
+          title={term ? 'Nothing like that' : 'The dictionary is empty'}
+          hint={term ? undefined : 'Add the first word.'}
         />
       ) : (
         <ul className="divide-y divide-fg/5 rounded-lg bg-surface px-3 md:columns-2 md:gap-4 md:[&>li]:break-inside-avoid">
@@ -102,11 +117,7 @@ export function DictionaryRoute() {
                 </span>
               </span>
               {w.audio_path && (
-                <PlayButton
-                  bucket={BUCKETS.languageAudio}
-                  path={w.audio_path}
-                  size="sm"
-                />
+                <PlayButton url={clips?.get(w.audio_path)} size="sm" />
               )}
               <button
                 type="button"
