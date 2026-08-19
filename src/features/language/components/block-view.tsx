@@ -10,7 +10,7 @@ import type {
   TableBlockData,
   Vocab,
 } from '../types';
-import { meaningOf, pick } from '../lib/pick';
+import { headword, meaningOf, pick } from '../lib/pick';
 import { youtubeId } from '../api/media';
 
 /** One piece of a lesson, whatever kind it is. */
@@ -156,7 +156,7 @@ function VocabBlock({
         <li key={w.id} className="flex items-center gap-2 py-2">
           <span className="min-w-0 flex-1">
             <span className="block font-display text-base text-fg">
-              {w.ru}
+              {headword(w)}
               {w.transliteration && (
                 <span className="ml-2 font-sans text-[0.68rem] text-muted">
                   {w.transliteration}
