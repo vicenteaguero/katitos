@@ -9,6 +9,12 @@
 export interface BookLayout {
   pageW: number;
   trackW: number;
+  /**
+   * Height the viewport must reserve: the page, the cover margin on both
+   * sides, AND the halo the curling leaf paints outside the paper. Without the
+   * last term the fold was sliced flat against the top and bottom edges.
+   */
+  viewportH: number;
   /** translateX that puts the LEFT page's left edge at the content-left pad. */
   restL: number;
   /** translateX that puts the RIGHT page's right edge at the content-right. */
@@ -26,14 +32,19 @@ export function computeLayout(
   elW: number,
   availH: number,
   m: number,
-  minPeek: number
+  minPeek: number,
+  curlPad = 0
 ): BookLayout {
-  const byH = Math.floor((availH - 2 * m) * 0.75);
+  // The curl needs room ABOVE and BELOW the paper, so it comes out of the
+  // height budget before the page is sized — not bolted on afterwards, which
+  // is how the book ended up taller than the space it was given.
+  const byH = Math.floor((availH - 2 * m - 2 * curlPad) * 0.75);
   const pageW = Math.max(200, Math.min(elW - minPeek, byH));
   const trackW = 2 * pageW + 2 * m;
   return {
     pageW,
     trackW,
+    viewportH: Math.round(pageW * (4 / 3)) + 2 * m + 2 * curlPad,
     // The wine COVER (frame) sits at the content padding on the focused side;
     // the page is inset by the cover margin `m`. The other side overflows.
     restL: 0,
