@@ -7,6 +7,12 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "stamp": "node scripts/stamp-build.mjs",
+    "predev": "npm run stamp",
+    "prebuild": "npm run stamp",
+    "pretypecheck": "npm run stamp",
+    "postinstall": "npm run stamp",
+    "prod:version": "node scripts/prod-version.mjs",
     "preview": "vite preview --host",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.worker.json",
     "lint": "eslint .",
