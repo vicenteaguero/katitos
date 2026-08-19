@@ -107,7 +107,15 @@ export function useBook(
  * on read — the same idempotent trick `ensurePages` uses — and this whole
  * function can be deleted once both phones have moved on.
  */
+/**
+ * Books already healed this session. The adoption only has to happen once per
+ * launch — without this it cost two extra round-trips every single time the
+ * album was opened, for a migration aid that is temporary anyway.
+ */
+const adopted = new Set<string>();
+
 async function adoptLegacyRows(bookId: string): Promise<boolean> {
+  if (adopted.has(bookId)) return false;
   const { data, error } = await supabase
     .from('album_photos')
     .select(
@@ -128,7 +136,10 @@ async function adoptLegacyRows(bookId: string): Promise<boolean> {
 
   const known = new Set((placed ?? []).map((r) => r.photo_id));
   const orphans = data.filter((r) => !known.has(r.id));
-  if (!orphans.length) return false;
+  if (!orphans.length) {
+    adopted.add(bookId);
+    return false;
+  }
 
   const { error: insErr } = await supabase.from('album_placements').insert(
     orphans.map((r) => ({
@@ -147,6 +158,7 @@ async function adoptLegacyRows(bookId: string): Promise<boolean> {
   );
   // A race with the partner's device doing the same adoption is fine: their
   // rows are already there, and a failed heal just retries on the next read.
+  if (!insErr) adopted.add(bookId);
   return !insErr;
 }
 
