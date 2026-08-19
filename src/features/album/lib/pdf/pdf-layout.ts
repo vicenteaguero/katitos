@@ -70,6 +70,28 @@ export function stickerMatrix(
   ];
 }
 
+/**
+ * A point offset from a box's centre, measured along the box's OWN axes.
+ *
+ * The photo window sits above the middle of a polaroid plate, and the caption
+ * below it — but once the sticker is tilted, "above" is no longer straight up
+ * the page. Adding the offset in page space slid the photograph off its frame
+ * for every sticker that wasn't perfectly level, which is most of them.
+ */
+export function offsetInFrame(
+  box: Pick<Box, 'cx' | 'cy' | 'rotation'>,
+  dx: number,
+  dy: number
+): { cx: number; cy: number } {
+  const rad = (box.rotation * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  return {
+    cx: box.cx + dx * cos - dy * sin,
+    cy: box.cy + dx * sin + dy * cos,
+  };
+}
+
 /** Instant-film proportions: a square window with a deeper chin beneath it. */
 export interface FilmLayout {
   /** The white plate. */
