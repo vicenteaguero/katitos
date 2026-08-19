@@ -3,13 +3,7 @@ import { ExternalLink, FileText, Play } from 'lucide-react';
 import { cn } from '@kernel/lib';
 import { BUCKETS, useSignedUrl } from '@kernel/storage';
 import { PlayButton } from '@kernel/ui';
-import type {
-  Block,
-  Media,
-  SupportLang,
-  TableBlockData,
-  Vocab,
-} from '../types';
+import type { Block, Media, Lang, TableBlockData, Vocab } from '../types';
 import { headword, meaningOf, pick } from '../lib/pick';
 import { youtubeId } from '../api/media';
 
@@ -21,7 +15,7 @@ export function BlockView({
   media,
 }: {
   block: Block;
-  support: SupportLang;
+  support: Lang;
   /** Words this block points at, already looked up. */
   vocab?: Vocab[];
   media?: Media;
@@ -84,7 +78,7 @@ function TableBlock({
 }: {
   data: TableBlockData;
   caption: string;
-  support: SupportLang;
+  support: Lang;
 }) {
   const headings = data.headings ?? [];
   const rows = data.rows ?? [];
@@ -142,13 +136,7 @@ function TableBlock({
   );
 }
 
-function VocabBlock({
-  words,
-  support,
-}: {
-  words: Vocab[];
-  support: SupportLang;
-}) {
+function VocabBlock({ words, support }: { words: Vocab[]; support: Lang }) {
   if (!words.length) return null;
   return (
     <ul className="divide-y divide-fg/5 rounded-lg bg-surface px-3">
