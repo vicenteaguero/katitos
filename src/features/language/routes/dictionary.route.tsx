@@ -11,6 +11,7 @@ import {
   PlayButton,
   Segmented,
   Sheet,
+  Textarea,
   useTopBarAction,
   useWideLayout,
   type AudioClip,
@@ -157,6 +158,7 @@ function WordSheet({
   word: Vocab | null;
   onClose: () => void;
 }) {
+  const support = useLangPrefs((s) => s.supportLang);
   const add = useAddVocab();
   const update = useUpdateVocab();
   const [ru, setRu] = useState(word?.ru ?? '');
@@ -164,7 +166,16 @@ function WordSheet({
   const [es, setEs] = useState(word?.es ?? '');
   const [translit, setTranslit] = useState(word?.transliteration ?? '');
   const [stress, setStress] = useState(word?.stress ?? '');
+  const [notes, setNotes] = useState(
+    (support === 'es' ? word?.notes_es : word?.notes_en) ?? ''
+  );
+  const [tags, setTags] = useState((word?.tags ?? []).join(', '));
   const [audio, setAudio] = useState<AudioClip | null>(null);
+
+  const tagList = tags
+    .split(',')
+    .map((t) => t.trim())
+    .filter(Boolean);
 
   const submit = () => {
     if (!ru.trim()) return;
@@ -178,6 +189,10 @@ function WordSheet({
             es: es || null,
             transliteration: translit || null,
             stress: stress || null,
+            ...(support === 'es'
+              ? { notes_es: notes || null }
+              : { notes_en: notes || null }),
+            tags: tagList,
           },
           audio,
         },
@@ -192,6 +207,8 @@ function WordSheet({
           es,
           transliteration: translit,
           stress,
+          ...(support === 'es' ? { notesEs: notes } : { notesEn: notes }),
+          tags: tagList,
           audio,
         },
         { onSuccess: onClose }
@@ -240,6 +257,28 @@ function WordSheet({
             />
           </Field>
         </FieldRow>
+        {/* The escape hatch for a word with no clean one-word translation —
+            успеть, тоска, давай. Written in the language she is explaining in. */}
+        <Field
+          label={support === 'es' ? 'Una nota' : 'A note'}
+          hint="When a translation is not enough"
+        >
+          <Textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={2}
+            placeholder={
+              support === 'es'
+                ? 'se usa cuando…'
+                : 'used when you finally manage to…'
+            }
+          />
+        </Field>
+
+        <Field label="Tags" hint="Separate with commas — food, verbs, lesson 8">
+          <Input value={tags} onChange={(e) => setTags(e.target.value)} />
+        </Field>
+
         {/* Recording can be added or replaced at ANY time now — it used to be
             only at creation, so fixing a bad clip meant deleting the word and
             every review of it. */}
