@@ -1,7 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Check, Plus, Search } from 'lucide-react';
 import { cn } from '@kernel/lib';
-import { Button, Field, FieldRow, Input, Sheet, Spinner } from '@kernel/ui';
+import {
+  AudioRecorder,
+  Button,
+  Field,
+  FieldRow,
+  Input,
+  Sheet,
+  Spinner,
+  type AudioClip,
+} from '@kernel/ui';
 import { useAddVocab, useVocab } from '../api/vocab';
 import { useSetBlockVocab } from '../api/block-vocab';
 import { useLangPrefs } from '../lib/lang-prefs';
@@ -38,6 +47,7 @@ export function VocabPickerSheet({
   const [chosen, setChosen] = useState<Vocab[]>(selected);
   const [newRu, setNewRu] = useState('');
   const [newMeaning, setNewMeaning] = useState('');
+  const [newAudio, setNewAudio] = useState<AudioClip | null>(null);
 
   // Re-seed when the sheet is opened for a different block.
   useEffect(() => {
@@ -59,6 +69,10 @@ export function VocabPickerSheet({
         termLang: 'ru',
         ru: newRu,
         ...(support === 'es' ? { es: newMeaning } : { en: newMeaning }),
+        // The shortcut she will actually use while writing a lesson. Without
+        // this it produced silent words, which is exactly what the vocab block
+        // exists to avoid.
+        audio: newAudio,
       },
       {
         onSuccess: (id) => {
@@ -73,6 +87,7 @@ export function VocabPickerSheet({
           ]);
           setNewRu('');
           setNewMeaning('');
+          setNewAudio(null);
         },
       }
     );
@@ -159,6 +174,9 @@ export function VocabPickerSheet({
             />
           </Field>
         </FieldRow>
+        <Field label="Say it" hint="So the word is not silent in the lesson">
+          <AudioRecorder onRecorded={setNewAudio} />
+        </Field>
         <Button
           variant="secondary"
           full
