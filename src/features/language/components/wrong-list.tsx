@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useMembers, useUserId } from '@kernel/auth';
 import { useAllReviews, useAllVocab } from '../api/vocab';
-import { meaningOf } from '../lib/pick';
+import { headword, meaningOf } from '../lib/pick';
 import { useLangPrefs } from '../lib/lang-prefs';
 
 /**
@@ -43,7 +43,9 @@ export function WrongList() {
         {rows.map(({ review, word }) => (
           <li key={review.vocab_id} className="flex items-baseline gap-2">
             <span className="min-w-0 flex-1">
-              <span className="font-display text-base text-fg">{word!.ru}</span>
+              <span className="font-display text-base text-fg">
+                {headword(word!)}
+              </span>
               {meaningOf(word!, support) && (
                 <span className="ml-2 font-sans text-xs text-muted">
                   {meaningOf(word!, support)}
