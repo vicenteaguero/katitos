@@ -1736,6 +1736,7 @@ export type Database = {
       lang_lessons: {
         Row: {
           created_at: string
+          created_by: string | null
           due_on: string | null
           est_minutes: number | null
           id: string
@@ -1749,6 +1750,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           due_on?: string | null
           est_minutes?: number | null
           id?: string
@@ -1762,6 +1764,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           due_on?: string | null
           est_minutes?: number | null
           id?: string
@@ -3016,6 +3019,13 @@ export type Database = {
       }
     }
     Functions: {
+      album_photo_counts: {
+        Args: never
+        Returns: {
+          book_id: string
+          photos: number
+        }[]
+      }
       can_upload_flowers: { Args: never; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
       is_member: { Args: never; Returns: boolean }
