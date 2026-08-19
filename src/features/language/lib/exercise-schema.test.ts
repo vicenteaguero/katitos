@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   gapCount,
   gradeAnswer,
+  scrambleTokens,
   splitTemplate,
   validateExercise,
   type ExerciseLike,
@@ -168,6 +169,40 @@ describe('listen and speak', () => {
   });
 });
 
+describe('scrambleTokens', () => {
+  it('never shows the words in the answer’s own order', () => {
+    const answer = ['я', 'тебя', 'очень', 'люблю'];
+    expect(scrambleTokens(answer)).not.toEqual(answer);
+  });
+
+  it('keeps every word exactly once', () => {
+    const answer = ['я', 'тебя', 'очень', 'люблю'];
+    expect([...scrambleTokens(answer)].sort()).toEqual([...answer].sort());
+  });
+
+  it('swaps a two-word sentence rather than leaving it alone', () => {
+    expect(scrambleTokens(['спасибо', 'большое'])).not.toEqual([
+      'спасибо',
+      'большое',
+    ]);
+  });
+
+  it('is the same jumble every time, so it cannot reshuffle mid-answer', () => {
+    const answer = ['a', 'b', 'c', 'd', 'e'];
+    expect(scrambleTokens(answer)).toEqual(scrambleTokens(answer));
+  });
+
+  it('copes with one word and with none', () => {
+    expect(scrambleTokens(['да'])).toEqual(['да']);
+    expect(scrambleTokens([])).toEqual([]);
+  });
+
+  it('handles repeated words without losing one', () => {
+    const answer = ['и', 'я', 'и', 'ты'];
+    expect([...scrambleTokens(answer)].sort()).toEqual([...answer].sort());
+  });
+});
+
 describe('validateExercise', () => {
   it('passes a well-formed question', () => {
     expect(
@@ -191,6 +226,25 @@ describe('validateExercise', () => {
     expect(
       validateExercise(ex('complete', { template: '{{1}} и {{2}}' }, ['да']))
     ).toBe('There is not one answer per gap');
+  });
+
+  it('refuses a choose-several with nothing marked correct', () => {
+    expect(validateExercise(ex('multi', { options: OPTIONS }, []))).toBe(
+      'The answer is missing'
+    );
+  });
+
+  it('refuses a typing question with a blank answer', () => {
+    expect(validateExercise(ex('type', {}, ''))).toBe('The answer is missing');
+  });
+
+  it('refuses a listening question with nothing to listen to', () => {
+    expect(validateExercise(ex('listen', { audioPath: null }, 'привет'))).toBe(
+      'The question is incomplete'
+    );
+    expect(
+      validateExercise(ex('listen', { audioPath: 'a/b.m4a' }, 'привет'))
+    ).toBeNull();
   });
 
   it('lets speak through without a stored answer', () => {
