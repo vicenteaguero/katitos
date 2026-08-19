@@ -2,17 +2,7 @@
 
 ## Waiting
 
-- `20260826000001_album_legacy_drop.sql` — drops `album_photos.page_id` /
-  `slot` (and the `(page_id, slot)` unique index that kept the old bundle's
-  upsert working), the `album_photos_book_from_page` trigger, and the three
-  dead sticker-album tables `album_chapters` / `album_slots` /
-  `album_stickers` (0 rows each on production).
-  **Two gates, both required.** First: both phones running the 19 August 2026
-  release — `make db-gate SINCE='2026-08-19 00:00+00'`, two opens each. The
-  previous bundle writes photos with a page and a slot, so dropping those
-  columns under it breaks every add. Second: `adoptLegacyRows()` in
-  `src/features/album/api/photo-book.queries.ts` must be deleted and that
-  deletion deployed — it reads both columns on the first open of each book.
+Nothing is waiting right now.
 
 This folder exists for migrations that are **valid and tested but must not run
 yet** — `make db-push` applies everything in `supabase/migrations/`, so anything
@@ -26,6 +16,15 @@ note it takes **two** opens to count, because the first only installs the new
 bundle and the second is when it starts running.
 
 ## Applied
+
+- `20260819000007_album_legacy_drop.sql` — 2026-08-19. Dropped `album_photos.page_id`
+  / `slot`, the `(page_id, slot)` unique index, the `album_photos_book_from_page`
+  trigger, and the three dead sticker tables. **Its gates were waived on
+  request** — and the reason they mattered went away in the same release: the
+  app now takes a new version by itself at launch, so nobody is left running a
+  bundle that still writes those columns. The migration adopts any leftover
+  page-pinned photo into a placement itself rather than trusting the client
+  heal, which is deleted in the same push.
 
 - `20260814000001_wishlist_hidden_by_default.sql` — 2026-08-12. `wishlist_items`
   was empty, so nothing changed meaning.
