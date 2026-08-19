@@ -1,16 +1,9 @@
 import { test, expect, type Page } from '@playwright/test';
-
-/** The release modal re-arms on every changelog entry; get it out of the way. */
-async function dismissChangelog(page: Page) {
-  const showMe = page.getByRole('button', { name: 'Show me' });
-  if (await showMe.isVisible().catch(() => false)) {
-    await showMe.click();
-    await expect(showMe).toBeHidden();
-  }
-}
+import { cleanup, dismissChangelog } from './helpers';
 
 /** Build a course → unit → lesson and land in its builder. */
 async function newLesson(page: Page, label: string): Promise<void> {
+  await cleanup(['courses', 'vocab']);
   await page.goto('/language');
   await expect(page.getByRole('navigation')).toBeVisible({ timeout: 20_000 });
   await dismissChangelog(page);
