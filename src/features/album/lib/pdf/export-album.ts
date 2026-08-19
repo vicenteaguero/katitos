@@ -210,7 +210,7 @@ export async function buildAlbumPdf(
       if (!bytes) continue;
       const size = readJpegSize(bytes);
       if (!size) continue;
-      const ref = doc.addJpeg(bytes, size.width, size.height);
+      const ref = doc.addJpeg(bytes, size.width, size.height, size.components);
       const name = `Im${n++}`;
       images.push({ name, ref });
 
