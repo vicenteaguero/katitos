@@ -5,6 +5,7 @@ import {
   LATEST,
   LATEST_KEY,
   changelogKey,
+  isAnnounced,
   type ChangelogEntry,
 } from './changelog';
 
@@ -110,6 +111,13 @@ describe('a held entry', () => {
   it('leaves the last announced release as the newest one shown', () => {
     expect(LATEST).toBe(ALL_ENTRIES.find((e) => !e.held));
     expect(LATEST_KEY).toBe(changelogKey(LATEST));
+  });
+
+  it('is not announced, so anything that shows itself stays hidden', () => {
+    for (const held of ALL_ENTRIES.filter((e) => e.held)) {
+      expect(isAnnounced(held.date)).toBe(false);
+    }
+    expect(isAnnounced(LATEST.date)).toBe(true);
   });
 
   it('becomes hers by deleting one flag, with its text untouched', () => {
