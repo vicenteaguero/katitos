@@ -142,24 +142,48 @@ export function buildSession<T extends { id: string }>(
   reviews: Map<string, ReviewState>,
   {
     limit = 20,
+    newPerSession = 5,
     today = DateTime.now(),
-  }: { limit?: number; today?: DateTime } = {}
+  }: { limit?: number; newPerSession?: number; today?: DateTime } = {}
 ): T[] {
   const due = cards.filter((c) => isDue(reviews.get(c.id), today));
+  const isNew = (c: T) => {
+    const r = reviews.get(c.id);
+    return !r || r.reps === 0;
+  };
   const rank = (c: T) => {
     const r = reviews.get(c.id);
-    if (!r || r.reps === 0) return 2; // unseen — last
-    if (r.lapses > 0) return 0; // forgotten before — first
+    if (isNew(c)) return 2; // unseen — last
+    if (r!.lapses > 0) return 0; // forgotten before — first
     return 1;
   };
-  return [...due]
-    .sort((a, b) => {
-      const d = rank(a) - rank(b);
-      if (d !== 0) return d;
-      // Within a band, the longest overdue first.
-      const ra = reviews.get(a.id)?.due_on ?? '9999-12-31';
-      const rb = reviews.get(b.id)?.due_on ?? '9999-12-31';
-      return ra < rb ? -1 : ra > rb ? 1 : 0;
-    })
-    .slice(0, limit);
+  const byUrgency = (a: T, b: T) => {
+    const d = rank(a) - rank(b);
+    if (d !== 0) return d;
+    // Within a band, the longest overdue first.
+    const ra = reviews.get(a.id)?.due_on ?? '9999-12-31';
+    const rb = reviews.get(b.id)?.due_on ?? '9999-12-31';
+    return ra < rb ? -1 : ra > rb ? 1 : 0;
+  };
+
+  /**
+   * A few new words ALWAYS get in.
+   *
+   * Ranking unseen cards last is right for remembering, but it starves a
+   * course: once twenty reviews come due each day, nothing she teaches ever
+   * enters the rotation. So a handful of places are held for new words, and
+   * the rest of the session is the schedule as before.
+   */
+  const fresh = due.filter(isNew).sort(byUrgency);
+  const seen = due.filter((c) => !isNew(c)).sort(byUrgency);
+
+  // Hold a few places for new words BEFORE filling up with reviews…
+  const held = fresh.slice(0, Math.min(newPerSession, limit));
+  const out = [...held, ...seen.slice(0, limit - held.length)];
+  // …and if the reviews didn't fill the session, keep going with new ones
+  // rather than handing back a short session.
+  if (out.length < limit) {
+    out.push(...fresh.slice(held.length, held.length + (limit - out.length)));
+  }
+  return out.sort(byUrgency);
 }
