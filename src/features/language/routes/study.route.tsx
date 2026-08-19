@@ -9,7 +9,7 @@ import { buildSession, type Grade } from '../lib/srs';
 import { CyrillicKeys } from '../components/cyrillic-keys';
 import { answerMatches } from '../lib/answer-match';
 import { useLangPrefs } from '../lib/lang-prefs';
-import { meaningOf } from '../lib/pick';
+import { headword, meaningOf } from '../lib/pick';
 import type { Vocab } from '../types';
 
 /** The four ways a card can be asked. */
@@ -155,7 +155,7 @@ export function StudyRoute() {
           ) : mode === 'recall' ? (
             <>
               <p className="font-display text-4xl font-semibold leading-tight text-accent">
-                {card.ru}
+                {headword(card)}
               </p>
               {card.transliteration && (
                 <p className="mt-2 font-display text-base italic text-copper">
@@ -182,11 +182,6 @@ export function StudyRoute() {
               {(support === 'es' ? card.notes_es : card.notes_en) && (
                 <p className="font-sans text-xs italic text-brown/70">
                   {support === 'es' ? card.notes_es : card.notes_en}
-                </p>
-              )}
-              {card.stress && (
-                <p className="mt-2 rounded-md bg-brown/10 px-3 py-2 text-left font-sans text-xs leading-relaxed text-brown">
-                  stress: {card.stress}
                 </p>
               )}
             </div>
