@@ -1,31 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { nanoid } from 'nanoid';
 import { supabase } from '@kernel/supabase';
 import { qk } from '@kernel/query';
 import { BUCKETS, storagePaths, useUpload } from '@kernel/storage';
 import { toast } from '@kernel/ui';
 import type { Media, MediaKind } from '../types';
-
-/** Everything attached to a course, newest first. */
-export function useMedia(courseId: string | undefined, lessonId?: string) {
-  return useQuery({
-    queryKey: [
-      ...qk.lang.media(courseId ?? 'none'),
-      lessonId ?? 'all',
-    ] as const,
-    enabled: !!courseId,
-    queryFn: async (): Promise<Media[]> => {
-      let q = supabase
-        .from('lang_media')
-        .select('*')
-        .eq('course_id', courseId as string);
-      if (lessonId) q = q.eq('lesson_id', lessonId);
-      const { data, error } = await q.order('created_at', { ascending: false });
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-}
 
 /** Which of the six kinds a file is, from its type and its name. */
 export function kindForFile(file: File): MediaKind {
@@ -158,7 +137,13 @@ export function useDeleteMedia() {
       }
     },
     onError: (e: Error) => toast.error(e.message),
-    onSuccess: (_d, v) =>
-      void qc.invalidateQueries({ queryKey: qk.lang.media(v.courseId) }),
+    onSuccess: (_d, v) => {
+      void qc.invalidateQueries({ queryKey: qk.lang.media(v.courseId) });
+      // The lesson carries its own attachments now, so it has to hear about it.
+      if (v.media.lesson_id)
+        void qc.invalidateQueries({
+          queryKey: qk.lang.lesson(v.media.lesson_id),
+        });
+    },
   });
 }
