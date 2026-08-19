@@ -71,7 +71,9 @@ export const answerSchemas = {
   multi: z.array(z.string()).min(1),
   type: writtenAnswer,
   complete: z.array(writtenAnswer),
-  order: z.array(z.string()),
+  // One accepted ordering, or several — Russian word order is pragmatic, not
+  // fixed, so "я тебя люблю" and "я люблю тебя" are both right.
+  order: z.union([z.array(z.string()), z.array(z.array(z.string())).min(1)]),
   match: z.record(z.string(), z.string()),
   listen: writtenAnswer,
   speak: z.boolean(),
@@ -163,6 +165,51 @@ export function validateExercise(ex: ExerciseLike): string | null {
   return null;
 }
 
+/** Normalise one-or-many accepted orderings into a list of orderings. */
+function acceptedOrderings(answer: string[] | string[][]): string[][] {
+  return Array.isArray(answer[0])
+    ? (answer as string[][])
+    : [answer as string[]];
+}
+
+/**
+ * The indexes of `got` that form the longest sequence also appearing, in
+ * order, in `want`.
+ *
+ * Scoring by exact position punishes a sentence that is right apart from one
+ * displaced word: everything after the displacement counts as wrong. This
+ * measures how much of the sentence is in the right ORDER, which is what the
+ * exercise is actually about.
+ */
+function longestCommonRun(want: string[], got: string[]): number[] {
+  const table: number[][] = Array.from({ length: want.length + 1 }, () =>
+    new Array<number>(got.length + 1).fill(0)
+  );
+  for (let i = 1; i <= want.length; i++) {
+    for (let j = 1; j <= got.length; j++) {
+      table[i][j] =
+        want[i - 1] === got[j - 1]
+          ? table[i - 1][j - 1] + 1
+          : Math.max(table[i - 1][j], table[i][j - 1]);
+    }
+  }
+  const kept: number[] = [];
+  let i = want.length;
+  let j = got.length;
+  while (i > 0 && j > 0) {
+    if (want[i - 1] === got[j - 1]) {
+      kept.push(j - 1);
+      i--;
+      j--;
+    } else if (table[i - 1][j] >= table[i][j - 1]) {
+      i--;
+    } else {
+      j--;
+    }
+  }
+  return kept.reverse();
+}
+
 const sameSet = (a: string[], b: string[]) =>
   a.length === b.length && [...a].sort().join(' ') === [...b].sort().join(' ');
 
@@ -183,14 +230,20 @@ export function gradeAnswer(ex: ExerciseLike, given: unknown): Grade {
       const got = answerSchemas.multi.safeParse(given);
       if (!want.success || !got.success) return WRONG;
       const correct = sameSet(want.data, got.data);
-      // Partial credit, minus whatever was picked wrongly — otherwise ticking
-      // every box scores full marks.
+      if (correct) return { correct: true, score: 1 };
+
+      // Credit for what was right MINUS the share of the wrong ones, measured
+      // against how many wrong answers there were to avoid. The old formula
+      // divided the penalty by the number of CORRECT answers, so ticking every
+      // box scored 67% on a four-option question — this scores it 0, whatever
+      // the shape of the question.
+      const options = (ex.payload as { options?: unknown[] })?.options ?? [];
+      const k = want.data.length;
+      const wrongAvailable = Math.max(1, options.length - k);
       const hits = got.data.filter((id) => want.data.includes(id)).length;
       const wrong = got.data.length - hits;
-      const score = want.data.length
-        ? Math.max(0, (hits - wrong) / want.data.length)
-        : 0;
-      return { correct, score: correct ? 1 : score };
+      const score = k ? Math.max(0, hits / k - wrong / wrongAvailable) : 0;
+      return { correct: false, score };
     }
 
     case 'type':
@@ -214,19 +267,29 @@ export function gradeAnswer(ex: ExerciseLike, given: unknown): Grade {
     }
 
     case 'order': {
-      const want = answerSchemas.order.safeParse(ex.answer);
-      const got = answerSchemas.order.safeParse(given);
-      if (!want.success || !got.success) return WRONG;
-      const detail = want.data.map((w, i) => got.data[i] === w);
-      const hits = detail.filter(Boolean).length;
-      return {
-        // Order is all-or-nothing to the learner, but the partial score still
-        // tells her how close he was.
-        correct:
-          hits === want.data.length && got.data.length === want.data.length,
-        score: want.data.length ? hits / want.data.length : 0,
-        detail,
-      };
+      const parsed = answerSchemas.order.safeParse(ex.answer);
+      if (!parsed.success) return WRONG;
+      const orderings = acceptedOrderings(parsed.data);
+      const got = Array.isArray(given) ? (given as string[]) : [];
+
+      // Marked against whichever accepted ordering he came closest to.
+      let best: Grade = WRONG;
+      for (const want of orderings) {
+        const kept = longestCommonRun(want, got);
+        const exact =
+          got.length === want.length && want.every((w, i) => got[i] === w);
+        const grade: Grade = {
+          correct: exact,
+          score: want.length ? kept.length / want.length : 0,
+          // A word is marked wrong only if it is not part of the best
+          // matching run — inserting one word early used to shift every word
+          // after it and paint the whole sentence red.
+          detail: got.map((_, i) => kept.includes(i)),
+        };
+        if (grade.correct) return grade;
+        if (grade.score > best.score) best = grade;
+      }
+      return best;
     }
 
     case 'match': {
