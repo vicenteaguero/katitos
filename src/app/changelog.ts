@@ -19,10 +19,23 @@ export interface ChangelogEntry {
   date: string;
   /** One line per thing she can now do. Warm, plain, no jargon. */
   lines: string[];
+  /**
+   * Written, but not hers to read yet.
+   *
+   * The code and the database can ship days before she is told about them — he
+   * decides when the occasion happens. A held entry is filtered out of
+   * `CHANGELOG` completely, so it is missing from Settings too, and `LATEST_KEY`
+   * keeps pointing at the last announced release: the modal cannot arm and the
+   * release push cannot fire. Deleting this one line is the whole announcement.
+   */
+  held?: boolean;
 }
 
-export const CHANGELOG: ChangelogEntry[] = [
+/** Every release ever written, newest first — held ones included. */
+export const ALL_ENTRIES: ChangelogEntry[] = [
   {
+    // Shipped 19 August 2026, announced when he says so.
+    held: true,
     title: 'Your classroom',
     date: '2026-08-19',
     lines: [
@@ -90,6 +103,9 @@ export const CHANGELOG: ChangelogEntry[] = [
     ],
   },
 ];
+
+/** What she is allowed to see: everything that has been announced. */
+export const CHANGELOG: ChangelogEntry[] = ALL_ENTRIES.filter((e) => !e.held);
 
 /** The one she'll be shown. */
 export const LATEST = CHANGELOG[0];
