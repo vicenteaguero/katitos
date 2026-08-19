@@ -52,7 +52,12 @@ const committedAt = git('log -1 --format=%cI');
 // Uncommitted work means the build matches NO commit — which is the single
 // most useful thing to know when you are staring at a phone wondering what it
 // is running. Meaningless on Vercel, which always builds a clean checkout.
-const dirty = !onVercel && git('status --porcelain').length > 0;
+//
+// Scoped to what the bundle is actually built from: a stray note or a photo
+// left lying in the repo root changes nothing about the app, and a stamp that
+// cries dirty at everything is one nobody reads.
+const BUILD_INPUTS = 'src public index.html vite.config.ts package.json';
+const dirty = !onVercel && git(`status --porcelain -- ${BUILD_INPUTS}`).length > 0;
 
 const pkg = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'));
 
