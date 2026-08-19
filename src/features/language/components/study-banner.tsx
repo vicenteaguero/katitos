@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
 import { GraduationCap } from 'lucide-react';
+import { useLanguages } from '../lib/languages';
 import { useAllVocab, useMyReviews } from '../api/vocab';
 import { buildSession, isDue, mastery } from '../lib/srs';
 
@@ -10,7 +11,8 @@ import { buildSession, isDue, mastery } from '../lib/srs';
  * "12 waiting for you" is a thing you can act on.
  */
 export function StudyBanner() {
-  const { data: words } = useAllVocab('ru');
+  const { learning } = useLanguages();
+  const { data: words } = useAllVocab(learning);
   const { data: reviews } = useMyReviews();
 
   const cards = words ?? [];
