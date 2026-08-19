@@ -4,8 +4,9 @@ import { ClipboardPaste, Pencil, Play, Plus, Trash2 } from 'lucide-react';
 import { BUCKETS } from '@kernel/storage';
 import { useTableSync } from '@kernel/realtime';
 import {
-  AudioFromPath,
   AudioRecorder,
+  PlayButton,
+  type AudioClip,
   Button,
   Card,
   Empty,
@@ -53,7 +54,7 @@ export function DeckRoute() {
     transliteration: '',
     example: '',
   });
-  const [audio, setAudio] = useState<Blob | null>(null);
+  const [audio, setAudio] = useState<AudioClip | null>(null);
 
   if (isLoading) return <LoadingScreen />;
   if (!deck) return <Empty icon="🗂️" title="Deck not found" />;
@@ -71,7 +72,7 @@ export function DeckRoute() {
         translation: form.translation || undefined,
         transliteration: form.transliteration || undefined,
         example: form.example || undefined,
-        audioBlob: audio,
+        audio,
       },
       {
         onSuccess: () => {
@@ -167,10 +168,10 @@ export function DeckRoute() {
                 </div>
               </div>
               {p.audio_path && (
-                <AudioFromPath
+                <PlayButton
                   bucket={BUCKETS.languageAudio}
                   path={p.audio_path}
-                  className="h-9 w-full"
+                  size="sm"
                 />
               )}
             </Card>
