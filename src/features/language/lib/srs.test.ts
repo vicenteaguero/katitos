@@ -49,30 +49,33 @@ describe('schedule', () => {
     const second = schedule(first, 2, TODAY);
     expect(second.interval_days).toBe(3);
     const third = schedule(second, 2, TODAY);
-    // 3 days × ease (2.6 after two good answers) ≈ 8
-    expect(third.interval_days).toBeGreaterThan(3);
+    // EXACTLY 3 × ease. `toBeGreaterThan(3)` passed just as well when the
+    // interval was multiplied by a flat constant instead of by the card's own
+    // ease, which is the whole idea of spaced repetition.
+    expect(third.interval_days).toBe(Math.round(3 * second.ease));
   });
 
-  it('never gives a long gap for a shaky answer', () => {
+  it('halves the gap for a shaky answer — not a quarter, not a third', () => {
     const next = schedule(sched({ interval_days: 30, reps: 6 }), 1, TODAY);
-    expect(next.interval_days).toBeLessThan(30);
-    expect(next.interval_days).toBeGreaterThan(0);
+    expect(next.interval_days).toBe(15);
   });
 
   it('keeps ease inside its bounds however badly it goes', () => {
     let s = sched();
     for (let i = 0; i < 30; i++) s = schedule(s, 0, TODAY);
-    expect(s.ease).toBeGreaterThanOrEqual(1.3);
+    // Pinned to the floor exactly — this is the value the database CHECK has
+    // to accept, and it once didn't.
+    expect(s.ease).toBe(1.3);
 
     let good = sched();
     for (let i = 0; i < 30; i++) good = schedule(good, 2, TODAY);
-    expect(good.ease).toBeLessThanOrEqual(3.5);
+    expect(good.ease).toBe(3.5);
   });
 
   it('caps the interval so she can always reteach something', () => {
     let s = sched();
     for (let i = 0; i < 40; i++) s = schedule(s, 2, TODAY);
-    expect(s.interval_days).toBeLessThanOrEqual(180);
+    expect(s.interval_days).toBe(180);
   });
 
   it('always sets due_on to match the interval it just chose', () => {
