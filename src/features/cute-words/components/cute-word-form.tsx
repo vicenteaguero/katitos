@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
   AudioRecorder,
+  type AudioClip,
   Button,
   Field,
   Input,
@@ -21,7 +22,7 @@ type FormValues = z.infer<typeof schema>;
 
 export function CuteWordForm({ onDone }: { onDone: () => void }) {
   const create = useCreateCuteWord();
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [audio, setAudio] = useState<AudioClip | null>(null);
   const {
     register,
     handleSubmit,
@@ -32,8 +33,8 @@ export function CuteWordForm({ onDone }: { onDone: () => void }) {
     defaultValues: { term: '', meaning: '', example: '' },
   });
 
-  const handleRecorded = useCallback((blob: Blob | null) => {
-    setAudioBlob(blob);
+  const handleRecorded = useCallback((clip: AudioClip | null) => {
+    setAudio(clip);
   }, []);
 
   const submit = handleSubmit(async (v) => {
@@ -42,10 +43,10 @@ export function CuteWordForm({ onDone }: { onDone: () => void }) {
         term: v.term,
         meaning: v.meaning,
         example: v.example,
-        audioBlob,
+        audio,
       });
       reset();
-      setAudioBlob(null);
+      setAudio(null);
       toast.success('Added');
       onDone();
     } catch (e) {
