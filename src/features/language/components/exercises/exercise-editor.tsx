@@ -15,7 +15,7 @@ import {
 } from '@kernel/ui';
 import { BUCKETS, storagePaths, useUpload } from '@kernel/storage';
 import { useSaveExercise } from '../../api/lessons.mutations';
-import { useLangPrefs } from '../../lib/lang-prefs';
+import { useLanguages } from '../../lib/languages';
 import {
   acceptedForms,
   gapCount,
@@ -71,7 +71,7 @@ export function ExerciseEditor({
 }) {
   const save = useSaveExercise();
   const { upload, uploading } = useUpload();
-  const support = useLangPrefs((s) => s.supportLang);
+  const { native: support } = useLanguages();
 
   const [kind, setKind] = useState<ExerciseKind>('choice');
   const [prompt, setPrompt] = useState('');
