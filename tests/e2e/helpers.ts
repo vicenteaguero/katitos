@@ -72,3 +72,36 @@ export async function cleanup(
   }
   await ctx.dispose();
 }
+
+/**
+ * Make every photo in the book look like one added before pixel sizes existed.
+ *
+ * Which is every photo either of us already owns: `width` / `height` arrived
+ * with the library, and a sticker with neither a stored ratio nor a height
+ * collapsed to a sliver on the page. This is the state to test against.
+ */
+export async function forgetPhotoSizes() {
+  const a = await api();
+  if (!a) return;
+  const { ctx, headers } = a;
+  await ctx.patch('/rest/v1/album_photos?width=not.is.null', {
+    headers: { ...headers, 'Content-Type': 'application/json' },
+    data: { width: null, height: null },
+  });
+  await ctx.dispose();
+}
+
+/** The stored pixel sizes, straight from the API — no cache in the way. */
+export async function photoSizes(): Promise<
+  Array<{ width: number | null; height: number | null }>
+> {
+  const a = await api();
+  if (!a) return [];
+  const { ctx, headers } = a;
+  const res = await ctx.get('/rest/v1/album_photos?select=width,height', {
+    headers,
+  });
+  const rows = res.ok() ? await res.json() : [];
+  await ctx.dispose();
+  return rows;
+}
