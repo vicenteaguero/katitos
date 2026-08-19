@@ -15,11 +15,20 @@ export function SlotPhoto({
   path,
   url,
   alt,
+  onMeasured,
 }: {
   source: PhotoSource;
   path: string | null;
   url?: string;
   alt: string;
+  /**
+   * The picture's real shape, once the browser knows it.
+   *
+   * Every photo taken before this release has no width or height stored, and a
+   * sticker with no ratio and no fixed height collapses to a sliver. Reporting
+   * it on load lets the row be filled in once and be right from then on.
+   */
+  onMeasured?: (size: { width: number; height: number }) => void;
 }) {
   const bucket = source === 'polaroid' ? BUCKETS.polaroids : BUCKETS.album;
   // Only signs when the book didn't already do it for us.
@@ -39,6 +48,15 @@ export function SlotPhoto({
       // A photo from before proxies existed has no `thumbs/` twin; fall back to
       // the original rather than showing a hole.
       onError={() => setFailed(true)}
+      onLoad={(e) => {
+        const img = e.currentTarget;
+        if (img.naturalWidth && img.naturalHeight) {
+          onMeasured?.({
+            width: img.naturalWidth,
+            height: img.naturalHeight,
+          });
+        }
+      }}
     />
   );
 }
