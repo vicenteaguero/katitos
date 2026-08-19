@@ -1,3 +1,5 @@
+import { stickerWidth } from '../../components/photo-book/sticker-math';
+
 /**
  * Where everything goes on a printed page.
  *
@@ -11,8 +13,9 @@
 export const PAGE_W = 594;
 export const PAGE_H = 792;
 
-/** A photo sticker's width as a fraction of the page, at scale 1. */
-export const BASE_W = 0.42;
+// One source of truth with the screen: an export that sized photos its own way
+// would print a book that does not look like the one you arranged.
+export { BASE_W, stickerWidth } from '../../components/photo-book/sticker-math';
 
 export interface Placed {
   x: number;
@@ -35,7 +38,7 @@ export interface Box {
 }
 
 export function layoutSticker(p: Placed, pageW = PAGE_W, pageH = PAGE_H): Box {
-  const w = BASE_W * (p.scale || 1) * pageW;
+  const w = stickerWidth(p.width, p.height) * (p.scale || 1) * pageW;
   const ratio = p.width && p.height && p.width > 0 ? p.height / p.width : 1;
   return {
     cx: p.x * pageW,
