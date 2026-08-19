@@ -63,6 +63,17 @@ export interface UnitWithLessons extends Unit {
 export interface LessonFull extends Lesson {
   blocks: Block[];
   exercises: Exercise[];
+  /** The course this lesson belongs to — two hops up, but everything needs it. */
+  courseId: string;
+  /** Files and links attached to this lesson, by id. */
+  media: Media[];
+  /** Words attached to each vocab block, keyed by block id. */
+  vocabByBlock: Record<string, Vocab[]>;
+}
+
+/** What a `media` block stores in its `data` jsonb: which attachment it shows. */
+export interface MediaBlockData {
+  mediaId?: string;
 }
 
 /** A lesson row plus how far along this person is. */
