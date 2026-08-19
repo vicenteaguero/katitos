@@ -1,15 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
-
-/** The release modal re-arms on every changelog entry; get it out of the way. */
-async function dismissChangelog(page: Page) {
-  const showMe = page.getByRole('button', { name: 'Show me' });
-  if (await showMe.isVisible().catch(() => false)) {
-    await showMe.click();
-    await expect(showMe).toBeHidden();
-  }
-}
+import { cleanup, dismissChangelog } from './helpers';
 
 async function openBook(page: Page) {
+  await cleanup(['albums']);
   await page.goto('/album');
   await expect(page.getByRole('navigation')).toBeVisible({ timeout: 20_000 });
   await dismissChangelog(page);
