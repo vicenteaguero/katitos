@@ -74,18 +74,22 @@ export function useLesson(lessonId: string | undefined) {
               .select('block_id, position, vocab:lang_vocab(*)')
               .in('block_id', vocabBlockIds)
               .order('position', { ascending: true })
-              .then((r) => r.data)
-          : Promise.resolve([]),
+          : Promise.resolve({ data: [], error: null }),
         supabase
           .from('lang_media')
           .select('*')
           .eq('lesson_id', lessonId as string)
-          .order('created_at', { ascending: false })
-          .then((r) => r.data),
+          .order('created_at', { ascending: false }),
       ]);
 
+      // These used to swallow their errors, so a refused read rendered a
+      // lesson with no words and no attachments — indistinguishable from a
+      // lesson she hadn't filled in yet.
+      if (links.error) throw links.error;
+      if (media.error) throw media.error;
+
       const vocabByBlock: Record<string, Vocab[]> = {};
-      for (const link of (links ?? []) as unknown as {
+      for (const link of (links.data ?? []) as unknown as {
         block_id: string;
         vocab: Vocab | null;
       }[]) {
@@ -100,7 +104,7 @@ export function useLesson(lessonId: string | undefined) {
         exercises: [...(row.exercises ?? [])].sort(
           (a, b) => a.position - b.position
         ),
-        media: (media ?? []) as Media[],
+        media: (media.data ?? []) as Media[],
         vocabByBlock,
       };
     },
