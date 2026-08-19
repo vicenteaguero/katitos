@@ -93,6 +93,11 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(req.url);
 
+  // The build stamp is the one thing that must NEVER come from a cache: it is
+  // how the app finds out it is running an old bundle, and a cached copy would
+  // cheerfully confirm that everything is fine forever.
+  if (url.pathname === '/version.json') return;
+
   // Supabase storage photos: cache-first, token-agnostic (the signed-URL token
   // lives in the query string, so match ignoring search → a warmed photo keeps
   // loading offline and across token rotations). Revalidate in the background.
@@ -129,6 +134,20 @@ interface PushPayload {
   /** Per-kind buzz pattern, so a love ping feels different to a wall note. */
   vibrate?: number[];
 }
+
+/**
+ * Take over now — only ever when asked by hand.
+ *
+ * The install handler deliberately does not skipWaiting, so a deploy never
+ * swaps the app out mid-session. This is the escape hatch behind the version
+ * row in Settings: someone looked at "a newer version is waiting" and said yes.
+ * The page reloads immediately afterwards, so nothing keeps running half-old.
+ */
+self.addEventListener('message', (event) => {
+  if ((event.data as { type?: string } | undefined)?.type === 'SKIP_WAITING') {
+    void self.skipWaiting();
+  }
+});
 
 self.addEventListener('push', (event) => {
   let payload: PushPayload = {};
