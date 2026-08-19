@@ -126,9 +126,6 @@ export const qk = {
   },
   album: {
     all: () => ['album'] as const,
-    chapters: () => ['album', 'chapters'] as const,
-    slots: () => ['album', 'slots'] as const,
-    stickers: () => ['album', 'stickers'] as const,
     book: (scope: string, key: string) =>
       ['album', 'book', scope, key] as const,
     pages: (bookId: string) => ['album', 'book', bookId, 'pages'] as const,
@@ -139,6 +136,8 @@ export const qk = {
      * so invalidating one would silently wipe the other.
      */
     books: () => ['album', 'books'] as const,
+    /** Every photo uploaded into one book, page or no page. */
+    library: (bookId: string) => ['album', 'book', bookId, 'library'] as const,
     byId: (id: string) => ['album', 'books', 'byId', id] as const,
   },
 } as const;
