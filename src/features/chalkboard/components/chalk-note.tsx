@@ -228,6 +228,13 @@ export function ChalkNoteItem({
     <div
       ref={selfRef}
       {...bind()}
+      // While the wall is being edited a note is something you pick up and
+      // rub out, so it has to announce itself as such — it was a bare div,
+      // which a screen reader walks straight past.
+      role={editing ? 'button' : undefined}
+      tabIndex={editing ? 0 : undefined}
+      aria-pressed={editing ? selected : undefined}
+      aria-label={editing ? `Note: ${note.body}` : undefined}
       style={{
         left: 0,
         top: 0,
