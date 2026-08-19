@@ -1405,6 +1405,584 @@ export type Database = {
         }
         Relationships: []
       }
+      lang_alphabet: {
+        Row: {
+          audio_path: string | null
+          example_translation_en: string | null
+          example_translation_es: string | null
+          example_word: string | null
+          id: string
+          letter: string
+          lower: string
+          name_en: string | null
+          name_es: string | null
+          position: number
+          script: string
+          sound_hint_en: string | null
+          sound_hint_es: string | null
+          updated_at: string
+        }
+        Insert: {
+          audio_path?: string | null
+          example_translation_en?: string | null
+          example_translation_es?: string | null
+          example_word?: string | null
+          id?: string
+          letter: string
+          lower: string
+          name_en?: string | null
+          name_es?: string | null
+          position?: number
+          script?: string
+          sound_hint_en?: string | null
+          sound_hint_es?: string | null
+          updated_at?: string
+        }
+        Update: {
+          audio_path?: string | null
+          example_translation_en?: string | null
+          example_translation_es?: string | null
+          example_word?: string | null
+          id?: string
+          letter?: string
+          lower?: string
+          name_en?: string | null
+          name_es?: string | null
+          position?: number
+          script?: string
+          sound_hint_en?: string | null
+          sound_hint_es?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      lang_attempts: {
+        Row: {
+          answer: Json
+          answered_at: string
+          attempt_no: number
+          correct: boolean | null
+          exercise_id: string
+          id: string
+          score: number | null
+          user_id: string
+        }
+        Insert: {
+          answer: Json
+          answered_at?: string
+          attempt_no?: number
+          correct?: boolean | null
+          exercise_id: string
+          id?: string
+          score?: number | null
+          user_id?: string
+        }
+        Update: {
+          answer?: Json
+          answered_at?: string
+          attempt_no?: number
+          correct?: boolean | null
+          exercise_id?: string
+          id?: string
+          score?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lang_attempts_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "lang_exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lang_block_vocab: {
+        Row: {
+          block_id: string
+          position: number
+          vocab_id: string
+        }
+        Insert: {
+          block_id: string
+          position?: number
+          vocab_id: string
+        }
+        Update: {
+          block_id?: string
+          position?: number
+          vocab_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lang_block_vocab_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "lang_blocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lang_block_vocab_vocab_id_fkey"
+            columns: ["vocab_id"]
+            isOneToOne: false
+            referencedRelation: "lang_vocab"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lang_blocks: {
+        Row: {
+          body_en: string | null
+          body_es: string | null
+          body_ru: string | null
+          created_at: string
+          data: Json
+          id: string
+          kind: string
+          lesson_id: string
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          body_en?: string | null
+          body_es?: string | null
+          body_ru?: string | null
+          created_at?: string
+          data?: Json
+          id?: string
+          kind: string
+          lesson_id: string
+          position?: number
+          updated_at?: string
+        }
+        Update: {
+          body_en?: string | null
+          body_es?: string | null
+          body_ru?: string | null
+          created_at?: string
+          data?: Json
+          id?: string
+          kind?: string
+          lesson_id?: string
+          position?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lang_blocks_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lang_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lang_courses: {
+        Row: {
+          archived: boolean
+          cover_path: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          emoji: string | null
+          id: string
+          position: number
+          target_lang: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          archived?: boolean
+          cover_path?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          emoji?: string | null
+          id?: string
+          position?: number
+          target_lang?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          archived?: boolean
+          cover_path?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          emoji?: string | null
+          id?: string
+          position?: number
+          target_lang?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      lang_exercises: {
+        Row: {
+          answer: Json | null
+          block_id: string | null
+          created_at: string
+          id: string
+          kind: string
+          lesson_id: string
+          media_id: string | null
+          payload: Json
+          points: number
+          position: number
+          prompt_en: string | null
+          prompt_es: string | null
+          prompt_ru: string | null
+          updated_at: string
+        }
+        Insert: {
+          answer?: Json | null
+          block_id?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          lesson_id: string
+          media_id?: string | null
+          payload?: Json
+          points?: number
+          position?: number
+          prompt_en?: string | null
+          prompt_es?: string | null
+          prompt_ru?: string | null
+          updated_at?: string
+        }
+        Update: {
+          answer?: Json | null
+          block_id?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          lesson_id?: string
+          media_id?: string | null
+          payload?: Json
+          points?: number
+          position?: number
+          prompt_en?: string | null
+          prompt_es?: string | null
+          prompt_ru?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lang_exercises_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "lang_blocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lang_exercises_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lang_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lang_lesson_progress: {
+        Row: {
+          graded_at: string | null
+          lesson_id: string
+          score: number | null
+          status: string
+          submitted_at: string | null
+          teacher_note: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          graded_at?: string | null
+          lesson_id: string
+          score?: number | null
+          status?: string
+          submitted_at?: string | null
+          teacher_note?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          graded_at?: string | null
+          lesson_id?: string
+          score?: number | null
+          status?: string
+          submitted_at?: string | null
+          teacher_note?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lang_lesson_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lang_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lang_lessons: {
+        Row: {
+          created_at: string
+          due_on: string | null
+          est_minutes: number | null
+          id: string
+          kind: string
+          position: number
+          status: string
+          subtitle: string | null
+          title: string
+          unit_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          due_on?: string | null
+          est_minutes?: number | null
+          id?: string
+          kind?: string
+          position?: number
+          status?: string
+          subtitle?: string | null
+          title: string
+          unit_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          due_on?: string | null
+          est_minutes?: number | null
+          id?: string
+          kind?: string
+          position?: number
+          status?: string
+          subtitle?: string | null
+          title?: string
+          unit_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lang_lessons_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "lang_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lang_media: {
+        Row: {
+          course_id: string
+          created_at: string
+          created_by: string
+          duration_ms: number | null
+          id: string
+          kind: string
+          lesson_id: string | null
+          mime: string | null
+          poster_path: string | null
+          size_bytes: number | null
+          storage_path: string | null
+          title: string | null
+          url: string | null
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          created_by?: string
+          duration_ms?: number | null
+          id?: string
+          kind: string
+          lesson_id?: string | null
+          mime?: string | null
+          poster_path?: string | null
+          size_bytes?: number | null
+          storage_path?: string | null
+          title?: string | null
+          url?: string | null
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          created_by?: string
+          duration_ms?: number | null
+          id?: string
+          kind?: string
+          lesson_id?: string | null
+          mime?: string | null
+          poster_path?: string | null
+          size_bytes?: number | null
+          storage_path?: string | null
+          title?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lang_media_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "lang_courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lang_media_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lang_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lang_units: {
+        Row: {
+          course_id: string
+          created_at: string
+          id: string
+          position: number
+          title: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          id?: string
+          position?: number
+          title: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          id?: string
+          position?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lang_units_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "lang_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lang_vocab: {
+        Row: {
+          audio_path: string | null
+          created_at: string
+          created_by: string
+          en: string | null
+          es: string | null
+          id: string
+          legacy_phrase_id: string | null
+          notes_en: string | null
+          notes_es: string | null
+          part_of_speech: string | null
+          ru: string
+          stress: string | null
+          tags: string[]
+          term_lang: string
+          transliteration: string | null
+          updated_at: string
+        }
+        Insert: {
+          audio_path?: string | null
+          created_at?: string
+          created_by?: string
+          en?: string | null
+          es?: string | null
+          id?: string
+          legacy_phrase_id?: string | null
+          notes_en?: string | null
+          notes_es?: string | null
+          part_of_speech?: string | null
+          ru: string
+          stress?: string | null
+          tags?: string[]
+          term_lang?: string
+          transliteration?: string | null
+          updated_at?: string
+        }
+        Update: {
+          audio_path?: string | null
+          created_at?: string
+          created_by?: string
+          en?: string | null
+          es?: string | null
+          id?: string
+          legacy_phrase_id?: string | null
+          notes_en?: string | null
+          notes_es?: string | null
+          part_of_speech?: string | null
+          ru?: string
+          stress?: string | null
+          tags?: string[]
+          term_lang?: string
+          transliteration?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lang_vocab_legacy_phrase_id_fkey"
+            columns: ["legacy_phrase_id"]
+            isOneToOne: true
+            referencedRelation: "phrases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lang_vocab_reviews: {
+        Row: {
+          due_on: string
+          ease: number
+          interval_days: number
+          lapses: number
+          last_grade: number | null
+          last_seen_at: string | null
+          reps: number
+          updated_at: string
+          user_id: string
+          vocab_id: string
+        }
+        Insert: {
+          due_on?: string
+          ease?: number
+          interval_days?: number
+          lapses?: number
+          last_grade?: number | null
+          last_seen_at?: string | null
+          reps?: number
+          updated_at?: string
+          user_id?: string
+          vocab_id: string
+        }
+        Update: {
+          due_on?: string
+          ease?: number
+          interval_days?: number
+          lapses?: number
+          last_grade?: number | null
+          last_seen_at?: string | null
+          reps?: number
+          updated_at?: string
+          user_id?: string
+          vocab_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lang_vocab_reviews_vocab_id_fkey"
+            columns: ["vocab_id"]
+            isOneToOne: false
+            referencedRelation: "lang_vocab"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       language_decks: {
         Row: {
           created_at: string
