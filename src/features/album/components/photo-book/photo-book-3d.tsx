@@ -65,6 +65,7 @@ import { StickerToolbar } from './sticker-toolbar';
 import { TextStyleSheet } from './text-style-sheet';
 import { usePdfBridge } from './use-pdf-bridge';
 import { computeLayout, restFor, slideDx, stepCrossing } from './book-geometry';
+import { dropSpot } from './sticker-math';
 import '../../photo-book.css';
 
 const FLIP_MS = 700; // StPageFlip curl duration
@@ -99,7 +100,9 @@ function NavBtn({
       aria-label={label}
       onClick={onClick}
       disabled={disabled}
-      className="lift-press flex h-11 w-11 items-center justify-center rounded-full bg-surface-2 text-gold/90 outline-none transition disabled:opacity-20"
+      // No disc: two filled circles either side of the page number read as the
+      // loudest thing on a screen whose subject is a photograph.
+      className="lift-press flex h-11 w-11 items-center justify-center rounded-full text-gold/75 outline-none transition active:bg-surface-2 disabled:opacity-20"
     >
       {children}
     </button>
@@ -466,7 +469,13 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
       const { pages: ps, focused: f } = stickerRef.current;
       const cur = ps?.[f];
       if (!cur || !bookId) return;
-      place.mutate({ bookId, pageId: cur.id, photoId: photo.id });
+      // Beside whatever is already there, not on top of it.
+      place.mutate({
+        bookId,
+        pageId: cur.id,
+        photoId: photo.id,
+        ...dropSpot(cur.stickers.length),
+      });
     },
     [bookId, place]
   );
@@ -485,7 +494,12 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
     const cur = ps?.[f];
     if (!cur || !textVal.trim() || !bookId) return;
     place.mutate(
-      { bookId, pageId: cur.id, body: textVal.trim() },
+      {
+        bookId,
+        pageId: cur.id,
+        body: textVal.trim(),
+        ...dropSpot(cur.stickers.length),
+      },
       {
         onSuccess: () => {
           setTextOpen(false);
