@@ -3,7 +3,14 @@ import { cn } from '../lib/cn';
 
 export interface FilePickerButtonProps {
   /** Receives the chosen image as a Blob (a File is a Blob). */
-  onPick: (file: File) => void;
+  onPick?: (file: File) => void;
+  /**
+   * Receives EVERY chosen file. Set this (with `multiple`) for a bulk pick —
+   * filling an album a page at a time is not a thing anyone will do twice.
+   */
+  onPickMany?: (files: File[]) => void;
+  /** Allow choosing more than one file. Requires `onPickMany`. */
+  multiple?: boolean;
   children: ReactNode;
   className?: string;
   disabled?: boolean;
@@ -22,6 +29,8 @@ export interface FilePickerButtonProps {
  */
 export function FilePickerButton({
   onPick,
+  onPickMany,
+  multiple = false,
   children,
   className,
   disabled,
@@ -57,10 +66,14 @@ export function FilePickerButton({
         ref={inputRef}
         type="file"
         accept={accept}
+        multiple={multiple}
         hidden
         onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) onPick(file);
+          const files = Array.from(e.target.files ?? []);
+          if (files.length) {
+            if (onPickMany) onPickMany(files);
+            else onPick?.(files[0]);
+          }
           // reset so picking the same file again still fires onChange
           e.target.value = '';
         }}
