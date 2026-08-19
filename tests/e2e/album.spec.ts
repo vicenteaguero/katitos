@@ -90,3 +90,29 @@ test('editing shows the photo strip under the book', async ({ page }) => {
     page.locator('.pb-strip').getByRole('button', { name: 'Add photos' })
   ).toBeVisible();
 });
+
+/**
+ * The page arrows have to be reachable WHILE arranging.
+ *
+ * They were disabled in edit mode, and — worse — the strip's height was never
+ * taken out of the page's height budget, so the whole row slid down underneath
+ * the navigation bar. Putting a photo on the next page was impossible.
+ */
+test('you can turn the page while arranging', async ({ page }) => {
+  await openBook(page);
+  await page.getByRole('button', { name: 'Arrange stickers' }).click();
+  await expect(page.locator('.pb-strip')).toBeVisible();
+
+  const next = page.getByRole('button', { name: 'Next page' });
+  await expect(next).toBeEnabled();
+
+  const [btn, nav] = await Promise.all([
+    next.boundingBox(),
+    page.getByRole('navigation').boundingBox(),
+  ]);
+  // Entirely clear of the nav bar, not merely on screen.
+  expect(btn!.y + btn!.height).toBeLessThanOrEqual(nav!.y);
+
+  await next.click();
+  await expect(page.getByText('2 / 5')).toBeVisible();
+});
