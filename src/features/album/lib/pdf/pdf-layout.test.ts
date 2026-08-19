@@ -78,12 +78,25 @@ describe('stickerMatrix', () => {
     expect((a.y + b.y) / 2).toBeCloseTo(400);
   });
 
-  it('a quarter turn swaps the sides', () => {
+  it('a quarter turn swaps the sides — and turns the RIGHT way', () => {
     const m = stickerMatrix({ cx: 0, cy: 0, w: 100, h: 50, rotation: 90 });
     const a = apply(m, 0, 0);
     const b = apply(m, 1, 0);
-    expect(Math.hypot(b.x - a.x, b.y - a.y)).toBeCloseTo(100);
     expect(b.x - a.x).toBeCloseTo(0);
+    // Signed, not a distance. `hypot` alone passed just as happily when the
+    // matrix rotated the opposite way, which would print every tilted photo
+    // mirrored about its own centre.
+    expect(b.y - a.y).toBeCloseTo(100);
+  });
+
+  it('turns counter-clockwise in PDF space, which is clockwise on screen', () => {
+    // layoutSticker already negates the CSS angle; a second negation here
+    // would cancel it out and no other test would notice.
+    const m = stickerMatrix({ cx: 0, cy: 0, w: 100, h: 100, rotation: 45 });
+    const a = apply(m, 0, 0);
+    const b = apply(m, 1, 0);
+    expect(b.x - a.x).toBeCloseTo(Math.SQRT1_2 * 100);
+    expect(b.y - a.y).toBeCloseTo(Math.SQRT1_2 * 100);
   });
 });
 
