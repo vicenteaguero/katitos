@@ -3,10 +3,17 @@ import { nanoid } from 'nanoid';
 
 export type ToastTone = 'info' | 'success' | 'error';
 
+/** An offer to take it back, sitting inside the toast itself. */
+export interface ToastAction {
+  label: string;
+  onClick: () => void;
+}
+
 export interface ToastItem {
   id: string;
   tone: ToastTone;
   message: string;
+  action?: ToastAction;
 }
 
 interface ToastState {
@@ -28,12 +35,17 @@ export const useToastStore = create<ToastState>((set) => ({
     set((s) => ({ toasts: s.toasts.filter((x) => x.id !== id) })),
 }));
 
-/** Imperative toast helper, usable outside React. */
+/**
+ * Imperative toast helper, usable outside React.
+ *
+ * The optional action is what makes a destructive tap safe to make one tap:
+ * "Taken off the page · Undo" beats a confirmation dialog nobody reads.
+ */
 export const toast = {
-  info: (message: string) =>
-    useToastStore.getState().push({ tone: 'info', message }),
-  success: (message: string) =>
-    useToastStore.getState().push({ tone: 'success', message }),
-  error: (message: string) =>
-    useToastStore.getState().push({ tone: 'error', message }),
+  info: (message: string, opts?: { action?: ToastAction }) =>
+    useToastStore.getState().push({ tone: 'info', message, ...opts }),
+  success: (message: string, opts?: { action?: ToastAction }) =>
+    useToastStore.getState().push({ tone: 'success', message, ...opts }),
+  error: (message: string, opts?: { action?: ToastAction }) =>
+    useToastStore.getState().push({ tone: 'error', message, ...opts }),
 };
