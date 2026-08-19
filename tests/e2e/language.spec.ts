@@ -66,15 +66,28 @@ test('a course, a unit and a lesson can be built and opened', async ({
   );
 });
 
-test('the language you read in is remembered', async ({ page }) => {
-  await open(page, '/language');
+/**
+ * There are two dictionaries, because there are two languages being learned.
+ *
+ * This screen used to carry an EN / ES switch, which was not the language of
+ * the words at all but the language they were explained in — so every Spanish
+ * word we own was unreachable, and the switch answered a question nobody had
+ * asked. What the switch says now is which language you are looking at.
+ */
+test('the dictionary opens in what you are learning, and switches', async ({
+  page,
+}) => {
+  await open(page, '/language/dictionary');
 
-  await page.getByRole('button', { name: 'ES', exact: true }).click();
-  await page.reload();
-  await dismissChangelog(page);
+  const learning = page.getByRole('button', { name: 'Русский', exact: true });
+  const teaching = page.getByRole('button', { name: 'Español', exact: true });
+  await expect(learning).toBeVisible({ timeout: 10_000 });
+  await expect(learning).toHaveClass(/bg-accent/);
 
-  // A reading preference lives on the device, so it must survive a reload.
-  await expect(
-    page.getByRole('button', { name: 'ES', exact: true })
-  ).toHaveClass(/bg-accent/, { timeout: 10_000 });
+  await teaching.click();
+  await expect(teaching).toHaveClass(/bg-accent/, { timeout: 10_000 });
+
+  // And a new word lands in the language you switched to, not in Russian.
+  await page.getByRole('button', { name: 'New word' }).click();
+  await expect(page.getByLabel('In Spanish')).toBeVisible();
 });
