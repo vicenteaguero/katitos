@@ -2,13 +2,24 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@kernel/supabase';
 import { qk } from '@kernel/query';
 import { useUserId } from '@kernel/auth';
-import type { Attempt, Block, Exercise, Lesson, LessonFull } from '../types';
+import type {
+  Attempt,
+  Block,
+  Exercise,
+  Lesson,
+  LessonFull,
+  Media,
+  Vocab,
+} from '../types';
 
 /**
- * One lesson, whole: its blocks and its exercises, both in order.
+ * One lesson, whole: its blocks, its exercises, its attachments, and the words
+ * each vocab block points at.
  *
- * A lesson is read from top to bottom, so it is fetched in one go rather than
- * block by block — there is no point streaming a page of text.
+ * A lesson is read top to bottom, so it is fetched in one go rather than block
+ * by block — and that includes the things blocks REFER to. A vocab block that
+ * has to fetch its own words, or a media block that has to fetch its own file,
+ * is a waterfall in the middle of a page of text.
  */
 export function useLesson(lessonId: string | undefined) {
   return useQuery({
@@ -18,20 +29,58 @@ export function useLesson(lessonId: string | undefined) {
     queryFn: async (): Promise<LessonFull> => {
       const { data, error } = await supabase
         .from('lang_lessons')
-        .select('*, blocks:lang_blocks(*), exercises:lang_exercises(*)')
+        .select(
+          '*, unit:lang_units(course_id), blocks:lang_blocks(*), exercises:lang_exercises(*)'
+        )
         .eq('id', lessonId as string)
         .single();
       if (error) throw error;
       const row = data as Lesson & {
+        unit: { course_id: string } | null;
         blocks: Block[] | null;
         exercises: Exercise[] | null;
       };
+
+      const blocks = [...(row.blocks ?? [])].sort(
+        (a, b) => a.position - b.position
+      );
+
+      // The words in this lesson's vocab blocks, in the order she arranged
+      // them. One request for the whole lesson, not one per block.
+      const vocabByBlock: Record<string, Vocab[]> = {};
+      const vocabBlockIds = blocks
+        .filter((b) => b.kind === 'vocab')
+        .map((b) => b.id);
+      if (vocabBlockIds.length) {
+        const { data: links } = await supabase
+          .from('lang_block_vocab')
+          .select('block_id, position, vocab:lang_vocab(*)')
+          .in('block_id', vocabBlockIds)
+          .order('position', { ascending: true });
+        for (const link of (links ?? []) as unknown as {
+          block_id: string;
+          vocab: Vocab | null;
+        }[]) {
+          if (!link.vocab) continue;
+          (vocabByBlock[link.block_id] ??= []).push(link.vocab);
+        }
+      }
+
+      const { data: media } = await supabase
+        .from('lang_media')
+        .select('*')
+        .eq('lesson_id', lessonId as string)
+        .order('created_at', { ascending: false });
+
       return {
         ...row,
-        blocks: [...(row.blocks ?? [])].sort((a, b) => a.position - b.position),
+        courseId: row.unit?.course_id ?? '',
+        blocks,
         exercises: [...(row.exercises ?? [])].sort(
           (a, b) => a.position - b.position
         ),
+        media: (media ?? []) as Media[],
+        vocabByBlock,
       };
     },
   });
