@@ -161,6 +161,49 @@ textarea,
   -webkit-user-select: text;
 }
 
+/* ── Native date & time fields ─────────────────────────────────────────────
+   These have bitten us in every sheet that holds one. Safari lays a date input
+   out from its OWN intrinsic box, ignores the width it is given, centres the
+   value inside a margin of its own and then clips it — so "From / Until" sat
+   crooked, overflowed a two-up row, and opened a blinding white picker in a
+   wine-dark app. All four are fixed here, once, rather than per screen. */
+input[type='date'],
+input[type='time'],
+input[type='month'],
+input[type='datetime-local'] {
+  -webkit-appearance: none;
+  appearance: none;
+  /* The native picker follows the app instead of the phone's light theme. */
+  color-scheme: dark;
+  min-width: 0;
+  /* Safari gives these a shorter intrinsic height than a text input, so a row
+     of "name + date" came out visibly uneven. */
+  min-height: 3.125rem;
+  text-align: left;
+}
+input[type='date']::-webkit-date-and-time-value,
+input[type='time']::-webkit-date-and-time-value,
+input[type='month']::-webkit-date-and-time-value,
+input[type='datetime-local']::-webkit-date-and-time-value {
+  text-align: left;
+  margin: 0;
+  min-height: 1.25em;
+}
+input[type='date']::-webkit-datetime-edit,
+input[type='time']::-webkit-datetime-edit {
+  padding: 0;
+}
+/* The little calendar glyph is black by default: invisible on a dark field. */
+input[type='date']::-webkit-calendar-picker-indicator,
+input[type='time']::-webkit-calendar-picker-indicator,
+input[type='month']::-webkit-calendar-picker-indicator,
+input[type='datetime-local']::-webkit-calendar-picker-indicator {
+  filter: invert(78%) sepia(38%) saturate(520%) hue-rotate(357deg)
+    brightness(95%);
+  opacity: 0.9;
+  cursor: pointer;
+}
+
 /* Big gilt numerals use Cormorant's lining figures so 3/4/5/7/9 don't drop a
    descender below the line box and get clipped by the clipped-gradient text. */
 .gilt-figures {
