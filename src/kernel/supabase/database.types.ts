@@ -87,39 +87,6 @@ export type Database = {
           },
         ]
       }
-      album_chapters: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          emoji: string | null
-          id: string
-          position: number
-          slug: string
-          subtitle: string | null
-          title: string
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          emoji?: string | null
-          id?: string
-          position: number
-          slug: string
-          subtitle?: string | null
-          title: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          emoji?: string | null
-          id?: string
-          position?: number
-          slug?: string
-          subtitle?: string | null
-          title?: string
-        }
-        Relationships: []
-      }
       album_pages: {
         Row: {
           book_id: string
@@ -167,10 +134,8 @@ export type Database = {
           height: number | null
           id: string
           image_path: string | null
-          page_id: string | null
           rotation: number
           scale: number
-          slot: number | null
           source: string
           updated_at: string
           width: number | null
@@ -185,10 +150,8 @@ export type Database = {
           height?: number | null
           id?: string
           image_path?: string | null
-          page_id?: string | null
           rotation?: number
           scale?: number
-          slot?: number | null
           source?: string
           updated_at?: string
           width?: number | null
@@ -203,10 +166,8 @@ export type Database = {
           height?: number | null
           id?: string
           image_path?: string | null
-          page_id?: string | null
           rotation?: number
           scale?: number
-          slot?: number | null
           source?: string
           updated_at?: string
           width?: number | null
@@ -219,13 +180,6 @@ export type Database = {
             columns: ["book_id"]
             isOneToOne: false
             referencedRelation: "album_books"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "album_photos_page_id_fkey"
-            columns: ["page_id"]
-            isOneToOne: false
-            referencedRelation: "album_pages"
             referencedColumns: ["id"]
           },
         ]
@@ -304,109 +258,6 @@ export type Database = {
             columns: ["photo_id"]
             isOneToOne: false
             referencedRelation: "album_photos"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      album_slots: {
-        Row: {
-          chapter_id: string
-          created_at: string
-          created_by: string | null
-          gate_end_doy: number | null
-          gate_label: string | null
-          gate_start_doy: number | null
-          hint: string | null
-          id: string
-          is_duo: boolean
-          position: number
-          source: string
-          tier: string
-          title: string
-        }
-        Insert: {
-          chapter_id: string
-          created_at?: string
-          created_by?: string | null
-          gate_end_doy?: number | null
-          gate_label?: string | null
-          gate_start_doy?: number | null
-          hint?: string | null
-          id?: string
-          is_duo?: boolean
-          position: number
-          source?: string
-          tier?: string
-          title: string
-        }
-        Update: {
-          chapter_id?: string
-          created_at?: string
-          created_by?: string | null
-          gate_end_doy?: number | null
-          gate_label?: string | null
-          gate_start_doy?: number | null
-          hint?: string | null
-          id?: string
-          is_duo?: boolean
-          position?: number
-          source?: string
-          tier?: string
-          title?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "album_slots_chapter_id_fkey"
-            columns: ["chapter_id"]
-            isOneToOne: false
-            referencedRelation: "album_chapters"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      album_stickers: {
-        Row: {
-          caption: string | null
-          created_at: string
-          created_by: string
-          half: string
-          id: string
-          image_path: string
-          location: string | null
-          slot_id: string
-          taken_on: string | null
-          updated_at: string
-        }
-        Insert: {
-          caption?: string | null
-          created_at?: string
-          created_by?: string
-          half?: string
-          id?: string
-          image_path: string
-          location?: string | null
-          slot_id: string
-          taken_on?: string | null
-          updated_at?: string
-        }
-        Update: {
-          caption?: string | null
-          created_at?: string
-          created_by?: string
-          half?: string
-          id?: string
-          image_path?: string
-          location?: string | null
-          slot_id?: string
-          taken_on?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "album_stickers_slot_id_fkey"
-            columns: ["slot_id"]
-            isOneToOne: false
-            referencedRelation: "album_slots"
             referencedColumns: ["id"]
           },
         ]
