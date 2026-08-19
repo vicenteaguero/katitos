@@ -16,7 +16,13 @@ export type Letter = Tables<'lang_alphabet'>;
 /** A lesson to read, homework to hand in, or an exam to sit. */
 export type LessonKind = 'lesson' | 'homework' | 'exam';
 export type LessonStatus = 'draft' | 'published';
-export type BlockKind = 'text' | 'vocab' | 'media' | 'exercise' | 'divider';
+export type BlockKind =
+  | 'text'
+  | 'vocab'
+  | 'media'
+  | 'exercise'
+  | 'divider'
+  | 'table';
 export type MediaKind = 'pdf' | 'doc' | 'image' | 'audio' | 'youtube' | 'link';
 
 /** The eight ways she can ask him something. */
@@ -74,6 +80,18 @@ export interface LessonFull extends Lesson {
 /** What a `media` block stores in its `data` jsonb: which attachment it shows. */
 export interface MediaBlockData {
   mediaId?: string;
+}
+
+/**
+ * A declension or conjugation table.
+ *
+ * The cells are Russian forms — the thing being taught — so they are not
+ * translated. Only the column headings are, which is why they carry the same
+ * three-language shape as everything else.
+ */
+export interface TableBlockData {
+  headings?: { ru?: string; en?: string; es?: string }[];
+  rows?: string[][];
 }
 
 /** A lesson row plus how far along this person is. */
