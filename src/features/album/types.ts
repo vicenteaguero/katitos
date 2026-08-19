@@ -1,25 +1,33 @@
 import type { Tables } from '@kernel/supabase';
 
-export type AlbumChapter = Tables<'album_chapters'>;
-export type AlbumSlot = Tables<'album_slots'>;
-export type AlbumSticker = Tables<'album_stickers'>;
-
-/** Duo half resolved for the current user from couple role / sorted fallback. */
-export type DuoHalf = 'a' | 'b';
-export type StickerHalf = 'solo' | 'a' | 'b';
-
 /* ── PhotoBook3D engine (shared Pololini + Summer Panini) ─────────────────── */
 
 export type BookScope = 'life' | 'trip';
 export type PhotoSource = 'upload' | 'polaroid' | 'text';
 
 export type AlbumBook = Tables<'album_books'>;
+/** A photo in the book's library — it exists whether or not it is on a page. */
 export type AlbumPhoto = Tables<'album_photos'>;
+/** Where a photo (or a piece of text) sits on one page. */
+export type AlbumPlacement = Tables<'album_placements'>;
 
-/** A page with its photos eagerly embedded (sorted by slot, 0–3). */
+/** How a sticker is dressed: bare photo, or mounted on instant film. */
+export type StickerFrame = 'plain' | 'polaroid';
+/** The three faces a text sticker can wear. */
+export type StickerFont = 'display' | 'sans' | 'hand';
+
+/**
+ * A placement with its library photo attached.
+ *
+ * The page needs both halves at once — where it sits (placement) and what it
+ * looks like (photo) — and joining them here keeps every consumer from having
+ * to remember which is which.
+ */
+export interface PlacedSticker extends AlbumPlacement {
+  photo: AlbumPhoto | null;
+}
+
+/** A page and everything standing on it, already in back-to-front order. */
 export type AlbumPageWithPhotos = Tables<'album_pages'> & {
-  photos: AlbumPhoto[];
+  stickers: PlacedSticker[];
 };
-
-/** Four photo slots per page (a 2×2 grid). */
-export const SLOTS_PER_PAGE = 4;
