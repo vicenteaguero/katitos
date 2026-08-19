@@ -51,17 +51,44 @@ export const payloadSchemas = {
   speak: z.object({ audioPath: z.string().optional().nullable() }),
 } as const;
 
+/**
+ * A written answer may have several right forms.
+ *
+ * Russian makes this compulsory rather than nice-to-have: "I have a sister"
+ * is у меня есть сестра or у меня сестра, and half the vocabulary has a
+ * synonym she would happily accept. One stored string means marking a correct
+ * answer wrong, which is the fastest way to make a learner stop trusting the
+ * app.
+ */
+const writtenAnswer = z.union([
+  z.string().min(1),
+  z.array(z.string().min(1)).min(1),
+]);
+
 export const answerSchemas = {
   choice: z.string().min(1),
   // At least one right answer, or the question can never be got right.
   multi: z.array(z.string()).min(1),
-  type: z.string().min(1),
-  complete: z.array(z.string()),
+  type: writtenAnswer,
+  complete: z.array(writtenAnswer),
   order: z.array(z.string()),
   match: z.record(z.string(), z.string()),
-  listen: z.string().min(1),
+  listen: writtenAnswer,
   speak: z.boolean(),
 } as const;
+
+/** Every form she is willing to accept for one written answer. */
+export function acceptedForms(answer: unknown): string[] {
+  if (typeof answer === 'string') return [answer];
+  if (Array.isArray(answer)) return answer.filter((a): a is string => !!a);
+  return [];
+}
+
+/** Does what he wrote match ANY of the forms she accepts? */
+function matchesAny(given: string, answer: unknown): boolean {
+  const forms = acceptedForms(answer);
+  return forms.length > 0 && forms.some((form) => answerMatches(given, form));
+}
 
 export interface ExerciseLike {
   kind: ExerciseKind | string;
@@ -128,7 +155,7 @@ export function validateExercise(ex: ExerciseLike): string | null {
   }
   if (ex.kind === 'complete') {
     const template = (ex.payload as { template: string }).template;
-    const answers = ex.answer as string[];
+    const answers = ex.answer as unknown[];
     if (gapCount(template) !== answers.length) {
       return 'There is not one answer per gap';
     }
@@ -168,19 +195,16 @@ export function gradeAnswer(ex: ExerciseLike, given: unknown): Grade {
 
     case 'type':
     case 'listen': {
-      const want = typeof ex.answer === 'string' ? ex.answer : '';
       const got = typeof given === 'string' ? given : '';
-      return answerMatches(got, want) ? { correct: true, score: 1 } : WRONG;
+      return matchesAny(got, ex.answer) ? { correct: true, score: 1 } : WRONG;
     }
 
     case 'complete': {
       const want = answerSchemas.complete.safeParse(ex.answer);
-      const got = answerSchemas.complete.safeParse(given);
       if (!want.success) return WRONG;
-      const answers = got.success ? got.data : [];
-      const detail = want.data.map((w, i) =>
-        answerMatches(answers[i] ?? '', w)
-      );
+      const answers = Array.isArray(given) ? (given as string[]) : [];
+      // Each gap can have its own set of acceptable forms.
+      const detail = want.data.map((w, i) => matchesAny(answers[i] ?? '', w));
       const hits = detail.filter(Boolean).length;
       return {
         correct: hits === want.data.length,
