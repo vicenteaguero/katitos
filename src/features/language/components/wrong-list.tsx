@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useMembers, useUserId } from '@kernel/auth';
 import { useAllReviews, useAllVocab } from '../api/vocab';
 import { headword, meaningOf } from '../lib/pick';
-import { useLangPrefs } from '../lib/lang-prefs';
+import { useLanguages } from '../lib/languages';
 
 /**
  * What your love keeps forgetting.
@@ -15,8 +15,8 @@ export function WrongList() {
   const userId = useUserId();
   const { data: members } = useMembers();
   const { data: reviews } = useAllReviews();
-  const { data: words } = useAllVocab('ru');
-  const support = useLangPrefs((s) => s.supportLang);
+  const { native: support, learning } = useLanguages();
+  const { data: words } = useAllVocab(learning);
 
   const partner = members?.find((m) => m.user_id !== userId);
 
