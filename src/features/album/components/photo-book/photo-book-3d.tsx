@@ -19,7 +19,6 @@ import {
   Pencil,
   Check,
   Settings2,
-  Type,
 } from 'lucide-react';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
@@ -100,8 +99,7 @@ function NavBtn({
       aria-label={label}
       onClick={onClick}
       disabled={disabled}
-      className="lift-press flex h-11 w-11 items-center justify-center rounded-full bg-surface-2 text-gold shadow-loge outline-none transition disabled:opacity-25"
-      style={{ border: '1px solid rgba(228,195,106,.28)' }}
+      className="lift-press flex h-11 w-11 items-center justify-center rounded-full bg-surface-2 text-gold/90 outline-none transition disabled:opacity-20"
     >
       {children}
     </button>
@@ -190,6 +188,9 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
   const bookRef = useRef<FlipBookRef | null>(null);
   const vpRef = useRef<HTMLDivElement | null>(null);
   const controlsRef = useRef<HTMLDivElement | null>(null);
+  const stripRef = useRef<HTMLDivElement | null>(null);
+  /** The measure function, so a mode change can ask for a fresh one. */
+  const computeRef = useRef<(() => void) | null>(null);
 
   const addPage = useAddPage();
   const place = usePlaceSticker();
@@ -226,10 +227,21 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
       const top = el.getBoundingClientRect().top;
       const elW = el.getBoundingClientRect().width; // padded content width
       const controlsH = controlsRef.current?.offsetHeight ?? 96;
+      // The photo strip only exists while arranging, and it was never taken out
+      // of the height budget — so the page kept its full size, the strip pushed
+      // the page arrows down, and they ended up UNDERNEATH the nav bar. Which
+      // is exactly the "I can't change pages in edit mode" you hit.
+      const stripH = stripRef.current?.offsetHeight ?? 0;
       const availH =
-        main.getBoundingClientRect().bottom - padB - top - controlsH - 16;
+        main.getBoundingClientRect().bottom -
+        padB -
+        top -
+        controlsH -
+        stripH -
+        16;
       setSize(computeLayout(elW, availH, M, MIN_PEEK, CURL_PAD));
     };
+    computeRef.current = compute;
     compute();
     // Re-measure once the curtain-reveal transform settles — the one-shot mount
     // read happens mid-animation, so this locks in the resting geometry.
@@ -249,6 +261,11 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
   }, []);
 
   useEffect(() => setIndex(0), [bookId]);
+
+  // Entering or leaving edit mode changes what has to fit on screen.
+  useEffect(() => {
+    computeRef.current?.();
+  }, [mode]);
 
   const count = pages?.length ?? 0;
   const focused = Math.min(Math.max(index, 0), Math.max(0, count - 1));
@@ -399,13 +416,22 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
     (dir: 1 | -1) => {
       const t = focused + dir;
       if (t < 0 || t > count - 1) return;
+      setSelectedId(null);
+      // While arranging there is no flip book on screen — the editor shows one
+      // page at a time — so turning is just moving the index. Without this the
+      // arrows were dead the whole time you were editing, which is exactly
+      // when you want to put a photo on the NEXT page.
+      if (mode === 'arrange') {
+        setIndex(t);
+        return;
+      }
       if (stepCrossing(focused, dir)) {
         const pf = bookRef.current?.pageFlip();
         if (dir > 0) pf?.flipNext();
         else pf?.flipPrev();
       } else setIndex(t);
     },
-    [focused, count]
+    [focused, count, mode]
   );
 
   // The SLIDE overlay (spine half) owns its touches and pans the piece between
@@ -445,6 +471,10 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
     [bookId, place]
   );
 
+  /** Stickers taken off in the last few seconds, so one Undo covers them all. */
+  const removedRef = useRef<PlacedSticker[]>([]);
+  const forgetRef = useRef<number | undefined>(undefined);
+
   const toggleEdit = useCallback(() => {
     setSelectedId(null);
     setMode((m) => (m === 'arrange' ? 'read' : 'arrange'));
@@ -479,45 +509,54 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
       unplace.mutate(
         { sticker, bookId },
         {
-          onSuccess: () =>
-            toast.info('Taken off the page', {
-              action: {
-                label: 'Undo',
-                onClick: () => restore.mutate({ sticker, bookId }),
-              },
-            }),
+          onSuccess: () => {
+            // Clearing a page means half a dozen taps in a row, and each one
+            // used to leave its own nine-second toast stacked over the book.
+            // One toast, counting up, and its Undo puts the whole burst back.
+            const batch = [...removedRef.current, sticker];
+            removedRef.current = batch;
+            window.clearTimeout(forgetRef.current);
+            forgetRef.current = window.setTimeout(() => {
+              removedRef.current = [];
+            }, 9000);
+            toast.info(
+              batch.length === 1
+                ? 'Taken off the page'
+                : `${batch.length} taken off the page`,
+              {
+                key: 'album-unplace',
+                action: {
+                  label: 'Undo',
+                  onClick: () => {
+                    for (const st of batch)
+                      restore.mutate({ sticker: st, bookId });
+                    removedRef.current = [];
+                  },
+                },
+              }
+            );
+          },
         }
       );
     },
     [bookId, unplace, restore]
   );
 
+  /**
+   * Two buttons, not four.
+   *
+   * Adding a photo and adding text only mean anything while you are arranging,
+   * and the strip under the book already offers both — so the top bar carried
+   * two dead controls in reading mode and four gilt-ringed circles in a row in
+   * either. What is left is the album itself and the way into editing it.
+   */
   useTopBarAction(
     <div className="flex items-center gap-1.5">
       <button
         type="button"
-        onClick={() => setUploadOpen(true)}
-        aria-label="Add photos"
-        className="lift-press flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-fg shadow-loge outline-none focus-visible:ring-2 focus-visible:ring-gold"
-        style={{ border: '1px solid rgba(228,195,106,.4)' }}
-      >
-        <Plus className="h-4 w-4" />
-      </button>
-      <button
-        type="button"
-        onClick={() => setTextOpen(true)}
-        aria-label="Add text"
-        className="lift-press flex h-8 w-8 items-center justify-center rounded-full bg-surface-2 text-gold shadow-loge outline-none focus-visible:ring-2 focus-visible:ring-gold"
-        style={{ border: '1px solid rgba(228,195,106,.4)' }}
-      >
-        <Type className="h-4 w-4" />
-      </button>
-      <button
-        type="button"
         onClick={() => setSettingsOpen(true)}
         aria-label="Album settings"
-        className="lift-press flex h-8 w-8 items-center justify-center rounded-full bg-surface-2 text-gold shadow-loge outline-none focus-visible:ring-2 focus-visible:ring-gold"
-        style={{ border: '1px solid rgba(228,195,106,.4)' }}
+        className="lift-press flex h-8 w-8 items-center justify-center rounded-full bg-surface-2 text-gold/90 outline-none focus-visible:ring-2 focus-visible:ring-gold"
       >
         <Settings2 className="h-4 w-4" />
       </button>
@@ -526,16 +565,11 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
         onClick={toggleEdit}
         aria-label={mode === 'arrange' ? 'Done arranging' : 'Arrange stickers'}
         className={cn(
-          'lift-press flex h-8 w-8 items-center justify-center rounded-full shadow-loge outline-none focus-visible:ring-2 focus-visible:ring-gold',
+          'lift-press flex h-8 w-8 items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-gold',
           mode === 'arrange'
             ? 'bg-accent text-accent-fg'
-            : 'bg-surface text-fg/80 ring-1 ring-accent'
+            : 'bg-surface-2 text-gold/90'
         )}
-        style={
-          mode === 'arrange'
-            ? { border: '1px solid rgba(228,195,106,.4)' }
-            : undefined
-        }
       >
         {mode === 'arrange' ? (
           <Check className="h-4 w-4" />
@@ -657,7 +691,12 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
         )}
 
         {pageW > 0 && arranging && (
-          <div className="pb-editor" style={{ maxWidth: pageW }}>
+          <div
+            className="pb-editor"
+            // The same page the book would draw, so what you arrange is what
+            // you turn to. A CSS aspect-ratio here ignored the height budget.
+            style={{ width: pageW, height: pageH }}
+          >
             <PageFace
               key={current.id}
               page={current}
@@ -674,17 +713,19 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
       {/* The book's photos, in the space under it. Only while editing — there
           is nothing to drop onto while you are reading. */}
       {arranging && (
-        <LibraryStrip
-          photos={library ?? []}
-          urls={libraryUrls}
-          placedPaths={placedOnPage}
-          onPlace={placeOnPage}
-          onAddPhotos={() => setUploadOpen(true)}
-          onAddText={() => setTextOpen(true)}
-          onDelete={(photo) =>
-            bookId && deleteFromLibrary.mutate({ photo, bookId })
-          }
-        />
+        <div ref={stripRef}>
+          <LibraryStrip
+            photos={library ?? []}
+            urls={libraryUrls}
+            placedPaths={placedOnPage}
+            onPlace={placeOnPage}
+            onAddPhotos={() => setUploadOpen(true)}
+            onAddText={() => setTextOpen(true)}
+            onDelete={(photo) =>
+              bookId && deleteFromLibrary.mutate({ photo, bookId })
+            }
+          />
+        </div>
       )}
 
       <div
@@ -732,7 +773,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
             <NavBtn
               label="Previous page"
               onClick={() => go(-1)}
-              disabled={arranging || focused <= 0}
+              disabled={focused <= 0}
             >
               <ChevronLeft className="h-5 w-5" />
             </NavBtn>
@@ -741,7 +782,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
               {focused + 1} / {count}
             </span>
 
-            {!arranging && atEnd ? (
+            {atEnd ? (
               <NavBtn
                 label="Add a page"
                 onClick={onAddPage}
@@ -750,11 +791,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
                 <Plus className="h-5 w-5" />
               </NavBtn>
             ) : (
-              <NavBtn
-                label="Next page"
-                onClick={() => go(1)}
-                disabled={arranging || atEnd}
-              >
+              <NavBtn label="Next page" onClick={() => go(1)} disabled={atEnd}>
                 <ChevronRight className="h-5 w-5" />
               </NavBtn>
             )}
