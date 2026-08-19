@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { RotateCcw, Volume2 } from 'lucide-react';
 import { BUCKETS } from '@kernel/storage';
-import { AudioFromPath, Button, Empty, LoadingScreen } from '@kernel/ui';
+import { PlayButton, Button, Empty, LoadingScreen } from '@kernel/ui';
 import { useDeck, useDeckCards } from '../api/decks.queries';
 
 /** A flashcard card-game over one deck — tap to flip, mark known/again. */
@@ -127,7 +127,7 @@ export function PlayRoute() {
                 className="mt-2 w-full max-w-xs"
                 onClick={(e) => e.stopPropagation()}
               >
-                <AudioFromPath
+                <PlayButton
                   bucket={BUCKETS.languageAudio}
                   path={card.audio_path}
                   className="h-9 w-full"
