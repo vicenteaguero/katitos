@@ -5,6 +5,7 @@ import { BUCKETS } from '@kernel/storage';
 import { Button, Input, PlayButton } from '@kernel/ui';
 import type { Exercise, SupportLang } from '../../types';
 import {
+  acceptedForms,
   splitTemplate,
   type ExerciseOption,
   type Grade,
@@ -195,8 +196,9 @@ function TypeView({
   disabled,
 }: ExerciseViewProps) {
   const text = typeof value === 'string' ? value : '';
+  // `||`, not `??`: an empty stored placeholder should still show the hint.
   const placeholder =
-    (exercise.payload as { placeholder?: string })?.placeholder ?? 'Write it';
+    (exercise.payload as { placeholder?: string })?.placeholder || 'Write it';
   return (
     <div className="space-y-2">
       <Input
@@ -216,8 +218,14 @@ function TypeView({
       )}
       {grade && !grade.correct && (
         <p className="font-sans text-xs text-muted">
-          The answer was{' '}
-          <span className="text-fg">{String(exercise.answer)}</span>
+          {/* There may be several right forms; showing `[object Object]` or a
+              comma-mangled array would be worse than showing nothing. */}
+          {acceptedForms(exercise.answer).length > 1
+            ? 'It could be '
+            : 'The answer was '}
+          <span className="text-fg">
+            {acceptedForms(exercise.answer).join(' · ')}
+          </span>
         </p>
       )}
     </div>
