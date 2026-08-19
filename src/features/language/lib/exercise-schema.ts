@@ -155,6 +155,13 @@ export function validateExercise(ex: ExerciseLike): string | null {
   if (ex.kind !== 'speak' && !answerSchema.safeParse(ex.answer).success) {
     return 'The answer is missing';
   }
+  if (ex.kind === 'match') {
+    const pairs = (ex.payload as { pairs: { left: string }[] }).pairs;
+    const lefts = new Set(pairs.map((p) => p.left));
+    // Duplicates collapse in the answer object, silently losing a pair and
+    // mis-marking every row after it.
+    if (lefts.size !== pairs.length) return 'Two rows say the same thing';
+  }
   if (ex.kind === 'complete') {
     const template = (ex.payload as { template: string }).template;
     const answers = ex.answer as unknown[];
@@ -296,7 +303,13 @@ export function gradeAnswer(ex: ExerciseLike, given: unknown): Grade {
       const want = answerSchemas.match.safeParse(ex.answer);
       const got = answerSchemas.match.safeParse(given);
       if (!want.success) return WRONG;
-      const pairs = Object.entries(want.data);
+      // Ordered by the PAIRS as shown, not by the answer object's keys: JS
+      // enumerates integer-like keys first, so a question whose left column is
+      // "2, 1" painted the verdicts onto the wrong rows.
+      const shown = (ex.payload as { pairs?: { left: string }[] })?.pairs;
+      const pairs: [string, string][] = shown?.length
+        ? shown.map((p) => [p.left, want.data[p.left]])
+        : Object.entries(want.data);
       const answers = got.success ? got.data : {};
       const detail = pairs.map(([k, v]) => answers[k] === v);
       const hits = detail.filter(Boolean).length;
