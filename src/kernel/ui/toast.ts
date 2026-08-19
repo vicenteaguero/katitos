@@ -27,9 +27,14 @@ export const useToastStore = create<ToastState>((set) => ({
   push: (t) => {
     const id = nanoid(8);
     set((s) => ({ toasts: [...s.toasts, { ...t, id }] }));
-    setTimeout(() => {
-      set((s) => ({ toasts: s.toasts.filter((x) => x.id !== id) }));
-    }, 3500);
+    // A toast carrying an Undo is the ONLY way back from a destructive tap,
+    // so it waits longer than one that is merely telling you something.
+    setTimeout(
+      () => {
+        set((s) => ({ toasts: s.toasts.filter((x) => x.id !== id) }));
+      },
+      t.action ? 9000 : 3500
+    );
   },
   dismiss: (id) =>
     set((s) => ({ toasts: s.toasts.filter((x) => x.id !== id) })),
