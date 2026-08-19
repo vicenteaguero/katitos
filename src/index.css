@@ -134,6 +134,15 @@ textarea,
   color-scheme: dark;
 }
 
+/* A route that calls `useWideLayout()` — the lesson builder, the dictionary —
+   gets a real desk to work on once the screen deserves one. Phones are
+   untouched: the query never matches there. */
+@media (min-width: 768px) {
+  :root[data-wide] {
+    --app-max-width: 72rem;
+  }
+}
+
 * {
   -webkit-tap-highlight-color: transparent;
 }
