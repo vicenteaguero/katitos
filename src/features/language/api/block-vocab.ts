@@ -18,22 +18,13 @@ export function useSetBlockVocab() {
       lessonId: string;
       vocabIds: string[];
     }) => {
-      // Replace the whole selection: it is a short, hand-picked list, and
-      // diffing it would cost more than rewriting it.
-      const { error: delErr } = await supabase
-        .from('lang_block_vocab')
-        .delete()
-        .eq('block_id', v.blockId);
-      if (delErr) throw delErr;
-
-      if (!v.vocabIds.length) return;
-      const { error } = await supabase.from('lang_block_vocab').insert(
-        v.vocabIds.map((vocabId, position) => ({
-          block_id: v.blockId,
-          vocab_id: vocabId,
-          position,
-        }))
-      );
+      // ONE statement, so it either replaces the list or leaves it alone.
+      // Deleting and then inserting from here meant a failure between the two
+      // left the block empty with nothing to restore from.
+      const { error } = await supabase.rpc('set_block_vocab', {
+        p_block: v.blockId,
+        p_vocab: v.vocabIds,
+      });
       if (error) throw error;
     },
     onError: (e: Error) => toast.error(e.message),
