@@ -787,6 +787,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
       </Sheet>
 
       <LibraryUploadSheet
+        bookId={bookId}
         open={uploadOpen}
         onClose={() => setUploadOpen(false)}
         onPick={(files) => void bulk.run(files)}
