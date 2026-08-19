@@ -93,3 +93,56 @@ test('the book loads the small copy, not the full-size original', async ({
   expect(displayed.length).toBeGreaterThan(0);
   expect(displayed.every((u) => u.includes('thumbs'))).toBe(true);
 });
+
+test('the album prints from the real photographs, not the small copies', async ({
+  page,
+}) => {
+  await openFreshBook(page);
+  await page.getByRole('button', { name: 'Arrange stickers' }).click();
+  await page.getByRole('button', { name: 'Add photos' }).first().click();
+  await page.locator('input[type="file"]').setInputFiles([WIDE]);
+  await expect(page.getByText('1 of 1 added')).toBeVisible({ timeout: 30_000 });
+  await page.getByRole('button', { name: 'Close' }).last().click();
+  await page.locator('.pb-strip-item').first().click();
+  await expect(page.locator('.pb-editor .pb-sticker-photo')).toHaveCount(1, {
+    timeout: 20_000,
+  });
+
+  // Reachable only from code, on purpose — it downloads full-size originals,
+  // which is the opposite of what the app does the rest of the time.
+  const result = await page.evaluate(async () => {
+    const w = window as unknown as {
+      __albumPdf?: (o: { returnBlob: boolean }) => Promise<Blob>;
+    };
+    if (!w.__albumPdf) return { missing: true } as const;
+    const blob = await w.__albumPdf({ returnBlob: true });
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    const head = String.fromCharCode(...bytes.slice(0, 8));
+    // Count the JPEGs spliced in whole.
+    let jpegs = 0;
+    for (let i = 0; i < bytes.length - 1; i++) {
+      if (bytes[i] === 0xff && bytes[i + 1] === 0xd8) jpegs++;
+    }
+    return {
+      missing: false as const,
+      type: blob.type,
+      size: bytes.length,
+      head,
+      jpegs,
+      // '%PDF-1.4\n' is nine bytes, then the '%' of the binary comment.
+      marker: [...bytes.slice(10, 14)],
+    };
+  });
+
+  expect(result.missing).toBe(false);
+  if (result.missing) return;
+
+  expect(result.type).toBe('application/pdf');
+  expect(result.head).toBe('%PDF-1.4');
+  // The binary marker, as raw bytes rather than their UTF-8 expansion.
+  expect(result.marker).toEqual([0xe2, 0xe3, 0xcf, 0xd3]);
+  expect(result.jpegs).toBeGreaterThan(0);
+  // The stored original is ~42KB; a PDF built from the 512px copies could not
+  // be this large, so this is the proof it printed the real photograph.
+  expect(result.size).toBeGreaterThan(40_000);
+});
