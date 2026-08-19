@@ -25,7 +25,12 @@ describe('Know-Me RPCs — daily assignment + anti-peek + edit-lock', () => {
       data: { user: ua },
     } = await a.auth.getUser();
 
-    const { data: day } = await a.rpc('know_me_ensure_today');
+    // `know_me_ensure_today` is declared `SETOF know_me_days`, so PostgREST
+    // hands back an ARRAY even though it only ever returns one row. Treating it
+    // as a bare object left every id undefined, which is why the question
+    // lookup below came back null.
+    const { data: days } = await a.rpc('know_me_ensure_today');
+    const day = Array.isArray(days) ? days[0] : days;
     // Clean any prior state for this day.
     await a.from('know_me_answers').delete().eq('day_id', day!.id);
     await a.from('know_me_presence').delete().eq('day_id', day!.id);
