@@ -65,6 +65,46 @@ describe('PdfDoc', () => {
     expect(out.trimEnd().endsWith('%%EOF')).toBe(true);
   });
 
+  it('marks itself binary with RAW high bytes, not UTF-8 versions of them', () => {
+    const doc = new PdfDoc(594, 792);
+    doc.addPage('', []);
+    const bytes = doc.buildBytes();
+    // The comment on line two is how a PDF tells every tool downstream not to
+    // treat it as text. Building it from a JS string through TextEncoder turns
+    // those four characters into eight UTF-8 bytes, which is not the marker.
+    const start = bytes.indexOf(0x25, 9);
+    expect([...bytes.slice(start, start + 5)]).toEqual([
+      0x25, 0xe2, 0xe3, 0xcf, 0xd3,
+    ]);
+  });
+
+  it('keeps the xref honest when a stream contains newlines and "endobj"', async () => {
+    // A real JPEG's compressed bytes can contain anything, including the very
+    // keywords the file format uses as terminators.
+    const nasty = Uint8Array.from([
+      ...TINY_JPEG.slice(0, 20),
+      ...new TextEncoder().encode('\nendstream\nendobj\n'),
+      0x0a,
+      0xff,
+      0xd9,
+    ]);
+    const doc = new PdfDoc(594, 792);
+    const ref = doc.addJpeg(nasty, 11, 7);
+    doc.addPage(drawImage('Im0', [1, 0, 0, 1, 0, 0]), [{ name: 'Im0', ref }]);
+
+    const out = text(doc);
+    const rows = out
+      .slice(out.indexOf('xref'))
+      .split('\n')
+      .filter((l) => / 00000 n $/.test(l));
+    rows.forEach((row, i) => {
+      const offset = Number(row.slice(0, 10));
+      expect(out.slice(offset).startsWith(`${i + 1} 0 obj`)).toBe(true);
+    });
+    // …and the declared length still matches the real byte count.
+    expect(out).toContain(`/Length ${nasty.length}`);
+  });
+
   it('gives every page a real parent, not the placeholder', async () => {
     const doc = new PdfDoc(594, 792);
     doc.addPage('', []);
