@@ -129,3 +129,15 @@ export function changelogKey(entry: ChangelogEntry = LATEST): string {
 }
 
 export const LATEST_KEY = changelogKey();
+
+/**
+ * Has the release of this date been told to her yet?
+ *
+ * For the things that announce themselves: a new widget on the home screen
+ * says "something changed" louder than the modal does, and the home screen is
+ * the one she cannot avoid. Anything like that asks here first, so the whole
+ * release still arrives on the single word he gives this file.
+ */
+export function isAnnounced(date: string): boolean {
+  return CHANGELOG.some((e) => e.date === date);
+}
