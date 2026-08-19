@@ -35,9 +35,11 @@ import {
 } from '../api/lessons.mutations';
 import { useLangPrefs } from '../lib/lang-prefs';
 import { isMissing, pick } from '../lib/pick';
+import { formatTable, parseTable } from '../lib/table-block';
 import { ExerciseEditor } from '../components/exercises/exercise-editor';
 import { MediaBlockEditor } from '../components/media-block-editor';
 import { VocabPickerSheet } from '../components/vocab-picker-sheet';
+import type { Json } from '@kernel/supabase';
 import type {
   Block,
   BlockKind,
@@ -46,6 +48,7 @@ import type {
   Media,
   MediaBlockData,
   SupportLang,
+  TableBlockData,
   Vocab,
 } from '../types';
 
@@ -166,6 +169,13 @@ export function BuildRoute() {
               }
               onPickWords={() => setWordsFor(block)}
               onAttach={() => setAttachFor(block)}
+              onSaveData={(data) =>
+                updateBlock.mutate({
+                  id: block.id,
+                  lessonId: lesson.id,
+                  patch: { data: data as unknown as Json },
+                })
+              }
             />
           ))}
 
@@ -205,24 +215,24 @@ export function BuildRoute() {
 
         <div className="mt-2 shrink-0 lg:mt-0 lg:w-64">
           <div className="flex flex-wrap gap-1.5">
-            {(['text', 'vocab', 'media', 'divider'] as BlockKind[]).map(
-              (kind) => (
-                <Button
-                  key={kind}
-                  size="sm"
-                  variant="secondary"
-                  onClick={() =>
-                    createBlock.mutate({
-                      lessonId: lesson.id,
-                      kind,
-                      position: blocks.length,
-                    })
-                  }
-                >
-                  <Plus size={13} /> {kind}
-                </Button>
-              )
-            )}
+            {(
+              ['text', 'vocab', 'table', 'media', 'divider'] as BlockKind[]
+            ).map((kind) => (
+              <Button
+                key={kind}
+                size="sm"
+                variant="secondary"
+                onClick={() =>
+                  createBlock.mutate({
+                    lessonId: lesson.id,
+                    kind,
+                    position: blocks.length,
+                  })
+                }
+              >
+                <Plus size={13} /> {kind}
+              </Button>
+            ))}
             <Button
               size="sm"
               variant="secondary"
@@ -313,6 +323,7 @@ function BlockEditor({
   onDelete,
   onPickWords,
   onAttach,
+  onSaveData,
 }: {
   block: Block;
   support: SupportLang;
@@ -330,10 +341,14 @@ function BlockEditor({
   onDelete: () => void;
   onPickWords: () => void;
   onAttach: () => void;
+  onSaveData: (data: TableBlockData) => void;
 }) {
   const [ru, setRu] = useState(block.body_ru ?? '');
   const [gloss, setGloss] = useState(
     (support === 'es' ? block.body_es : block.body_en) ?? ''
+  );
+  const [grid, setGrid] = useState(() =>
+    formatTable((block.data ?? {}) as TableBlockData, support)
   );
 
   if (block.kind === 'divider') {
@@ -349,6 +364,59 @@ function BlockEditor({
   }
 
   const missing = isMissing(block, 'body', support);
+
+  if (block.kind === 'table') {
+    return (
+      <div className="space-y-1.5 rounded-lg bg-surface px-3 py-2.5">
+        <div className="flex items-center gap-2">
+          <span className="flex-1 font-sans text-[0.68rem] uppercase tracking-[0.12em] text-gold">
+            table
+          </span>
+          <button
+            type="button"
+            aria-label="Move up"
+            disabled={first}
+            onClick={() => onMove(-1)}
+            className={cn('text-muted', first && 'opacity-30')}
+          >
+            <ChevronUp className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            aria-label="Move down"
+            disabled={last}
+            onClick={() => onMove(1)}
+            className={cn('text-muted', last && 'opacity-30')}
+          >
+            <ChevronDown className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            aria-label="Delete"
+            onClick={onDelete}
+            className="text-muted"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
+        <Textarea
+          value={grid}
+          onChange={(e) => setGrid(e.target.value)}
+          onBlur={() => onSaveData(parseTable(grid, support))}
+          rows={4}
+          spellCheck={false}
+          placeholder={', singular, plural\nnominative, стол, столы'}
+          className="font-display"
+        />
+        <Input
+          value={ru}
+          onChange={(e) => setRu(e.target.value)}
+          onBlur={() => onSave({ body_ru: ru || null })}
+          placeholder="What the table is (optional)"
+        />
+      </div>
+    );
+  }
 
   if (block.kind === 'vocab' || block.kind === 'media') {
     const isVocab = block.kind === 'vocab';
