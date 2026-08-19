@@ -38,13 +38,22 @@ export function StudyRoute() {
   // Frozen for the session so answering a card doesn't reshuffle the queue
   // under your feet.
   const [sessionKey, setSessionKey] = useState(0);
+  /**
+   * Built once BOTH halves have arrived.
+   *
+   * The reviews query waits for the user id while the words query does not, so
+   * this reliably ran first with no reviews at all — every word looked due,
+   * and the frozen queue was twenty arbitrary cards instead of what the
+   * schedule actually asked for.
+   */
+  const ready = !!words && !!reviews;
   const session = useMemo(
-    () => buildSession(words ?? [], reviews ?? new Map()),
+    () => (ready ? buildSession(words, reviews) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [words, sessionKey]
+    [ready, sessionKey]
   );
 
-  if (isLoading) return <LoadingScreen />;
+  if (isLoading || !ready) return <LoadingScreen />;
   if (session.length === 0) {
     return (
       <Empty
