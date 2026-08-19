@@ -2,12 +2,13 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@kernel/supabase';
 import { qk } from '@kernel/query';
 import { BUCKETS, storagePaths, useUpload } from '@kernel/storage';
+import type { AudioClip } from '@kernel/ui';
 
 interface CreateCuteWordInput {
   term: string;
   meaning?: string;
   example?: string;
-  audioBlob?: Blob | null;
+  audio?: AudioClip | null;
 }
 
 export function useCreateCuteWord() {
@@ -18,7 +19,7 @@ export function useCreateCuteWord() {
       term,
       meaning,
       example,
-      audioBlob,
+      audio,
     }: CreateCuteWordInput) => {
       const { data, error } = await supabase
         .from('cute_words')
@@ -31,12 +32,12 @@ export function useCreateCuteWord() {
         .single();
       if (error) throw error;
 
-      if (audioBlob) {
+      if (audio) {
         const path = await upload(
           BUCKETS.languageAudio,
-          storagePaths.languageAudio(data.id),
-          audioBlob,
-          { contentType: 'audio/webm' }
+          storagePaths.languageAudio(data.id, audio.ext),
+          audio.blob,
+          { contentType: audio.mime }
         );
         const { error: updateError } = await supabase
           .from('cute_words')
