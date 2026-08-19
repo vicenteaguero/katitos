@@ -89,3 +89,41 @@ export function Field({
     </label>
   );
 }
+
+/**
+ * A labelled GROUP of controls — a segmented switch, a row of chips.
+ *
+ * `Field` is a `<label>`, which is right for exactly one input and wrong for
+ * anything else: a label wraps its control, so a Segmented inside one had every
+ * button announcing itself as "A note English When a translation is not enough"
+ * and a tap on the caption pressing the first option. Same look, honest markup.
+ */
+export function Fieldset({
+  label,
+  hint,
+  children,
+  className,
+}: {
+  label?: string;
+  hint?: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      role="group"
+      aria-label={label}
+      className={cn('block space-y-2.5', className)}
+    >
+      {label && (
+        <span className="block font-sans text-xs font-semibold uppercase tracking-[0.18em] text-muted">
+          {label}
+        </span>
+      )}
+      {children}
+      {hint && (
+        <span className="block font-sans text-xs text-muted">{hint}</span>
+      )}
+    </div>
+  );
+}
