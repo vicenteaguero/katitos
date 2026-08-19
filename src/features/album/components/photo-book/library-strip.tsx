@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Images, Plus, Trash2, Type } from 'lucide-react';
 import { cn } from '@kernel/lib';
 import type { AlbumPhoto } from '../../types';
@@ -32,14 +32,28 @@ export function LibraryStrip({
 }) {
   const [menuFor, setMenuFor] = useState<AlbumPhoto | null>(null);
   const holdRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // Set once the long-press has opened the menu, so the release doesn't ALSO
+  // count as a tap and drop the photo onto the page behind the menu.
+  const heldRef = useRef(false);
 
   const startHold = (photo: AlbumPhoto) => {
-    holdRef.current = setTimeout(() => setMenuFor(photo), 500);
+    heldRef.current = false;
+    holdRef.current = setTimeout(() => {
+      heldRef.current = true;
+      setMenuFor(photo);
+    }, 500);
   };
   const endHold = () => {
     if (holdRef.current) clearTimeout(holdRef.current);
     holdRef.current = undefined;
   };
+
+  useEffect(
+    () => () => {
+      if (holdRef.current) clearTimeout(holdRef.current);
+    },
+    []
+  );
 
   return (
     <div className="pb-strip">
@@ -73,7 +87,10 @@ export function LibraryStrip({
             <button
               key={photo.id}
               type="button"
-              onClick={() => onPlace(photo)}
+              onClick={() => {
+                if (heldRef.current) return;
+                onPlace(photo);
+              }}
               onPointerDown={() => startHold(photo)}
               onPointerUp={endHold}
               onPointerLeave={endHold}
