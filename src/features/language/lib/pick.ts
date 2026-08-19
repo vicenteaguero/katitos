@@ -62,3 +62,18 @@ export function isMissing<T extends string>(
   // Nothing written at all isn't "missing a translation", it's just empty.
   return !!anything && !written?.trim();
 }
+
+/**
+ * The word as it should be READ.
+ *
+ * Russian stress is phonemic — за́мок is a castle, замо́к is a lock — and it is
+ * not written in ordinary text, so a learner has no way to know it. She writes
+ * the accented form once and it becomes the headword everywhere the word
+ * appears. Falls back to the plain spelling whenever she hasn't marked it.
+ *
+ * Marking is unaffected: `answerMatches` strips combining marks, so he never
+ * has to type the accent.
+ */
+export function headword(word: { ru: string; stress?: string | null }): string {
+  return word.stress?.trim() || word.ru;
+}
