@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   angleOf,
+  BASE_W,
+  dropSpot,
   handleTransform,
   MAX_SCALE,
   MIN_SCALE,
@@ -10,6 +12,7 @@ import {
   normalizeZ,
   orderStickers,
   snapAngle,
+  stickerWidth,
 } from './sticker-math';
 
 const s = (id: string, z: number, created_at = '2026-01-01T00:00:00Z') => ({
@@ -153,5 +156,91 @@ describe('the corner handle', () => {
   it('measures angles the way CSS rotate does', () => {
     expect(angleOf(centre, { x: 200, y: 100 })).toBeCloseTo(0);
     expect(angleOf(centre, { x: 100, y: 200 })).toBeCloseTo(90);
+  });
+});
+
+/**
+ * Four photos onto a page, four photos you can see.
+ *
+ * They all landed on the exact centre of the page, one hiding the next, which
+ * from the outside is indistinguishable from "I added them and nothing
+ * happened".
+ */
+describe('dropSpot', () => {
+  it('does not put the second sticker on top of the first', () => {
+    const a = dropSpot(0);
+    const b = dropSpot(1);
+    expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThan(0.1);
+  });
+
+  it('keeps a whole page of stickers apart from each other', () => {
+    const spots = Array.from({ length: 7 }, (_, i) => dropSpot(i));
+    for (let i = 0; i < spots.length; i++) {
+      for (let k = i + 1; k < spots.length; k++) {
+        const d = Math.hypot(spots[i].x - spots[k].x, spots[i].y - spots[k].y);
+        expect(d, `${i} vs ${k}`).toBeGreaterThan(0.08);
+      }
+    }
+  });
+
+  it('never lands half off the paper', () => {
+    for (let i = 0; i < 40; i++) {
+      const { x, y } = dropSpot(i);
+      expect(x).toBeGreaterThanOrEqual(0.18);
+      expect(x).toBeLessThanOrEqual(0.82);
+      expect(y).toBeGreaterThanOrEqual(0.18);
+      expect(y).toBeLessThanOrEqual(0.82);
+    }
+  });
+
+  it('is the same on both phones', () => {
+    expect(dropSpot(3)).toEqual(dropSpot(3));
+  });
+
+  it('leans them alternately, so it reads as a page and not a grid', () => {
+    expect(dropSpot(0).rotation).toBeLessThan(0);
+    expect(dropSpot(1).rotation).toBeGreaterThan(0);
+  });
+
+  it('starts in the middle when the page is empty', () => {
+    expect(dropSpot(0).x).toBeCloseTo(0.5);
+    expect(dropSpot(0).y).toBeCloseTo(0.5);
+  });
+});
+
+/**
+ * Two photos of different shapes should look like a pair, not a mismatch.
+ *
+ * Everything was 42% of the page wide whatever it was, so a portrait picture
+ * towered over the landscape one next to it — same width, nearly twice the
+ * height. Matching area instead is what makes a page look arranged.
+ */
+describe('stickerWidth', () => {
+  const area = (r: number) => {
+    const w = stickerWidth(r * 100, 100);
+    return w * (w / r);
+  };
+
+  it('gives a wide photo and a tall one the same amount of paper', () => {
+    expect(area(16 / 9)).toBeCloseTo(area(9 / 16), 3);
+  });
+
+  it('makes a wide photo wider and a tall one narrower', () => {
+    expect(stickerWidth(1600, 900)).toBeGreaterThan(BASE_W);
+    expect(stickerWidth(900, 1600)).toBeLessThan(BASE_W);
+  });
+
+  it('leaves a square photo at the base size', () => {
+    expect(stickerWidth(800, 800)).toBeCloseTo(BASE_W, 5);
+  });
+
+  it('falls back to the base size when the shape is unknown', () => {
+    expect(stickerWidth(null, null)).toBe(BASE_W);
+    expect(stickerWidth(0, 0)).toBe(BASE_W);
+  });
+
+  it('never spans the whole page, however extreme the panorama', () => {
+    expect(stickerWidth(4000, 200)).toBeLessThanOrEqual(0.72);
+    expect(stickerWidth(200, 4000)).toBeGreaterThanOrEqual(0.22);
   });
 });
