@@ -112,7 +112,11 @@ export function ExerciseEditor({
     } else {
       setAnswerText(acceptedForms(exercise.answer).join(' / '));
     }
-  }, [exercise, support]);
+    // Seeded from the exercise ONLY. `support` used to be a dependency, so
+    // changing the language in the top bar mid-edit threw away everything she
+    // had typed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exercise?.id]);
 
   /** Turn the form into the shapes `exercise-schema` expects. */
   const buildWith = (
