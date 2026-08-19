@@ -17,7 +17,7 @@ import { useLangPrefs } from '../lib/lang-prefs';
 import { gradeAnswer, type Grade } from '../lib/exercise-schema';
 import { ExerciseView } from '../components/exercises/exercise-view';
 import { BlockView } from '../components/block-view';
-import type { Exercise } from '../types';
+import type { Exercise, MediaBlockData } from '../types';
 
 /**
  * A lesson, as he reads it.
@@ -65,6 +65,13 @@ export function LessonRoute() {
 
   const isExam = lesson.kind === 'exam';
   const exercises = lesson.exercises;
+
+  /** The attachment a media block points at, if it has been given one yet. */
+  const mediaFor = (block: (typeof lesson.blocks)[number]) => {
+    if (block.kind !== 'media') return undefined;
+    const { mediaId } = (block.data ?? {}) as MediaBlockData;
+    return lesson.media.find((m) => m.id === mediaId);
+  };
 
   const markOne = (ex: Exercise) => {
     const given = answers[ex.id];
@@ -131,7 +138,13 @@ export function LessonRoute() {
       </header>
 
       {lesson.blocks.map((block) => (
-        <BlockView key={block.id} block={block} support={support} />
+        <BlockView
+          key={block.id}
+          block={block}
+          support={support}
+          vocab={lesson.vocabByBlock[block.id]}
+          media={mediaFor(block)}
+        />
       ))}
 
       {exercises.length > 0 && (
