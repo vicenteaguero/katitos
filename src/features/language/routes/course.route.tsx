@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import {
   CalendarClock,
@@ -7,6 +7,7 @@ import {
   Pencil,
   Plus,
 } from 'lucide-react';
+import { usePartner } from '@kernel/auth';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import { cn } from '@kernel/lib';
@@ -20,7 +21,12 @@ import {
   Sheet,
   useTopBarAction,
 } from '@kernel/ui';
-import { useCourse, useMyProgress, useUnits } from '../api/courses.queries';
+import {
+  useCourse,
+  useMyProgress,
+  useProgress,
+  useUnits,
+} from '../api/courses.queries';
 import { useCreateLesson, useCreateUnit } from '../api/lessons.mutations';
 import type { Lesson, LessonKind } from '../types';
 
@@ -60,6 +66,21 @@ export function CourseRoute() {
   const { data: course, isLoading } = useCourse(courseId);
   const { data: units } = useUnits(courseId);
   const { data: progress } = useMyProgress();
+  const { data: everyone } = useProgress();
+  const { partner } = usePartner();
+
+  /** Lessons he has handed in and she has not marked yet. */
+  const toMark = useMemo(
+    () =>
+      new Set(
+        (everyone ?? [])
+          .filter(
+            (p) => p.user_id === partner?.user_id && p.status === 'submitted'
+          )
+          .map((p) => p.lesson_id)
+      ),
+    [everyone, partner?.user_id]
+  );
   const createUnit = useCreateUnit();
   const createLesson = useCreateLesson();
   useTableSync('lang_lessons', qk.lang.units(courseId ?? 'none'));
@@ -135,6 +156,7 @@ export function CourseRoute() {
                     lesson={lesson}
                     done={progress?.get(lesson.id)?.status === 'graded'}
                     score={progress?.get(lesson.id)?.score ?? null}
+                    waiting={toMark.has(lesson.id)}
                   />
                 ))}
               </ul>
@@ -234,17 +256,24 @@ function LessonRow({
   lesson,
   done,
   score,
+  waiting,
 }: {
   lesson: Lesson;
   done: boolean;
   score: number | null;
+  /** He has handed this in and it has not been marked. */
+  waiting: boolean;
 }) {
   const Icon = KIND_ICON[lesson.kind as LessonKind] ?? FileText;
   const draft = lesson.status === 'draft';
   return (
     <li>
       <Link
-        to={`/language/lesson/${lesson.id}`}
+        to={
+          waiting
+            ? `/language/mark/${lesson.id}`
+            : `/language/lesson/${lesson.id}`
+        }
         className={cn(
           'lift-press flex items-center gap-2.5 rounded-lg bg-surface-2 px-3 py-2.5',
           draft && 'opacity-60'
@@ -268,6 +297,12 @@ function LessonRow({
             )}
           </span>
         </span>
+        {/* The one thing she is waiting for, said plainly. */}
+        {waiting && (
+          <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 font-sans text-[0.6rem] uppercase tracking-[0.1em] text-accent-fg">
+            to mark
+          </span>
+        )}
       </Link>
     </li>
   );
