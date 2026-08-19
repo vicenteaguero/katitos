@@ -4,7 +4,7 @@ import { qk } from '@kernel/query';
 import { useUserId } from '@kernel/auth';
 import { BUCKETS, storagePaths, useUpload } from '@kernel/storage';
 import { toast, type AudioClip } from '@kernel/ui';
-import type { TargetLang, Vocab } from '../types';
+import type { Lang, Vocab } from '../types';
 import { schedule, type Grade, type Schedule } from '../lib/srs';
 
 /** Stable reference: an inline arrow re-runs `select` on every render. */
@@ -21,7 +21,7 @@ const reviewsByVocab = (rows: VocabReview[]) => {
  * that word appears in. That was the whole reason for moving off the old
  * per-deck cards.
  */
-export function useVocab(target?: TargetLang, search?: string) {
+export function useVocab(target?: Lang, search?: string) {
   return useQuery({
     queryKey: [...qk.lang.vocab(), target ?? 'all', search ?? ''] as const,
     staleTime: 30_000,
@@ -44,8 +44,14 @@ export function useVocab(target?: TargetLang, search?: string) {
   });
 }
 
-/** Every word, unfiltered — what the study session draws its queue from. */
-export function useAllVocab(target: TargetLang = 'ru') {
+/**
+ * Every word in one language, unfiltered — the study session's queue.
+ *
+ * The language is always passed in. It used to default to Russian, which meant
+ * every screen that forgot to think about it silently became Russian-only, and
+ * the five Spanish words on production were invisible for a week.
+ */
+export function useAllVocab(target: Lang) {
   return useQuery({
     queryKey: [...qk.lang.vocab(), 'all', target] as const,
     staleTime: 60_000,
@@ -65,8 +71,9 @@ export function useAddVocab() {
   const { upload } = useUpload();
   return useMutation({
     mutationFn: async (v: {
-      termLang: TargetLang;
-      ru: string;
+      /** Which of the three columns below holds the word being taught. */
+      termLang: Lang;
+      ru?: string | null;
       en?: string | null;
       es?: string | null;
       transliteration?: string | null;
@@ -74,16 +81,23 @@ export function useAddVocab() {
       partOfSpeech?: string | null;
       notesEn?: string | null;
       notesEs?: string | null;
+      notesRu?: string | null;
       tags?: string[];
       audio?: AudioClip | null;
     }) => {
+      // The headword is whichever column `termLang` names — checking `ru` for
+      // a Spanish word found nothing, every time, and quietly made duplicates.
+      const term = (v[v.termLang] ?? '').trim();
+      if (!term)
+        throw new Error('A word needs to be written in its own language');
+
       // One entry per word is the promise this table makes, and the quickest
       // way to break it is the add-without-leaving-the-lesson shortcut.
       const { data: existing } = await supabase
         .from('lang_vocab')
         .select('id')
         .eq('term_lang', v.termLang)
-        .ilike('ru', v.ru.trim())
+        .ilike(v.termLang, term)
         .limit(1);
       if (existing?.length) return existing[0].id as string;
 
@@ -91,7 +105,7 @@ export function useAddVocab() {
         .from('lang_vocab')
         .insert({
           term_lang: v.termLang,
-          ru: v.ru.trim(),
+          ru: v.ru?.trim() || null,
           en: v.en?.trim() || null,
           es: v.es?.trim() || null,
           transliteration: v.transliteration?.trim() || null,
@@ -99,6 +113,7 @@ export function useAddVocab() {
           part_of_speech: v.partOfSpeech?.trim() || null,
           notes_en: v.notesEn?.trim() || null,
           notes_es: v.notesEs?.trim() || null,
+          notes_ru: v.notesRu?.trim() || null,
           tags: v.tags ?? [],
         })
         .select('id')
@@ -149,6 +164,7 @@ export function useUpdateVocab() {
           | 'part_of_speech'
           | 'notes_en'
           | 'notes_es'
+          | 'notes_ru'
           | 'tags'
         >
       >;
