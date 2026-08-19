@@ -120,7 +120,9 @@ describe('Language course (local stack)', () => {
       user_id: userA!.id,
       answer: 'y',
     });
-    expect(forgedErr).not.toBeNull();
+    // 42501 = the POLICY refused it. `not.toBeNull()` would pass for any
+    // error at all, including one that has nothing to do with permissions.
+    expect(forgedErr?.code).toBe('42501');
 
     await b.from('lang_courses').delete().eq('id', courseId);
   });
@@ -223,7 +225,7 @@ describe('Language course (local stack)', () => {
     const { error: forgedErr } = await b
       .from('lang_vocab_reviews')
       .insert({ vocab_id: word!.id, user_id: userA!.id, reps: 99 });
-    expect(forgedErr).not.toBeNull();
+    expect(forgedErr?.code).toBe('42501');
 
     await a.from('lang_vocab').delete().eq('id', word!.id);
   });
@@ -238,7 +240,7 @@ describe('Language course (local stack)', () => {
       storage_path: 'a.pdf',
       url: 'https://example.com/a.pdf',
     });
-    expect(bothErr).not.toBeNull();
+    expect(bothErr?.code).toBe('23514');
 
     const { error: linkErr } = await a.from('lang_media').insert({
       course_id: courseId,
