@@ -63,3 +63,23 @@ export const BUILD_STATE_LABEL: Record<BuildState, string> = {
   dirty: 'Built with changes that are not committed',
   unknown: 'Could not check right now',
 };
+
+/**
+ * Should the app take the newer version by itself, right now?
+ *
+ * The service worker installs a new build and then waits, which means a phone
+ * can sit three deploys behind and look completely normal — you only find out
+ * when something does not work. So the app stops asking and just updates.
+ *
+ * `triedSha` is the version we already tried to apply this session. Without it
+ * a build that installs but cannot take over (a service worker error, a browser
+ * that never fires controllerchange) would reload the app forever.
+ */
+export function shouldAutoUpdate(
+  state: BuildState,
+  server: BuildStamp | null | undefined,
+  triedSha: string | null
+): boolean {
+  if (state !== 'stale' || !server?.sha) return false;
+  return server.sha !== triedSha;
+}
