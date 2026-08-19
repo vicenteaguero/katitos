@@ -179,7 +179,10 @@ export async function buildAlbumPdf(
       });
 
       if (st.kind === 'text') {
-        const size = st.font_size * PAGE_W;
+        // × the sticker's scale, exactly as the page does — the screen sizes
+        // text as `font_size * scale`, so leaving `scale` out here printed
+        // every resized caption at the wrong size.
+        const size = st.font_size * (st.scale || 1) * PAGE_W;
         const img = await textToJpeg(
           st.body ?? '',
           size,
@@ -242,7 +245,7 @@ export async function buildAlbumPdf(
 
       if (st.caption) {
         // A caption sits under its photo and should never out-shout it.
-        const size = st.font_size * PAGE_W * 0.6;
+        const size = st.font_size * (st.scale || 1) * PAGE_W * 0.6;
         const img = await textToJpeg(
           st.caption,
           size,
