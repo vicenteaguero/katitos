@@ -167,3 +167,68 @@ describe('buildSession', () => {
     expect(buildSession([{ id: 'a' }], ahead, { today: TODAY })).toEqual([]);
   });
 });
+
+describe('a course keeps teaching', () => {
+  const many = (n: number, prefix: string) =>
+    Array.from({ length: n }, (_, i) => ({ id: `${prefix}${i}` }));
+
+  it('always makes room for a few new words', () => {
+    // Twenty-five words already due, and five she has just taught. Ranking
+    // unseen cards last meant the new ones never appeared at all.
+    const seen = many(25, 'old');
+    const fresh = many(5, 'new');
+    const reviews = new Map(
+      seen.map((c) => [c.id, review({ reps: 3, due_on: '2026-08-01' })])
+    );
+    const out = buildSession([...seen, ...fresh], reviews, { today: TODAY });
+    expect(out).toHaveLength(20);
+    expect(out.filter((c) => c.id.startsWith('new'))).toHaveLength(5);
+  });
+
+  it('fills a whole session when there is nothing else to review', () => {
+    // A beginner with an empty history should get a full session, not five
+    // words — the reservation exists to stop reviews CROWDING OUT new words,
+    // not to ration them.
+    const out = buildSession(many(50, 'new'), new Map(), { today: TODAY });
+    expect(out).toHaveLength(20);
+  });
+
+  it('lets a few new words in even when reviews could fill the session', () => {
+    // A deliberate trade: five reviews wait until tomorrow so that what she
+    // taught today is actually seen. Reviews still take the large majority.
+    const seen = many(18, 'old');
+    const reviews = new Map(
+      seen.map((c) => [c.id, review({ reps: 3, due_on: '2026-08-01' })])
+    );
+    const out = buildSession([...seen, ...many(30, 'new')], reviews, {
+      today: TODAY,
+    });
+    expect(out).toHaveLength(20);
+    expect(out.filter((c) => c.id.startsWith('new'))).toHaveLength(5);
+    expect(out.filter((c) => c.id.startsWith('old'))).toHaveLength(15);
+  });
+
+  it('lets her ask for a different number of new words', () => {
+    const seen = many(30, 'old');
+    const reviews = new Map(
+      seen.map((c) => [c.id, review({ reps: 3, due_on: '2026-08-01' })])
+    );
+    const out = buildSession([...seen, ...many(10, 'new')], reviews, {
+      today: TODAY,
+      newPerSession: 0,
+    });
+    // Nothing new at all when the schedule is what matters.
+    expect(out.filter((c) => c.id.startsWith('new'))).toHaveLength(0);
+  });
+
+  it('still puts what he forgot first', () => {
+    const cards = [{ id: 'fresh' }, { id: 'lapsed' }, { id: 'steady' }];
+    const reviews = new Map([
+      ['lapsed', review({ reps: 4, lapses: 2, due_on: '2026-08-01' })],
+      ['steady', review({ reps: 4, due_on: '2026-08-05' })],
+    ]);
+    const out = buildSession(cards, reviews, { today: TODAY });
+    expect(out[0].id).toBe('lapsed');
+    expect(out[out.length - 1].id).toBe('fresh');
+  });
+});
