@@ -11,7 +11,7 @@ import {
   type AudioClip,
 } from '@kernel/ui';
 import { useAlphabet, useRecordLetter } from '../api/alphabet';
-import { useLangPrefs } from '../lib/lang-prefs';
+import { useLanguages } from '../lib/languages';
 import type { Letter } from '../types';
 
 /**
@@ -23,7 +23,7 @@ import type { Letter } from '../types';
  */
 export function AlphabetRoute() {
   const { data: letters, isLoading } = useAlphabet();
-  const support = useLangPrefs((s) => s.supportLang);
+  const { native: support } = useLanguages();
   const [open, setOpen] = useState<Letter | null>(null);
   const [audio, setAudio] = useState<AudioClip | null>(null);
   const record = useRecordLetter();
