@@ -38,26 +38,38 @@ export type ExerciseKind =
 
 /* ── Languages ───────────────────────────────────────────────────────────── */
 
-/** What is being taught. */
-export type TargetLang = 'ru' | 'es' | 'en';
 /**
- * The language the teaching is explained IN.
+ * One of the three, in any role.
  *
- * This is the whole trilingual trick: one lesson, written once in Russian with
- * an English gloss, becomes a Spanish lesson the moment somebody fills in the
- * Spanish — and reads perfectly in English until they do.
+ * There is no separate "target" and "support" type any more, and that was the
+ * bug: making support `'en' | 'es'` quietly decided that Russian is always the
+ * thing being taught and never the thing explaining. She is the one learning
+ * Spanish, and she reads Russian.
  */
-export type SupportLang = 'en' | 'es';
+export type Lang = 'ru' | 'es' | 'en';
 
-export const LANG_LABELS: Record<TargetLang, string> = {
+/** Kept as an alias so "the language this course teaches" still reads that way. */
+export type TargetLang = Lang;
+
+/** In English, for prose: "a course of Russian". */
+export const LANG_LABELS: Record<Lang, string> = {
   ru: 'Russian',
   es: 'Spanish',
   en: 'English',
 };
 
-export const SUPPORT_LABELS: Record<SupportLang, string> = {
-  en: 'English',
+/** In its own language, for a control you tap. */
+export const LANG_NATIVE_LABELS: Record<Lang, string> = {
+  ru: 'Русский',
   es: 'Español',
+  en: 'English',
+};
+
+/** A flag for a course row, and for the New course picker. */
+export const LANG_FLAGS: Record<Lang, string> = {
+  ru: '🇷🇺',
+  es: '🇨🇱',
+  en: '🇬🇧',
 };
 
 /* ── Shapes the screens actually want ────────────────────────────────────── */
@@ -69,6 +81,8 @@ export interface UnitWithLessons extends Unit {
 export interface LessonFull extends Lesson {
   blocks: Block[];
   exercises: Exercise[];
+  /** The language this lesson teaches, from its course. */
+  targetLang: Lang;
   /** The course this lesson belongs to — two hops up, but everything needs it. */
   courseId: string;
   /** Files and links attached to this lesson, by id. */
