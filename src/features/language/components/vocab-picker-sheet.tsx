@@ -13,9 +13,9 @@ import {
 } from '@kernel/ui';
 import { useAddVocab, useVocab } from '../api/vocab';
 import { useSetBlockVocab } from '../api/block-vocab';
-import { useLangPrefs } from '../lib/lang-prefs';
-import { meaningOf } from '../lib/pick';
-import type { Vocab } from '../types';
+import { useLanguages } from '../lib/languages';
+import { headword, meaningOf } from '../lib/pick';
+import { LANG_NATIVE_LABELS, type Lang, type Vocab } from '../types';
 
 /**
  * Choose the words a lesson teaches.
@@ -30,6 +30,7 @@ export function VocabPickerSheet({
   blockId,
   lessonId,
   selected,
+  target,
 }: {
   open: boolean;
   onClose: () => void;
@@ -37,15 +38,19 @@ export function VocabPickerSheet({
   lessonId: string;
   /** The words already on this block, in order. */
   selected: Vocab[];
+  /** The language this lesson teaches — the words are in it, not in yours. */
+  target: Lang;
 }) {
-  const support = useLangPrefs((s) => s.supportLang);
+  const { native: support } = useLanguages();
   const [search, setSearch] = useState('');
-  const { data: words, isLoading } = useVocab('ru', search);
+  // The dictionary of the language being TAUGHT here. Using "what I'm learning"
+  // would show her a list of Spanish words while she writes a Russian lesson.
+  const { data: words, isLoading } = useVocab(target, search);
   const setBlockVocab = useSetBlockVocab();
   const addVocab = useAddVocab();
 
   const [chosen, setChosen] = useState<Vocab[]>(selected);
-  const [newRu, setNewRu] = useState('');
+  const [newTerm, setNewTerm] = useState('');
   const [newMeaning, setNewMeaning] = useState('');
   const [newAudio, setNewAudio] = useState<AudioClip | null>(null);
 
@@ -63,12 +68,12 @@ export function VocabPickerSheet({
     );
 
   const addAndChoose = () => {
-    if (!newRu.trim()) return;
+    if (!newTerm.trim()) return;
     addVocab.mutate(
       {
-        termLang: 'ru',
-        ru: newRu,
-        ...(support === 'es' ? { es: newMeaning } : { en: newMeaning }),
+        termLang: target,
+        [target]: newTerm,
+        [support === target ? 'en' : support]: newMeaning,
         // The shortcut she will actually use while writing a lesson. Without
         // this it produced silent words, which is exactly what the vocab block
         // exists to avoid.
@@ -80,12 +85,12 @@ export function VocabPickerSheet({
             ...c,
             {
               id,
-              ru: newRu.trim(),
-              en: support === 'en' ? newMeaning : null,
-              es: support === 'es' ? newMeaning : null,
-            } as Vocab,
+              term_lang: target,
+              [target]: newTerm.trim(),
+              [support === target ? 'en' : support]: newMeaning,
+            } as unknown as Vocab,
           ]);
-          setNewRu('');
+          setNewTerm('');
           setNewMeaning('');
           setNewAudio(null);
         },
@@ -105,7 +110,7 @@ export function VocabPickerSheet({
                 onClick={() => toggle(w)}
                 className="lift-press rounded-full bg-accent px-3 py-1 font-sans text-sm text-accent-fg"
               >
-                {w.ru} ×
+                {headword(w)} ×
               </button>
             ))}
           </div>
@@ -144,7 +149,7 @@ export function VocabPickerSheet({
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-display text-base text-fg">
-                        {w.ru}
+                        {headword(w)}
                       </span>
                       <span className="block truncate font-sans text-xs text-muted">
                         {meaningOf(w, support)}
@@ -161,16 +166,18 @@ export function VocabPickerSheet({
         <FieldRow>
           <Field label="Not there yet?">
             <Input
-              value={newRu}
-              onChange={(e) => setNewRu(e.target.value)}
-              placeholder="слово"
+              value={newTerm}
+              onChange={(e) => setNewTerm(e.target.value)}
+              placeholder={target === 'ru' ? 'слово' : 'palabra'}
             />
           </Field>
-          <Field label={support === 'es' ? 'Español' : 'English'}>
+          <Field
+            label={LANG_NATIVE_LABELS[support === target ? 'en' : support]}
+          >
             <Input
               value={newMeaning}
               onChange={(e) => setNewMeaning(e.target.value)}
-              placeholder={support === 'es' ? 'palabra' : 'word'}
+              placeholder="what it means"
             />
           </Field>
         </FieldRow>
@@ -181,7 +188,7 @@ export function VocabPickerSheet({
           variant="secondary"
           full
           onClick={addAndChoose}
-          disabled={!newRu.trim() || addVocab.isPending}
+          disabled={!newTerm.trim() || addVocab.isPending}
         >
           <Plus size={14} /> Add it to the dictionary
         </Button>
