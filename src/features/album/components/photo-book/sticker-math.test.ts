@@ -14,6 +14,7 @@ import {
   shapeRatio,
   shapedWidth,
   snapAngle,
+  stepOrder,
   stickerWidth,
 } from './sticker-math';
 
@@ -279,5 +280,62 @@ describe('shapedWidth', () => {
     const a = shapedWidth('natural', 3000, 2000);
     const b = shapedWidth('natural', 2000, 3000);
     expect(area(a, 1.5)).toBeCloseTo(area(b, 2 / 3), 6);
+  });
+});
+
+describe('stepOrder', () => {
+  const page = (n: number) =>
+    Array.from({ length: n }, (_, i) => ({
+      id: `s${i}`,
+      z: i * 10, // sparse, the way real depths drift
+      created_at: `2026-01-0${i + 1}`,
+    }));
+
+  it('moves one place, not all the way', () => {
+    const list = page(5); // s0 at the back … s4 in front
+    const rows = stepOrder(list, 's1', 1);
+    const after = orderStickers(
+      list.map((s) => ({ ...s, z: rows.find((r) => r.id === s.id)?.z ?? s.z }))
+    ).map((s) => s.id);
+    expect(after).toEqual(['s0', 's2', 's1', 's3', 's4']);
+  });
+
+  it('goes the other way too', () => {
+    const list = page(5);
+    const rows = stepOrder(list, 's3', -1);
+    const after = orderStickers(
+      list.map((s) => ({ ...s, z: rows.find((r) => r.id === s.id)?.z ?? s.z }))
+    ).map((s) => s.id);
+    expect(after).toEqual(['s0', 's1', 's3', 's2', 's4']);
+  });
+
+  it('can reach any arrangement, one press at a time', () => {
+    let list = page(4);
+    // Walk the back-most sticker all the way to the front.
+    for (let i = 0; i < 3; i++) {
+      const rows = stepOrder(list, 's0', 1);
+      list = list.map((s) => ({
+        ...s,
+        z: rows.find((r) => r.id === s.id)?.z ?? s.z,
+      }));
+    }
+    expect(orderStickers(list).map((s) => s.id)).toEqual([
+      's1',
+      's2',
+      's3',
+      's0',
+    ]);
+  });
+
+  it('does nothing at the ends', () => {
+    const list = page(3);
+    expect(stepOrder(list, 's0', -1)).toEqual([]);
+    expect(stepOrder(list, 's2', 1)).toEqual([]);
+    expect(stepOrder(list, 'nope', 1)).toEqual([]);
+  });
+
+  it('tidies the sparse depths while it is there', () => {
+    const rows = stepOrder(page(4), 's1', 1);
+    for (const r of rows) expect(r.z).toBeLessThan(4);
   });
 });
