@@ -16,6 +16,13 @@ import '@fontsource/cormorant-garamond/latin-700.css';
 import '@fontsource/cormorant-garamond/latin-400-italic.css';
 import '@fontsource/cormorant-garamond/latin-500-italic.css';
 import '@fontsource/cormorant-garamond/latin-600-italic.css';
+// The handwriting face. `--font-hand` named a font nobody had ever installed,
+// so every "handwritten" caption in the album quietly came out as Cormorant.
+// Cyrillic too: her captions are in Russian and Caveat covers them.
+import '@fontsource/caveat/latin-400.css';
+import '@fontsource/caveat/latin-600.css';
+import '@fontsource/caveat/cyrillic-400.css';
+import '@fontsource/caveat/cyrillic-600.css';
 import './index.css';
 import { App } from './app/App';
 
