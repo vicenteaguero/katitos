@@ -1,5 +1,6 @@
 import { forwardRef } from 'react';
 import { cn } from '@kernel/lib';
+import { KatitosMark } from '@kernel/ui';
 import type { AlbumBook, CoverMaterial } from '../../types';
 import { bookSpan } from '../../lib/book-span';
 
@@ -44,8 +45,12 @@ export const CoverFace = forwardRef<
         )}
         <span className="pb-cover-plate" aria-hidden="true" />
         {back ? (
+          // Stamped in gilt, big, the way a binder's mark goes on a back
+          // board. The gradient it paints with is defined once in `ShapeDefs`
+          // — an SVG paint server is document-scoped, so it reaches across
+          // from there into this entirely separate <svg>.
           <span className="pb-cover-mark">
-            <span className="pb-title">К</span>
+            <KatitosMark className="pb-cover-logo" fill="url(#pb-gilt-grad)" />
           </span>
         ) : (
           <span className="pb-cover-text">
@@ -76,7 +81,7 @@ export const EndPaper = forwardRef<HTMLDivElement, { paper?: string }>(
 );
 
 /**
- * The one shape CSS cannot describe on its own.
+ * The paints CSS cannot describe on its own: the heart clip and the gilt.
  *
  * `clip-path: path()` does not scale with its element, so a heart has to come
  * from an SVG clipPath in objectBoundingBox units. It is mounted ONCE, at the
@@ -91,6 +96,15 @@ export function ShapeDefs() {
         <clipPath id="pb-heart" clipPathUnits="objectBoundingBox">
           <path d="M0.5,1 C0.5,1 0.02,0.66 0.02,0.34 C0.02,0.13 0.18,0.02 0.33,0.02 C0.42,0.02 0.47,0.08 0.5,0.14 C0.53,0.08 0.58,0.02 0.67,0.02 C0.82,0.02 0.98,0.13 0.98,0.34 C0.98,0.66 0.5,1 0.5,1 Z" />
         </clipPath>
+        {/* Real gilt, not flat gold: the highlight running across the middle
+            is what makes stamped foil look stamped. */}
+        <linearGradient id="pb-gilt-grad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#9c7a2e" />
+          <stop offset="42%" stopColor="#e4c36a" />
+          <stop offset="52%" stopColor="#fff1c9" />
+          <stop offset="62%" stopColor="#e4c36a" />
+          <stop offset="100%" stopColor="#9c7a2e" />
+        </linearGradient>
       </defs>
     </svg>
   );
