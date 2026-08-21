@@ -52,6 +52,35 @@ export function needsNormalize(zs: readonly number[]): boolean {
   return zs.some((z) => Math.abs(z) > Z_LIMIT);
 }
 
+/**
+ * Move ONE sticker a single step through the stack.
+ *
+ * Front and back in one jump is a blunt instrument: with ten things on a page
+ * the only arrangements you can reach are "this one on top" and "this one at
+ * the bottom", and getting something to sit between two others is impossible.
+ * A step at a time can reach any order at all, and it is undoable by pressing
+ * the other button once.
+ *
+ * Returns ONLY the rows whose depth actually changed — an empty list when the
+ * sticker is already at that end. Depths come back normalised to 0..n-1, so
+ * the sparse comparator gets tidied up for free every time.
+ */
+export function stepOrder<T extends Stackable>(
+  list: readonly T[],
+  id: string,
+  dir: 1 | -1
+): { id: string; z: number }[] {
+  const ordered = orderStickers(list);
+  const at = ordered.findIndex((s) => s.id === id);
+  const to = at + dir;
+  if (at < 0 || to < 0 || to >= ordered.length) return [];
+  const swapped = [...ordered];
+  [swapped[at], swapped[to]] = [swapped[to], swapped[at]];
+  return swapped
+    .map((s, i) => ({ id: s.id, z: i }))
+    .filter((row, i) => ordered[i].id !== row.id || ordered[i].z !== row.z);
+}
+
 /** Re-number a page 0..n-1 in its current visual order. Nothing moves. */
 export function normalizeZ<T extends Stackable>(
   list: readonly T[]
