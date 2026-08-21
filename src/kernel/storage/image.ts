@@ -148,13 +148,18 @@ export async function imageSize(
  */
 export async function tinyPlaceholder(
   blob: Blob,
-  maxDim = 24
+  maxDim = 16
 ): Promise<string | null> {
   try {
-    const small = await downscaleImage(blob, { maxDim, quality: 0.5 });
+    // Sixteen pixels, and low quality on purpose: it is going to be blurred
+    // to nothing anyway, and Safari cannot canvas-encode WebP, so on her phone
+    // every one of these is a JPEG — which is roughly twice the size for the
+    // same picture. Three hundred photos have to fit in a query response AND
+    // in a localStorage snapshot beside everything else in the app.
+    const small = await downscaleImage(blob, { maxDim, quality: 0.4 });
     // A placeholder that is not tiny is not a placeholder — it would be dead
     // weight in every page query and in the persisted cache behind it.
-    if (small.size > 2000) return null;
+    if (small.size > 900) return null;
     return await new Promise<string | null>((resolve) => {
       const reader = new FileReader();
       reader.onload = () =>
