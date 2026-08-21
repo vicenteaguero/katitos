@@ -1,7 +1,7 @@
 import {
-  ArrowDownToLine,
-  ArrowUpToLine,
   Check,
+  ChevronDown,
+  ChevronUp,
   Crop,
   Palette,
   Trash2,
@@ -57,11 +57,12 @@ export function StickerToolbar({
 
   return (
     <div className="pb-toolbar" role="toolbar" aria-label="Sticker">
-      <Tool label="Bring to front" onClick={onFront}>
-        <ArrowUpToLine className="h-4 w-4" />
+      {/* One place at a time, not all the way — see `stepOrder`. */}
+      <Tool label="Forward one" onClick={onFront}>
+        <ChevronUp className="h-4 w-4" />
       </Tool>
-      <Tool label="Send to back" onClick={onBack}>
-        <ArrowDownToLine className="h-4 w-4" />
+      <Tool label="Back one" onClick={onBack}>
+        <ChevronDown className="h-4 w-4" />
       </Tool>
       {!isText && (
         <Tool label="Move the picture in its frame" onClick={onCrop}>
