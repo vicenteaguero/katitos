@@ -133,3 +133,36 @@ export async function imageSize(
     img.release();
   }
 }
+
+/**
+ * A postage-stamp of a photo, small enough to live in a database row.
+ *
+ * Twenty-four pixels across, encoded as a data URI: three or four hundred bytes
+ * that arrive WITH the page, before anything has been signed for or fetched.
+ * Blown up and blurred by CSS it is the shape and the colours of the picture —
+ * enough that a page is never a grid of empty grey holes while the real
+ * photographs land, including offline and on the very first open.
+ *
+ * Best-effort like the proxy: if the browser cannot encode it, we simply have
+ * no placeholder, which is exactly what we had before.
+ */
+export async function tinyPlaceholder(
+  blob: Blob,
+  maxDim = 24
+): Promise<string | null> {
+  try {
+    const small = await downscaleImage(blob, { maxDim, quality: 0.5 });
+    // A placeholder that is not tiny is not a placeholder — it would be dead
+    // weight in every page query and in the persisted cache behind it.
+    if (small.size > 2000) return null;
+    return await new Promise<string | null>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () =>
+        resolve(typeof reader.result === 'string' ? reader.result : null);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(small);
+    });
+  } catch {
+    return null;
+  }
+}
