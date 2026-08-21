@@ -500,6 +500,32 @@
   transform: translateZ(0);
 }
 
+/* The mount, cut to follow the picture. Only the shapes that are not
+   rectangles need it — and never instant film, whose plate IS a rectangle. */
+.pb-fshape-circle:not(.pb-frame-polaroid) {
+  border-radius: 50%;
+}
+.pb-fshape-arch:not(.pb-frame-polaroid) {
+  border-radius: 50% 50% 8px 8px / 58% 58% 8px 8px;
+}
+.pb-fshape-heart:not(.pb-frame-polaroid) {
+  clip-path: url(#pb-heart);
+}
+.pb-fshape-torn:not(.pb-frame-polaroid) {
+  -webkit-mask-image: var(--pb-torn);
+  mask-image: var(--pb-torn);
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+}
+/* A round photo mounted on a round card wants the same margin all the way
+   round it, not a deeper chin. */
+.pb-fshape-circle.pb-frame-plain,
+.pb-fshape-circle.pb-frame-white,
+.pb-fshape-heart.pb-frame-plain,
+.pb-fshape-heart.pb-frame-white {
+  padding: 6px;
+}
+
 /* ── The cut of the window ────────────────────────────────────────────────
    `clip-path` and `border-radius` only — no `path()`, which does not scale
    with the element, and no images to download. */
@@ -925,6 +951,15 @@
   border-radius: 12px;
   transition: background 120ms ease;
 }
+/* One fixed box for every preview, whatever it contains. Film is taller than
+   the rest, and letting it set its own height knocked that whole row's labels
+   out of line with the others. */
+.pb-swatch > :first-child {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+}
 .pb-swatch--on {
   background: rgba(228, 195, 106, 0.14);
   box-shadow: inset 0 0 0 1px rgba(228, 195, 106, 0.5);
@@ -950,7 +985,13 @@
 }
 .pb-swatch-frame {
   display: block;
+  width: auto;
+  height: auto;
   background: var(--pb-mount, #fdfaf4);
+}
+.pb-swatch-frame .pb-swatch-photo {
+  width: 34px;
+  height: 34px;
 }
 .pb-swatch-color {
   display: block;
