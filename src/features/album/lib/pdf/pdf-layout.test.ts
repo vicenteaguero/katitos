@@ -143,3 +143,35 @@ describe('filmLayout', () => {
     expect(plate.h).toBeGreaterThan(plate.w);
   });
 });
+
+describe('layoutSticker with a shape', () => {
+  it('prints a shaped photo as the shape, not as the photograph', () => {
+    const wide = {
+      x: 0.5,
+      y: 0.5,
+      scale: 1,
+      rotation: 0,
+      width: 3000,
+      height: 2000,
+    };
+    const asIs = layoutSticker({ ...wide, shape: 'natural' });
+    const round = layoutSticker({ ...wide, shape: 'circle' });
+    // A circle is square: same width and height.
+    expect(round.w).toBeCloseTo(round.h, 6);
+    // …and narrower than the landscape it was cut out of.
+    expect(round.w).toBeLessThan(asIs.w);
+  });
+
+  it('keeps the arch upright', () => {
+    const box = layoutSticker({
+      x: 0.5,
+      y: 0.5,
+      scale: 1,
+      rotation: 0,
+      width: 3000,
+      height: 2000,
+      shape: 'arch',
+    });
+    expect(box.w / box.h).toBeCloseTo(0.75, 6);
+  });
+});
