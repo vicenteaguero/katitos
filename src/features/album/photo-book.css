@@ -476,6 +476,29 @@
   bottom: -6px;
   transform: rotate(-24deg);
 }
+/* A corner is only a corner on something with corners. Taped across the top
+   and bottom of a circle, an arch or a heart the strips sit ON the picture;
+   at the corners of its bounding box they floated in bare paper an inch away
+   from the photograph they were supposed to be holding. */
+.pb-fshape-circle.pb-frame-tape::before,
+.pb-fshape-arch.pb-frame-tape::before,
+.pb-fshape-heart.pb-frame-tape::before {
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-5deg);
+}
+.pb-fshape-circle.pb-frame-tape::after,
+.pb-fshape-arch.pb-frame-tape::after,
+.pb-fshape-heart.pb-frame-tape::after {
+  right: auto;
+  bottom: -7px;
+  left: 50%;
+  transform: translateX(-50%) rotate(4deg);
+}
+/* A heart's bottom is a point, so one strip across the top is enough. */
+.pb-fshape-heart.pb-frame-tape::after {
+  display: none;
+}
 .pb-sticker--sel .pb-sticker-frame {
   box-shadow:
     0 0 0 2px var(--pb-gilt),
