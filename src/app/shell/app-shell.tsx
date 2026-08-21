@@ -3,12 +3,16 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@kernel/auth';
 import { useEnsurePushSubscription } from '@kernel/push';
-import { IconButton, TopBarSlotProvider, useTopBarSlot } from '@kernel/ui';
+import {
+  IconButton,
+  KatitosMark,
+  TopBarSlotProvider,
+  useTopBarSlot,
+} from '@kernel/ui';
 import { PresenceTracker, PartnerStatusDot } from '@features/presence';
 import { ExchangeIcon } from '@features/currency';
 import { LoginScreen } from './login';
 import { DevUserSwitcher } from './dev-switcher';
-import { KatitosMark } from './katitos-mark';
 import { BottomNav } from './nav';
 import { CacheWarmer } from './cache-warmer';
 import { SplashScreen } from './splash-screen';
