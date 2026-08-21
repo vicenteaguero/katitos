@@ -1,16 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import {
   computeLayout,
-  landscapeSpreads,
+  coverRest,
   isEndPaper,
+  landscapeSpreads,
   leafAfterFlip,
   leafCountFor,
   leafOfPage,
   padLeaves,
   pageOfLeaf,
   placeLeaf,
-  coverRest,
   restFor,
+  settleAfterBoard,
   slideDx,
 } from './book-geometry';
 
@@ -258,5 +259,41 @@ describe('restFor', () => {
     expect(restFor(placeLeaf(0, leafCount), -10, 99)).toBe(99);
     // …and the back cover on the left.
     expect(restFor(placeLeaf(leafCount - 1, leafCount), -10, 99)).toBe(-10);
+  });
+});
+
+describe('opening and closing a board', () => {
+  const leafCount = L(6); // [0] [1,2] [3,4] [5,6] [7]
+
+  it('lands on what the front cover was covering, then settles to page one', () => {
+    // Off the cover, StPageFlip reports the new spread's first leaf: 1.
+    const landed = leafAfterFlip(1, 0, leafCount);
+    expect(landed).toBe(2); // page two — the leaf the cover sat on top of
+    expect(
+      settleAfterBoard(placeLeaf(0, leafCount), placeLeaf(landed, leafCount))
+    ).toBe(1); // …and then across to page one
+  });
+
+  it('does the same in reverse off the back board', () => {
+    const back = leafCount - 1;
+    const landed = leafAfterFlip(leafCount - 3, back, leafCount);
+    expect(landed).toBe(leafCount - 3); // the leaf the board was lying on
+    expect(
+      settleAfterBoard(placeLeaf(back, leafCount), placeLeaf(landed, leafCount))
+    ).toBe(leafCount - 2);
+  });
+
+  it('has nothing to settle when a board is where you land', () => {
+    expect(
+      settleAfterBoard(placeLeaf(1, leafCount), placeLeaf(0, leafCount))
+    ).toBeNull();
+  });
+
+  it('leaves an ordinary page turn exactly as it was', () => {
+    expect(leafAfterFlip(3, 2, leafCount)).toBe(3); // forward
+    expect(leafAfterFlip(1, 3, leafCount)).toBe(2); // back, from the right
+    expect(
+      settleAfterBoard(placeLeaf(2, leafCount), placeLeaf(3, leafCount))
+    ).toBeNull();
   });
 });
