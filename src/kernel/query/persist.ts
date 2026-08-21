@@ -16,7 +16,11 @@ import { dehydrate, hydrate, type QueryClient } from '@tanstack/react-query';
 //        (placements). A v2 snapshot would paint a page with no `stickers`
 //        array at all, and the book iterates it during render — so the first
 //        open after the update would throw instead of showing the album.
-const KEY = 'katitos:rq-cache:v3';
+//   v4 — the albums were wiped and rebuilt: placements gained a shape, a crop
+//        and a mount, books gained a material and a paper. A v3 snapshot would
+//        paint the deleted books back onto the shelf, with pages made of
+//        columns that no longer describe how anything looks.
+const KEY = 'katitos:rq-cache:v4';
 const MAX_AGE = 24 * 60 * 60 * 1000; // a day — older snapshots are dropped
 const WRITE_DEBOUNCE = 1000;
 
