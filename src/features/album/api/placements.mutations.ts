@@ -9,9 +9,12 @@ import { useUserId } from '@kernel/auth';
 import { toast } from '@kernel/ui';
 import type {
   AlbumPageWithPhotos,
+  AlbumPhoto,
+  FrameColor,
   PlacedSticker,
   StickerFont,
   StickerFrame,
+  StickerShape,
 } from '../types';
 import {
   needsNormalize,
@@ -40,10 +43,20 @@ function patchSticker(
   const key = qk.album.pages(bookId);
   const before = qc.getQueryData<Pages>(key);
   qc.setQueryData<Pages>(key, (pages) =>
-    pages?.map((p) => ({
-      ...p,
-      stickers: p.stickers.map((s) => (s.id === id ? { ...s, ...patch } : s)),
-    }))
+    // ONLY the page that actually changed gets a new object. Cloning every
+    // page — which `pages.map(p => ({...p}))` did — broke `PageFace`'s memo for
+    // all of them at once, so `flipPages` came back all-new and StPageFlip
+    // re-ran its layout for the whole book on every single drag release.
+    pages?.map((p) =>
+      p.stickers.some((s) => s.id === id)
+        ? {
+            ...p,
+            stickers: p.stickers.map((s) =>
+              s.id === id ? { ...s, ...patch } : s
+            ),
+          }
+        : p
+    )
   );
   return before;
 }
@@ -70,6 +83,9 @@ export function useMoveSticker() {
       scale?: number;
       rotation?: number;
     }) => {
+      // Still landing: it has no row to update yet, and the screen already
+      // shows where it went.
+      if (isPending(v.id)) return;
       const patch: {
         x: number;
         y: number;
@@ -110,6 +126,7 @@ export function useRestack() {
       pageId: string;
       to: 'front' | 'back';
     }) => {
+      if (isPending(v.id)) return 0;
       // Read the depths and patch the cache in ONE place. Splitting this across
       // `onMutate` and here meant the second read saw the first one's optimistic
       // write and picked a depth one higher — so the screen and the database
@@ -152,22 +169,31 @@ export function useRestack() {
   });
 }
 
-/** Caption, words, frame, font — everything about how a sticker looks. */
+/** Everything about how a sticker looks — words, cut, mount and crop. */
+export interface StickerStyle {
+  caption?: string | null;
+  body?: string | null;
+  frame?: StickerFrame;
+  frame_color?: FrameColor;
+  shape?: StickerShape;
+  crop_x?: number;
+  crop_y?: number;
+  crop_zoom?: number;
+  font_family?: StickerFont;
+  font_size?: number;
+  font_weight?: number;
+}
+
+/** Caption, words, frame, font, shape, crop — how a sticker looks. */
 export function useStyleSticker() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (v: {
       id: string;
       bookId: string;
-      patch: {
-        caption?: string | null;
-        body?: string | null;
-        frame?: StickerFrame;
-        font_family?: StickerFont;
-        font_size?: number;
-        font_weight?: number;
-      };
+      patch: StickerStyle;
     }) => {
+      if (isPending(v.id)) return;
       const { error } = await supabase
         .from('album_placements')
         .update(v.patch)
@@ -190,7 +216,21 @@ export function useStyleSticker() {
   });
 }
 
-/** Put a library photo (or a new line of text) on a page, in front. */
+/**
+ * A sticker that only exists on this phone, for the moment between the tap and
+ * the database agreeing. Recognisable so nothing tries to move or delete it.
+ */
+const PENDING = 'pending:';
+export const isPending = (id: string) => id.startsWith(PENDING);
+
+/** Put a library photo (or a new line of text) on a page, in front.
+ *
+ * OPTIMISTIC, because this is the tap you make two hundred times while
+ * building a book. It used to invalidate the whole book on success — a full
+ * refetch and a StPageFlip re-initialisation per photo placed, which is why
+ * filling a page felt like wading. The sticker appears at once and the real
+ * row quietly replaces it.
+ */
 export function usePlaceSticker() {
   const qc = useQueryClient();
   const userId = useUserId();
@@ -199,10 +239,13 @@ export function usePlaceSticker() {
       bookId: string;
       pageId: string;
       photoId?: string;
+      photo?: AlbumPhoto | null;
       body?: string;
       x?: number;
       y?: number;
       rotation?: number;
+      z?: number;
+      tempId?: string;
     }) => {
       const { data, error } = await supabase
         .from('album_placements')
@@ -214,17 +257,78 @@ export function usePlaceSticker() {
           x: v.x ?? 0.5,
           y: v.y ?? 0.5,
           rotation: v.rotation ?? 0,
-          z: nextZFront(depthsOnPage(qc, v.bookId, v.pageId)),
+          z: v.z ?? nextZFront(depthsOnPage(qc, v.bookId, v.pageId)),
           ...(userId ? { created_by: userId } : {}),
         })
-        .select('id')
+        .select('*, photo:album_photos(*)')
         .single();
       if (error) throw error;
-      return data.id as string;
+      return data as PlacedSticker;
     },
-    onError: (e: Error) => toast.error(e.message),
-    onSuccess: (_id, v) =>
-      void qc.invalidateQueries({ queryKey: qk.album.pages(v.bookId) }),
+    onMutate: (v) => {
+      const key = qk.album.pages(v.bookId);
+      const previous = qc.getQueryData<Pages>(key);
+      const tempId =
+        v.tempId ?? `${PENDING}${Math.random().toString(36).slice(2)}`;
+      const now = new Date().toISOString();
+      const optimistic = {
+        id: tempId,
+        page_id: v.pageId,
+        photo_id: v.photoId ?? null,
+        photo: v.photo ?? null,
+        kind: v.photoId ? 'photo' : 'text',
+        body: v.body ?? null,
+        caption: null,
+        x: v.x ?? 0.5,
+        y: v.y ?? 0.5,
+        scale: 1,
+        rotation: v.rotation ?? 0,
+        z: v.z ?? nextZFront(depthsOnPage(qc, v.bookId, v.pageId)),
+        frame: 'plain',
+        frame_color: 'cream',
+        shape: 'natural',
+        crop_x: 0.5,
+        crop_y: 0.5,
+        crop_zoom: 1,
+        font_family: 'display',
+        font_size: 0.06,
+        font_weight: 600,
+        created_by: userId ?? '',
+        created_at: now,
+        updated_at: now,
+      } as PlacedSticker;
+      qc.setQueryData<Pages>(key, (pages) =>
+        pages?.map((p) =>
+          p.id === v.pageId
+            ? { ...p, stickers: [...p.stickers, optimistic] }
+            : p
+        )
+      );
+      return { previous, tempId };
+    },
+    onError: (e: Error, v, ctx) => {
+      if (ctx?.previous)
+        qc.setQueryData(qk.album.pages(v.bookId), ctx.previous);
+      toast.error(e.message);
+    },
+    onSuccess: (row, v, ctx) => {
+      // Swap the stand-in for the real row IN PLACE — no refetch, so the book
+      // never re-initialises and the page you are looking at does not blink.
+      qc.setQueryData<Pages>(qk.album.pages(v.bookId), (pages) =>
+        pages?.map((p) =>
+          p.id === v.pageId
+            ? {
+                ...p,
+                stickers: p.stickers.map((s) =>
+                  s.id === ctx?.tempId
+                    ? { ...row, photo: v.photo ?? row.photo }
+                    : s
+                ),
+              }
+            : p
+        )
+      );
+    },
   });
 }
 
@@ -240,6 +344,7 @@ export function useUnplaceSticker() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (v: { sticker: PlacedSticker; bookId: string }) => {
+      if (isPending(v.sticker.id)) return;
       const { error } = await supabase
         .from('album_placements')
         .delete()
@@ -271,11 +376,30 @@ export function useRestoreSticker() {
   return useMutation({
     mutationFn: async (v: { sticker: PlacedSticker; bookId: string }) => {
       const { photo: _photo, ...row } = v.sticker;
-      const { error } = await supabase.from('album_placements').insert(row);
+      // Upsert, not insert: Undo is a button you can press twice, and the
+      // second press used to throw a duplicate-key error at you.
+      const { error } = await supabase
+        .from('album_placements')
+        .upsert(row, { onConflict: 'id' });
       if (error) throw error;
     },
-    onError: (e: Error) => toast.error(e.message),
-    onSuccess: (_d, v) =>
-      void qc.invalidateQueries({ queryKey: qk.album.pages(v.bookId) }),
+    onMutate: (v) => {
+      const key = qk.album.pages(v.bookId);
+      const previous = qc.getQueryData<Pages>(key);
+      qc.setQueryData<Pages>(key, (pages) =>
+        pages?.map((p) =>
+          p.id === v.sticker.page_id &&
+          !p.stickers.some((s) => s.id === v.sticker.id)
+            ? { ...p, stickers: [...p.stickers, v.sticker] }
+            : p
+        )
+      );
+      return { previous };
+    },
+    onError: (e: Error, v, ctx) => {
+      if (ctx?.previous)
+        qc.setQueryData(qk.album.pages(v.bookId), ctx.previous);
+      toast.error(e.message);
+    },
   });
 }
