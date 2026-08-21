@@ -8,7 +8,7 @@ import {
   type CSSProperties,
   type ReactNode,
 } from 'react';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import HTMLFlipBook from 'react-pageflip';
 import { useDrag } from '@use-gesture/react';
 import {
@@ -28,7 +28,6 @@ import {
   Button,
   Empty,
   Input,
-  LoadingScreen,
   Sheet,
   toast,
   useTopBarAction,
@@ -46,6 +45,7 @@ import {
   usePages,
 } from '../../api/photo-book.queries';
 import { useAddPage } from '../../api/photo-book.mutations';
+import { usePlacementSync } from '../../api/placements.realtime';
 import {
   useBulkAddToLibrary,
   useDeleteFromLibrary,
@@ -59,12 +59,24 @@ import {
 } from '../../api/placements.mutations';
 import { AlbumSettingsSheet } from '../album-settings-sheet';
 import { PageFace } from './page-face';
+import { CoverFace, EndPaper, ShapeDefs } from './cover-face';
 import { LibraryStrip } from './library-strip';
+import { LibrarySheet } from './library-sheet';
 import { LibraryUploadSheet } from './library-upload-sheet';
 import { StickerToolbar } from './sticker-toolbar';
+import { StickerStyleSheet } from './sticker-style-sheet';
 import { TextStyleSheet } from './text-style-sheet';
 import { usePdfBridge } from './use-pdf-bridge';
-import { computeLayout, restFor, slideDx, stepCrossing } from './book-geometry';
+import {
+  computeLayout,
+  leafAfterFlip,
+  leafCountFor,
+  padLeaves,
+  placeLeaf,
+  restFor,
+  slideDx,
+  stepCrossing,
+} from './book-geometry';
 import { dropSpot } from './sticker-math';
 import '../../photo-book.css';
 
@@ -129,23 +141,38 @@ interface FlipBookRef {
 /** One paper leaf — ref-forwarded so StPageFlip can grab the DOM node. */
 const FlipPage = forwardRef<
   HTMLDivElement,
-  { page: AlbumPageWithPhotos; bookId: string; urls: Map<string, string> }
->(function FlipPage({ page, bookId, urls }, ref) {
+  {
+    page: AlbumPageWithPhotos;
+    bookId: string;
+    urls: Map<string, string>;
+    paper: string;
+    eager: boolean;
+  }
+>(function FlipPage({ page, bookId, urls, paper, eager }, ref) {
   return (
-    <div className="pb-page-host" ref={ref}>
-      <PageFace page={page} bookId={bookId} interactive={false} urls={urls} />
+    <div className={cn('pb-page-host', `pb-paper-${paper}`)} ref={ref}>
+      <PageFace
+        page={page}
+        bookId={bookId}
+        interactive={false}
+        eager={eager}
+        urls={urls}
+      />
     </div>
   );
 });
 
 /**
- * The shared photo-book engine — a wine-bound, double-page open book rendered as
- * ONE PIECE (cover + both pages) that is WIDER than the screen. You see one full
- * page + a peek of the facing page. Each focused page is split down the middle:
- * the OUTER half gives StPageFlip's native finger-curl (`useMouseEvents`), the
- * SPINE half is a transparent overlay that SLIDES the piece between the two
- * pages of a spread. Left page → [ curl | slide ]; right page → [ slide | curl ].
- * The two never fight — ownership is decided by which half the touch starts on.
+ * The shared photo-book engine — a wine-bound book with real boards at each
+ * end, rendered as ONE PIECE (case + both pages) that is WIDER than the screen.
+ * You see one full page + a peek of the facing page. Each focused page is split
+ * down the middle: the OUTER half gives StPageFlip's native finger-curl
+ * (`useMouseEvents`), the SPINE half is a transparent overlay that SLIDES the
+ * piece between the two pages of a spread. The two never fight — ownership is
+ * decided by which half the touch starts on. A cover has no facing page, so it
+ * simply turns.
+ *
+ * `index` is a LEAF, not a page: leaf 0 is the front cover, leaf N+1 the back.
  * `read` shows the book; `arrange` swaps it for a single-page editor.
  */
 export function PhotoBook3D(props: PhotoBook3DProps) {
@@ -159,35 +186,52 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
   const byId = useBookById(props.bookId);
   const book = props.bookId ? byId.data : byScope.data;
   const bookLoading = props.bookId ? byId.isLoading : byScope.isLoading;
+  const bookError = props.bookId ? byId.error : byScope.error;
+  // `maybeSingle` resolves to null for a book that no longer exists — a stale
+  // link, or the partner deleting the one you had open. That is a real answer,
+  // not a loading state, and it used to spin forever.
+  const bookGone = props.bookId ? !byId.isLoading && byId.data === null : false;
   const bookId = book?.id;
   const { data: pages, isLoading: pagesLoading } = usePages(bookId);
+  const paper = book?.paper ?? 'cream';
 
   useTableSync('album_pages', bookId ? qk.album.pages(bookId) : [], {
     filter: bookId ? `book_id=eq.${bookId}` : undefined,
     enabled: !!bookId,
   });
-  // Both filtered to THIS book: unfiltered, any change in any album refetched
-  // whichever book happened to be open.
-  useTableSync('album_placements', bookId ? qk.album.pages(bookId) : [], {
-    enabled: !!bookId,
-  });
+  // Placements can't be filtered server-side and Postgres echoes our own
+  // writes, so this one needs to think before it invalidates.
+  usePlacementSync(bookId, pages);
   useTableSync('album_photos', bookId ? qk.album.library(bookId) : [], {
     filter: bookId ? `book_id=eq.${bookId}` : undefined,
     enabled: !!bookId,
   });
 
-  // `index` = the page being read; its spread + side decide where the piece sits.
+  // `index` = the LEAF being read; its spread + side decide where the piece sits.
   const [index, setIndex] = useState(0);
   const [mode, setMode] = useState<'read' | 'arrange'>('read');
   const navigate = useNavigate();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [croppingId, setCroppingId] = useState<string | null>(null);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
   const [styleFor, setStyleFor] = useState<PlacedSticker | null>(null);
+  const [dressFor, setDressFor] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [drag, setDrag] = useState<{ active: boolean; dx: number }>({
     active: false,
     dx: 0,
   });
+  /**
+   * Where the case is heading while a board is turning.
+   *
+   * A hard cover rotates about the spine across BOTH halves of the case, and
+   * `onFlip` only fires when the animation ends — so sliding the piece
+   * afterwards made opening the book a two-beat, 1.1-second affair. The slide
+   * starts with the turn instead.
+   */
+  const [slideAhead, setSlideAhead] = useState<number | null>(null);
+  const flippingRef = useRef(false);
   const bookRef = useRef<FlipBookRef | null>(null);
   const vpRef = useRef<HTMLDivElement | null>(null);
   const controlsRef = useRef<HTMLDivElement | null>(null);
@@ -270,19 +314,22 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
     computeRef.current?.();
   }, [mode]);
 
-  const count = pages?.length ?? 0;
-  const focused = Math.min(Math.max(index, 0), Math.max(0, count - 1));
+  const pageCount = pages?.length ?? 0;
+  const leafCount = leafCountFor(pageCount);
+  const focused = Math.min(Math.max(index, 0), Math.max(0, leafCount - 1));
+  const place3 = useMemo(
+    () => placeLeaf(focused, leafCount),
+    [focused, leafCount]
+  );
+  /** The paper page this leaf shows — null on either cover, or the endpaper. */
+  const currentPage =
+    focused >= 1 && focused <= pageCount
+      ? (pages?.[focused - 1] ?? null)
+      : null;
 
   // Live mirror so the stable onFlip handler always reads the latest values.
-  const liveRef = useRef({ pages, focused, count });
-  liveRef.current = { pages, focused, count };
-
-  // Keep StPageFlip's spread aligned to the focused page after a data change
-  // (which re-runs updateFromHtml and can reset it).
-  useEffect(() => {
-    if (mode === 'read') bookRef.current?.pageFlip()?.turnToPage(focused);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pages]);
+  const liveRef = useRef({ pages, focused, leafCount });
+  liveRef.current = { pages, focused, leafCount };
 
   /**
    * Sign every photo in the book in ONE request per bucket.
@@ -322,6 +369,15 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
     proxy: true,
   });
 
+  const coverPaths = useMemo(
+    () => (book?.cover_path ? [book.cover_path] : []),
+    [book?.cover_path]
+  );
+  const coverUrls = useSignedUrls(BUCKETS.album, coverPaths, { proxy: true });
+  const coverUrl = book?.cover_path
+    ? coverUrls.data?.get(book.cover_path)
+    : undefined;
+
   // The strip's own thumbnails, signed separately and only while it is on
   // screen — it is hidden while reading, so there is nothing to sign then.
   const libraryPaths = useMemo(
@@ -331,7 +387,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
   );
   const stripUrls = useSignedUrls(BUCKETS.album, libraryPaths, {
     proxy: true,
-    enabled: mode === 'arrange',
+    enabled: mode === 'arrange' || libraryOpen,
   });
 
   const urlFor = useCallback(
@@ -373,12 +429,12 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
    *
    * The signed-URL Map has no meaningful order, so the order has to be built
    * here — nearest pages first, because those are the ones about to be turned
-   * to.
+   * to. Leaf indices, shifted by the cover.
    */
   const prefetch = useMemo(() => {
     const out: string[] = [];
-    for (let i = focused - 1; i <= focused + 2; i++) {
-      const p = pages?.[i];
+    for (let leaf = focused - 2; leaf <= focused + 3; leaf++) {
+      const p = pages?.[leaf - 1];
       if (!p) continue;
       for (const st of p.stickers) {
         const url = urlFor(st.photo);
@@ -391,26 +447,65 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
 
   usePdfBridge(pages, book?.title ?? 'album');
 
-  const flipPages = useMemo(
-    () =>
-      (pages ?? []).map((p) => (
+  const flipPages = useMemo(() => {
+    if (!book) return [];
+    const leaves: ReactNode[] = [
+      <CoverFace key="cover-front" book={book} coverUrl={coverUrl} />,
+    ];
+    (pages ?? []).forEach((p, i) => {
+      leaves.push(
         <FlipPage
           key={p.id}
           page={p}
           bookId={bookId ?? ''}
+          paper={paper}
+          // The spread you are actually looking at gets its photographs now;
+          // everything else can wait its turn.
+          eager={Math.abs(i + 1 - focused) <= 1}
           urls={pageUrls.get(p.id) ?? EMPTY_URLS}
         />
-      )),
-    [pages, bookId, pageUrls]
-  );
+      );
+    });
+    // Keeps the leaf count even so the back board flips alone. Without it
+    // StPageFlip pairs the back cover with the last photograph AND turns that
+    // photograph into a rigid board.
+    if (padLeaves(pageCount)) leaves.push(<EndPaper key="pad" paper={paper} />);
+    leaves.push(<CoverFace key="cover-back" book={book} back />);
+    return leaves;
+    // `focused` deliberately excluded: eagerness is a hint, and rebuilding
+    // every leaf on every page turn is the thing this whole file avoids.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pages, bookId, pageUrls, book, coverUrl, paper, pageCount]);
 
   // StPageFlip drives the curl natively; when it lands on a new spread it tells
-  // us here so our sliding-window track + overlay re-sync. A backward flip
-  // enters the previous spread from its RIGHT page (sliding-window continuity).
+  // us here so our sliding-window track + overlay re-sync. `e.data` is the
+  // FIRST LEAF of the new spread, so a backward flip enters the previous spread
+  // from its RIGHT page (sliding-window continuity).
   const onFlipped = useCallback((e: { data: number }) => {
-    const spread = e.data;
-    const { focused: f, count: c } = liveRef.current;
-    setIndex(spread < f ? Math.min(spread + 1, c - 1) : spread);
+    const { focused: f, leafCount: lc } = liveRef.current;
+    flippingRef.current = false;
+    setSlideAhead(null);
+    setIndex(leafAfterFlip(e.data, f, lc));
+  }, []);
+
+  /**
+   * Start the case moving with the board, not after it.
+   *
+   * The only way out of a cover is a flip, so the direction is never in doubt:
+   * off the front board we are going forwards, off the back one backwards, and
+   * a paper page curls towards whichever edge it is not resting against.
+   */
+  const onChangeState = useCallback((e: { data: string }) => {
+    if (e.data !== 'flipping') {
+      if (e.data === 'read') flippingRef.current = false;
+      return;
+    }
+    flippingRef.current = true;
+    const { focused: f, leafCount: lc } = liveRef.current;
+    const p = placeLeaf(f, lc);
+    const dir = p.lone ? (f === 0 ? 1 : -1) : p.side === 'left' ? -1 : 1;
+    const target = Math.min(Math.max(f + dir, 0), lc - 1);
+    setSlideAhead(target);
   }, []);
 
   // Buttons: slide within a spread (CSS pan), or trigger the native curl across
@@ -418,8 +513,11 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
   const go = useCallback(
     (dir: 1 | -1) => {
       const t = focused + dir;
-      if (t < 0 || t > count - 1) return;
+      const lo = mode === 'arrange' ? 1 : 0;
+      const hi = mode === 'arrange' ? pageCount : leafCount - 1;
+      if (t < lo || t > hi) return;
       setSelectedId(null);
+      setCroppingId(null);
       // While arranging there is no flip book on screen — the editor shows one
       // page at a time — so turning is just moving the index. Without this the
       // arrows were dead the whole time you were editing, which is exactly
@@ -428,23 +526,36 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
         setIndex(t);
         return;
       }
-      if (stepCrossing(focused, dir)) {
+      if (stepCrossing(place3, dir)) {
+        setSlideAhead(t);
+        flippingRef.current = true;
         const pf = bookRef.current?.pageFlip();
         if (dir > 0) pf?.flipNext();
         else pf?.flipPrev();
       } else setIndex(t);
     },
-    [focused, count, mode]
+    [focused, leafCount, pageCount, mode, place3]
   );
+
+  // Keep StPageFlip's spread aligned to the focused leaf after a data change
+  // (which re-runs updateFromHtml and can reset it) — but NEVER mid-curl, or
+  // the book snaps back under your finger.
+  useEffect(() => {
+    if (mode === 'read' && !flippingRef.current) {
+      bookRef.current?.pageFlip()?.turnToPage(focused);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flipPages]);
 
   // The SLIDE overlay (spine half) owns its touches and pans the piece between
   // the two pages of the current spread, committing on release. The outer half
   // is left uncovered for StPageFlip's native curl.
   const slideBind = useDrag(
     ({ last, movement: [mx], velocity: [vx] }) => {
-      const even = focused % 2 === 0;
-      const t = even ? focused + 1 : focused - 1;
-      if (t < 0 || t > count - 1) return; // lone page — nothing to slide to
+      // A cover has nothing beside it to slide to.
+      if (place3.lone) return;
+      const t = place3.side === 'left' ? focused + 1 : focused - 1;
+      if (t < 0 || t > leafCount - 1) return;
       if (last) {
         setDrag({ active: false, dx: 0 });
         if (Math.abs(mx) > 40 || Math.abs(vx) > 0.4) setIndex(t);
@@ -452,30 +563,42 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
       }
       setDrag({
         active: true,
-        dx: slideDx(focused, mx, size.restL, size.restR),
+        dx: slideDx(place3, mx, size.restL, size.restR),
       });
     },
     { axis: 'x', filterTaps: true, pointer: { touch: true } }
   );
 
-  // Top-bar controls: photos in, text in, and the edit toggle.
-  const stickerRef = useRef({ pages, focused });
-  stickerRef.current = { pages, focused };
-
-  const currentPageId = pages?.[focused]?.id;
-
   const placeOnPage = useCallback(
     (photo: AlbumPhoto) => {
-      const { pages: ps, focused: f } = stickerRef.current;
-      const cur = ps?.[f];
+      const cur = liveRef.current.pages?.[liveRef.current.focused - 1];
       if (!cur || !bookId) return;
       // Beside whatever is already there, not on top of it.
       place.mutate({
         bookId,
         pageId: cur.id,
         photoId: photo.id,
+        photo,
         ...dropSpot(cur.stickers.length),
       });
+    },
+    [bookId, place]
+  );
+
+  const placeMany = useCallback(
+    (chosen: AlbumPhoto[]) => {
+      const cur = liveRef.current.pages?.[liveRef.current.focused - 1];
+      if (!cur || !bookId || !chosen.length) return;
+      const base = cur.stickers.length;
+      chosen.forEach((photo, i) =>
+        place.mutate({
+          bookId,
+          pageId: cur.id,
+          photoId: photo.id,
+          photo,
+          ...dropSpot(base + i),
+        })
+      );
     },
     [bookId, place]
   );
@@ -486,12 +609,18 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
 
   const toggleEdit = useCallback(() => {
     setSelectedId(null);
+    setCroppingId(null);
+    // There is nothing to arrange on a board. Offer what a cover is actually
+    // for instead of an empty editor.
+    if (!currentPage) {
+      setSettingsOpen(true);
+      return;
+    }
     setMode((m) => (m === 'arrange' ? 'read' : 'arrange'));
-  }, []);
+  }, [currentPage]);
 
   const submitText = useCallback(() => {
-    const { pages: ps, focused: f } = stickerRef.current;
-    const cur = ps?.[f];
+    const cur = liveRef.current.pages?.[liveRef.current.focused - 1];
     if (!cur || !textVal.trim() || !bookId) return;
     place.mutate(
       {
@@ -520,6 +649,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
     (sticker: PlacedSticker) => {
       if (!bookId) return;
       setSelectedId(null);
+      setCroppingId(null);
       unplace.mutate(
         { sticker, bookId },
         {
@@ -592,7 +722,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
         )}
       </button>
     </div>,
-    [mode]
+    [mode, toggleEdit]
   );
 
   if (props.scope === 'trip' && !props.tripId) {
@@ -604,44 +734,98 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
       />
     );
   }
-  if (bookLoading) {
-    return <LoadingScreen />;
-  }
-  if (bookLoading || pagesLoading || !pages || count === 0 || !bookId) {
-    return <LoadingScreen />;
+  if (bookGone || bookError) {
+    return (
+      <Empty
+        icon={<BookOpen />}
+        title={bookGone ? 'That album is gone' : "That album won't open"}
+        hint={
+          bookGone
+            ? 'It was taken off the shelf. The others are still there.'
+            : 'Something went wrong reaching it. Try again in a moment.'
+        }
+        action={
+          <Link to="/album">
+            <Button>Back to the shelf</Button>
+          </Link>
+        }
+      />
+    );
   }
 
   const arranging = mode === 'arrange';
-  const current = pages[focused];
-  const selected = current.stickers.find((st) => st.id === selectedId) ?? null;
+  const selected =
+    currentPage?.stickers.find((st) => st.id === selectedId) ?? null;
+  const cropping = !!croppingId;
+  const dressed =
+    currentPage?.stickers.find((st) => st.id === dressFor) ?? null;
   const placedOnPage = new Set(
-    current.stickers
+    (currentPage?.stickers ?? [])
       .map((st) => st.photo?.image_path)
       .filter((v): v is string => !!v)
   );
   const { pageW, trackW, restL, restR, vw, viewportH } = size;
   const pageH = Math.round(pageW * (4 / 3));
-  const rest = restFor(focused, restL, restR);
+  const restingOn =
+    slideAhead != null ? placeLeaf(slideAhead, leafCount) : place3;
+  const rest = restFor(restingOn, restL, restR);
   const tx = rest + (drag.active ? drag.dx : 0);
-  const even = focused % 2 === 0;
   // The slide overlay sits on the spine half of the focused page; the outer half
   // stays open for StPageFlip's native curl.
-  const dividerX = even ? M + pageW / 2 : vw - M - pageW / 2;
-  const slideStyle: CSSProperties = even
+  const onLeft = place3.side === 'left';
+  const dividerX = onLeft ? M + pageW / 2 : vw - M - pageW / 2;
+  const slideStyle: CSSProperties = onLeft
     ? { left: dividerX, right: 0 }
     : { left: 0, width: dividerX };
 
   const onAddPage = () => {
-    const position = (pages[count - 1]?.position ?? -1) + 1;
+    if (!bookId) return;
+    const position = (pages?.[pageCount - 1]?.position ?? -1) + 1;
     addPage.mutate({ bookId, position });
-    setIndex(count);
+    // The new page is page index `pageCount`, which is leaf `pageCount + 1`.
+    setIndex(pageCount + 1);
   };
-  const atEnd = focused >= count - 1;
+  // The ＋ replaces ▸ once there is no further page worth turning to: on the
+  // last page, on the endpaper, or on the back board.
+  const atEnd = focused >= pageCount;
+  const label =
+    focused === 0
+      ? 'Cover'
+      : focused === leafCount - 1
+        ? 'The end'
+        : focused > pageCount
+          ? '·'
+          : `${focused} / ${pageCount}`;
+
+  const loading = bookLoading || pagesLoading || !pages || !bookId || !book;
 
   return (
-    <div className="pb-wine curtain-reveal">
+    <div
+      className={cn(
+        'pb-wine curtain-reveal',
+        `pb-mat-${book?.cover_material ?? 'leather'}`
+      )}
+    >
+      <ShapeDefs />
       <div ref={setStage} className="pb-stage">
-        {pageW > 0 && !arranging && (
+        {/* The case is drawn as soon as it has been measured, whether or not
+            the photographs have arrived. A full-screen spinner in its place is
+            what made opening an album feel slow when the data was already in
+            the cache. */}
+        {pageW > 0 && loading && (
+          <div className="pb-viewport" style={{ height: viewportH }}>
+            <div className="pb-track" style={{ width: trackW, top: CURL_PAD }}>
+              <div className="pb-case pb-case--waiting">
+                <div
+                  className="pb-page-host pb-skeleton-leaf"
+                  style={{ width: pageW, height: pageH }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {pageW > 0 && !loading && !arranging && (
           <div
             ref={vpRef}
             className="pb-viewport"
@@ -658,7 +842,15 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
                   : `transform ${SLIDE_MS}ms cubic-bezier(0.33, 0, 0.2, 1)`,
               }}
             >
-              <div className="pb-case">
+              <div
+                className={cn(
+                  'pb-case',
+                  place3.lone &&
+                    (place3.side === 'left'
+                      ? 'pb-case--void-right'
+                      : 'pb-case--void-left')
+                )}
+              >
                 <HTMLFlipBook
                   ref={bookRef}
                   className="pb-book"
@@ -677,11 +869,12 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
                   startZIndex={0}
                   autoSize={false}
                   maxShadowOpacity={0.5}
-                  showCover={false}
+                  showCover
                   mobileScrollSupport={false}
                   clickEventForward={false}
                   useMouseEvents
                   onFlip={onFlipped}
+                  onChangeState={onChangeState}
                   swipeDistance={18}
                   showPageCorners
                   disableFlipByClick
@@ -691,34 +884,46 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
               </div>
             </div>
             {/* Slide zone — the spine half; the outer half stays open for the
-                native curl. */}
-            <div
-              className="pb-slide-zone"
-              // Inset by the curl padding: the halo the viewport now paints
-              // above and below the paper is not part of the book, and a
-              // gesture zone stretched over it would swallow taps meant for
-              // whatever sits there.
-              style={{ ...slideStyle, top: CURL_PAD, bottom: CURL_PAD }}
-              {...slideBind()}
-            />
+                native curl. A board has no facing page, so it gets no zone at
+                all and the whole leaf is free to turn. */}
+            {!place3.lone && (
+              <div
+                className="pb-slide-zone"
+                // Inset by the curl padding: the halo the viewport now paints
+                // above and below the paper is not part of the book, and a
+                // gesture zone stretched over it would swallow taps meant for
+                // whatever sits there.
+                style={{ ...slideStyle, top: CURL_PAD, bottom: CURL_PAD }}
+                {...slideBind()}
+              />
+            )}
           </div>
         )}
 
-        {pageW > 0 && arranging && (
+        {pageW > 0 && !loading && arranging && currentPage && (
           <div
-            className="pb-editor"
+            className={cn(
+              'pb-editor',
+              `pb-paper-${paper}`,
+              cropping && 'pb-editor--crop'
+            )}
             // The same page the book would draw, so what you arrange is what
             // you turn to. A CSS aspect-ratio here ignored the height budget.
             style={{ width: pageW, height: pageH }}
           >
             <PageFace
-              key={current.id}
-              page={current}
+              key={currentPage.id}
+              page={currentPage}
               bookId={bookId}
               interactive
-              urls={pageUrls.get(current.id) ?? EMPTY_URLS}
+              eager
+              urls={pageUrls.get(currentPage.id) ?? EMPTY_URLS}
               selectedId={selectedId}
-              onSelect={setSelectedId}
+              croppingId={croppingId}
+              onSelect={(id) => {
+                setSelectedId(id);
+                if (!id || id !== croppingId) setCroppingId(null);
+              }}
             />
           </div>
         )}
@@ -726,18 +931,18 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
 
       {/* The book's photos, in the space under it. Only while editing — there
           is nothing to drop onto while you are reading. */}
-      {arranging && (
+      {arranging && !loading && (
         <div ref={stripRef}>
           <LibraryStrip
             photos={library ?? []}
             urls={libraryUrls}
             placedPaths={placedOnPage}
+            canPlace={!!currentPage}
             onPlace={placeOnPage}
+            onPlaceMany={placeMany}
             onAddPhotos={() => setUploadOpen(true)}
             onAddText={() => setTextOpen(true)}
-            onDelete={(photo) =>
-              bookId && deleteFromLibrary.mutate({ photo, bookId })
-            }
+            onOpenAll={() => setLibraryOpen(true)}
           />
         </div>
       )}
@@ -746,39 +951,30 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
         ref={controlsRef}
         className="mt-3 flex items-center justify-center gap-4 pb-[env(safe-area-inset-bottom)]"
       >
-        {selected ? (
+        {selected && bookId ? (
           <StickerToolbar
             sticker={selected}
+            cropping={cropping}
             onFront={() =>
-              bookId &&
-              currentPageId &&
+              currentPage &&
               restack.mutate({
                 id: selected.id,
                 bookId,
-                pageId: currentPageId,
+                pageId: currentPage.id,
                 to: 'front',
               })
             }
             onBack={() =>
-              bookId &&
-              currentPageId &&
+              currentPage &&
               restack.mutate({
                 id: selected.id,
                 bookId,
-                pageId: currentPageId,
+                pageId: currentPage.id,
                 to: 'back',
               })
             }
-            onToggleFrame={() =>
-              bookId &&
-              styleSticker.mutate({
-                id: selected.id,
-                bookId,
-                patch: {
-                  frame: selected.frame === 'polaroid' ? 'plain' : 'polaroid',
-                },
-              })
-            }
+            onCrop={() => setCroppingId((c) => (c ? null : selected.id))}
+            onStyle={() => setDressFor(selected.id)}
             onEditText={() => setStyleFor(selected)}
             onRemove={() => removeSelected(selected)}
           />
@@ -787,25 +983,25 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
             <NavBtn
               label="Previous page"
               onClick={() => go(-1)}
-              disabled={focused <= 0}
+              disabled={focused <= (arranging ? 1 : 0)}
             >
               <ChevronLeft className="h-5 w-5" />
             </NavBtn>
 
-            <span className="gilt-text gilt-figures min-w-[3.75rem] text-center font-display text-lg font-semibold tabular-nums">
-              {focused + 1} / {count}
+            <span className="gilt-text gilt-figures min-w-[4.5rem] text-center font-display text-lg font-semibold tabular-nums">
+              {label}
             </span>
 
             {atEnd ? (
               <NavBtn
                 label="Add a page"
                 onClick={onAddPage}
-                disabled={addPage.isPending}
+                disabled={addPage.isPending || loading}
               >
                 <Plus className="h-5 w-5" />
               </NavBtn>
             ) : (
-              <NavBtn label="Next page" onClick={() => go(1)} disabled={atEnd}>
+              <NavBtn label="Next page" onClick={() => go(1)}>
                 <ChevronRight className="h-5 w-5" />
               </NavBtn>
             )}
@@ -837,28 +1033,62 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
         </div>
       </Sheet>
 
-      <LibraryUploadSheet
-        bookId={bookId}
-        open={uploadOpen}
-        onClose={() => setUploadOpen(false)}
-        onPick={(files) => void bulk.run(files)}
-        jobs={bulk.jobs}
-        running={bulk.running}
-      />
+      {bookId && (
+        <>
+          <LibraryUploadSheet
+            bookId={bookId}
+            open={uploadOpen}
+            onClose={() => setUploadOpen(false)}
+            onPick={(files) => void bulk.run(files)}
+            jobs={bulk.jobs}
+            running={bulk.running}
+          />
+
+          <LibrarySheet
+            open={libraryOpen}
+            photos={library ?? []}
+            urls={libraryUrls}
+            canPlace={!!currentPage}
+            onClose={() => setLibraryOpen(false)}
+            onPlaceMany={placeMany}
+            onDeleteMany={(chosen) =>
+              chosen.forEach((photo) =>
+                deleteFromLibrary.mutate({ photo, bookId })
+              )
+            }
+            onAddPhotos={() => {
+              setLibraryOpen(false);
+              setUploadOpen(true);
+            }}
+          />
+        </>
+      )}
 
       {book && (
         <AlbumSettingsSheet
           open={settingsOpen}
           onClose={() => setSettingsOpen(false)}
           book={book}
-          page={current}
-          pageNumber={focused + 1}
+          page={currentPage}
+          pageNumber={focused}
           onDeleted={() => {
             setSettingsOpen(false);
             navigate('/album');
           }}
         />
       )}
+
+      <StickerStyleSheet
+        open={!!dressed}
+        sticker={dressed}
+        url={urlFor(dressed?.photo)}
+        onClose={() => setDressFor(null)}
+        onChange={(patch) =>
+          dressed &&
+          bookId &&
+          styleSticker.mutate({ id: dressed.id, bookId, patch })
+        }
+      />
 
       <TextStyleSheet
         open={!!styleFor}
