@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { drawImage, fillRect, num, PdfDoc, readJpegSize } from './pdf-writer';
+import {
+  PdfDoc,
+  drawImage,
+  drawImageClipped,
+  fillRect,
+  num,
+  readJpegSize,
+} from './pdf-writer';
 
 /** A 1×1 JPEG, so the tests exercise real bytes rather than a stand-in. */
 const TINY_JPEG = Uint8Array.from([
@@ -196,5 +203,31 @@ describe('PdfDoc', () => {
       const offset = Number(row.slice(0, 10));
       expect(out.slice(offset).startsWith(`${i + 1} 0 obj`)).toBe(true);
     });
+  });
+});
+
+describe('drawImageClipped', () => {
+  it('clips to the frame and then places the image inside it', () => {
+    const out = drawImageClipped(
+      'Im1',
+      [10, 0, 0, 20, 5, 6],
+      [2, 0, 0, 2, -0.5, -0.25]
+    );
+    // The frame's unit square, made into a clip, and only then the image.
+    expect(out).toContain('0 0 1 1 re W n');
+    expect(out.indexOf('re W n')).toBeLessThan(out.indexOf('/Im1 Do'));
+    expect(out.startsWith('q ')).toBe(true);
+    expect(out.trim().endsWith('Q')).toBe(true);
+  });
+
+  it('shows the whole picture when nothing is cropped', () => {
+    const out = drawImageClipped(
+      'Im2',
+      [10, 0, 0, 20, 0, 0],
+      [1, 0, 0, 1, 0, 0]
+    );
+    expect(out).toContain(
+      '1.0000 0.0000 0.0000 1.0000 0.0000 0.0000 cm /Im2 Do'
+    );
   });
 });
