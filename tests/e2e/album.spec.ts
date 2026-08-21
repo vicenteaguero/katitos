@@ -7,16 +7,13 @@ async function openBook(page: Page) {
   await expect(page.getByRole('navigation')).toBeVisible({ timeout: 20_000 });
   await dismissChangelog(page);
 
-  // A fresh database has an empty shelf, so make a book to open. Creating one
-  // now opens it straight away.
-  const spines = page.locator('a[href^="/album/"]');
-  if ((await spines.count()) === 0) {
-    await page.getByRole('button', { name: 'Start a new album' }).click();
-    await page.getByLabel('What is it?').fill('itest album');
-    await page.getByRole('button', { name: 'Start it' }).click();
-  } else {
-    await spines.first().click();
-  }
+  // ALWAYS make our own, and open that one. The shelf is no longer empty on a
+  // fresh database — it self-heals Pololini into existence — so "click the
+  // first spine" opened whatever book happened to be there, with whatever
+  // number of pages it happened to have.
+  await page.getByRole('button', { name: 'Start a new album' }).click();
+  await page.getByLabel('What is it?').fill('itest album');
+  await page.getByRole('button', { name: 'Start it' }).click();
   await expect(page.locator('.pb-stage')).toBeVisible({ timeout: 20_000 });
   // Every book opens closed, on its front board.
   await expect(page.getByText('Cover')).toBeVisible({ timeout: 20_000 });
