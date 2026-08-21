@@ -86,28 +86,76 @@ describe('Album library + placements (local stack)', () => {
     await a.from('album_books').delete().eq('id', bookId);
   });
 
-  it('still accepts the OLD bundle’s upsert on (page_id, slot)', async () => {
+  it('accepts a shape, a crop and a mount on a placement', async () => {
     const a = await signedInClient(USER_A);
     const { bookId, pageId } = await makeBook(a);
 
-    // Exactly what the previous release does, and will keep doing until both
-    // phones have launched the new one twice.
-    for (const path of ['old-1.jpg', 'old-2.jpg']) {
-      const { error } = await a
-        .from('album_photos')
-        .upsert(
-          { page_id: pageId, slot: 0, image_path: path, source: 'upload' },
-          { onConflict: 'page_id,slot' }
-        );
+    const { data: photo } = await a
+      .from('album_photos')
+      .insert({ book_id: bookId, image_path: 'shaped.jpg', source: 'upload' })
+      .select('id')
+      .single();
+
+    const { error } = await a.from('album_placements').insert({
+      page_id: pageId,
+      photo_id: photo!.id,
+      kind: 'photo',
+      shape: 'circle',
+      crop_x: 0.2,
+      crop_y: 0.8,
+      crop_zoom: 2.5,
+      frame: 'gilt',
+      frame_color: 'wine',
+    });
+    expect(error).toBeNull();
+
+    await a.from('album_books').delete().eq('id', bookId);
+  });
+
+  it('refuses a crop that would leave the frame half empty', async () => {
+    const a = await signedInClient(USER_A);
+    const { bookId, pageId } = await makeBook(a);
+
+    const { data: photo } = await a
+      .from('album_photos')
+      .insert({ book_id: bookId, image_path: 'bad-crop.jpg', source: 'upload' })
+      .select('id')
+      .single();
+
+    // Below 1 the picture stops covering its own window and the paper shows
+    // through the middle of it.
+    const { error } = await a.from('album_placements').insert({
+      page_id: pageId,
+      photo_id: photo!.id,
+      kind: 'photo',
+      crop_zoom: 0.4,
+    });
+    expect(error).not.toBeNull();
+
+    await a.from('album_books').delete().eq('id', bookId);
+  });
+
+  it('still accepts the frames the OLD bundle writes', async () => {
+    const a = await signedInClient(USER_A);
+    const { bookId, pageId } = await makeBook(a);
+
+    const { data: photo } = await a
+      .from('album_photos')
+      .insert({ book_id: bookId, image_path: 'legacy.jpg', source: 'upload' })
+      .select('id')
+      .single();
+
+    // The previous release's frame toggle writes exactly these two, and it
+    // keeps running until both phones have launched the new one twice.
+    for (const frame of ['plain', 'polaroid']) {
+      const { error } = await a.from('album_placements').insert({
+        page_id: pageId,
+        photo_id: photo!.id,
+        kind: 'photo',
+        frame,
+      });
       expect(error).toBeNull();
     }
-
-    const { data: rows } = await a
-      .from('album_photos')
-      .select('image_path')
-      .eq('page_id', pageId);
-    expect(rows).toHaveLength(1);
-    expect(rows![0].image_path).toBe('old-2.jpg');
 
     await a.from('album_books').delete().eq('id', bookId);
   });
