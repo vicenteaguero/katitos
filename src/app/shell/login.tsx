@@ -1,7 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useAuth } from '@kernel/auth';
-import { Button, Field, Input } from '@kernel/ui';
-import { KatitosMark } from './katitos-mark';
+import { Button, Field, Input, KatitosMark } from '@kernel/ui';
 
 /** Real Supabase email/password login. Shown in prod mode when signed out. */
 export function LoginScreen() {
