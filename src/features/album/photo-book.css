@@ -309,8 +309,18 @@
 .pb-cover-mark {
   position: relative;
   z-index: 1;
-  font-size: clamp(1rem, 9cqw, 1.9rem);
-  opacity: 0.55;
+  display: grid;
+  place-items: center;
+  width: 100%;
+}
+/* Big. It is the only thing on the back board, so it can afford to be — and
+   the width comes off the BOARD (`cqw`), so it is the same size relative to
+   the book on every screen. */
+.pb-cover-logo {
+  width: 74cqw;
+  height: auto;
+  opacity: 0.92;
+  filter: drop-shadow(0 1px 0 rgba(20, 4, 9, 0.45));
 }
 /* The inside of the board, for the blank leaf that keeps the count even. */
 .pb-endpaper {
