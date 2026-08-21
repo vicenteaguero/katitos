@@ -1,8 +1,7 @@
 export { albumFeature } from './feature';
-export { AlbumWidget } from './widgets/album-progress.widget';
 
 /**
- * The book engine is NOT re-exported here.
+ * Neither the book engine NOR the shelf widget is re-exported here.
  *
  * This barrel is imported by the feature registry, which every launch loads —
  * so anything re-exported from it lands in the boot chunk. Re-exporting the
