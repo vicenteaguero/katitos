@@ -105,6 +105,18 @@ export function leafOfPage(pageIndex: number): number {
   return pageIndex + 1;
 }
 
+/**
+ * Is this leaf the blank endpaper?
+ *
+ * It exists ONLY to keep the leaf count even so the back board flips alone —
+ * it is not a page and it is not a cover, and nobody should ever be left
+ * standing on it wondering why the album has a blank sheet in it. The buttons
+ * step over it; you see it in passing, mid-turn, which is what an endpaper is.
+ */
+export function isEndPaper(leaf: number, pageCount: number, leafCount: number) {
+  return leaf > pageCount && leaf < leafCount - 1;
+}
+
 /** The page index a leaf shows, or -1 for a cover or the blank endpaper. */
 export function pageOfLeaf(leaf: number, pageCount: number): number {
   return leaf >= 1 && leaf <= pageCount ? leaf - 1 : -1;
@@ -251,14 +263,14 @@ export function slideDx(
 }
 
 /**
- * A button step: does direction `dir` cross a spread boundary (→ flip)?
+ * There is deliberately no `stepCrossing` here any more.
  *
- * A lone leaf has nothing beside it, so every step off a cover is a flip.
+ * "Does this direction cross a spread boundary" stopped being answerable from
+ * a direction alone the moment the buttons had to step OVER the blank
+ * endpaper: from the last page, one press forward lands two leaves away. The
+ * caller compares `placeLeaf(target).spread` with the current one instead,
+ * which is the same question asked of the destination we actually want.
  */
-export function stepCrossing(place: LeafPlace, dir: 1 | -1): boolean {
-  if (place.lone) return true;
-  return place.side === 'left' ? dir < 0 : dir > 0;
-}
 
 /**
  * There is deliberately no `decideGesture` here any more.
