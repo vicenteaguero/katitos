@@ -34,6 +34,31 @@ export interface ChangelogEntry {
 /** Every release ever written, newest first — held ones included. */
 export const ALL_ENTRIES: ChangelogEntry[] = [
   {
+    // Shipped 21 August 2026, announced when he says so.
+    held: true,
+    title: 'The album, properly',
+    date: '2026-08-21',
+    lines: [
+      'Every album is a real book now. It starts closed, on its own cover, with its name in gold and the months it covers underneath — and you turn the cover to open it, like a book.',
+      'There is a back cover too, so a book actually ends instead of just running out of pages.',
+      'You choose what it is made of: leather, linen, velvet or brown paper for the covers, and cream, ivory, kraft or night-dark paper for the pages inside.',
+      'A photo can be cut into a shape — soft corners, a square, a circle, an arch, a heart, or torn out at the edges.',
+      'And you choose how it is mounted: bare, on a card, on instant film, in a thin gold line, taped down at the corners, or just lifted off the page with a shadow. The card comes in six colours.',
+      'You can move the picture around inside its frame and pinch to come closer, so a photo shows the part of it you actually want. Nothing is cut away — change your mind whenever you like.',
+      'The strip of photos under the book is two rows deep now, so you can see far more of them at once, and it fits whatever phone you are holding.',
+      'Hold a photo down and you start choosing: pick as many as you like and they all go onto the page together, spread out.',
+      'There is a proper gallery of everything in the album now, for when the strip is not enough — choose several, place them, or throw them out.',
+      'You can take a photo straight into the album without leaving the page you are putting it on.',
+      'Photos appear the instant you tap them instead of after a pause, and pages no longer flash while you are working.',
+      'A page opens showing a soft blur of each photo straight away, so it is never a screen of empty grey squares while they arrive.',
+      'Handwriting is real handwriting at last — in Russian too. It has quietly been the same serif as everything else this whole time.',
+      'A page you tear out stays torn out. It used to come back.',
+      'Starting a new album opens it, instead of leaving you standing in front of the shelf.',
+      'If something does not save, it says so now, instead of telling you it saved.',
+      'The albums we had were cleared out — they were built while the book underneath them kept changing, and they had the scars. Every daily photo and every bouquet is untouched.',
+    ],
+  },
+  {
     // Shipped 19 August 2026, announced when he says so.
     held: true,
     title: 'Your classroom',
