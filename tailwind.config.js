@@ -35,6 +35,7 @@ export default {
       fontFamily: {
         sans: 'var(--font-sans)',
         display: 'var(--font-display)',
+        hand: 'var(--font-hand)',
       },
       boxShadow: {
         loge: 'var(--shadow-loge)',
