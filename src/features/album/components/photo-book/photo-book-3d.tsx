@@ -112,9 +112,10 @@ function NavBtn({
       aria-label={label}
       onClick={onClick}
       disabled={disabled}
-      // No disc: two filled circles either side of the page number read as the
-      // loudest thing on a screen whose subject is a photograph.
-      className="lift-press flex h-11 w-11 items-center justify-center rounded-full text-gold/75 outline-none transition active:bg-surface-2 disabled:opacity-20"
+      // No disc, and no gilt: two gold circles either side of the page number
+      // read as the loudest thing on a screen whose subject is a photograph.
+      // The gold on this screen belongs to the book itself.
+      className="lift-press flex h-11 w-11 items-center justify-center rounded-full text-fg/55 outline-none transition active:bg-surface-2 active:text-fg disabled:opacity-20"
     >
       {children}
     </button>
@@ -261,6 +262,8 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
     restR: 0,
     vw: 0,
     viewportH: 0,
+    /** All the room the book was given — usually more than it takes. */
+    availH: 0,
   });
   const teardownRef = useRef<(() => void) | null>(null);
   const setStage = useCallback((el: HTMLDivElement | null) => {
@@ -286,7 +289,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
         controlsH -
         stripH -
         16;
-      setSize(computeLayout(elW, availH, M, MIN_PEEK, CURL_PAD));
+      setSize({ ...computeLayout(elW, availH, M, MIN_PEEK, CURL_PAD), availH });
     };
     computeRef.current = compute;
     compute();
@@ -778,7 +781,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
       .map((st) => st.photo?.image_path)
       .filter((v): v is string => !!v)
   );
-  const { pageW, trackW, restL, restR, vw, viewportH } = size;
+  const { pageW, trackW, restL, restR, vw, viewportH, availH } = size;
   const pageH = Math.round(pageW * (4 / 3));
   const restingOn =
     slideAhead != null ? placeLeaf(slideAhead, leafCount) : place3;
@@ -821,7 +824,17 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
       )}
     >
       <ShapeDefs />
-      <div ref={setStage} className="pb-stage">
+      {/* The book is usually shorter than the space it is given — a 3:4 page
+          inside a 16:9-ish gap — and it used to sit at the top of that space
+          with all the slack dumped underneath it. Reading mode looked
+          top-heavy while arrange mode did not, because the editor centres
+          itself. Now the stage owns the whole budget and centres whatever is
+          in it, so both modes sit in the same place. */}
+      <div
+        ref={setStage}
+        className="pb-stage"
+        style={availH > 0 ? { minHeight: availH } : undefined}
+      >
         {/* The case is drawn as soon as it has been measured, whether or not
             the photographs have arrived. A full-screen spinner in its place is
             what made opening an album feel slow when the data was already in
