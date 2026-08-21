@@ -69,8 +69,10 @@ import { TextStyleSheet } from './text-style-sheet';
 import { usePdfBridge } from './use-pdf-bridge';
 import {
   computeLayout,
+  coverRest,
   leafAfterFlip,
   leafCountFor,
+  leafOfPage,
   padLeaves,
   placeLeaf,
   restFor,
@@ -312,6 +314,9 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
 
   useEffect(() => setIndex(0), [bookId]);
 
+  /** The position of a page we have asked for and are waiting to turn to. */
+  const landOnRef = useRef<number | null>(null);
+
   // Entering or leaving edit mode changes what has to fit on screen.
   useEffect(() => {
     computeRef.current?.();
@@ -450,6 +455,26 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
 
   usePdfBridge(pages, book?.title ?? 'album');
 
+  /**
+   * Changes ONLY when the run of leaves itself changes — a page added, a page
+   * torn out, the endpaper appearing or going.
+   *
+   * StPageFlip takes each leaf element OUT of React's tree and re-parents it
+   * into its own `.stf__item` wrappers. React does not know that, so when a new
+   * page has to be inserted between two existing leaves it looks for a sibling
+   * that is no longer where it left it and throws `NotFoundError: The object
+   * can not be found here` — which took the whole route down with it. That is
+   * the crash behind "adding a page from the back cover adds another cover".
+   *
+   * Used as a `key`, so the book is rebuilt from scratch on those rare
+   * occasions instead of being spliced into. Sticker edits do NOT change it,
+   * so the expensive case stays as cheap as it was.
+   */
+  const flipKey = useMemo(
+    () => `${(pages ?? []).map((p) => p.id).join('|')}|${padLeaves(pageCount)}`,
+    [pages, pageCount]
+  );
+
   const flipPages = useMemo(() => {
     if (!book) return [];
     const leaves: ReactNode[] = [
@@ -547,6 +572,16 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
     },
     [focused, leafCount, pageCount, mode, place3]
   );
+
+  // A page we asked for has arrived — go and stand on it.
+  useEffect(() => {
+    const position = landOnRef.current;
+    if (position == null || !pages) return;
+    const index = pages.findIndex((p) => p.position === position);
+    if (index < 0) return;
+    landOnRef.current = null;
+    setIndex(leafOfPage(index));
+  }, [pages]);
 
   // Keep StPageFlip's spread aligned to the focused leaf after a data change
   // (which re-runs updateFromHtml and can reset it) — but NEVER mid-curl, or
@@ -783,10 +818,37 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
   );
   const { pageW, trackW, restL, restR, vw, viewportH, availH } = size;
   const pageH = Math.round(pageW * (4 / 3));
-  const restingOn =
-    slideAhead != null ? placeLeaf(slideAhead, leafCount) : place3;
-  const rest = restFor(restingOn, restL, restR);
+  /**
+   * A shut book is ONE board. An open one is a spread.
+   *
+   * Only while it is actually settled on a cover, though — during a turn the
+   * board must be full width, because a hard cover swings across both halves
+   * of the case and there has to be binding under it the whole way.
+   */
+  const shut = slideAhead == null && place3.lone;
+  /**
+   * THE CASE DOES NOT MOVE WHILE A LEAF IS TURNING.
+   *
+   * It used to start sliding towards the destination the moment the flip
+   * began. On a paper page that was a nudge; on the cover it threw the whole
+   * book sideways at t=0, so page one was simply THERE before the cover had
+   * gone anywhere — the turn revealed nothing. A book opens where it is
+   * standing, and the case follows afterwards.
+   *
+   * Which is why this reads the leaf we are ON (`place3`), never the one we
+   * are heading to.
+   */
+  const rest = place3.lone
+    ? coverRest(place3, pageW, M, vw)
+    : restFor(place3, restL, restR);
   const tx = rest + (drag.active ? drag.dx : 0);
+  /**
+   * The binding is not drawn at all while the book is shut.
+   *
+   * A closed book is its cover — one board, and nothing behind it. Any binding
+   * left showing is a second wine rectangle around the first, which is exactly
+   * the "book lying on another book" this all started as.
+   */
   // The slide overlay sits on the spine half of the focused page; the outer half
   // stays open for StPageFlip's native curl.
   const onLeft = place3.side === 'left';
@@ -798,9 +860,14 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
   const onAddPage = () => {
     if (!bookId) return;
     const position = (pages?.[pageCount - 1]?.position ?? -1) + 1;
+    // Remember WHICH page we are waiting for, and turn to it only once it
+    // actually exists. Setting the leaf straight away pointed at a leaf the
+    // book did not have yet — on the back board that landed on the board
+    // itself, and StPageFlip redrew a second cover where the new page should
+    // have been. The board moves to the end on its own; we just follow the
+    // page.
+    landOnRef.current = position;
     addPage.mutate({ bookId, position });
-    // The new page is page index `pageCount`, which is leaf `pageCount + 1`.
-    setIndex(pageCount + 1);
   };
   // The ＋ replaces ▸ once there is no further page worth turning to: on the
   // last page, on the endpaper, or on the back board.
@@ -843,6 +910,11 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
           <div className="pb-viewport" style={{ height: viewportH }}>
             <div className="pb-track" style={{ width: trackW, top: CURL_PAD }}>
               <div className="pb-case pb-case--waiting">
+                <span
+                  className="pb-board"
+                  style={{ left: 0, right: 0 }}
+                  aria-hidden
+                />
                 <div
                   className="pb-page-host pb-skeleton-leaf"
                   style={{ width: pageW, height: pageH }}
@@ -869,16 +941,10 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
                   : `transform ${SLIDE_MS}ms cubic-bezier(0.33, 0, 0.2, 1)`,
               }}
             >
-              <div
-                className={cn(
-                  'pb-case',
-                  place3.lone &&
-                    (place3.side === 'left'
-                      ? 'pb-case--void-right'
-                      : 'pb-case--void-left')
-                )}
-              >
+              <div className="pb-case">
+                {!shut && <span className="pb-board" aria-hidden />}
                 <HTMLFlipBook
+                  key={flipKey}
                   ref={bookRef}
                   className="pb-book"
                   style={NO_STYLE}
@@ -1067,6 +1133,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
             open={uploadOpen}
             onClose={() => setUploadOpen(false)}
             onPick={(files) => void bulk.run(files)}
+            onRemove={bulk.remove}
             jobs={bulk.jobs}
             running={bulk.running}
           />
