@@ -77,6 +77,7 @@ import {
   padLeaves,
   placeLeaf,
   restFor,
+  settleAfterBoard,
   slideDx,
 } from './book-geometry';
 import { dropSpot } from './sticker-math';
@@ -316,6 +317,15 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
 
   /** The position of a page we have asked for and are waiting to turn to. */
   const landOnRef = useRef<number | null>(null);
+  /** Timers for the two-beat cover choreography, so they can be called off. */
+  const beatRef = useRef<number[]>([]);
+  useEffect(
+    () => () => {
+      for (const t of beatRef.current) window.clearTimeout(t);
+      beatRef.current = [];
+    },
+    []
+  );
 
   // Entering or leaving edit mode changes what has to fit on screen.
   useEffect(() => {
@@ -517,7 +527,16 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
     // Never come to rest on the blank endpaper — carry on the way we were
     // already going.
     if (isEndPaper(leaf, pc, lc)) leaf += leaf > f ? 1 : -1;
-    setIndex(Math.min(Math.max(leaf, 0), lc - 1));
+    leaf = Math.min(Math.max(leaf, 0), lc - 1);
+    setIndex(leaf);
+
+    // The second beat: the board has turned and shown you what was under it;
+    // now the book slides across to the page you actually read.
+    const settle = settleAfterBoard(placeLeaf(f, lc), placeLeaf(leaf, lc));
+    if (settle == null || isEndPaper(settle, pc, lc)) return;
+    beatRef.current.push(
+      window.setTimeout(() => setIndex(settle), Math.round(SLIDE_MS * 0.3))
+    );
   }, []);
 
   /**
@@ -572,15 +591,32 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
       // Same spread → pan the case. Different spread → turn a leaf. Asking
       // the destination rather than the direction is what lets the step over
       // the endpaper still resolve to a single turn.
-      if (placeLeaf(t, leafCount).spread === place3.spread) {
+      const to = placeLeaf(t, leafCount);
+      if (to.spread === place3.spread) {
         setIndex(t);
         return;
       }
-      setSlideAhead(t);
-      flippingRef.current = true;
-      const pf = bookRef.current?.pageFlip();
-      if (dir > 0) pf?.flipNext();
-      else pf?.flipPrev();
+
+      const turn = () => {
+        setSlideAhead(t);
+        flippingRef.current = true;
+        const pf = bookRef.current?.pageFlip();
+        if (dir > 0) pf?.flipNext();
+        else pf?.flipPrev();
+      };
+
+      // Going TO a board: stand under where it is about to come down first.
+      // Closing the book from page one means sliding across to page two and
+      // only then bringing the cover over — the mirror of opening it.
+      if (to.lone && place3.side !== to.side) {
+        const near = to.side === 'right' ? focused + 1 : focused - 1;
+        if (near >= 0 && near <= leafCount - 1) {
+          setIndex(near);
+          beatRef.current.push(window.setTimeout(turn, SLIDE_MS + 40));
+          return;
+        }
+      }
+      turn();
     },
     [focused, leafCount, pageCount, mode, place3]
   );
