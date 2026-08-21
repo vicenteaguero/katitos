@@ -17,11 +17,9 @@ import type {
   StickerShape,
 } from '../types';
 import {
-  needsNormalize,
-  nextZBack,
   nextZFront,
-  normalizeZ,
   orderStickers,
+  stepOrder,
 } from '../components/photo-book/sticker-math';
 
 type Pages = AlbumPageWithPhotos[];
@@ -121,7 +119,17 @@ export function useMoveSticker() {
   });
 }
 
-/** Bring a sticker to the very front, or tuck it right at the back. */
+/**
+ * Move a sticker ONE place through the stack.
+ *
+ * It used to jump to the very front or the very back. With ten things on a
+ * page that only ever reaches two arrangements, and getting one photo to sit
+ * between two others could not be done at all. A step at a time reaches any
+ * order, and one press of the other button undoes it.
+ *
+ * The whole page is renumbered 0..n-1 as it goes, which also keeps the sparse
+ * depths from drifting — so the old `needsNormalize` dance is no longer needed.
+ */
 export function useRestack() {
   const qc = useQueryClient();
   return useMutation({
@@ -131,44 +139,47 @@ export function useRestack() {
       pageId: string;
       to: 'front' | 'back';
     }) => {
-      if (isPending(v.id)) return 0;
-      // Read the depths and patch the cache in ONE place. Splitting this across
-      // `onMutate` and here meant the second read saw the first one's optimistic
-      // write and picked a depth one higher — so the screen and the database
-      // quietly disagreed, and every tap inflated `z` twice as fast as it should.
-      const zs = depthsOnPage(qc, v.bookId, v.pageId);
+      if (isPending(v.id)) return;
+      const pages = qc.getQueryData<Pages>(qk.album.pages(v.bookId));
+      const page = pages?.find((p) => p.id === v.pageId);
+      if (!page) return;
 
-      // Depths only ever grow apart — front, back, front — so after enough
-      // fiddling the range drifts. Tidy the page back to 0..n-1 before it gets
-      // silly; nothing moves, the order is exactly what it was.
-      if (needsNormalize(zs)) {
-        const pages = qc.getQueryData<Pages>(qk.album.pages(v.bookId));
-        const page = pages?.find((p) => p.id === v.pageId);
-        if (page) {
-          await Promise.all(
-            normalizeZ(page.stickers).map((row) =>
-              supabase
-                .from('album_placements')
-                .update({ z: row.z })
-                .eq('id', row.id)
-            )
-          );
-          await qc.invalidateQueries({ queryKey: qk.album.pages(v.bookId) });
-        }
-      }
+      const rows = stepOrder(page.stickers, v.id, v.to === 'front' ? 1 : -1);
+      if (!rows.length) return; // already at that end
 
-      const fresh = depthsOnPage(qc, v.bookId, v.pageId);
-      const z = v.to === 'front' ? nextZFront(fresh) : nextZBack(fresh);
-      const previous = patchSticker(qc, v.bookId, v.id, { z });
-      const { error } = await supabase
-        .from('album_placements')
-        .update({ z })
-        .eq('id', v.id);
-      if (error) {
-        if (previous) qc.setQueryData(qk.album.pages(v.bookId), previous);
-        throw error;
+      // On screen first — depth is drawn from the ORDER of the array, so the
+      // cache write has to re-sort, not just re-number.
+      const key = qk.album.pages(v.bookId);
+      const previous = qc.getQueryData<Pages>(key);
+      qc.setQueryData<Pages>(key, (all) =>
+        all?.map((p) =>
+          p.id !== v.pageId
+            ? p
+            : {
+                ...p,
+                stickers: orderStickers(
+                  p.stickers.map((s) => {
+                    const row = rows.find((r) => r.id === s.id);
+                    return row ? { ...s, z: row.z } : s;
+                  })
+                ),
+              }
+        )
+      );
+
+      const results = await Promise.all(
+        rows.map((row) =>
+          supabase
+            .from('album_placements')
+            .update({ z: row.z })
+            .eq('id', row.id)
+        )
+      );
+      const failed = results.find((r) => r.error);
+      if (failed?.error) {
+        if (previous) qc.setQueryData(key, previous);
+        throw failed.error;
       }
-      return z;
     },
     onError: (e: Error) => toast.error(e.message),
   });
