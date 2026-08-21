@@ -70,6 +70,7 @@ import { usePdfBridge } from './use-pdf-bridge';
 import {
   computeLayout,
   coverRest,
+  isEndPaper,
   leafAfterFlip,
   leafCountFor,
   leafOfPage,
@@ -77,7 +78,6 @@ import {
   placeLeaf,
   restFor,
   slideDx,
-  stepCrossing,
 } from './book-geometry';
 import { dropSpot } from './sticker-math';
 import '../../photo-book.css';
@@ -336,8 +336,8 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
       : null;
 
   // Live mirror so the stable onFlip handler always reads the latest values.
-  const liveRef = useRef({ pages, focused, leafCount });
-  liveRef.current = { pages, focused, leafCount };
+  const liveRef = useRef({ pages, focused, leafCount, pageCount });
+  liveRef.current = { pages, focused, leafCount, pageCount };
 
   /**
    * Sign every photo in the book in ONE request per bucket.
@@ -510,10 +510,14 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
   // FIRST LEAF of the new spread, so a backward flip enters the previous spread
   // from its RIGHT page (sliding-window continuity).
   const onFlipped = useCallback((e: { data: number }) => {
-    const { focused: f, leafCount: lc } = liveRef.current;
+    const { focused: f, leafCount: lc, pageCount: pc } = liveRef.current;
     flippingRef.current = false;
     setSlideAhead(null);
-    setIndex(leafAfterFlip(e.data, f, lc));
+    let leaf = leafAfterFlip(e.data, f, lc);
+    // Never come to rest on the blank endpaper — carry on the way we were
+    // already going.
+    if (isEndPaper(leaf, pc, lc)) leaf += leaf > f ? 1 : -1;
+    setIndex(Math.min(Math.max(leaf, 0), lc - 1));
   }, []);
 
   /**
@@ -548,7 +552,10 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
   // a boundary (onFlipped then syncs the index).
   const go = useCallback(
     (dir: 1 | -1) => {
-      const t = focused + dir;
+      let t = focused + dir;
+      // Step OVER the blank endpaper — it is not a page, and landing on it
+      // reads as "my album has an empty sheet in it".
+      if (isEndPaper(t, pageCount, leafCount)) t += dir;
       const lo = mode === 'arrange' ? 1 : 0;
       const hi = mode === 'arrange' ? pageCount : leafCount - 1;
       if (t < lo || t > hi) return;
@@ -562,13 +569,18 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
         setIndex(t);
         return;
       }
-      if (stepCrossing(place3, dir)) {
-        setSlideAhead(t);
-        flippingRef.current = true;
-        const pf = bookRef.current?.pageFlip();
-        if (dir > 0) pf?.flipNext();
-        else pf?.flipPrev();
-      } else setIndex(t);
+      // Same spread → pan the case. Different spread → turn a leaf. Asking
+      // the destination rather than the direction is what lets the step over
+      // the endpaper still resolve to a single turn.
+      if (placeLeaf(t, leafCount).spread === place3.spread) {
+        setIndex(t);
+        return;
+      }
+      setSlideAhead(t);
+      flippingRef.current = true;
+      const pf = bookRef.current?.pageFlip();
+      if (dir > 0) pf?.flipNext();
+      else pf?.flipPrev();
     },
     [focused, leafCount, pageCount, mode, place3]
   );
@@ -1085,17 +1097,25 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
               {label}
             </span>
 
-            {atEnd ? (
+            {/* BOTH, once you reach the end. The ＋ used to REPLACE the
+                arrow on the last page, which left the back board reachable
+                only by dragging its corner — there was no button that went
+                there at all. */}
+            <NavBtn
+              label="Next page"
+              onClick={() => go(1)}
+              disabled={focused >= (arranging ? pageCount : leafCount - 1)}
+            >
+              <ChevronRight className="h-5 w-5" />
+            </NavBtn>
+
+            {atEnd && (
               <NavBtn
                 label="Add a page"
                 onClick={onAddPage}
                 disabled={addPage.isPending || loading}
               >
                 <Plus className="h-5 w-5" />
-              </NavBtn>
-            ) : (
-              <NavBtn label="Next page" onClick={() => go(1)}>
-                <ChevronRight className="h-5 w-5" />
               </NavBtn>
             )}
           </>
