@@ -155,6 +155,24 @@ export function drawImage(
   return `q ${m.map(num).join(' ')} cm /${name} Do Q\n`;
 }
 
+/**
+ * Draw an image showing only part of itself, clipped to its frame.
+ *
+ * `clip` puts the frame's unit square on the page; inside that space the frame
+ * IS the unit square, so `img` is a plain scale-and-shift with no matrix to
+ * invert and no rotated offsets to get subtly wrong.
+ */
+export function drawImageClipped(
+  name: string,
+  clip: readonly [number, number, number, number, number, number],
+  img: readonly [number, number, number, number, number, number]
+): string {
+  return (
+    `q ${clip.map(num).join(' ')} cm 0 0 1 1 re W n ` +
+    `${img.map(num).join(' ')} cm /${name} Do Q\n`
+  );
+}
+
 /** A filled rectangle, for the white of a polaroid plate. */
 export function fillRect(
   x: number,
