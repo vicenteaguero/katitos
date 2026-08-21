@@ -20,9 +20,6 @@ const countByBook = (rows: { book_id: string; photos: number }[]) => {
   return out;
 };
 
-/** The one book that is about us rather than about a trip. */
-export const LIFE_BOOK_TITLE = 'Pololini';
-
 /** Singleton key for the life book; the trip id otherwise. */
 function bookKey(scope: BookScope, tripId?: string): string {
   return scope === 'life' ? 'life' : (tripId ?? 'none');
@@ -182,20 +179,6 @@ export function useLibrary(bookId: string | undefined) {
       return data ?? [];
     },
   });
-}
-
-/**
- * Make sure the one book about US exists.
- *
- * `scope: 'life'` is a singleton and `useBook` creates it on demand — but the
- * only screen that ever asked for it was the id-less `/album` route, which
- * cannot be reached: the route that renders a book always has an id. So the
- * self-heal was dead code, and after the albums were wiped Pololini would
- * simply never have come back. The shelf asks for it now, which is the one
- * screen guaranteed to be visited.
- */
-export function useEnsureLifeBook(enabled = true) {
-  return useBook('life', undefined, LIFE_BOOK_TITLE, enabled);
 }
 
 /**
