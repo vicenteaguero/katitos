@@ -47,6 +47,16 @@ export type StickerFont = 'display' | 'sans' | 'hand';
  */
 export interface PlacedSticker extends AlbumPlacement {
   photo: AlbumPhoto | null;
+  /**
+   * A React key that survives the row getting its real id.
+   *
+   * A sticker appears the instant you tap, under a made-up id, and is swapped
+   * for the database's row a moment later. Keying on `id` made that swap a
+   * REMOUNT — the element was destroyed and rebuilt, which on a page you are
+   * filling with two hundred photos reads as a flicker per photo. Only
+   * optimistic rows carry this; everything else is keyed by its id as before.
+   */
+  localKey?: string;
 }
 
 /** A page and everything standing on it, already in back-to-front order. */
