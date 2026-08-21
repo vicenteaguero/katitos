@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { BookHeart, Plus } from 'lucide-react';
-import { DateTime } from 'luxon';
 import { BUCKETS, useSignedUrls } from '@kernel/storage';
 import {
   Button,
@@ -15,9 +14,22 @@ import {
   toast,
   useTopBarAction,
 } from '@kernel/ui';
-import { useAlbumPhotoCounts, useAlbums } from '../api/photo-book.queries';
+import {
+  useAlbumPhotoCounts,
+  useAlbums,
+  useEnsureLifeBook,
+} from '../api/photo-book.queries';
 import { useCreateAlbum } from '../api/albums.mutations';
-import type { AlbumBook } from '../types';
+import { bookSpan } from '../lib/book-span';
+import type { AlbumBook, CoverMaterial } from '../types';
+
+/** The board, in the colours of whatever the book is bound in. */
+const BOARD: Record<CoverMaterial, string> = {
+  leather: 'linear-gradient(150deg, #6e1423 0%, #4d0d18 100%)',
+  linen: 'linear-gradient(150deg, #7a2233 0%, #5a1522 100%)',
+  velvet: 'linear-gradient(150deg, #5a0f1d 0%, #33070f 100%)',
+  kraft: 'linear-gradient(150deg, #7d5a3c 0%, #58402c 100%)',
+};
 
 /**
  * The shelf — every album we keep, one per era of ours.
@@ -30,6 +42,12 @@ export function AlbumsRoute() {
   const { data: books, isLoading } = useAlbums();
   const { data: counts } = useAlbumPhotoCounts();
   const create = useCreateAlbum();
+  const navigate = useNavigate();
+  // The one book that is about US rather than about a trip. It creates itself
+  // here because this is the only screen guaranteed to be visited — the route
+  // that used to do it could never be reached, so after the albums were wiped
+  // Pololini would simply never have come back.
+  useEnsureLifeBook();
 
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ title: '', startsOn: '', endsOn: '' });
@@ -48,12 +66,14 @@ export function AlbumsRoute() {
         endsOn: form.endsOn || null,
       },
       {
-        onSuccess: () => {
+        onSuccess: (book) => {
           setOpen(false);
           setForm({ title: '', startsOn: '', endsOn: '' });
           toast.success('Album started 📖');
+          // Straight into it. Starting a book and then being left standing in
+          // front of the shelf is the oddest moment in the whole feature.
+          navigate(`/album/${book.id}`);
         },
-        onError: (e) => toast.error(e.message),
       }
     );
   };
@@ -136,7 +156,13 @@ export function AlbumsRoute() {
               />
             </FieldRow>
           </Fieldset>
-          <Button full onClick={submit} disabled={create.isPending}>
+          <Button
+            full
+            onClick={submit}
+            // Not only `isPending`: a double tap in the moment before the
+            // request leaves used to start two albums.
+            disabled={create.isPending || !form.title.trim()}
+          >
             Start it
           </Button>
         </div>
@@ -157,9 +183,11 @@ function AlbumSpine({
   photos: number;
   coverUrl?: string;
 }) {
-  const meta = [span(book), photos ? `${photos} photos` : 'empty'].filter(
+  const meta = [bookSpan(book), photos ? `${photos} photos` : 'empty'].filter(
     Boolean
   );
+  const board =
+    BOARD[(book.cover_material as CoverMaterial) ?? 'leather'] ?? BOARD.leather;
   return (
     <Link
       to={`/album/${book.id}`}
@@ -171,11 +199,7 @@ function AlbumSpine({
       <span
         className="relative w-20 shrink-0 overflow-hidden"
         aria-hidden="true"
-        style={{
-          background: coverUrl
-            ? undefined
-            : 'linear-gradient(150deg, #6e1423 0%, #4d0d18 100%)',
-        }}
+        style={{ background: coverUrl ? undefined : board }}
       >
         {coverUrl ? (
           <img
@@ -208,18 +232,4 @@ function AlbumSpine({
       </span>
     </Link>
   );
-}
-
-/** "Jun – Aug 2026", "from Jun 2026", or nothing at all. */
-function span(book: AlbumBook): string {
-  const fmt = (d: string) => DateTime.fromISO(d).toFormat('LLL yyyy');
-  if (book.starts_on && book.ends_on) {
-    const a = fmt(book.starts_on);
-    const b = fmt(book.ends_on);
-    return a === b ? a : `${a} – ${b}`;
-  }
-  if (book.starts_on) return `from ${fmt(book.starts_on)}`;
-  if (book.ends_on) return `until ${fmt(book.ends_on)}`;
-  // Nothing at all beats "no dates yet" sitting under every new album.
-  return '';
 }
