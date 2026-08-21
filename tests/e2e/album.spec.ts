@@ -23,8 +23,28 @@ test('a book opens on its cover, and the cover turns', async ({ page }) => {
   await openBook(page);
   // A board stands alone: there is no facing page to slide to, so the whole
   // leaf turns.
-  await expect(page.locator('.pb-case--void-left')).toBeVisible();
   await expect(page.locator('.pb-slide-zone')).toHaveCount(0);
+
+  // And a SHUT book is one board, centred — not a two-page binding with a
+  // cover lying on half of it and the rest running off the screen.
+  // No binding is drawn behind a shut book at all — the cover IS the book.
+  await expect(page.locator('.pb-board')).toHaveCount(0);
+
+  const closed = await page.evaluate(() => {
+    const cover = document.querySelector('.pb-cover') as HTMLElement | null;
+    const stage = document.querySelector('.pb-stage') as HTMLElement | null;
+    if (!cover || !stage) return null;
+    const c = cover.getBoundingClientRect();
+    const s = stage.getBoundingClientRect();
+    return { left: c.left - s.left, right: s.right - c.right, width: c.width };
+  });
+  expect(closed).not.toBeNull();
+  // Centred: the same amount of nothing either side of it.
+  expect(Math.abs(closed!.left - closed!.right)).toBeLessThan(2);
+  // And narrower than the spread it opens into.
+  expect(closed!.width).toBeLessThan(
+    (await page.locator('.pb-track').boundingBox())!.width
+  );
 
   await page.getByRole('button', { name: 'Next page' }).click();
   await expect(page.getByText('1 / 5')).toBeVisible({ timeout: 20_000 });
