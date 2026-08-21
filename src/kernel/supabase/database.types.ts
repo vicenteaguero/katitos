@@ -37,11 +37,13 @@ export type Database = {
       album_books: {
         Row: {
           archived: boolean
+          cover_material: string
           cover_path: string | null
           created_at: string
           created_by: string | null
           ends_on: string | null
           id: string
+          paper: string
           position: number
           scope: string
           starts_on: string | null
@@ -51,11 +53,13 @@ export type Database = {
         }
         Insert: {
           archived?: boolean
+          cover_material?: string
           cover_path?: string | null
           created_at?: string
           created_by?: string | null
           ends_on?: string | null
           id?: string
+          paper?: string
           position?: number
           scope?: string
           starts_on?: string | null
@@ -65,11 +69,13 @@ export type Database = {
         }
         Update: {
           archived?: boolean
+          cover_material?: string
           cover_path?: string | null
           created_at?: string
           created_by?: string | null
           ends_on?: string | null
           id?: string
+          paper?: string
           position?: number
           scope?: string
           starts_on?: string | null
@@ -127,6 +133,7 @@ export type Database = {
       }
       album_photos: {
         Row: {
+          blur: string | null
           book_id: string | null
           caption: string | null
           created_at: string
@@ -143,6 +150,7 @@ export type Database = {
           y: number
         }
         Insert: {
+          blur?: string | null
           book_id?: string | null
           caption?: string | null
           created_at?: string
@@ -159,6 +167,7 @@ export type Database = {
           y?: number
         }
         Update: {
+          blur?: string | null
           book_id?: string | null
           caption?: string | null
           created_at?: string
@@ -190,16 +199,21 @@ export type Database = {
           caption: string | null
           created_at: string
           created_by: string
+          crop_x: number
+          crop_y: number
+          crop_zoom: number
           font_family: string
           font_size: number
           font_weight: number
           frame: string
+          frame_color: string
           id: string
           kind: string
           page_id: string
           photo_id: string | null
           rotation: number
           scale: number
+          shape: string
           updated_at: string
           x: number
           y: number
@@ -210,16 +224,21 @@ export type Database = {
           caption?: string | null
           created_at?: string
           created_by?: string
+          crop_x?: number
+          crop_y?: number
+          crop_zoom?: number
           font_family?: string
           font_size?: number
           font_weight?: number
           frame?: string
+          frame_color?: string
           id?: string
           kind?: string
           page_id: string
           photo_id?: string | null
           rotation?: number
           scale?: number
+          shape?: string
           updated_at?: string
           x?: number
           y?: number
@@ -230,16 +249,21 @@ export type Database = {
           caption?: string | null
           created_at?: string
           created_by?: string
+          crop_x?: number
+          crop_y?: number
+          crop_zoom?: number
           font_family?: string
           font_size?: number
           font_weight?: number
           frame?: string
+          frame_color?: string
           id?: string
           kind?: string
           page_id?: string
           photo_id?: string | null
           rotation?: number
           scale?: number
+          shape?: string
           updated_at?: string
           x?: number
           y?: number
