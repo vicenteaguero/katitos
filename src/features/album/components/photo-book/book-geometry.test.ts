@@ -2,10 +2,20 @@ import { describe, expect, it } from 'vitest';
 import {
   computeLayout,
   decideGesture,
+  landscapeSpreads,
+  leafAfterFlip,
+  leafCountFor,
+  leafOfPage,
+  padLeaves,
+  pageOfLeaf,
+  placeLeaf,
   restFor,
   slideDx,
   stepCrossing,
 } from './book-geometry';
+
+/** The book a book of `n` paper pages actually becomes. */
+const L = (n: number) => leafCountFor(n);
 
 const M = 10;
 const MIN_PEEK = 40;
@@ -74,51 +84,166 @@ describe('computeLayout', () => {
   });
 });
 
-describe('decideGesture', () => {
-  const count = 4; // spreads [0|1] [2|3]
+describe('the leaf layout', () => {
+  it('always leaves an even number of leaves, so the back cover flips alone', () => {
+    for (let n = 0; n <= 20; n++) expect(leafCountFor(n) % 2).toBe(0);
+  });
 
-  it('left page: left half flips back, right half slides forward', () => {
-    expect(decideGesture(2, count, true, false)).toEqual({
+  it('is cover + pages + endpaper + back cover, and nothing else', () => {
+    for (let n = 0; n <= 20; n++) {
+      expect(leafCountFor(n) - padLeaves(n) - 2).toBe(n);
+    }
+  });
+
+  it('maps pages to leaves and back, and says so when a leaf is not a page', () => {
+    expect(leafOfPage(0)).toBe(1);
+    expect(pageOfLeaf(1, 5)).toBe(0);
+    expect(pageOfLeaf(5, 5)).toBe(4);
+    expect(pageOfLeaf(0, 5)).toBe(-1); // the front cover
+    expect(pageOfLeaf(6, 5)).toBe(-1); // the blank endpaper (5 is odd)
+    expect(pageOfLeaf(L(5) - 1, 5)).toBe(-1); // the back cover
+  });
+
+  it('groups leaves exactly the way StPageFlip does', () => {
+    // Transcribed from PageCollection.createSpread(): cover alone, then pairs,
+    // then whatever is left over alone. If a react-pageflip upgrade changes
+    // this rule, THIS is the test that goes red instead of the whole book.
+    const reference = (leafCount: number, showCover: boolean) => {
+      const out: number[][] = [];
+      let t = 0;
+      if (showCover && leafCount > 0) {
+        out.push([0]);
+        t = 1;
+      }
+      for (let e = t; e < leafCount; e += 2) {
+        if (e < leafCount - 1) out.push([e, e + 1]);
+        else out.push([e]);
+      }
+      return out;
+    };
+    for (let leafCount = 0; leafCount <= 12; leafCount++) {
+      for (const showCover of [true, false]) {
+        expect(landscapeSpreads(leafCount, showCover)).toEqual(
+          reference(leafCount, showCover)
+        );
+      }
+    }
+  });
+});
+
+describe('placeLeaf', () => {
+  it('opens on a cover that stands alone on the right', () => {
+    const p = placeLeaf(0, L(6));
+    expect(p.lone).toBe(true);
+    expect(p.side).toBe('right');
+  });
+
+  it('closes on a back cover that stands alone on the left', () => {
+    const leafCount = L(6);
+    const p = placeLeaf(leafCount - 1, leafCount);
+    expect(p.lone).toBe(true);
+    expect(p.side).toBe('left');
+  });
+
+  it('puts the paper pages in pairs, odd leaf on the left', () => {
+    const leafCount = L(6); // 8 leaves: [0] [1,2] [3,4] [5,6] [7]
+    expect(placeLeaf(1, leafCount).side).toBe('left');
+    expect(placeLeaf(2, leafCount).side).toBe('right');
+    expect(placeLeaf(3, leafCount).side).toBe('left');
+    expect(placeLeaf(6, leafCount).side).toBe('right');
+    for (const leaf of [1, 2, 3, 4, 5, 6]) {
+      expect(placeLeaf(leaf, leafCount).lone).toBe(false);
+    }
+  });
+
+  it('clamps a leaf that has wandered out of the book', () => {
+    const leafCount = L(3);
+    expect(placeLeaf(-4, leafCount).leaf).toBe(0);
+    expect(placeLeaf(99, leafCount).leaf).toBe(leafCount - 1);
+  });
+});
+
+describe('leafAfterFlip', () => {
+  const leafCount = L(6); // [0] [1,2] [3,4] [5,6] [7]
+
+  it('enters the next spread on its left page', () => {
+    expect(leafAfterFlip(3, 2, leafCount)).toBe(3);
+  });
+
+  it('enters a spread we are flipping BACK into from its right page', () => {
+    expect(leafAfterFlip(1, 3, leafCount)).toBe(2);
+  });
+
+  it('lands ON the front cover rather than beside it', () => {
+    // The regression this whole function exists for: a lone spread has one
+    // leaf, so "enter from the right" would put us on page 1 with the cover
+    // already turned — you could never actually see the cover again.
+    expect(leafAfterFlip(0, 1, leafCount)).toBe(0);
+  });
+
+  it('lands ON the back cover', () => {
+    expect(leafAfterFlip(leafCount - 1, leafCount - 2, leafCount)).toBe(
+      leafCount - 1
+    );
+  });
+});
+
+describe('decideGesture', () => {
+  const leafCount = L(4); // 6 leaves: [0] [1,2] [3,4] [5]
+
+  it('left leaf: left half flips back, right half slides forward', () => {
+    const p = placeLeaf(3, leafCount);
+    expect(decideGesture(p, leafCount, true, false)).toEqual({
       mode: 'flip',
+      target: 2,
+    });
+    expect(decideGesture(p, leafCount, false, false)).toEqual({
+      mode: 'slide',
+      target: 4,
+    });
+  });
+
+  it('right leaf: left half slides back, right half flips forward', () => {
+    const p = placeLeaf(2, leafCount);
+    expect(decideGesture(p, leafCount, true, false)).toEqual({
+      mode: 'slide',
       target: 1,
     });
-    expect(decideGesture(2, count, false, false)).toEqual({
-      mode: 'slide',
+    expect(decideGesture(p, leafCount, false, false)).toEqual({
+      mode: 'flip',
       target: 3,
     });
   });
 
-  it('right page: left half slides back, right half flips forward', () => {
-    expect(decideGesture(1, count, true, false)).toEqual({
-      mode: 'slide',
-      target: 0,
-    });
-    expect(decideGesture(1, count, false, false)).toEqual({
-      mode: 'flip',
-      target: 2,
-    });
-  });
-
-  it('blocks at the very start (no previous spread)', () => {
-    expect(decideGesture(0, count, true, false).mode).toBeNull();
-  });
-
-  it('blocks at the very end (no next page)', () => {
-    expect(decideGesture(3, count, false, false).mode).toBeNull();
-  });
-
-  it('blocks every gesture while a flip is still animating', () => {
-    expect(decideGesture(1, count, false, true).mode).toBeNull();
-    expect(decideGesture(2, count, false, true).mode).toBeNull();
-  });
-
-  it('handles an odd page count (lone last left page)', () => {
-    // count 3 → spreads [0|1] [2]; page 2 is a lone left page.
-    expect(decideGesture(2, 3, false, false).mode).toBeNull(); // no page 3 to slide to
-    expect(decideGesture(2, 3, true, false)).toEqual({
+  it('a cover flips whichever half you touch — there is nothing beside it', () => {
+    expect(
+      decideGesture(placeLeaf(0, leafCount), leafCount, false, false)
+    ).toEqual({
       mode: 'flip',
       target: 1,
     });
+    const back = placeLeaf(leafCount - 1, leafCount);
+    expect(decideGesture(back, leafCount, true, false)).toEqual({
+      mode: 'flip',
+      target: leafCount - 2,
+    });
+  });
+
+  it('blocks at the very start and the very end', () => {
+    expect(
+      decideGesture(placeLeaf(0, leafCount), leafCount, true, false).mode
+    ).toBeNull();
+    const back = placeLeaf(leafCount - 1, leafCount);
+    expect(decideGesture(back, leafCount, false, false).mode).toBeNull();
+  });
+
+  it('blocks every gesture while a flip is still animating', () => {
+    expect(
+      decideGesture(placeLeaf(1, leafCount), leafCount, false, true).mode
+    ).toBeNull();
+    expect(
+      decideGesture(placeLeaf(2, leafCount), leafCount, false, true).mode
+    ).toBeNull();
   });
 });
 
@@ -127,29 +252,39 @@ describe('slideDx', () => {
     const elW = 360;
     const { restL, restR } = computeLayout(elW, 600, M, MIN_PEEK);
     const span = Math.abs(restR - restL);
-    // From the left page, a big leftward drag clamps to exactly the gap.
-    const big = slideDx(0, -10000, restL, restR);
+    const left = placeLeaf(1, L(4)); // a left-hand paper page
+    const big = slideDx(left, -10000, restL, restR);
     expect(Math.abs(big)).toBeCloseTo(span, 5);
-    // A small drag passes through ~1:1.
-    expect(slideDx(0, -5, restL, restR)).toBeCloseTo(-5, 5);
-    // Wrong-direction drag from the left page is clamped to 0 (can't go past rest).
-    expect(slideDx(0, 9999, restL, restR)).toBe(0);
+    expect(slideDx(left, -5, restL, restR)).toBeCloseTo(-5, 5);
+    // Wrong-direction drag from the left page is clamped to 0 (can't pass rest).
+    expect(slideDx(left, 9999, restL, restR)).toBe(0);
   });
 });
 
 describe('stepCrossing', () => {
+  const leafCount = L(4); // [0] [1,2] [3,4] [5]
+
   it('slides within a spread, flips across one', () => {
-    expect(stepCrossing(0, 1)).toBe(false); // even fwd = slide
-    expect(stepCrossing(1, 1)).toBe(true); // odd fwd = flip
-    expect(stepCrossing(2, -1)).toBe(true); // even back = flip
-    expect(stepCrossing(1, -1)).toBe(false); // odd back = slide
+    expect(stepCrossing(placeLeaf(1, leafCount), 1)).toBe(false); // left → right
+    expect(stepCrossing(placeLeaf(2, leafCount), 1)).toBe(true); // right → next
+    expect(stepCrossing(placeLeaf(3, leafCount), -1)).toBe(true); // left → prev
+    expect(stepCrossing(placeLeaf(2, leafCount), -1)).toBe(false); // right → left
+  });
+
+  it('always flips off a cover', () => {
+    expect(stepCrossing(placeLeaf(0, leafCount), 1)).toBe(true);
+    expect(stepCrossing(placeLeaf(leafCount - 1, leafCount), -1)).toBe(true);
   });
 });
 
 describe('restFor', () => {
-  it('uses restL for even (left) pages and restR for odd (right) pages', () => {
-    expect(restFor(0, -10, 99)).toBe(-10);
-    expect(restFor(1, -10, 99)).toBe(99);
-    expect(restFor(2, -10, 99)).toBe(-10);
+  it('rests left for a left leaf and right for a right one', () => {
+    const leafCount = L(4);
+    expect(restFor(placeLeaf(1, leafCount), -10, 99)).toBe(-10);
+    expect(restFor(placeLeaf(2, leafCount), -10, 99)).toBe(99);
+    // The unopened front cover sits on the right of the case…
+    expect(restFor(placeLeaf(0, leafCount), -10, 99)).toBe(99);
+    // …and the back cover on the left.
+    expect(restFor(placeLeaf(leafCount - 1, leafCount), -10, 99)).toBe(-10);
   });
 });
