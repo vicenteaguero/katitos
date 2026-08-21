@@ -235,9 +235,6 @@
 /* ── The boards ───────────────────────────────────────────────────────────── */
 .pb-cover {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   overflow: hidden;
   border-radius: 4px 11px 11px 4px;
   background:
@@ -247,6 +244,25 @@
     inset 0 0 0 1px rgba(0, 0, 0, 0.35),
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
     0 10px 26px -12px rgba(20, 4, 9, 0.8);
+}
+/* The board's contents.
+   NOTHING that lays out may live on `.pb-cover` itself: StPageFlip rewrites
+   every leaf's whole `cssText` on each draw, and its template hard-codes
+   `display: block`. A `display: flex` up there is silently thrown away, which
+   is what dropped the title to the top of the board and cut its ascenders off
+   against the rounded corner. Same split the paper pages have always used. */
+.pb-cover-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: inherit;
+  /* So `cqw` below means "a percent of THIS COVER" — without a container the
+     unit silently falls back to the viewport, and the title was sized off the
+     phone's width instead of off the book's. */
+  container-type: inline-size;
 }
 /* The back board closes the other way round, so its bevel does too. */
 .pb-cover--back {
@@ -276,18 +292,24 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 0 24px;
+  gap: 0.6em;
+  /* Clear of the gilt plate (inset 14px) on every side, so a long name wraps
+     inside the panel instead of running across it. */
+  padding: 26px 30px;
+  max-height: 100%;
   text-align: center;
 }
 .pb-cover-title {
   font-family: var(--font-display);
-  font-size: clamp(1.25rem, 8cqw, 2.1rem);
-  line-height: 1.1;
+  font-size: clamp(0.95rem, 12cqw, 2.4rem);
+  line-height: 1.16;
+  /* Two short lines beat one long one and one orphan. */
+  text-wrap: balance;
+  overflow-wrap: anywhere;
 }
 .pb-cover-span {
   font-family: var(--font-sans);
-  font-size: 0.68rem;
+  font-size: clamp(0.5rem, 3.4cqw, 0.72rem);
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: rgba(228, 195, 106, 0.72);
@@ -295,7 +317,7 @@
 .pb-cover-mark {
   position: relative;
   z-index: 1;
-  font-size: 1.6rem;
+  font-size: clamp(1rem, 9cqw, 1.9rem);
   opacity: 0.55;
 }
 /* The inside of the board, for the blank leaf that keeps the count even. */
