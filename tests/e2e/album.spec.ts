@@ -8,17 +8,30 @@ async function openBook(page: Page) {
   await dismissChangelog(page);
 
   // A fresh database has an empty shelf, so make a book to open. Creating one
-  // stays on the shelf — it appears as a spine you then tap.
+  // now opens it straight away.
   const spines = page.locator('a[href^="/album/"]');
   if ((await spines.count()) === 0) {
     await page.getByRole('button', { name: 'Start a new album' }).click();
     await page.getByLabel('What is it?').fill('itest album');
     await page.getByRole('button', { name: 'Start it' }).click();
+  } else {
+    await spines.first().click();
   }
-  await expect(spines.first()).toBeVisible({ timeout: 20_000 });
-  await spines.first().click();
   await expect(page.locator('.pb-stage')).toBeVisible({ timeout: 20_000 });
+  // Every book opens closed, on its front board.
+  await expect(page.getByText('Cover')).toBeVisible({ timeout: 20_000 });
 }
+
+test('a book opens on its cover, and the cover turns', async ({ page }) => {
+  await openBook(page);
+  // A board stands alone: there is no facing page to slide to, so the whole
+  // leaf turns.
+  await expect(page.locator('.pb-case--void-left')).toBeVisible();
+  await expect(page.locator('.pb-slide-zone')).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Next page' }).click();
+  await expect(page.getByText('1 / 5')).toBeVisible({ timeout: 20_000 });
+});
 
 test('the book opens and can be paged through', async ({ page }) => {
   const errors: string[] = [];
@@ -28,11 +41,16 @@ test('the book opens and can be paged through', async ({ page }) => {
   await expect(page.locator('.pb-viewport')).toBeVisible();
 
   await page.getByRole('button', { name: 'Next page' }).click();
+  await expect(page.getByText('1 / 5')).toBeVisible({ timeout: 20_000 });
+  await page.getByRole('button', { name: 'Next page' }).click();
+  await expect(page.getByText('2 / 5')).toBeVisible({ timeout: 20_000 });
   expect(errors, errors.join('\n')).toEqual([]);
 });
 
 test('the curl is not clipped away by its container', async ({ page }) => {
   await openBook(page);
+  await page.getByRole('button', { name: 'Next page' }).click();
+  await expect(page.getByText('1 / 5')).toBeVisible({ timeout: 20_000 });
 
   const overflow = await page.evaluate(() => {
     const read = (sel: string) => {
@@ -102,6 +120,9 @@ test('you can turn the page while arranging', async ({ page }) => {
   await openBook(page);
   await page.getByRole('button', { name: 'Arrange stickers' }).click();
   await expect(page.locator('.pb-strip')).toBeVisible();
+
+  // Arranging always starts on a page, never on a board.
+  await expect(page.getByText('1 / 5')).toBeVisible({ timeout: 20_000 });
 
   const next = page.getByRole('button', { name: 'Next page' });
   await expect(next).toBeEnabled();
