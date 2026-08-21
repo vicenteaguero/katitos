@@ -89,7 +89,7 @@ function PageFaceImpl({
     >
       {page.stickers.map((sticker, i) => (
         <Sticker
-          key={sticker.id}
+          key={sticker.localKey ?? sticker.id}
           sticker={sticker}
           interactive={interactive}
           eager={eager}
@@ -387,7 +387,10 @@ function Sticker({
     {
       enabled: interactive && cropping,
       eventOptions: { passive: false },
-      drag: { pointer: { touch: true } },
+      // Pointer events, NOT touch-only like the move gesture. There is no flip
+      // book on screen while arranging, so nothing to conflict with — and
+      // cropping with a mouse works, which it did not.
+      drag: { filterTaps: true },
       pinch: {
         from: () => [crop.cropZoom, 0],
         scaleBounds: { min: MIN_ZOOM, max: MAX_ZOOM },
@@ -399,6 +402,11 @@ function Sticker({
     <div
       ref={ref}
       {...(interactive && !cropping ? bind() : {})}
+      // The tap that SELECTS this sticker is a gesture, and the click that
+      // follows it still travels up to the paper — whose job is to clear the
+      // selection. Without this, selecting anything immediately deselected it
+      // again and the toolbar never appeared.
+      onClick={(e) => interactive && e.stopPropagation()}
       className={cn(
         'pb-sticker',
         isText && 'pb-sticker--text',
@@ -446,6 +454,9 @@ function Sticker({
           className={cn(
             'pb-sticker-frame',
             `pb-frame-${polaroid ? 'polaroid' : (sticker.frame ?? 'plain')}`,
+            // The MOUNT is cut to the same shape as the picture. Without this a
+            // gilt circle came out as a square of gold with a round hole in it.
+            `pb-fshape-${shape}`,
             `pb-mount-${sticker.frame_color ?? 'cream'}`
           )}
         >
