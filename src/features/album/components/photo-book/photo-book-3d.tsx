@@ -497,7 +497,15 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
    */
   const onChangeState = useCallback((e: { data: string }) => {
     if (e.data !== 'flipping') {
-      if (e.data === 'read') flippingRef.current = false;
+      // 'read' is the last thing StPageFlip says — AFTER `onFlip`, and also
+      // after a fold that was picked up and then abandoned. Either way the
+      // case must stop leaning towards a page it is not going to: without
+      // this, letting go of a half-turned corner left the whole book resting
+      // at the wrong offset until the next thing you did.
+      if (e.data === 'read') {
+        flippingRef.current = false;
+        setSlideAhead(null);
+      }
       return;
     }
     flippingRef.current = true;
