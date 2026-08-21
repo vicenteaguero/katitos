@@ -51,6 +51,11 @@ export function useSignedUrls(
     // album is exactly that long.
     refetchInterval: Math.max(60_000, (expiresIn - 60) * 1000),
     refetchIntervalInBackground: false,
+    // Adding ONE photo changes the path list, which changes the key, which
+    // would otherwise blank every already-signed photo on screen until the new
+    // batch came back — a whole page flashing because one sticker was placed.
+    // Hold the last answer while the next one is on its way.
+    placeholderData: (prev: Array<[string, string]> | undefined) => prev,
     queryFn: async (): Promise<Array<[string, string]>> => {
       const targets = proxy ? wanted.map(proxyPath) : wanted;
       const { data, error } = await supabase.storage
