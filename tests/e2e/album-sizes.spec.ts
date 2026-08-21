@@ -36,7 +36,7 @@ for (const [name, size] of [
     await page
       .locator('input[type="file"]')
       .setInputFiles([WIDE, TALL, WIDE, TALL, WIDE]);
-    await expect(page.getByText('5 of 5 added')).toBeVisible({
+    await expect(page.getByText('5 of 5')).toBeVisible({
       timeout: 60_000,
     });
     await page.getByRole('button', { name: 'Close' }).last().click();

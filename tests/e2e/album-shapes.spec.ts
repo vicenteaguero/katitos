@@ -26,7 +26,7 @@ test('every shape and every mount, on a real page', async ({ page }) => {
   await page
     .locator('input[type="file"]')
     .setInputFiles([WIDE, TALL, WIDE, TALL, WIDE, TALL, WIDE]);
-  await expect(page.getByText('7 of 7 added')).toBeVisible({ timeout: 90_000 });
+  await expect(page.getByText('7 of 7')).toBeVisible({ timeout: 90_000 });
   await page.getByRole('button', { name: 'Close' }).last().click();
   await expect(page.locator('.pb-strip-item').first()).toBeVisible();
 

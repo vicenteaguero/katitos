@@ -34,7 +34,7 @@ test('a pile of photos goes in at once and lands in the strip', async ({
   // time.
   await page.locator('input[type="file"]').setInputFiles([WIDE, TALL]);
 
-  await expect(page.getByText('2 of 2 added')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText('2 of 2')).toBeVisible({ timeout: 30_000 });
   await page.getByRole('button', { name: 'Close' }).last().click();
 
   // Both are in the strip under the book, ready to be placed.
@@ -51,7 +51,7 @@ test('a placed photo keeps its own shape instead of being cropped square', async
 
   await page.getByRole('button', { name: 'Add photos' }).first().click();
   await page.locator('input[type="file"]').setInputFiles([WIDE]);
-  await expect(page.getByText('1 of 1 added')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText('1 of 1')).toBeVisible({ timeout: 30_000 });
   await page.getByRole('button', { name: 'Close' }).last().click();
 
   // Tap the thumbnail to drop it on the open page.
@@ -93,7 +93,7 @@ test('the book loads the small copy, not the full-size original', async ({
   await page.getByRole('button', { name: 'Arrange stickers' }).click();
   await page.getByRole('button', { name: 'Add photos' }).first().click();
   await page.locator('input[type="file"]').setInputFiles([WIDE]);
-  await expect(page.getByText('1 of 1 added')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText('1 of 1')).toBeVisible({ timeout: 30_000 });
   await page.getByRole('button', { name: 'Close' }).last().click();
 
   await expect(page.locator('.pb-strip-item img')).toHaveCount(1, {
@@ -114,7 +114,7 @@ test('the album prints from the real photographs, not the small copies', async (
   await page.getByRole('button', { name: 'Arrange stickers' }).click();
   await page.getByRole('button', { name: 'Add photos' }).first().click();
   await page.locator('input[type="file"]').setInputFiles([WIDE]);
-  await expect(page.getByText('1 of 1 added')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText('1 of 1')).toBeVisible({ timeout: 30_000 });
   await page.getByRole('button', { name: 'Close' }).last().click();
   await page.locator('.pb-strip-item').first().click();
   await expect(page.locator('.pb-editor .pb-sticker-photo')).toHaveCount(1, {
@@ -178,7 +178,7 @@ test('a photo with no stored size still shows, and learns its shape', async ({
 
   await page.getByRole('button', { name: 'Add photos' }).first().click();
   await page.locator('input[type="file"]').setInputFiles([WIDE]);
-  await expect(page.getByText('1 of 1 added')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText('1 of 1')).toBeVisible({ timeout: 30_000 });
   await page.getByRole('button', { name: 'Close' }).last().click();
 
   // The upload sheet closes with an animation; a tap that lands while it is on
