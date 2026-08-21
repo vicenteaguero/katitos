@@ -1,8 +1,15 @@
 import { supabase } from '@kernel/supabase';
 import { BUCKETS } from '@kernel/storage';
-import type { AlbumPageWithPhotos, PlacedSticker } from '../../types';
+import type {
+  AlbumPageWithPhotos,
+  PlacedSticker,
+  StickerShape,
+} from '../../types';
 import { mapWithConcurrency } from '../upload-queue';
 import {
+  cropMatrix,
+  cropOf,
+  cropWindow,
   filmLayout,
   layoutSticker,
   offsetInFrame,
@@ -11,7 +18,13 @@ import {
   stickerMatrix,
   type Box,
 } from './pdf-layout';
-import { drawImage, fillRect, PdfDoc, readJpegSize } from './pdf-writer';
+import {
+  drawImage,
+  drawImageClipped,
+  fillRect,
+  PdfDoc,
+  readJpegSize,
+} from './pdf-writer';
 
 /**
  * Print the album at full quality.
@@ -176,6 +189,12 @@ export async function buildAlbumPdf(
         rotation: st.rotation,
         width: st.photo?.width,
         height: st.photo?.height,
+        // A polaroid's window is square whatever the row says — that is what
+        // the format is — and the screen makes the same substitution.
+        shape:
+          st.frame === 'polaroid'
+            ? 'square'
+            : (st.shape as StickerShape | null),
       });
 
       if (st.kind === 'text') {
@@ -214,6 +233,31 @@ export async function buildAlbumPdf(
       const name = `Im${n++}`;
       images.push({ name, ref });
 
+      /**
+       * Print the part of the picture she framed, not all of it.
+       *
+       * The old export drew every photograph STRETCHED into its box, which
+       * happened to look right only while the box was the photograph's own
+       * shape. With a shape or a crop on it that is simply the wrong picture,
+       * so both go through one clip: the frame, and the window inside it.
+       *
+       * The cut itself (a circle, an arch) is not reproduced — a PDF clip path
+       * per shape is a bigger piece of work than a console-only export earns —
+       * so a shaped photo prints as the correctly-cropped rectangle it is cut
+       * out of. Worth knowing before the first book goes to a printer.
+       */
+      const crop = cropOf(st);
+      const natural =
+        st.photo?.width && st.photo?.height
+          ? st.photo.width / st.photo.height
+          : size.width / size.height;
+      const drawInto = (target: Box) =>
+        drawImageClipped(
+          name,
+          stickerMatrix(target),
+          cropMatrix(cropWindow(target.w / target.h, natural, crop))
+        );
+
       if (st.frame === 'polaroid') {
         // The white plate is vector — a rectangle costs nothing and stays
         // crisp at any print size.
@@ -238,9 +282,9 @@ export async function buildAlbumPdf(
           h: film.window.size,
           rotation: box.rotation,
         };
-        ops += drawImage(name, stickerMatrix(window));
+        ops += drawInto(window);
       } else {
-        ops += drawImage(name, stickerMatrix(box));
+        ops += drawInto(box);
       }
 
       if (st.caption) {
