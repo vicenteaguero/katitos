@@ -273,6 +273,7 @@ export function usePlaceSticker() {
       const now = new Date().toISOString();
       const optimistic = {
         id: tempId,
+        localKey: tempId,
         page_id: v.pageId,
         photo_id: v.photoId ?? null,
         photo: v.photo ?? null,
@@ -321,7 +322,14 @@ export function usePlaceSticker() {
                 ...p,
                 stickers: p.stickers.map((s) =>
                   s.id === ctx?.tempId
-                    ? { ...row, photo: v.photo ?? row.photo }
+                    ? {
+                        ...row,
+                        photo: v.photo ?? row.photo,
+                        // Same key as the stand-in, so React updates the
+                        // element it already has instead of throwing it away
+                        // and building another.
+                        localKey: ctx.tempId,
+                      }
                     : s
                 ),
               }
@@ -375,7 +383,9 @@ export function useRestoreSticker() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (v: { sticker: PlacedSticker; bookId: string }) => {
-      const { photo: _photo, ...row } = v.sticker;
+      // `localKey` is ours, not the database's — it exists only so React can
+      // keep the element it already drew.
+      const { photo: _photo, localKey: _localKey, ...row } = v.sticker;
       // Upsert, not insert: Undo is a button you can press twice, and the
       // second press used to throw a duplicate-key error at you.
       const { error } = await supabase
