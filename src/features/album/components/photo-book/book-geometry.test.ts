@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   computeLayout,
   landscapeSpreads,
+  isEndPaper,
   leafAfterFlip,
   leafCountFor,
   leafOfPage,
@@ -11,7 +12,6 @@ import {
   coverRest,
   restFor,
   slideDx,
-  stepCrossing,
 } from './book-geometry';
 
 /** The book a book of `n` paper pages actually becomes. */
@@ -131,6 +131,23 @@ describe('the leaf layout', () => {
   });
 });
 
+describe('isEndPaper', () => {
+  it('finds the blank leaf, and only when there is one', () => {
+    // 5 pages → 8 leaves: [cover] 1..5 pages, 6 blank, 7 back.
+    const odd = L(5);
+    expect(isEndPaper(6, 5, odd)).toBe(true);
+    expect(isEndPaper(5, 5, odd)).toBe(false); // the last page
+    expect(isEndPaper(7, 5, odd)).toBe(false); // the back board
+    expect(isEndPaper(0, 5, odd)).toBe(false); // the front board
+
+    // 6 pages → 8 leaves, no blank at all.
+    const even = L(6);
+    for (let leaf = 0; leaf < even; leaf++) {
+      expect(isEndPaper(leaf, 6, even)).toBe(false);
+    }
+  });
+});
+
 describe('placeLeaf', () => {
   it('opens on a cover that stands alone on the right', () => {
     const p = placeLeaf(0, L(6));
@@ -202,22 +219,6 @@ describe('slideDx', () => {
   });
 });
 
-describe('stepCrossing', () => {
-  const leafCount = L(4); // [0] [1,2] [3,4] [5]
-
-  it('slides within a spread, flips across one', () => {
-    expect(stepCrossing(placeLeaf(1, leafCount), 1)).toBe(false); // left → right
-    expect(stepCrossing(placeLeaf(2, leafCount), 1)).toBe(true); // right → next
-    expect(stepCrossing(placeLeaf(3, leafCount), -1)).toBe(true); // left → prev
-    expect(stepCrossing(placeLeaf(2, leafCount), -1)).toBe(false); // right → left
-  });
-
-  it('always flips off a cover', () => {
-    expect(stepCrossing(placeLeaf(0, leafCount), 1)).toBe(true);
-    expect(stepCrossing(placeLeaf(leafCount - 1, leafCount), -1)).toBe(true);
-  });
-});
-
 describe('coverRest', () => {
   const M = 10;
 
@@ -239,8 +240,6 @@ describe('coverRest', () => {
   });
 
   it('leaves nothing of the binding sticking out beside it', () => {
-    // The bug: the case is two pages wide AND padded, so a shut book showed a
-    // second rounded rectangle of wine around and behind its own cover.
     const vw = 360;
     const pageW = 300;
     const front = placeLeaf(0, L(4));
