@@ -199,6 +199,31 @@ export function leafAfterFlip(
   return data < prevFocused ? data + 1 : data;
 }
 
+/**
+ * Where a CLOSED book rests: centred, and only one board wide.
+ *
+ * A cover has no facing page, but the case behind it is still two pages wide —
+ * so the binding stuck out past the board on one side and ran off the screen
+ * on the other, and the whole thing read as a book lying on top of another
+ * book. A shut book is one board; it sits in the middle of the screen; you
+ * open it and THEN it becomes a spread that slides.
+ */
+export function coverRest(
+  place: LeafPlace,
+  pageW: number,
+  m: number,
+  vw: number
+): number {
+  // The BOARD is the whole book when it is shut — there is no binding behind
+  // it to leave room for, so this centres the leaf itself. Leaving the case's
+  // margin visible around it was the second half of the "book on top of a
+  // book" look: two rounded rectangles, one inside the other, both wine.
+  const centred = (vw - pageW) / 2;
+  // The front board is drawn in the RIGHT half of the case, so the track comes
+  // back by a page and the case's own padding for that half to land centred.
+  return place.side === 'right' ? centred - m - pageW : centred - m;
+}
+
 /** The rest offset for the leaf currently focused. */
 export function restFor(
   place: LeafPlace,
