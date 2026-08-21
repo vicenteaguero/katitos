@@ -1,7 +1,13 @@
 import { useState } from 'react';
-import { Check, ImagePlus, X } from 'lucide-react';
+import { Camera, Check, ImagePlus, X } from 'lucide-react';
 import { BUCKETS, useSignedUrls } from '@kernel/storage';
-import { Button, FilePickerButton, Sheet, Spinner } from '@kernel/ui';
+import {
+  Button,
+  CameraCapture,
+  FilePickerButton,
+  Sheet,
+  Spinner,
+} from '@kernel/ui';
 import { batchProgress } from '../../lib/upload-queue';
 import { usePolaroidPicker } from '../../api/photo-book.queries';
 import { useAddToLibrary, type UploadJob } from '../../api/library.mutations';
@@ -29,6 +35,7 @@ export function LibraryUploadSheet({
 }) {
   const { done, failed, total, pct } = batchProgress(jobs.map((j) => j.state));
   const [pickingPolaroid, setPickingPolaroid] = useState(false);
+  const [shooting, setShooting] = useState(false);
   const { data: polaroids } = usePolaroidPicker(pickingPolaroid);
   const addOne = useAddToLibrary();
   const { data: thumbs } = useSignedUrls(
@@ -37,12 +44,30 @@ export function LibraryUploadSheet({
     { proxy: true, enabled: pickingPolaroid }
   );
 
+  if (shooting) {
+    return (
+      <CameraCapture
+        onCancel={() => setShooting(false)}
+        onCapture={(blob) => {
+          setShooting(false);
+          addOne.mutate({ bookId, source: 'upload', blob });
+        }}
+      />
+    );
+  }
+
   return (
     <Sheet open={open} onClose={onClose} title="Add photos" size="half">
       <div className="space-y-3">
         <FilePickerButton multiple onPickMany={onPick} className="w-full">
           <ImagePlus size={16} /> Choose photos
         </FilePickerButton>
+
+        {/* Straight into the book. Half of what goes in an album on a trip is
+            taken while you are looking at the page you want it on. */}
+        <Button full variant="secondary" onClick={() => setShooting(true)}>
+          <Camera size={16} /> Take one now
+        </Button>
 
         {/* The daily photos belong in the books too — this was reachable
             before the library arrived and quietly stopped being. */}
