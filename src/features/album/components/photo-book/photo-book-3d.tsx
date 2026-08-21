@@ -610,10 +610,16 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
   const toggleEdit = useCallback(() => {
     setSelectedId(null);
     setCroppingId(null);
-    // There is nothing to arrange on a board. Offer what a cover is actually
-    // for instead of an empty editor.
+    // A board has nothing on it to arrange. Turn to the first page and start
+    // there — which is what "let me put things in" means when you are looking
+    // at a cover. (The cover's own settings live behind the gear.)
     if (!currentPage) {
-      setSettingsOpen(true);
+      // Not conditional on the pages having arrived. Tapping edit a beat too
+      // early used to do NOTHING AT ALL — no editor, no message — and you were
+      // left tapping it again wondering what was broken. Leaf 1 is the first
+      // page whenever there is one, and the editor simply waits for it.
+      setIndex(1);
+      setMode('arrange');
       return;
     }
     setMode((m) => (m === 'arrange' ? 'read' : 'arrange'));
