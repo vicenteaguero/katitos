@@ -1,7 +1,9 @@
 import {
   ArrowDownToLine,
   ArrowUpToLine,
-  Contrast,
+  Check,
+  Crop,
+  Palette,
   Trash2,
   Type,
 } from 'lucide-react';
@@ -14,23 +16,45 @@ import type { PlacedSticker } from '../../types';
  * A bar, not a Sheet: it stands in for the nav row rather than sitting on top
  * of it, so it costs no height at all — and it never covers the page you are
  * arranging, which a bottom sheet always would.
+ *
+ * While cropping it becomes a single Done, because there is exactly one thing
+ * to do with a picture you are moving inside its frame, and a row of tools you
+ * must not press is worse than no row at all.
  */
 export function StickerToolbar({
   sticker,
+  cropping,
   onFront,
   onBack,
-  onToggleFrame,
+  onCrop,
+  onStyle,
   onEditText,
   onRemove,
 }: {
   sticker: PlacedSticker;
+  cropping: boolean;
   onFront: () => void;
   onBack: () => void;
-  onToggleFrame: () => void;
+  onCrop: () => void;
+  onStyle: () => void;
   onEditText: () => void;
   onRemove: () => void;
 }) {
   const isText = sticker.kind === 'text';
+
+  if (cropping) {
+    return (
+      <div className="pb-toolbar" role="toolbar" aria-label="Cropping">
+        <span className="pb-toolbar-note">
+          Drag the picture · pinch to come closer
+        </span>
+        <Tool label="Done cropping" onClick={onCrop} active>
+          <Check className="h-4 w-4" />
+        </Tool>
+      </div>
+    );
+  }
+
   return (
     <div className="pb-toolbar" role="toolbar" aria-label="Sticker">
       <Tool label="Bring to front" onClick={onFront}>
@@ -40,16 +64,13 @@ export function StickerToolbar({
         <ArrowDownToLine className="h-4 w-4" />
       </Tool>
       {!isText && (
-        <Tool
-          label={
-            sticker.frame === 'polaroid'
-              ? 'Take off the film'
-              : 'Make a polaroid'
-          }
-          onClick={onToggleFrame}
-          active={sticker.frame === 'polaroid'}
-        >
-          <Contrast className="h-4 w-4" />
+        <Tool label="Move the picture in its frame" onClick={onCrop}>
+          <Crop className="h-4 w-4" />
+        </Tool>
+      )}
+      {!isText && (
+        <Tool label="Shape, mount and colour" onClick={onStyle}>
+          <Palette className="h-4 w-4" />
         </Tool>
       )}
       <Tool
