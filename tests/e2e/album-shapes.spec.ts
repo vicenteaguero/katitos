@@ -16,7 +16,7 @@ test('every shape and every mount, on a real page', async ({ page }) => {
   await expect(page.getByRole('navigation')).toBeVisible({ timeout: 20_000 });
   await dismissChangelog(page);
   await page.getByRole('button', { name: 'Start a new album' }).click();
-  await page.getByLabel('What is it?').fill('Every shape');
+  await page.getByLabel('What is it?').fill('itest every shape');
   await page.getByRole('button', { name: 'Start it' }).click();
   await expect(page.getByText('Cover')).toBeVisible({ timeout: 20_000 });
 
