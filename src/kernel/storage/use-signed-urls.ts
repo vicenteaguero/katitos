@@ -44,6 +44,13 @@ export function useSignedUrls(
     enabled: enabled && wanted.length > 0,
     // Refresh a minute before the signatures actually lapse.
     staleTime: Math.max(0, (expiresIn - 60) * 1000),
+    // …and actually GO and refresh. Being stale is not the same as being
+    // refetched: the app turns off `refetchOnWindowFocus`, so nothing ever
+    // asked again, and a book left open for over an hour quietly started
+    // serving 403s for every photograph in it. An evening spent building an
+    // album is exactly that long.
+    refetchInterval: Math.max(60_000, (expiresIn - 60) * 1000),
+    refetchIntervalInBackground: false,
     queryFn: async (): Promise<Array<[string, string]>> => {
       const targets = proxy ? wanted.map(proxyPath) : wanted;
       const { data, error } = await supabase.storage
