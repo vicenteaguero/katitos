@@ -154,18 +154,33 @@
   box-sizing: border-box;
   position: relative;
   width: 100%;
+  padding: 10px; /* the binding around the open pages */
+}
+/*
+  The binding itself, as its OWN layer.
+
+  It used to be the background of `.pb-case`, which is always two pages wide —
+  so on a cover, where only one board is drawn, the other page's worth of
+  binding sat there beside it: a book on top of a book, running off the edge of
+  the screen. Now the board is a separate element whose width is set per state,
+  so a shut book is one board and an open one is a spread.
+*/
+.pb-board {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   border-radius: 18px;
   background:
     var(--pb-board-grain, none),
     linear-gradient(125deg, var(--pb-board) 0%, var(--pb-board-2) 100%);
-  padding: 10px; /* the wine cover around the open pages */
   box-shadow:
     0 22px 46px -20px rgba(20, 4, 9, 0.85),
     0 2px 0 rgba(255, 255, 255, 0.06) inset;
+  pointer-events: none;
 }
-/* Gilt hairline framing the cover — behind the pages (a turning leaf passes over
-   it), so it only shows in the wine margin. */
-.pb-case::before {
+/* Gilt hairline framing the binding — behind the pages (a turning leaf passes
+   over it), so it only shows in the margin. */
+.pb-board::before {
   content: '';
   position: absolute;
   inset: 4px;
@@ -190,6 +205,7 @@
 }
 .pb-book {
   position: relative;
+  z-index: 1;
 }
 /* The slide zone — a transparent overlay over the SPINE half of the focused
    page. It owns the pan gesture; the OUTER half is left uncovered so StPageFlip
@@ -208,10 +224,6 @@
   background: var(--pb-paper-2);
   box-shadow: inset 0 0 0 1px rgba(228, 195, 106, 0.22);
 }
-/* A lone spread — a cover — leaves the other half of the case empty, and empty
-   is what it should look like: the board, and nothing else. There used to be a
-   painted "fore-edge" of page ends in there. It read as a barcode. */
-
 /* ── The boards ───────────────────────────────────────────────────────────── */
 .pb-cover {
   position: relative;
@@ -223,7 +235,7 @@
   box-shadow:
     inset 0 0 0 1px rgba(0, 0, 0, 0.35),
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 10px 26px -12px rgba(20, 4, 9, 0.8);
+    0 22px 46px -20px rgba(20, 4, 9, 0.85);
 }
 /* The board's contents.
    NOTHING that lays out may live on `.pb-cover` itself: StPageFlip rewrites
@@ -720,8 +732,12 @@
 .pb-sticker-cap {
   display: block;
   padding-top: 5px;
-  font-style: italic;
-  font-size: 11px;
+  /* Set per sticker, in page-width units like everything else on the paper.
+     This was a hard 11px, so the XS–XL control did nothing at all to a caption
+     — the size only ever moved a standalone text sticker. The face comes from
+     the `pb-font-*` class, which is why the italic is no longer forced here. */
+  font-size: var(--pb-cap-size, 3.7cqw);
+  font-weight: var(--pb-cap-weight, 400);
   line-height: 1.2;
   text-align: center;
   color: var(--pb-ink);
@@ -791,7 +807,10 @@
   gap: 4px;
   overflow-x: auto;
   overscroll-behavior-x: contain;
-  scroll-snap-type: x proximity;
+  /* NO scroll snapping. The snap points sat on the photo tiles, so scrolling
+     back always caught on the first PHOTO — and the column of actions in front
+     of it (add, text, gallery) could never be reached again. It bounced you
+     forward every time. Free scrolling reaches both ends. */
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   padding-bottom: 2px;
@@ -855,7 +874,6 @@
   overflow: hidden;
   border-radius: 10px;
   background: rgba(58, 30, 16, 0.18);
-  scroll-snap-align: start;
   transition: transform 120ms ease;
 }
 .pb-strip-item img {
@@ -1034,4 +1052,83 @@
   border-radius: 10px;
   background: var(--pb-mount, #fdfaf4);
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+
+/* ── Getting photos in ────────────────────────────────────────────────────
+   Three small ways in on one row, then the photos themselves. */
+.pb-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  color: rgba(251, 245, 240, 0.85);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+}
+.pb-add:active {
+  background: rgba(255, 255, 255, 0.12);
+}
+.pb-add--on {
+  background: var(--color-accent, #6e1423);
+  color: var(--color-accent-fg, #fff);
+  box-shadow: none;
+}
+
+.pb-upload-tile {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 10px;
+  background: rgba(58, 30, 16, 0.18);
+}
+.pb-upload-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* Still going: dim it, and say so on top. */
+.pb-upload-tile:has(.pb-upload-state) img {
+  opacity: 0.45;
+}
+.pb-upload-state {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: rgba(251, 245, 240, 0.9);
+}
+.pb-upload-tile--failed {
+  box-shadow: inset 0 0 0 2px var(--color-danger, #c14b58);
+}
+.pb-upload-done {
+  position: absolute;
+  inset: auto 3px 3px auto;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--color-accent, #6e1423);
+  color: var(--color-accent-fg, #fff);
+}
+.pb-upload-x {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: rgba(20, 4, 9, 0.72);
+  color: rgba(251, 245, 240, 0.95);
+}
+.pb-upload-x:active {
+  background: rgba(20, 4, 9, 0.92);
 }
