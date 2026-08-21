@@ -175,22 +175,75 @@ function clamp01(v: number): number {
 /** A sticker at scale 1, as a fraction of the page width. */
 export const BASE_W = 0.42;
 
+/** The cut of the window a photo shows through. */
+export type StickerShape =
+  | 'natural'
+  | 'square'
+  | 'rounded'
+  | 'circle'
+  | 'arch'
+  | 'heart'
+  | 'torn';
+
 /**
- * How wide a photo should sit on the page.
+ * The shape of the FRAME, which is not always the shape of the photo.
+ *
+ * `natural` and `rounded` follow the photograph. Everything else imposes its
+ * own proportions and the picture is cropped into them — that is the whole
+ * point of choosing a circle.
+ */
+export function shapeRatio(
+  shape: StickerShape | null | undefined,
+  width?: number | null,
+  height?: number | null
+): number {
+  switch (shape) {
+    case 'square':
+    case 'circle':
+    case 'heart':
+    case 'torn':
+      return 1;
+    case 'arch':
+      return 3 / 4;
+    default:
+      return width && height ? width / height : 1;
+  }
+}
+
+/**
+ * How wide a frame of a given aspect should sit on the page.
  *
  * Every sticker used to be 42% of the page WIDE whatever shape it was, so a
  * portrait photo came out towering over the landscape one beside it — same
  * width, nearly twice the height, and the page looked lopsided. Matching the
- * AREA instead makes the two read as a pair: a wide photo is wider and shorter,
+ * AREA instead makes the two read as a pair: a wide frame is wider and shorter,
  * a tall one narrower and taller, and both take up the same amount of paper.
+ */
+export function frameWidth(ratio: number): number {
+  // sqrt, because area is width × height and height is width ÷ ratio.
+  const w = BASE_W * Math.sqrt(ratio);
+  return Math.min(0.72, Math.max(0.22, w));
+}
+
+/**
+ * How wide a photo should sit on the page, in its own natural shape.
+ *
+ * Kept as it was — the PDF re-exports this name — and now expressed in terms
+ * of the two pieces above, so a shaped sticker and a plain one are sized by
+ * one rule rather than two that drift.
  */
 export function stickerWidth(
   width?: number | null,
   height?: number | null
 ): number {
-  if (!width || !height) return BASE_W;
-  const ratio = width / height;
-  // sqrt, because area is width × height and height is width ÷ ratio.
-  const w = BASE_W * Math.sqrt(ratio);
-  return Math.min(0.72, Math.max(0.22, w));
+  return frameWidth(shapeRatio('natural', width, height));
+}
+
+/** The width of a sticker once its shape has had its say. */
+export function shapedWidth(
+  shape: StickerShape | null | undefined,
+  width?: number | null,
+  height?: number | null
+): number {
+  return frameWidth(shapeRatio(shape, width, height));
 }
