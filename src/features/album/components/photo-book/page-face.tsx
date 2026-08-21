@@ -83,6 +83,14 @@ function PageFaceImpl({
    * page becomes the control surface for it.
    */
   const pageRef = useRef<HTMLDivElement>(null);
+  /**
+   * When a two-finger gesture last finished.
+   *
+   * Selection changes ONLY on a deliberate one-finger tap. A pinch can end
+   * with a synthetic click, and that click landing on the paper used to throw
+   * the selection away in the middle of resizing something.
+   */
+  const gestureAt = useRef(0);
 
   return (
     <div
@@ -94,7 +102,11 @@ function PageFaceImpl({
       // sticker deselected and immediately reselected it — and it could never
       // be dismissed by tapping it again. A click on the paper is a click that
       // no sticker stopped.
-      onClick={() => interactive && onSelect?.(null)}
+      onClick={() => {
+        if (!interactive) return;
+        if (Date.now() - gestureAt.current < 400) return;
+        onSelect?.(null);
+      }}
     >
       {page.stickers.map((sticker, i) => (
         <Sticker
@@ -103,6 +115,8 @@ function PageFaceImpl({
           interactive={interactive}
           eager={eager}
           cropping={croppingId === sticker.id}
+          // While ONE photo is being cropped, nothing else on the page moves.
+          frozen={!!croppingId && croppingId !== sticker.id}
           // Depth is DERIVED from the sorted order, never from the raw `z`:
           // that number is a sparse comparator and can be negative or huge,
           // which would fight the slide overlay and the add button.
@@ -134,6 +148,7 @@ function PageFaceImpl({
             heal(sticker.photo.id, size)
           }
           surface={pageRef}
+          gestureAt={gestureAt}
         />
       ))}
     </div>
@@ -170,6 +185,7 @@ function Sticker({
   eager,
   selected,
   cropping,
+  frozen,
   depth,
   url,
   onSelect,
@@ -177,20 +193,25 @@ function Sticker({
   onCrop,
   onMeasured,
   surface,
+  gestureAt,
 }: {
   sticker: PlacedSticker;
   interactive: boolean;
   eager: boolean;
   selected: boolean;
   cropping: boolean;
+  /** Another sticker is being cropped — stand still. */
+  frozen: boolean;
   depth: number;
   url?: string;
   onSelect: () => void;
   onTransform: (t: Transform) => void;
   onCrop: (c: Crop) => void;
   onMeasured: (size: { width: number; height: number }) => void;
-  /** The page. While cropping, the gesture lives here rather than on the photo. */
+  /** The page. Two-finger gestures live here rather than on the sticker. */
   surface: RefObject<HTMLDivElement | null>;
+  /** Stamped when a two-finger gesture ends, so no tap is inferred from it. */
+  gestureAt: RefObject<number>;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const photoRef = useRef<HTMLDivElement>(null);
@@ -233,16 +254,25 @@ function Sticker({
         first,
         last,
         tap,
+        touches,
         movement: [mx, my],
         memo,
-        pinching,
         cancel,
       }) => {
-        if (pinching) {
+        // TWO FINGERS ARE NEVER A MOVE. They belong to the page, which is
+        // scaling and turning whatever is selected — including when they land
+        // on some other sticker, which must not start dragging that one.
+        // Checked before anything else so the event still reaches the page.
+        if (touches > 1) {
+          const base = memo as { x: number; y: number } | undefined;
+          if (base) setView((v) => ({ ...v, x: base.x, y: base.y }));
+          busyRef.current = false;
           cancel();
           return;
         }
         if (tap) {
+          // A tap that is really the tail of a pinch is not a tap.
+          if (Date.now() - gestureAt.current < 400) return;
           onSelect();
           return;
         }
@@ -272,30 +302,16 @@ function Sticker({
         }
         return base;
       },
-      onPinch: ({ first, last, offset: [scale, rotation] }) => {
-        if (first) {
-          busyRef.current = true;
-          onSelect();
-        }
-        setView((v) => ({ ...v, scale, rotation }));
-        if (last) {
-          busyRef.current = false;
-          onTransform({ x: view.x, y: view.y, scale, rotation });
-        }
-      },
     },
     {
       // While cropping, the sticker itself holds perfectly still: the finger is
       // moving the PICTURE, not the frame it sits in. Two drags fighting over
       // one pointer is how "I can't crop it, it just runs away" happens.
-      enabled: interactive && !cropping,
+      enabled: interactive && !cropping && !frozen,
       eventOptions: { passive: false },
+      // Drag only. Pinch is the PAGE's, always — a sticker that is not
+      // selected must not be resizable by putting two fingers on it.
       drag: { filterTaps: true, pointer: { touch: true } },
-      pinch: {
-        from: () => [view.scale, view.rotation],
-        scaleBounds: { min: MIN_SCALE, max: MAX_SCALE },
-        rubberband: true,
-      },
     }
   );
 
@@ -336,7 +352,10 @@ function Sticker({
         }
       },
     },
-    { enabled: interactive && !cropping, eventOptions: { passive: false } }
+    {
+      enabled: interactive && !cropping && !frozen,
+      eventOptions: { passive: false },
+    }
   );
 
   const polaroid = !isText && sticker.frame === 'polaroid';
@@ -351,6 +370,39 @@ function Sticker({
       ? sticker.photo.width / sticker.photo.height
       : 1;
   const win = cropWindow(ratio, imgRatio, crop);
+
+  /**
+   * Resize and turn the selected sticker from ANYWHERE on the page.
+   *
+   * The corner handle is the precise control, but a line of text is a
+   * centimetre tall and the handle is smaller still — you cannot pinch that
+   * with two adult thumbs. While something is selected the whole sheet takes
+   * the pinch, exactly as it does while cropping.
+   */
+  useGesture(
+    {
+      onPinch: ({ event, first, last, offset: [scale, rotation] }) => {
+        event?.stopPropagation();
+        if (first) busyRef.current = true;
+        setView((v) => ({ ...v, scale, rotation }));
+        if (last) {
+          busyRef.current = false;
+          gestureAt.current = Date.now();
+          onTransform({ x: view.x, y: view.y, scale, rotation });
+        }
+      },
+    },
+    {
+      target: surface,
+      enabled: interactive && selected && !cropping,
+      eventOptions: { passive: false },
+      pinch: {
+        from: () => [view.scale, view.rotation],
+        scaleBounds: { min: MIN_SCALE, max: MAX_SCALE },
+        rubberband: true,
+      },
+    }
+  );
 
   /**
    * Move the picture inside its frame; the frame does not budge.
@@ -392,6 +444,7 @@ function Sticker({
         setCrop((c) => ({ ...c, cropZoom: z }));
         if (last) {
           busyRef.current = false;
+          gestureAt.current = Date.now();
           onCrop({ ...crop, cropZoom: z });
         }
       },
@@ -522,7 +575,7 @@ function Sticker({
           )}
         </div>
       )}
-      {interactive && selected && !cropping && (
+      {interactive && selected && !cropping && !frozen && (
         <span
           {...handleBind()}
           aria-label="Resize and turn"
