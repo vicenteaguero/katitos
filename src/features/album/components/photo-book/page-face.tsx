@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState, type RefObject } from 'react';
 import { useGesture } from '@use-gesture/react';
 import { cn } from '@kernel/lib';
 import type {
@@ -75,9 +75,18 @@ function PageFaceImpl({
   const move = useMoveSticker();
   const style = useStyleSticker();
   const heal = useHealPhotoSize(bookId);
+  /**
+   * The whole sheet of paper, so that cropping can be done ON IT.
+   *
+   * A sticker is a couple of centimetres across; pinching one with two thumbs
+   * is not a thing anybody can do. While a photo is being cropped the entire
+   * page becomes the control surface for it.
+   */
+  const pageRef = useRef<HTMLDivElement>(null);
 
   return (
     <div
+      ref={pageRef}
       className="pb-page"
       aria-hidden={!interactive}
       // `onClick`, not `onPointerDown`. Clearing the selection on pointerdown
@@ -124,6 +133,7 @@ function PageFaceImpl({
             !sticker.photo.width &&
             heal(sticker.photo.id, size)
           }
+          surface={pageRef}
         />
       ))}
     </div>
@@ -166,6 +176,7 @@ function Sticker({
   onTransform,
   onCrop,
   onMeasured,
+  surface,
 }: {
   sticker: PlacedSticker;
   interactive: boolean;
@@ -178,6 +189,8 @@ function Sticker({
   onTransform: (t: Transform) => void;
   onCrop: (c: Crop) => void;
   onMeasured: (size: { width: number; height: number }) => void;
+  /** The page. While cropping, the gesture lives here rather than on the photo. */
+  surface: RefObject<HTMLDivElement | null>;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const photoRef = useRef<HTMLDivElement>(null);
@@ -339,8 +352,14 @@ function Sticker({
       : 1;
   const win = cropWindow(ratio, imgRatio, crop);
 
-  /** Move the picture inside its frame; the frame does not budge. */
-  const cropBind = useGesture(
+  /**
+   * Move the picture inside its frame; the frame does not budge.
+   *
+   * Bound to the PAGE, not to the sticker — `target` attaches the listeners
+   * directly, so the drag and the pinch have the whole sheet to work with
+   * while the thing they are moving stays a couple of centimetres across.
+   */
+  useGesture(
     {
       onDrag: ({ event, first, last, delta: [dx, dy] }) => {
         event?.stopPropagation();
@@ -385,6 +404,7 @@ function Sticker({
       },
     },
     {
+      target: surface,
       enabled: interactive && cropping,
       eventOptions: { passive: false },
       // Pointer events, NOT touch-only like the move gesture. There is no flip
@@ -462,7 +482,6 @@ function Sticker({
         >
           <div
             ref={photoRef}
-            {...(interactive && cropping ? cropBind() : {})}
             className={cn('pb-sticker-photo', `pb-shape-${shape}`)}
             style={{
               aspectRatio: String(ratio),
@@ -488,6 +507,15 @@ function Sticker({
           {sticker.caption && (
             <span
               className={cn('pb-sticker-cap', `pb-font-${sticker.font_family}`)}
+              style={{
+                // A fraction of the PAGE, and smaller than a title would be —
+                // the same 0.62 the printed page uses, so a caption comes out
+                // the size you chose on both.
+                ['--pb-cap-size' as string]: `${
+                  sticker.font_size * 100 * view.scale * 0.62
+                }cqw`,
+                ['--pb-cap-weight' as string]: String(sticker.font_weight),
+              }}
             >
               {sticker.caption}
             </span>
