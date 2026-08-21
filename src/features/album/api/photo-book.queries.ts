@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@kernel/supabase';
 import { qk } from '@kernel/query';
 import type { Tables } from '@kernel/supabase';
@@ -20,6 +20,9 @@ const countByBook = (rows: { book_id: string; photos: number }[]) => {
   return out;
 };
 
+/** The one book that is about us rather than about a trip. */
+export const LIFE_BOOK_TITLE = 'Pololini';
+
 /** Singleton key for the life book; the trip id otherwise. */
 function bookKey(scope: BookScope, tripId?: string): string {
   return scope === 'life' ? 'life' : (tripId ?? 'none');
@@ -36,24 +39,33 @@ async function findBook(
   return data;
 }
 
-/** Seed the book up to a few empty pages so the flip-through feels like a book
- *  from the first open (prod has no seed → heal on open). */
+/** A brand-new book opens with a few blank pages, so it feels like a book. */
 const SEED_PAGES = 5;
-async function ensurePages(bookId: string): Promise<void> {
-  const { data, error } = await supabase
+
+/**
+ * Give a book its first pages — ONCE, when it has none at all.
+ *
+ * This used to top every book back up to five on every single resolution, which
+ * meant tearing a page out and reopening the album put it straight back, and a
+ * three-page book could not exist. It also ran on every remount, so a *write*
+ * sat on the critical path of the first paint.
+ *
+ * Only the empty case is healed now. Production ships no seed, so a book that
+ * has just been created still needs this — but a book you have edited is yours.
+ */
+async function seedFirstPages(bookId: string): Promise<void> {
+  const { count, error } = await supabase
     .from('album_pages')
-    .select('position')
-    .eq('book_id', bookId)
-    .order('position', { ascending: false });
+    .select('id', { count: 'exact', head: true })
+    .eq('book_id', bookId);
   if (error) throw error;
-  const have = data?.length ?? 0;
-  if (have >= SEED_PAGES) return;
-  const maxPos = data && data.length ? data[0].position : -1;
-  const rows = Array.from({ length: SEED_PAGES - have }, (_, i) => ({
+  if ((count ?? 0) > 0) return;
+  const rows = Array.from({ length: SEED_PAGES }, (_, i) => ({
     book_id: bookId,
-    position: maxPos + 1 + i,
+    position: i,
   }));
   const { error: insErr } = await supabase.from('album_pages').insert(rows);
+  // 23505: the other phone seeded it a moment ago. Theirs is as good as ours.
   if (insErr && insErr.code !== '23505') throw insErr;
 }
 
@@ -69,6 +81,7 @@ export function useBook(
   title?: string,
   enabled = true
 ) {
+  const qc = useQueryClient();
   return useQuery({
     queryKey: qk.album.book(scope, bookKey(scope, tripId)),
     enabled: enabled && (scope === 'life' || !!tripId),
@@ -95,10 +108,15 @@ export function useBook(
           }
         } else {
           book = data;
+          // A book that has just come into existence has to appear on the
+          // shelf without a reload — this is how Pololini comes back after the
+          // albums were wiped, and how a trip's book shows up the first time
+          // its tab is opened.
+          void qc.invalidateQueries({ queryKey: qk.album.books() });
         }
       }
       if (!book) throw new Error('Could not resolve album book');
-      await ensurePages(book.id);
+      await seedFirstPages(book.id);
       return book;
     },
   });
@@ -133,6 +151,9 @@ export function usePages(bookId: string | undefined) {
   });
 }
 
+/** As many photos as one strip can usefully hold at once. */
+export const LIBRARY_LIMIT = 300;
+
 /**
  * Every photo uploaded into this book, newest first — the strip under the book.
  *
@@ -148,15 +169,33 @@ export function useLibrary(bookId: string | undefined) {
     enabled: !!bookId,
     staleTime: 30_000,
     queryFn: async (): Promise<AlbumPhoto[]> => {
+      // Capped: PostgREST stops at 1000 rows anyway, and every path here is
+      // signed in one batched request whose query key is the path list — an
+      // unbounded book would hash a several-kilobyte key on every render.
       const { data, error } = await supabase
         .from('album_photos')
         .select('*')
         .eq('book_id', bookId as string)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(LIBRARY_LIMIT);
       if (error) throw error;
       return data ?? [];
     },
   });
+}
+
+/**
+ * Make sure the one book about US exists.
+ *
+ * `scope: 'life'` is a singleton and `useBook` creates it on demand — but the
+ * only screen that ever asked for it was the id-less `/album` route, which
+ * cannot be reached: the route that renders a book always has an id. So the
+ * self-heal was dead code, and after the albums were wiped Pololini would
+ * simply never have come back. The shelf asks for it now, which is the one
+ * screen guaranteed to be visited.
+ */
+export function useEnsureLifeBook(enabled = true) {
+  return useBook('life', undefined, LIFE_BOOK_TITLE, enabled);
 }
 
 /**
@@ -180,19 +219,33 @@ export function useAlbums(includeArchived = false) {
   });
 }
 
-/** One album by id — how every book except the two legacy ones is opened. */
+/**
+ * One album by id — how every book except the two legacy ones is opened.
+ *
+ * `maybeSingle`, not `single`: a link to a book that has been deleted (by the
+ * partner, or by us) is a perfectly ordinary thing to follow, and `single`
+ * turned it into a thrown error that the screen could only render as a spinner
+ * that never stopped. `null` means "gone", and the route says so and offers the
+ * shelf.
+ *
+ * The id of a book never changes, so this is cached hard — it used to refetch,
+ * AND re-run the page seeding, on every remount.
+ */
 export function useBookById(id: string | undefined) {
   return useQuery({
     queryKey: qk.album.byId(id ?? 'none'),
     enabled: !!id,
-    queryFn: async (): Promise<AlbumBook> => {
+    staleTime: 5 * 60_000,
+    retry: 0,
+    queryFn: async (): Promise<AlbumBook | null> => {
       const { data, error } = await supabase
         .from('album_books')
         .select('*')
         .eq('id', id as string)
-        .single();
+        .maybeSingle();
       if (error) throw error;
-      await ensurePages(data.id);
+      if (!data) return null;
+      await seedFirstPages(data.id);
       return data;
     },
   });
@@ -230,7 +283,8 @@ export function usePolaroidPicker(enabled: boolean) {
       const { data, error } = await supabase
         .from('polaroids')
         .select('*')
-        .order('day', { ascending: false });
+        .order('day', { ascending: false })
+        .limit(120);
       if (error) throw error;
       return data ?? [];
     },
