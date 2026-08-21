@@ -17,7 +17,9 @@ declare const self: ServiceWorkerGlobalScope & {
 const CACHE = 'katitos-shell-v5';
 // Photos from Supabase storage (signed URLs). Cached token-agnostically so a
 // warmed photo keeps loading offline even after its signed URL rotates.
-const IMG_CACHE = 'katitos-img-v1';
+const IMG_CACHE = 'katitos-img-v2';
+/** How many photographs are worth keeping on the phone. */
+const IMG_CACHE_MAX = 400;
 const PRECACHE_URLS = [
   '/',
   '/index.html',
@@ -43,6 +45,30 @@ self.addEventListener('install', (event) => {
     })()
   );
 });
+
+/**
+ * Keep one copy of each photograph, and not too many of them.
+ *
+ * Entries were keyed by the FULL url — signed token and all — while lookups
+ * matched with `ignoreSearch`, so every hourly token rotation quietly stored
+ * another complete copy of the same picture, forever, in a cache that was never
+ * trimmed. An album browsed over a few weeks was paying for the same photos
+ * dozens of times over on a phone.
+ */
+async function storePhoto(cache: Cache, req: Request, resp: Response) {
+  // Drop the token before storing: the object path IS the identity, and this
+  // is what makes `ignoreSearch` reads and writes agree with each other.
+  const key = new Request(new URL(req.url).origin + new URL(req.url).pathname, {
+    headers: req.headers,
+  });
+  await cache.put(key, resp);
+  const keys = await cache.keys();
+  if (keys.length <= IMG_CACHE_MAX) return;
+  // Oldest first — `cache.keys()` is insertion-ordered.
+  await Promise.all(
+    keys.slice(0, keys.length - IMG_CACHE_MAX).map((k) => cache.delete(k))
+  );
+}
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
@@ -108,7 +134,7 @@ self.addEventListener('fetch', (event) => {
         const cached = await cache.match(req, { ignoreSearch: true });
         const network = fetch(req)
           .then((resp) => {
-            if (resp.ok) void cache.put(req, resp.clone());
+            if (resp.ok) void storePhoto(cache, req, resp.clone());
             return resp;
           })
           .catch(() => undefined);
