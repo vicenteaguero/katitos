@@ -20,6 +20,7 @@ import { toast, useTopBarAction } from '@kernel/ui';
 import { usePartnerPresence } from '@features/presence';
 import { LastPolaroidWidget } from '@features/polaroid';
 import { NextLessonWidget } from '@features/language';
+import { AlbumWidget } from '@features/album';
 import { loveNoteFor, useLovePhrases } from '@features/love';
 import { sendLoveBurst } from '../shell/love-channel';
 
@@ -399,6 +400,9 @@ export function HomeRoute() {
       <Greeting />
       <TogetherHero />
       <LastPolaroidWidget />
+      {/* It has existed, and been parsed on every single launch, since the
+          multi-album release — and been rendered by nothing. */}
+      <AlbumWidget />
       {classroom && <NextLessonWidget />}
     </div>
   );
