@@ -728,6 +728,16 @@
   cursor: nwse-resize;
   touch-action: none;
 }
+/* The disc stays 24px because a bigger one covers the photograph it is
+   resizing — but the thing you have to HIT is 46px, which is what a thumb
+   actually needs. Invisible, and outside the sticker, so it never steals a
+   tap meant for the picture itself. */
+.pb-sticker-handle::before {
+  content: '';
+  position: absolute;
+  inset: -11px;
+  border-radius: 999px;
+}
 
 .pb-sticker-cap {
   display: block;
