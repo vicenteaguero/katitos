@@ -1,19 +1,20 @@
 import { useState } from 'react';
-import { Camera, Check, ImagePlus, X } from 'lucide-react';
+import { Camera, Check, Images, ImagePlus, X } from 'lucide-react';
+import { cn } from '@kernel/lib';
 import { BUCKETS, useSignedUrls } from '@kernel/storage';
-import {
-  Button,
-  CameraCapture,
-  FilePickerButton,
-  Sheet,
-  Spinner,
-} from '@kernel/ui';
+import { CameraCapture, FilePickerButton, Sheet, Spinner } from '@kernel/ui';
 import { batchProgress } from '../../lib/upload-queue';
 import { usePolaroidPicker } from '../../api/photo-book.queries';
 import { useAddToLibrary, type UploadJob } from '../../api/library.mutations';
 
 /**
- * Twenty photos at once, with something honest to watch while they land.
+ * Photos in, and nothing else.
+ *
+ * Three ways in — the camera roll, the camera, or one of our daily polaroids —
+ * as three small buttons on ONE row, because they are a means to an end and
+ * they used to take up half the sheet before a single photo had been chosen.
+ * Everything below them is the photos themselves: what you picked, how far
+ * along it is, and an ✕ on each in case you picked the wrong one.
  *
  * No cropper in this path on purpose: squaring thirty photos one at a time is
  * not a thing anybody does twice. Cropping stays available per sticker later.
@@ -22,6 +23,7 @@ export function LibraryUploadSheet({
   open,
   onClose,
   onPick,
+  onRemove,
   jobs,
   running,
   bookId,
@@ -29,6 +31,7 @@ export function LibraryUploadSheet({
   open: boolean;
   onClose: () => void;
   onPick: (files: File[]) => void;
+  onRemove: (index: number) => void;
   jobs: UploadJob[];
   running: boolean;
   bookId: string;
@@ -57,30 +60,47 @@ export function LibraryUploadSheet({
   }
 
   return (
-    <Sheet open={open} onClose={onClose} title="Add photos" size="half">
+    <Sheet
+      open={open}
+      onClose={onClose}
+      title={total ? `${done} of ${total}` : 'Add photos'}
+      size="half"
+    >
       <div className="space-y-3">
-        <FilePickerButton multiple onPickMany={onPick} className="w-full">
-          <ImagePlus size={16} /> Choose photos
-        </FilePickerButton>
-
-        {/* Straight into the book. Half of what goes in an album on a trip is
-            taken while you are looking at the page you want it on. */}
-        <Button full variant="secondary" onClick={() => setShooting(true)}>
-          <Camera size={16} /> Take one now
-        </Button>
-
-        {/* The daily photos belong in the books too — this was reachable
-            before the library arrived and quietly stopped being. */}
-        <Button
-          full
-          variant="secondary"
-          onClick={() => setPickingPolaroid((v) => !v)}
-        >
-          {pickingPolaroid ? 'Never mind' : 'Or one of our polaroids'}
-        </Button>
+        {/* Three ways in, one row, symbols only. */}
+        <div className="flex gap-2">
+          <FilePickerButton
+            multiple
+            onPickMany={onPick}
+            bare
+            className="flex-1"
+          >
+            <span className="pb-add">
+              <ImagePlus size={17} />
+              <span>Choose</span>
+            </span>
+          </FilePickerButton>
+          <button
+            type="button"
+            className="pb-add flex-1"
+            onClick={() => setShooting(true)}
+          >
+            <Camera size={17} />
+            <span>Take</span>
+          </button>
+          <button
+            type="button"
+            aria-pressed={pickingPolaroid}
+            className={cn('pb-add flex-1', pickingPolaroid && 'pb-add--on')}
+            onClick={() => setPickingPolaroid((v) => !v)}
+          >
+            <Images size={17} />
+            <span>Polaroid</span>
+          </button>
+        </div>
 
         {pickingPolaroid && (
-          <div className="flex flex-wrap gap-1.5">
+          <div className="pb-gallery">
             {(polaroids ?? []).map((p) => {
               const url = p.image_path ? thumbs?.get(p.image_path) : undefined;
               return (
@@ -101,16 +121,9 @@ export function LibraryUploadSheet({
                       { onSuccess: () => setPickingPolaroid(false) }
                     )
                   }
-                  className="lift-press h-16 w-16 overflow-hidden rounded-lg bg-surface-2"
+                  className="pb-gallery-item"
                 >
-                  {url && (
-                    <img
-                      src={url}
-                      alt=""
-                      className="h-full w-full object-cover"
-                      loading="lazy"
-                    />
-                  )}
+                  {url && <img src={url} alt="" loading="lazy" />}
                 </button>
               );
             })}
@@ -119,45 +132,60 @@ export function LibraryUploadSheet({
 
         {total > 0 && (
           <>
-            <div className="flex items-center justify-between text-xs text-muted">
-              <span>
-                {done} of {total} added{failed ? ` · ${failed} failed` : ''}
-              </span>
-              {running && <Spinner className="h-3.5 w-3.5" />}
-            </div>
             <div className="h-1 w-full overflow-hidden rounded-full bg-surface-2">
               <div
-                className="h-full bg-gold transition-[width] duration-300"
+                className="h-full bg-accent transition-[width] duration-300"
                 style={{ width: `${pct}%` }}
               />
             </div>
-            <ul className="max-h-48 space-y-1 overflow-y-auto">
-              {jobs.map((j, i) => (
-                <li
-                  key={`${j.name}-${i}`}
-                  className="flex items-center gap-2 text-xs"
+
+            {/* The photos themselves, not a list of file names. */}
+            <div className="pb-gallery">
+              {jobs.map((job, i) => (
+                <div
+                  key={`${job.name}-${i}`}
+                  className={cn(
+                    'pb-upload-tile',
+                    job.state === 'failed' && 'pb-upload-tile--failed'
+                  )}
                 >
-                  {j.state === 'done' && (
-                    <Check className="h-3.5 w-3.5 shrink-0 text-gold" />
+                  {job.previewUrl && <img src={job.previewUrl} alt="" />}
+                  {job.state !== 'done' && (
+                    <span className="pb-upload-state">
+                      {job.state === 'failed' ? (
+                        <X className="h-4 w-4 text-danger" />
+                      ) : (
+                        <Spinner className="h-4 w-4" />
+                      )}
+                    </span>
                   )}
-                  {j.state === 'failed' && (
-                    <X className="h-3.5 w-3.5 shrink-0 text-danger" />
+                  {job.state === 'done' && (
+                    <span className="pb-upload-done">
+                      <Check className="h-3 w-3" />
+                    </span>
                   )}
-                  {j.state === 'working' && (
-                    <Spinner className="h-3.5 w-3.5 shrink-0" />
-                  )}
-                  {j.state === 'queued' && (
-                    <span className="h-3.5 w-3.5 shrink-0" />
-                  )}
-                  <span className="min-w-0 flex-1 truncate text-muted">
-                    {j.name}
-                  </span>
-                  {j.error && (
-                    <span className="shrink-0 text-danger">{j.error}</span>
-                  )}
-                </li>
+                  {/* Wrong photo? Out it goes — the row and its bytes are
+                      cleaned up behind you, so nothing here waits on a
+                      round trip. */}
+                  <button
+                    type="button"
+                    aria-label={`Remove ${job.name}`}
+                    className="pb-upload-x"
+                    onClick={() => onRemove(i)}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
               ))}
-            </ul>
+            </div>
+
+            <p className="text-center font-sans text-xs text-muted">
+              {running
+                ? 'Adding them…'
+                : failed
+                  ? `${failed} didn’t make it — the rest are in`
+                  : 'All in. Tap one under the book to place it.'}
+            </p>
           </>
         )}
       </div>
