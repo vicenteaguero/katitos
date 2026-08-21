@@ -14,11 +14,7 @@ import {
   toast,
   useTopBarAction,
 } from '@kernel/ui';
-import {
-  useAlbumPhotoCounts,
-  useAlbums,
-  useEnsureLifeBook,
-} from '../api/photo-book.queries';
+import { useAlbumPhotoCounts, useAlbums } from '../api/photo-book.queries';
 import { useCreateAlbum } from '../api/albums.mutations';
 import { bookSpan } from '../lib/book-span';
 import type { AlbumBook, CoverMaterial } from '../types';
@@ -43,11 +39,6 @@ export function AlbumsRoute() {
   const { data: counts } = useAlbumPhotoCounts();
   const create = useCreateAlbum();
   const navigate = useNavigate();
-  // The one book that is about US rather than about a trip. It creates itself
-  // here because this is the only screen guaranteed to be visited — the route
-  // that used to do it could never be reached, so after the albums were wiped
-  // Pololini would simply never have come back.
-  useEnsureLifeBook();
 
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ title: '', startsOn: '', endsOn: '' });
