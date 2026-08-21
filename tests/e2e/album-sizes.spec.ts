@@ -24,7 +24,7 @@ for (const [name, size] of [
     await expect(page.getByRole('navigation')).toBeVisible({ timeout: 20_000 });
     await dismissChangelog(page);
     await page.getByRole('button', { name: 'Start a new album' }).click();
-    await page.getByLabel('What is it?').fill(`fit ${name}`);
+    await page.getByLabel('What is it?').fill(`itest fit ${name}`);
     await page.getByRole('button', { name: 'Start it' }).click();
     await expect(page.getByText('Cover')).toBeVisible({ timeout: 20_000 });
     await page.waitForTimeout(800);
