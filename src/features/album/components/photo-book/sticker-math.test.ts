@@ -1,16 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import {
-  angleOf,
   BASE_W,
-  dropSpot,
-  handleTransform,
   MAX_SCALE,
   MIN_SCALE,
+  angleOf,
+  dropSpot,
+  handleTransform,
   needsNormalize,
   nextZBack,
   nextZFront,
   normalizeZ,
   orderStickers,
+  shapeRatio,
+  shapedWidth,
   snapAngle,
   stickerWidth,
 } from './sticker-math';
@@ -242,5 +244,40 @@ describe('stickerWidth', () => {
   it('never spans the whole page, however extreme the panorama', () => {
     expect(stickerWidth(4000, 200)).toBeLessThanOrEqual(0.72);
     expect(stickerWidth(200, 4000)).toBeGreaterThanOrEqual(0.22);
+  });
+});
+
+describe('shapeRatio', () => {
+  it('lets a natural photo keep its own proportions', () => {
+    expect(shapeRatio('natural', 3000, 2000)).toBeCloseTo(1.5, 6);
+    expect(shapeRatio('rounded', 2000, 3000)).toBeCloseTo(2 / 3, 6);
+  });
+
+  it('imposes its own on the shapes that have one', () => {
+    for (const shape of ['square', 'circle', 'heart', 'torn'] as const) {
+      expect(shapeRatio(shape, 3000, 2000)).toBe(1);
+    }
+    expect(shapeRatio('arch', 3000, 2000)).toBeCloseTo(0.75, 6);
+  });
+
+  it('falls back to square when the photo has never been measured', () => {
+    expect(shapeRatio('natural', null, null)).toBe(1);
+  });
+});
+
+describe('shapedWidth', () => {
+  it('sizes a shaped sticker by the frame, not by the photograph', () => {
+    // A wide photo forced into a circle is a circle: it must be sized like
+    // one, or it comes out as wide as the landscape it used to be and then
+    // cropped to a much smaller round window.
+    expect(shapedWidth('circle', 3000, 2000)).toBeCloseTo(BASE_W, 6);
+    expect(shapedWidth('natural', 3000, 2000)).toBeGreaterThan(BASE_W);
+  });
+
+  it('matches areas across shapes, which is what makes a page read as a page', () => {
+    const area = (w: number, ratio: number) => w * (w / ratio);
+    const a = shapedWidth('natural', 3000, 2000);
+    const b = shapedWidth('natural', 2000, 3000);
+    expect(area(a, 1.5)).toBeCloseTo(area(b, 2 / 3), 6);
   });
 });
