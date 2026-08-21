@@ -1,4 +1,4 @@
-import { cn } from '@kernel/lib';
+import { cn } from '../lib/cn';
 
 /**
  * The Katitos brand mark — a cat head with negative-space heart eyes.
@@ -7,6 +7,14 @@ import { cn } from '@kernel/lib';
  * (`design/logo/katitos-logo.svg`, vector-traced from the brand render).
  * The head is Marble Snow; the heart eyes are true cut-outs, so whatever
  * sits behind the mark shows through them — exactly like the icon tile.
+ *
+ * `fill` takes any paint, including a `url(#…)` reference to a gradient
+ * defined elsewhere in the document — which is how it comes out gilt, stamped
+ * on the back board of an album.
+ *
+ * Lives in the kernel rather than in the app shell because features use it
+ * too, and a feature reaching up into `app/` is exactly what the boundary
+ * lint forbids.
  */
 export function KatitosMark({
   size = 40,
