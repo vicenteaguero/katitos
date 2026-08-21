@@ -6,11 +6,12 @@ import {
   Fieldset,
   Input,
   PhotoPicker,
+  Segmented,
   Sheet,
   Switch,
   toast,
 } from '@kernel/ui';
-import type { AlbumBook } from '../types';
+import type { AlbumBook, CoverMaterial, PaperStock } from '../types';
 import {
   useDeleteAlbum,
   useSetAlbumCover,
@@ -37,7 +38,8 @@ export function AlbumSettingsSheet({
   open: boolean;
   onClose: () => void;
   book: AlbumBook;
-  page?: { id: string; title: string | null; on_date: string | null };
+  /** Null on a cover, on the endpaper, or before the book has loaded. */
+  page?: { id: string; title: string | null; on_date: string | null } | null;
   pageNumber: number;
   onDeleted: () => void;
 }) {
@@ -71,7 +73,12 @@ export function AlbumSettingsSheet({
   }, [page?.id]);
 
   const save = () => {
-    update.mutate({ id: book.id, title, startsOn, endsOn });
+    // The toast used to fire here, before either write had been attempted — so
+    // it cheerfully said "Saved" over a rename that had just been refused.
+    update.mutate(
+      { id: book.id, title, startsOn, endsOn },
+      { onSuccess: () => toast.success('Saved', { key: 'album-saved' }) }
+    );
     if (page) {
       updatePage.mutate({
         id: page.id,
@@ -80,9 +87,11 @@ export function AlbumSettingsSheet({
         onDate: pageDate,
       });
     }
-    toast.success('Saved', { key: 'album-saved' });
     onClose();
   };
+
+  const material = (book.cover_material as CoverMaterial) ?? 'leather';
+  const paper = (book.paper as PaperStock) ?? 'cream';
 
   return (
     <Sheet open={open} onClose={onClose} title="This album" size="half">
@@ -125,6 +134,41 @@ export function AlbumSettingsSheet({
             }}
           />
         </div>
+
+        {/* What the book is MADE of. Two rows, because a leather book with
+            charcoal pages and a kraft one with cream are different objects and
+            she should get to choose which one this era is. */}
+        <Fieldset label="Bound in">
+          <Segmented
+            full
+            value={material}
+            onChange={(v) =>
+              update.mutate({ id: book.id, coverMaterial: v as CoverMaterial })
+            }
+            options={[
+              { value: 'leather', label: 'Leather' },
+              { value: 'linen', label: 'Linen' },
+              { value: 'velvet', label: 'Velvet' },
+              { value: 'kraft', label: 'Kraft' },
+            ]}
+          />
+        </Fieldset>
+
+        <Fieldset label="Paper">
+          <Segmented
+            full
+            value={paper}
+            onChange={(v) =>
+              update.mutate({ id: book.id, paper: v as PaperStock })
+            }
+            options={[
+              { value: 'cream', label: 'Cream' },
+              { value: 'ivory', label: 'Ivory' },
+              { value: 'kraft', label: 'Kraft' },
+              { value: 'charcoal', label: 'Night' },
+            ]}
+          />
+        </Fieldset>
 
         <div className="flex items-center justify-between gap-3 rounded-lg bg-surface px-3 py-2">
           <span className="min-w-0 font-sans text-sm text-fg">
