@@ -206,9 +206,33 @@ export function leafAfterFlip(
   leafCount: number,
   showCover = true
 ): number {
-  const place = placeLeaf(data, leafCount, showCover);
-  if (place.lone) return place.leaf;
+  const dest = placeLeaf(data, leafCount, showCover);
+  if (dest.lone) return dest.leaf;
+
+  // Coming off a BOARD, you land on whatever was underneath it — which is the
+  // leaf on the board's own side. Open the front cover and page two is what
+  // the cover was covering; the book then slides across to page one. Landing
+  // straight on page one instead meant the case had to jump the width of a
+  // page the instant the turn finished, which is what read as broken.
+  const from = placeLeaf(prevFocused, leafCount, showCover);
+  if (from.lone) return from.side === 'right' ? data + 1 : data;
+
   return data < prevFocused ? data + 1 : data;
+}
+
+/**
+ * After landing from a board, the leaf we then slide across to.
+ *
+ * Revealed page → the one you actually read. Forward off the front cover that
+ * is the left-hand page; backward off the back board it is the right-hand one.
+ * `null` when there is nothing to settle to.
+ */
+export function settleAfterBoard(
+  from: LeafPlace,
+  landed: LeafPlace
+): number | null {
+  if (!from.lone || landed.lone) return null;
+  return from.side === 'right' ? landed.leaf - 1 : landed.leaf + 1;
 }
 
 /**
