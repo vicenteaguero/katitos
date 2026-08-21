@@ -8,12 +8,13 @@ import {
   imageSize,
   proxyPath,
   storagePaths,
+  tinyPlaceholder,
   usePhotoUpload,
 } from '@kernel/storage';
 import { qk } from '@kernel/query';
 import { useUserId } from '@kernel/auth';
 import { toast } from '@kernel/ui';
-import type { AlbumPhoto } from '../types';
+import type { AlbumPageWithPhotos, AlbumPhoto } from '../types';
 import { mapWithConcurrency, type JobState } from '../lib/upload-queue';
 
 /**
@@ -77,6 +78,11 @@ export function useBulkAddToLibrary(bookId: string | undefined) {
             // encoding) — keep the file as it came rather than losing it.
           }
 
+          // The postage-stamp comes off the SHRUNK blob, so it costs one more
+          // encode of something already small rather than another decode of a
+          // twelve-megapixel HEIC.
+          const blur = await tinyPlaceholder(blob);
+
           const path = storagePaths.albumPhoto(bookId, nanoid(12));
           await uploadPhoto(BUCKETS.album, path, blob);
 
@@ -86,6 +92,7 @@ export function useBulkAddToLibrary(bookId: string | undefined) {
             source: 'upload',
             width: size?.width ?? null,
             height: size?.height ?? null,
+            blur,
             ...(userId ? { created_by: userId } : {}),
           });
           if (error) throw error;
@@ -130,6 +137,7 @@ export function useAddToLibrary() {
     }) => {
       let imagePath = v.polaroidPath ?? null;
       let size: { width: number; height: number } | null = null;
+      let blur: string | null = null;
       if (v.source === 'upload') {
         if (!v.blob) throw new Error('No photo to upload');
         let blob: Blob = v.blob;
@@ -142,6 +150,7 @@ export function useAddToLibrary() {
         } catch {
           /* keep the original bytes */
         }
+        blur = await tinyPlaceholder(blob);
         imagePath = storagePaths.albumPhoto(v.bookId, nanoid(12));
         await uploadPhoto(BUCKETS.album, imagePath, blob);
       }
@@ -154,6 +163,7 @@ export function useAddToLibrary() {
           caption: v.caption ?? null,
           width: size?.width ?? null,
           height: size?.height ?? null,
+          blur,
           ...(userId ? { created_by: userId } : {}),
         })
         .select('*')
@@ -219,6 +229,11 @@ export function useDeleteFromLibrary() {
  * migration that cannot open a JPEG, the first render that decodes the image
  * writes what it saw. Fire-and-forget: it must never interrupt looking at the
  * album, and it is harmless if both phones do it at once.
+ *
+ * It writes the answer STRAIGHT INTO THE CACHE rather than invalidating. The
+ * old version invalidated the whole book once per healed photo, so opening an
+ * older album with a dozen unmeasured pictures fired a dozen full refetches —
+ * each one rebuilding every page element while the images were still decoding.
  */
 const measured = new Set<string>();
 
@@ -228,23 +243,61 @@ export function useHealPhotoSize(bookId: string | undefined) {
     (photoId: string, size: { width: number; height: number }) => {
       if (measured.has(photoId)) return;
       measured.add(photoId);
+
+      // The screen can know immediately; the database catches up when it does.
+      if (bookId) {
+        const key = qk.album.pages(bookId);
+        qc.setQueryData<AlbumPageWithPhotos[]>(key, (pages) =>
+          pages?.map((page) =>
+            page.stickers.some((s) => s.photo?.id === photoId)
+              ? {
+                  ...page,
+                  stickers: page.stickers.map((s) =>
+                    s.photo?.id === photoId
+                      ? { ...s, photo: { ...s.photo, ...size } }
+                      : s
+                  ),
+                }
+              : page
+          )
+        );
+      }
+
       void supabase
         .from('album_photos')
         .update({ width: size.width, height: size.height })
         .eq('id', photoId)
         .is('width', null)
         .then(
-          () => {
-            // The book is cached for thirty seconds, so without this the photo
-            // keeps its fallback square for the rest of the session even though
-            // its real shape is now known.
-            if (bookId) {
-              void qc.invalidateQueries({ queryKey: qk.album.pages(bookId) });
-            }
-          },
+          () => {},
           () => measured.delete(photoId)
         );
     },
     [qc, bookId]
   );
+}
+
+/**
+ * Give a photo the little placeholder it was uploaded without.
+ *
+ * Same idea as the size heal and the same one-shot bookkeeping: the first
+ * screen that has the real bytes in hand makes the postage-stamp and stores it,
+ * so every later open of that page paints instantly. Nothing waits on it.
+ */
+const blurred = new Set<string>();
+
+export function useHealPhotoBlur() {
+  return useCallback((photoId: string, blur: string) => {
+    if (blurred.has(photoId)) return;
+    blurred.add(photoId);
+    void supabase
+      .from('album_photos')
+      .update({ blur })
+      .eq('id', photoId)
+      .is('blur', null)
+      .then(
+        () => {},
+        () => blurred.delete(photoId)
+      );
+  }, []);
 }
