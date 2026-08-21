@@ -15,6 +15,92 @@
   --pb-paper: #f7eeda;
   --pb-paper-2: #ece0c4;
   --pb-ink: #4a3520;
+  /* The board. Overridden per material below, so the case, the covers and the
+     shelf spine are all made of the same thing without any of them knowing
+     which thing it is. */
+  --pb-board: var(--pb-wine);
+  --pb-board-2: var(--pb-wine-deep);
+  --pb-board-grain: none;
+  --pb-board-gilt: 0.7;
+}
+
+/* ── What the boards are made of ──────────────────────────────────────────
+   All CSS: a texture file would be one more thing to download before the
+   album could be looked at, on the screen where waiting is least welcome. */
+.pb-mat-leather {
+  --pb-board: #6e1423;
+  --pb-board-2: #4d0d18;
+  /* A fine pebbled grain — two crossed hairline gradients, almost invisible
+     until the light in the gradient above catches it. */
+  --pb-board-grain:
+    repeating-linear-gradient(
+      54deg,
+      rgba(255, 255, 255, 0.035) 0 1px,
+      rgba(0, 0, 0, 0.03) 1px 3px
+    ),
+    repeating-linear-gradient(
+      -46deg,
+      rgba(255, 255, 255, 0.028) 0 1px,
+      rgba(0, 0, 0, 0.024) 1px 4px
+    );
+}
+.pb-mat-linen {
+  --pb-board: #7a2233;
+  --pb-board-2: #5a1522;
+  /* A woven weft: perpendicular threads, wider than leather's grain. */
+  --pb-board-grain:
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.07) 0 1px,
+      transparent 1px 3px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.07) 0 1px,
+      transparent 1px 3px
+    );
+}
+.pb-mat-velvet {
+  --pb-board: #5a0f1d;
+  --pb-board-2: #33070f;
+  /* Nap, not grain: a broad soft sheen that reads as pile. */
+  --pb-board-grain: radial-gradient(
+    120% 90% at 30% 0%,
+    rgba(255, 190, 205, 0.16),
+    transparent 62%
+  );
+}
+.pb-mat-kraft {
+  --pb-board: #7d5a3c;
+  --pb-board-2: #58402c;
+  --pb-board-gilt: 0.32; /* brown paper does not get much gold */
+  --pb-board-grain: repeating-linear-gradient(
+    102deg,
+    rgba(255, 255, 255, 0.05) 0 2px,
+    rgba(0, 0, 0, 0.04) 2px 5px
+  );
+}
+
+/* ── What the pages are made of ───────────────────────────────────────────── */
+.pb-paper-cream {
+  --pb-paper: #f7eeda;
+  --pb-paper-2: #ece0c4;
+  --pb-ink: #4a3520;
+}
+.pb-paper-ivory {
+  --pb-paper: #fdfaf2;
+  --pb-paper-2: #f3ecdd;
+  --pb-ink: #453422;
+}
+.pb-paper-kraft {
+  --pb-paper: #ddc49b;
+  --pb-paper-2: #c9ab7d;
+  --pb-ink: #3b2a17;
+}
+.pb-paper-charcoal {
+  --pb-paper: #2a2429;
+  --pb-paper-2: #1d181c;
+  --pb-ink: #e9dfd0;
 }
 
 /* ── The open book as ONE PIECE ─────────────────────────────────────────────
@@ -66,11 +152,9 @@
   position: relative;
   width: 100%;
   border-radius: 18px;
-  background: linear-gradient(
-    125deg,
-    var(--pb-wine) 0%,
-    var(--pb-wine-deep) 100%
-  );
+  background:
+    var(--pb-board-grain, none),
+    linear-gradient(125deg, var(--pb-board) 0%, var(--pb-board-2) 100%);
   padding: 10px; /* the wine cover around the open pages */
   box-shadow:
     0 22px 46px -20px rgba(20, 4, 9, 0.85),
@@ -97,7 +181,7 @@
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   padding: 1px;
-  opacity: 0.7;
+  opacity: var(--pb-board-gilt, 0.7);
   pointer-events: none;
   z-index: 0;
 }
@@ -120,6 +204,118 @@
   overflow: visible;
   background: var(--pb-paper-2);
   box-shadow: inset 0 0 0 1px rgba(228, 195, 106, 0.22);
+}
+/* The half of a lone spread with nothing in it. Left bare it is a slab of
+   wine beside the cover; this is the fore-edge of the page block, which is
+   what you would actually be looking at. */
+.pb-case--void-left::after,
+.pb-case--void-right::after {
+  content: '';
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  width: calc(50% - 14px);
+  border-radius: 4px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--pb-paper) 0 2px,
+    rgba(120, 92, 48, 0.22) 2px 3px
+  );
+  box-shadow: inset 0 0 14px rgba(20, 4, 9, 0.35);
+  opacity: 0.85;
+  pointer-events: none;
+}
+.pb-case--void-left::after {
+  left: 10px;
+}
+.pb-case--void-right::after {
+  right: 10px;
+}
+
+/* ── The boards ───────────────────────────────────────────────────────────── */
+.pb-cover {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 4px 11px 11px 4px;
+  background:
+    var(--pb-board-grain, none),
+    linear-gradient(150deg, var(--pb-board) 0%, var(--pb-board-2) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 10px 26px -12px rgba(20, 4, 9, 0.8);
+}
+/* The back board closes the other way round, so its bevel does too. */
+.pb-cover--back {
+  border-radius: 11px 4px 4px 11px;
+}
+.pb-cover-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.42; /* under the gilt, never competing with it */
+}
+/* The blind-stamped panel: a gilt rule inset from the edge, the oldest
+   binding decoration there is. */
+.pb-cover-plate {
+  position: absolute;
+  inset: 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(228, 195, 106, calc(var(--pb-board-gilt, 0.7) * 0.75));
+  box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.12);
+  pointer-events: none;
+}
+.pb-cover-text {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 0 24px;
+  text-align: center;
+}
+.pb-cover-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 8cqw, 2.1rem);
+  line-height: 1.1;
+}
+.pb-cover-span {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(228, 195, 106, 0.72);
+}
+.pb-cover-mark {
+  position: relative;
+  z-index: 1;
+  font-size: 1.6rem;
+  opacity: 0.55;
+}
+/* The inside of the board, for the blank leaf that keeps the count even. */
+.pb-endpaper {
+  background:
+    radial-gradient(
+      120% 80% at 30% 6%,
+      rgba(255, 255, 255, 0.06),
+      transparent 60%
+    ),
+    linear-gradient(160deg, var(--pb-paper-2) 0%, var(--pb-paper) 100%);
+}
+
+/* The book before it has anything to show: the case, and one blank leaf. */
+.pb-case--waiting {
+  opacity: 0.72;
+}
+.pb-skeleton-leaf {
+  background: var(--pb-paper-2);
+  opacity: 0.5;
 }
 .pb-page {
   position: absolute;
@@ -181,11 +377,104 @@
 
 .pb-sticker-frame {
   position: relative;
-  background: #fdfaf4;
+  background: var(--pb-mount, #fdfaf4);
+  color: var(--pb-mount-ink, var(--pb-ink));
   padding: 5px 5px 7px;
   border-radius: 6px;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
   transition: box-shadow 140ms ease;
+}
+
+/* ── What the mount is made of ────────────────────────────────────────────── */
+.pb-mount-cream {
+  --pb-mount: #fdfaf4;
+  --pb-mount-ink: #4a3520;
+}
+.pb-mount-white {
+  --pb-mount: #ffffff;
+  --pb-mount-ink: #3a2c1c;
+}
+.pb-mount-gold {
+  --pb-mount: #e8d3a0;
+  --pb-mount-ink: #4a3520;
+}
+.pb-mount-wine {
+  --pb-mount: #6e1423;
+  --pb-mount-ink: #f6e6c8;
+}
+.pb-mount-ink {
+  --pb-mount: #241019;
+  --pb-mount-ink: #efe3d2;
+}
+.pb-mount-kraft {
+  --pb-mount: #cbab7e;
+  --pb-mount-ink: #3b2a17;
+}
+
+/* ── The mounts ───────────────────────────────────────────────────────────── */
+/* Bare: the photograph, and nothing else. */
+.pb-frame-none {
+  padding: 0;
+  background: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+/* `plain` is what the previous build wrote for "not on film". Same thing. */
+.pb-frame-plain,
+.pb-frame-white {
+  padding: 5px 5px 7px;
+}
+/* A hairline of gilt, tight to the picture. */
+.pb-frame-gilt {
+  padding: 3px;
+  background: linear-gradient(
+    135deg,
+    var(--pb-gilt-deep),
+    var(--pb-gilt) 48%,
+    var(--pb-gilt-spark) 52%,
+    var(--pb-gilt-deep)
+  );
+  box-shadow: 0 2px 6px rgba(20, 4, 9, 0.4);
+}
+/* Lifted off the paper. `filter`, not `box-shadow`: a box-shadow traces the
+   BORDER BOX, so a circular photo would get a rectangle of shadow behind it. */
+.pb-frame-shadow {
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  filter: drop-shadow(0 6px 10px rgba(20, 4, 9, 0.45));
+}
+/* Two strips of washi across opposite corners, the way a photo actually gets
+   stuck into an album. */
+.pb-frame-tape {
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+.pb-frame-tape::before,
+.pb-frame-tape::after {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  width: 34%;
+  height: 13px;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(255, 246, 224, 0.9) 0 5px,
+    rgba(233, 214, 173, 0.9) 5px 10px
+  );
+  box-shadow: 0 1px 3px rgba(20, 4, 9, 0.35);
+  opacity: 0.82;
+}
+.pb-frame-tape::before {
+  top: -6px;
+  left: -8px;
+  transform: rotate(-24deg);
+}
+.pb-frame-tape::after {
+  right: -8px;
+  bottom: -6px;
+  transform: rotate(-24deg);
 }
 .pb-sticker--sel .pb-sticker-frame {
   box-shadow:
@@ -204,6 +493,42 @@
   border-radius: 3px;
   overflow: hidden;
   background: rgba(58, 30, 16, 0.06);
+  /* iOS Safari lets a transformed child (the crop's `scale`) escape a clipped
+     parent while the leaf is mid-3D-curl. Its own compositing layer keeps the
+     picture inside the shape it was cut into. */
+  isolation: isolate;
+  transform: translateZ(0);
+}
+
+/* ── The cut of the window ────────────────────────────────────────────────
+   `clip-path` and `border-radius` only — no `path()`, which does not scale
+   with the element, and no images to download. */
+.pb-shape-rounded {
+  border-radius: 12%;
+}
+.pb-shape-circle {
+  border-radius: 50%;
+  clip-path: circle(50% at 50% 50%);
+}
+/* A window arch: fully round at the top, barely eased at the foot. */
+.pb-shape-arch {
+  border-radius: 50% 50% 6px 6px / 62% 62% 6px 6px;
+}
+.pb-shape-heart {
+  clip-path: path(
+    'M0.5,1 C0.5,1 0,0.68 0,0.36 C0,0.14 0.16,0.02 0.32,0.02 C0.42,0.02 0.47,0.09 0.5,0.14 C0.53,0.09 0.58,0.02 0.68,0.02 C0.84,0.02 1,0.14 1,0.36 C1,0.68 0.5,1 0.5,1 Z'
+  );
+  clip-path: url(#pb-heart);
+}
+/* A deckle edge, torn out of something. */
+.pb-shape-torn {
+  -webkit-mask-image: var(--pb-torn);
+  mask-image: var(--pb-torn);
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+}
+.pb-wine {
+  --pb-torn: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath fill='%23000' d='M3 4 L14 2 L26 6 L38 1 L52 5 L64 1 L77 6 L88 2 L97 5 L95 16 L99 28 L94 40 L98 52 L93 64 L98 76 L94 88 L97 96 L86 98 L74 94 L62 99 L49 95 L36 99 L24 94 L12 98 L3 96 L5 85 L1 73 L6 61 L2 49 L6 37 L1 25 L5 13 Z'/%3E%3C/svg%3E");
 }
 .pb-photo {
   position: absolute;
@@ -212,14 +537,91 @@
   height: 100%;
   object-fit: cover;
   background: rgba(58, 30, 16, 0.06);
+  /* The crop, in three numbers. `object-position` splits the cover-fit slack
+     by the focal point; the scale about that SAME origin zooms without the
+     picture jumping sideways. */
+  object-position: calc(var(--pb-cx, 0.5) * 100%) calc(var(--pb-cy, 0.5) * 100%);
+  transform-origin: calc(var(--pb-cx, 0.5) * 100%)
+    calc(var(--pb-cy, 0.5) * 100%);
+  transform: scale(var(--pb-cz, 1));
+  transition: opacity 220ms ease;
+}
+/* The postage-stamp underneath, blown up and softened. It is a few hundred
+   bytes and it arrives with the page, so a photograph is never a grey hole. */
+.pb-photo-blur {
+  background-size: cover;
+  background-position: calc(var(--pb-cx, 0.5) * 100%)
+    calc(var(--pb-cy, 0.5) * 100%);
+  filter: blur(8px) saturate(1.15);
+  transform: scale(var(--pb-cz, 1));
+  transform-origin: calc(var(--pb-cx, 0.5) * 100%)
+    calc(var(--pb-cy, 0.5) * 100%);
+}
+
+/* ── Moving the picture inside its frame ──────────────────────────────────── */
+.pb-editor--crop .pb-sticker:not(.pb-sticker--crop) {
+  opacity: 0.32;
+  filter: saturate(0.5);
+}
+.pb-sticker--crop .pb-sticker-photo {
+  cursor: move;
+  box-shadow: 0 0 0 2px var(--pb-gilt);
+}
+/* Thirds, only while cropping — the one moment they help rather than clutter. */
+.pb-crop-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    linear-gradient(
+        to right,
+        transparent calc(33.333% - 0.5px),
+        rgba(255, 255, 255, 0.4) calc(33.333% - 0.5px) calc(33.333% + 0.5px),
+        transparent calc(33.333% + 0.5px)
+      )
+      no-repeat,
+    linear-gradient(
+        to right,
+        transparent calc(66.666% - 0.5px),
+        rgba(255, 255, 255, 0.4) calc(66.666% - 0.5px) calc(66.666% + 0.5px),
+        transparent calc(66.666% + 0.5px)
+      )
+      no-repeat,
+    linear-gradient(
+        to bottom,
+        transparent calc(33.333% - 0.5px),
+        rgba(255, 255, 255, 0.4) calc(33.333% - 0.5px) calc(33.333% + 0.5px),
+        transparent calc(33.333% + 0.5px)
+      )
+      no-repeat,
+    linear-gradient(
+        to bottom,
+        transparent calc(66.666% - 0.5px),
+        rgba(255, 255, 255, 0.4) calc(66.666% - 0.5px) calc(66.666% + 0.5px),
+        transparent calc(66.666% + 0.5px)
+      )
+      no-repeat;
+}
+.pb-crop-hint {
+  position: absolute;
+  bottom: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(20, 4, 9, 0.8);
+  color: var(--pb-gilt);
+  font-family: var(--font-sans);
+  font-size: 10px;
+  white-space: nowrap;
+  pointer-events: none;
 }
 /* Instant film: a square window and a chin deeper than the other three edges —
-   the proportions the kernel PolaroidPlate uses everywhere else. */
-.pb-sticker--film {
+   the proportions the kernel PolaroidPlate uses everywhere else. The squareness
+   is imposed by the shape now, so this is only the plate. */
+.pb-frame-polaroid {
   padding: 6px 6px 20px;
-}
-.pb-sticker-photo--square {
-  aspect-ratio: 1;
 }
 .pb-font-display {
   font-family: var(--font-display);
@@ -316,25 +718,63 @@
 }
 
 /* ── The library strip: the book's photos, in the room under it ──────────── */
-.pb-strip {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+.pb-strip-wrap {
   margin-top: 8px;
+}
+/* TWO rows, filling sideways. A single row of tiles showed four photos on her
+   phone and a book is built from thirty. The tile sizes itself off the
+   viewport, so this fits a 320px phone and a tablet with no media query. */
+.pb-strip {
+  --pb-tile: clamp(44px, 13.5vw, 66px);
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(2, var(--pb-tile));
+  grid-auto-columns: var(--pb-tile);
+  align-content: start;
+  gap: 4px;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
   scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  padding-bottom: 2px;
+}
+/* The three actions stand full-height at the head of the strip, so they read
+   as one shelf-end rather than as two of the photos. */
+.pb-strip > .pb-strip-btn:first-child {
+  grid-row: 1 / 2;
+}
+.pb-strip-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 6px 6px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--pb-gilt);
+}
+.pb-strip-bar button {
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: var(--muted, rgba(255, 255, 255, 0.6));
+}
+.pb-strip-bar-go {
+  background: var(--pb-gilt);
+  color: #2a0a12;
+  font-weight: 600;
+}
+.pb-strip-bar-go:disabled {
+  opacity: 0.4;
 }
 .pb-strip::-webkit-scrollbar {
   display: none;
 }
 .pb-strip-btn {
   display: grid;
-  flex: 0 0 auto;
   place-items: center;
-  width: 56px;
-  height: 56px;
+  width: var(--pb-tile);
+  height: var(--pb-tile);
   border-radius: 10px;
   /* Same tile as a photo, so the row reads as one shelf instead of two cream
      squares glowing at the front of it. */
@@ -345,20 +785,40 @@
 .pb-strip-btn:active {
   background: rgba(255, 255, 255, 0.1);
 }
+.pb-strip-btn:disabled {
+  opacity: 0.35;
+}
 .pb-strip-item {
   position: relative;
-  flex: 0 0 auto;
-  width: 56px;
-  height: 56px;
+  width: var(--pb-tile);
+  height: var(--pb-tile);
   overflow: hidden;
   border-radius: 10px;
   background: rgba(58, 30, 16, 0.18);
   scroll-snap-align: start;
+  transition: transform 120ms ease;
 }
 .pb-strip-item img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  background-size: cover;
+  background-position: center;
+}
+.pb-strip-item--picked {
+  transform: scale(0.9);
+  box-shadow: 0 0 0 2px var(--pb-gilt);
+}
+.pb-strip-tick {
+  position: absolute;
+  inset: auto 3px 3px auto;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--pb-gilt);
+  color: #2a0a12;
 }
 /* Already standing on the page you're looking at — still tappable, because the
    same photo twice is a perfectly reasonable thing to want. */
@@ -378,6 +838,9 @@
   width: 100%;
   height: 100%;
   background: rgba(255, 255, 255, 0.05);
+  background-size: cover;
+  background-position: center;
+  filter: blur(4px);
 }
 .pb-strip-empty {
   display: inline-flex;
@@ -388,29 +851,6 @@
   color: var(--muted, rgba(255, 255, 255, 0.5));
   white-space: nowrap;
 }
-.pb-strip-menu {
-  position: fixed;
-  left: 50%;
-  bottom: calc(16px + env(safe-area-inset-bottom));
-  z-index: 70;
-  display: flex;
-  flex-direction: column;
-  min-width: 12rem;
-  overflow: hidden;
-  border-radius: 14px;
-  background: var(--surface-2, #1d0a10);
-  box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.7);
-  transform: translateX(-50%);
-}
-.pb-strip-menu button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  font-size: 14px;
-  text-align: left;
-}
-
 /* The sticker toolbar stands IN PLACE OF the page nav, so it costs no height. */
 .pb-toolbar {
   display: flex;
@@ -421,4 +861,102 @@
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.05);
   box-shadow: inset 0 0 0 1px rgba(228, 195, 106, 0.18);
+}
+
+/* ── The toolbar's one line of guidance while cropping ────────────────────── */
+.pb-toolbar-note {
+  flex: 1;
+  padding-left: 10px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--muted, rgba(255, 255, 255, 0.55));
+}
+
+/* ── All the photos, as a sheet ───────────────────────────────────────────── */
+.pb-gallery {
+  display: grid;
+  /* Fills whatever width it is given: four across a phone, seven a tablet. */
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 4px;
+  max-height: 58vh;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+.pb-gallery-item {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 10px;
+  background: rgba(58, 30, 16, 0.18);
+  background-size: cover;
+  background-position: center;
+  transition: transform 120ms ease;
+}
+.pb-gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.pb-gallery-item--on {
+  transform: scale(0.9);
+  box-shadow: 0 0 0 2px var(--pb-gilt);
+}
+.pb-gallery-tick {
+  position: absolute;
+  inset: auto 4px 4px auto;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--pb-gilt);
+  color: #2a0a12;
+}
+
+/* ── Choosing how a photo is dressed ──────────────────────────────────────── */
+.pb-swatch {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 62px;
+  padding: 5px 3px;
+  border-radius: 12px;
+  transition: background 120ms ease;
+}
+.pb-swatch--on {
+  background: rgba(228, 195, 106, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(228, 195, 106, 0.5);
+}
+.pb-swatch-label {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  color: var(--muted, rgba(255, 255, 255, 0.55));
+}
+.pb-swatch--on .pb-swatch-label {
+  color: var(--pb-gilt);
+}
+/* A real slice of the photograph being dressed, wearing the option — nobody
+   can picture "arch" from the word. */
+.pb-swatch-photo {
+  display: block;
+  width: 40px;
+  height: 40px;
+  background-color: rgba(255, 255, 255, 0.08);
+  background-size: cover;
+  background-position: center;
+  isolation: isolate;
+}
+.pb-swatch-frame {
+  display: block;
+  background: var(--pb-mount, #fdfaf4);
+}
+.pb-swatch-color {
+  display: block;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--pb-mount, #fdfaf4);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
 }
