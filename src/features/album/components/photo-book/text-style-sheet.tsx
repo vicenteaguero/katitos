@@ -86,7 +86,7 @@ export function TextStyleSheet({
             { value: 'hand', label: <span className="pb-font-hand">Aa</span> },
           ]}
         />
-        <div className="flex items-center gap-2">
+        <div className="space-y-2">
           <Segmented
             full
             value={String(size)}
@@ -96,12 +96,19 @@ export function TextStyleSheet({
               label: ['XS', 'S', 'M', 'L', 'XL'][i],
             }))}
           />
+          {/* Words, not two nearly identical Aa's. At this size the only
+              difference between them was a hair of stroke weight, and nobody
+              could tell which one they were already on. */}
+          {/* Words, not two nearly identical Aa's — at that size the only
+              difference was a hair of stroke weight and you could not tell
+              which one you were already on. */}
           <Segmented
+            full
             value={bold ? 'b' : 'r'}
             onChange={(v) => setBold(v === 'b')}
             options={[
-              { value: 'r', label: 'Aa' },
-              { value: 'b', label: <strong>Aa</strong> },
+              { value: 'r', label: 'Regular' },
+              { value: 'b', label: 'Bold' },
             ]}
           />
         </div>
