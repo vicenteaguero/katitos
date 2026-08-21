@@ -235,30 +235,16 @@ export function stepCrossing(place: LeafPlace, dir: 1 | -1): boolean {
   return place.side === 'left' ? dir < 0 : dir > 0;
 }
 
-export type GestureMode = 'slide' | 'flip' | null;
-
-export interface GestureDecision {
-  mode: GestureMode;
-  target: number;
-}
-
 /**
- * Classify a touch by which half of the focused leaf it began in, locking it
- * for the whole gesture (so slide and flip never mix → no bounce).
- *   Left leaf  → [ flipPrev | slide ]
- *   Right leaf → [ slide | flipNext ]
- *   A cover    → the whole leaf flips; there is nothing to slide to.
- * Returns `mode: null` at the book's ends or while a flip is still animating.
+ * There is deliberately no `decideGesture` here any more.
+ *
+ * One used to exist, complete with six passing tests — and nothing imported
+ * it. The real split is not a function at all: `.pb-slide-zone` is a
+ * transparent overlay covering the SPINE half of the focused leaf, so the DOM
+ * decides who owns a touch before any of our code runs, and StPageFlip gets
+ * the outer half untouched. Green tests over a code path that never executes
+ * are worse than no tests, because they read like coverage.
+ *
+ * `stepCrossing` is the button-press equivalent and IS used; `placeLeaf` is
+ * what both of them are really asking.
  */
-export function decideGesture(
-  place: LeafPlace,
-  leafCount: number,
-  leftHalf: boolean,
-  busy: boolean
-): GestureDecision {
-  const target = place.leaf + (leftHalf ? -1 : 1);
-  if (busy || target < 0 || target > leafCount - 1)
-    return { mode: null, target };
-  const crossing = place.lone || (place.side === 'left' ? leftHalf : !leftHalf);
-  return { mode: crossing ? 'flip' : 'slide', target };
-}
