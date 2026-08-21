@@ -46,7 +46,12 @@ export function SlotPhoto({
   const { proxyUrl, fullUrl } = useProxiedUrl(
     bucket,
     url && !failed ? undefined : path,
-    { proxy: !url, full: true }
+    // `full` ONLY once the small copy has actually failed. A sticker is a
+    // couple of centimetres across; signing and then downloading the 2048px
+    // original for it is pure waiting, and it is what made a photo you just
+    // placed sit there visibly loading. The full size belongs to the printed
+    // PDF, and nowhere else.
+    { proxy: !url, full: failed }
   );
 
   // A photo uploaded before proxies existed has no `thumbs/` twin, so the
