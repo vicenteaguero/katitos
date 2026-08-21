@@ -17,12 +17,10 @@ async function openFreshBook(page: Page) {
 
   await page.getByRole('button', { name: 'Start a new album' }).click();
   await page.getByLabel('What is it?').fill('itest upload');
+  // Starting an album opens it.
   await page.getByRole('button', { name: 'Start it' }).click();
-
-  const spine = page.locator('a[href^="/album/"]').first();
-  await expect(spine).toBeVisible({ timeout: 20_000 });
-  await spine.click();
   await expect(page.locator('.pb-stage')).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText('Cover')).toBeVisible({ timeout: 20_000 });
 }
 
 test('a pile of photos goes in at once and lands in the strip', async ({
@@ -62,10 +60,20 @@ test('a placed photo keeps its own shape instead of being cropped square', async
   const frame = page.locator('.pb-editor .pb-sticker-photo').first();
   await expect(frame).toBeVisible({ timeout: 20_000 });
 
-  const box = await frame.boundingBox();
-  // The source is 16:9. A square frame here would mean the old CSS is still
-  // cropping every photo to a square.
-  expect(box!.width / box!.height).toBeGreaterThan(1.4);
+  // Polled, not read once: the sticker appears the instant you tap and is then
+  // replaced by the real row a moment later, so a single `boundingBox()` can
+  // land in the gap between the two and come back null.
+  // The source is 16:9. A square frame here would mean the photo is being
+  // cropped to a square again.
+  await expect
+    .poll(
+      async () => {
+        const box = await frame.boundingBox().catch(() => null);
+        return box ? box.width / box.height : 0;
+      },
+      { timeout: 20_000 }
+    )
+    .toBeGreaterThan(1.4);
 });
 
 test('the book loads the small copy, not the full-size original', async ({
@@ -220,7 +228,15 @@ async function reopenArranging(page: Page) {
   // A launch, not a refresh. The book is kept in localStorage between sessions,
   // so without this the app happily re-renders the photo with the size it had
   // BEFORE the test took it away, and proves nothing.
-  await page.evaluate(() => localStorage.removeItem('katitos:rq-cache:v3'));
+  // Every version of the snapshot, not one named version: the key moves with
+  // the shape of what is cached, and a test pinned to `v3` silently stopped
+  // clearing anything the moment it became `v4` — after which the book simply
+  // re-rendered the size the test had just taken away, and proved nothing.
+  await page.evaluate(() => {
+    for (const k of Object.keys(localStorage)) {
+      if (k.startsWith('katitos:rq-cache:')) localStorage.removeItem(k);
+    }
+  });
   await page.reload();
   await dismissChangelog(page);
   await expect(page.locator('.pb-stage')).toBeVisible({ timeout: 20_000 });
