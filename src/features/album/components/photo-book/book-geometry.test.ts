@@ -8,6 +8,7 @@ import {
   padLeaves,
   pageOfLeaf,
   placeLeaf,
+  coverRest,
   restFor,
   slideDx,
   stepCrossing,
@@ -214,6 +215,38 @@ describe('stepCrossing', () => {
   it('always flips off a cover', () => {
     expect(stepCrossing(placeLeaf(0, leafCount), 1)).toBe(true);
     expect(stepCrossing(placeLeaf(leafCount - 1, leafCount), -1)).toBe(true);
+  });
+});
+
+describe('coverRest', () => {
+  const M = 10;
+
+  it('centres the shut book, whichever board it is', () => {
+    const vw = 360;
+    const pageW = 260;
+    const leafCount = L(4);
+
+    // Front board: drawn in the right half of the case, whose own padding is
+    // `M` — so its left edge on screen is translate + M + pageW.
+    const front = placeLeaf(0, leafCount);
+    const frontLeft = coverRest(front, pageW, M, vw) + M + pageW;
+    expect(frontLeft).toBeCloseTo((vw - pageW) / 2, 6);
+    expect(frontLeft + pageW).toBeCloseTo(vw - (vw - pageW) / 2, 6);
+
+    // Back board: drawn in the left half.
+    const back = placeLeaf(leafCount - 1, leafCount);
+    expect(coverRest(back, pageW, M, vw) + M).toBeCloseTo((vw - pageW) / 2, 6);
+  });
+
+  it('leaves nothing of the binding sticking out beside it', () => {
+    // The bug: the case is two pages wide AND padded, so a shut book showed a
+    // second rounded rectangle of wine around and behind its own cover.
+    const vw = 360;
+    const pageW = 300;
+    const front = placeLeaf(0, L(4));
+    const left = coverRest(front, pageW, M, vw) + M + pageW;
+    const right = left + pageW;
+    expect(Math.abs(left - (vw - right))).toBeLessThan(0.001); // symmetric
   });
 });
 
