@@ -1,4 +1,8 @@
-import { stickerWidth } from '../../components/photo-book/sticker-math';
+import {
+  frameWidth,
+  shapeRatio,
+  type StickerShape,
+} from '../../components/photo-book/sticker-math';
 
 /**
  * Where everything goes on a printed page.
@@ -15,7 +19,17 @@ export const PAGE_H = 792;
 
 // One source of truth with the screen: an export that sized photos its own way
 // would print a book that does not look like the one you arranged.
-export { BASE_W, stickerWidth } from '../../components/photo-book/sticker-math';
+export {
+  BASE_W,
+  stickerWidth,
+  frameWidth,
+  shapeRatio,
+} from '../../components/photo-book/sticker-math';
+export {
+  cropWindow,
+  cropMatrix,
+  cropOf,
+} from '../../components/photo-book/crop-math';
 
 export interface Placed {
   x: number;
@@ -25,6 +39,8 @@ export interface Placed {
   /** Natural pixel size, when we know it — otherwise it is drawn square. */
   width?: number | null;
   height?: number | null;
+  /** The cut of the frame. A shaped frame is NOT the photo's own shape. */
+  shape?: StickerShape | null;
 }
 
 export interface Box {
@@ -38,14 +54,17 @@ export interface Box {
 }
 
 export function layoutSticker(p: Placed, pageW = PAGE_W, pageH = PAGE_H): Box {
-  const w = stickerWidth(p.width, p.height) * (p.scale || 1) * pageW;
-  const ratio = p.width && p.height && p.width > 0 ? p.height / p.width : 1;
+  // The FRAME's aspect, not the photograph's: a picture pushed into a circle
+  // prints as a circle's worth of paper, and the parts of it that fall outside
+  // are cropped away exactly as they are on screen.
+  const ratio = shapeRatio(p.shape ?? 'natural', p.width, p.height);
+  const w = frameWidth(ratio) * (p.scale || 1) * pageW;
   return {
     cx: p.x * pageW,
     // The flip. Without it every album prints mirrored top-to-bottom.
     cy: (1 - p.y) * pageH,
     w,
-    h: w * ratio,
+    h: w / ratio,
     // The other flip.
     rotation: -(p.rotation || 0),
   };
