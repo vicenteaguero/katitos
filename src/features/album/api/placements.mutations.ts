@@ -21,6 +21,7 @@ import {
   nextZBack,
   nextZFront,
   normalizeZ,
+  orderStickers,
 } from '../components/photo-book/sticker-math';
 
 type Pages = AlbumPageWithPhotos[];
@@ -47,16 +48,20 @@ function patchSticker(
     // page — which `pages.map(p => ({...p}))` did — broke `PageFace`'s memo for
     // all of them at once, so `flipPages` came back all-new and StPageFlip
     // re-ran its layout for the whole book on every single drag release.
-    pages?.map((p) =>
-      p.stickers.some((s) => s.id === id)
-        ? {
-            ...p,
-            stickers: p.stickers.map((s) =>
-              s.id === id ? { ...s, ...patch } : s
-            ),
-          }
-        : p
-    )
+    pages?.map((p) => {
+      if (!p.stickers.some((s) => s.id === id)) return p;
+      const stickers = p.stickers.map((s) =>
+        s.id === id ? { ...s, ...patch } : s
+      );
+      return {
+        ...p,
+        // Depth is DRAWN from the order of this array, not from the raw `z` —
+        // so changing `z` without re-sorting moved nothing at all until a
+        // refetch happened to reorder it. Which is why bringing a photo to the
+        // front only appeared to work once you left the editor.
+        stickers: patch.z == null ? stickers : orderStickers(stickers),
+      };
+    })
   );
   return before;
 }
