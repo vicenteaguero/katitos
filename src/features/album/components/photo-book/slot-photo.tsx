@@ -14,13 +14,19 @@ export function SlotPhoto({
   source,
   path,
   url,
+  blur,
   alt,
+  eager,
   onMeasured,
 }: {
   source: PhotoSource;
   path: string | null;
   url?: string;
+  /** The postage-stamp stored on the row: shown until the real one arrives. */
+  blur?: string | null;
   alt: string;
+  /** The page being read right now — its photos are not "later". */
+  eager?: boolean;
   /**
    * The picture's real shape, once the browser knows it.
    *
@@ -31,32 +37,61 @@ export function SlotPhoto({
   onMeasured?: (size: { width: number; height: number }) => void;
 }) {
   const bucket = source === 'polaroid' ? BUCKETS.polaroids : BUCKETS.album;
-  // Only signs when the book didn't already do it for us.
-  const { proxyUrl, fullUrl } = useProxiedUrl(bucket, url ? undefined : path);
   const [failed, setFailed] = useState(false);
-  const src = url ?? (!failed && proxyUrl ? proxyUrl : fullUrl);
+  const [ready, setReady] = useState(false);
+  // Nothing is signed here while the book's batched URL is working — that is
+  // the whole point of the batch. But the moment it 404s we DO need the
+  // original signed, and asking for it only in that case is what the old
+  // `url ? undefined : path` could never do: it had already decided.
+  const { proxyUrl, fullUrl } = useProxiedUrl(
+    bucket,
+    url && !failed ? undefined : path,
+    { proxy: !url, full: true }
+  );
 
-  if (!src) return <div className="pb-photo" aria-hidden="true" />;
+  // A photo uploaded before proxies existed has no `thumbs/` twin, so the
+  // batched URL the book handed us 404s. The `??` chain here used to
+  // short-circuit on `url` and never consult `failed` at all — which is why
+  // those photos showed a permanent hole with no fallback underneath them.
+  const src = failed ? (fullUrl ?? undefined) : (url ?? proxyUrl ?? fullUrl);
+
+  if (!src && !blur) return <div className="pb-photo" aria-hidden="true" />;
   return (
-    <img
-      className="pb-photo"
-      src={src}
-      alt={alt}
-      draggable={false}
-      loading="lazy"
-      decoding="async"
-      // A photo from before proxies existed has no `thumbs/` twin; fall back to
-      // the original rather than showing a hole.
-      onError={() => setFailed(true)}
-      onLoad={(e) => {
-        const img = e.currentTarget;
-        if (img.naturalWidth && img.naturalHeight) {
-          onMeasured?.({
-            width: img.naturalWidth,
-            height: img.naturalHeight,
-          });
-        }
-      }}
-    />
+    <>
+      {blur && (
+        // Underneath, always: the real photograph fades in on top of it, so
+        // there is never a grey hole where a picture is going to be.
+        <span
+          className="pb-photo pb-photo-blur"
+          aria-hidden="true"
+          style={{ backgroundImage: `url(${blur})` }}
+        />
+      )}
+      {src && (
+        <img
+          className="pb-photo"
+          src={src}
+          alt={alt}
+          draggable={false}
+          loading={eager ? 'eager' : 'lazy'}
+          decoding="async"
+          fetchPriority={eager ? 'high' : 'auto'}
+          style={blur ? { opacity: ready ? 1 : 0 } : undefined}
+          // Fall back to the original ONCE. Without the guard a photo that has
+          // neither copy would re-render itself forever.
+          onError={() => setFailed(true)}
+          onLoad={(e) => {
+            setReady(true);
+            const img = e.currentTarget;
+            if (img.naturalWidth && img.naturalHeight) {
+              onMeasured?.({
+                width: img.naturalWidth,
+                height: img.naturalHeight,
+              });
+            }
+          }}
+        />
+      )}
+    </>
   );
 }
