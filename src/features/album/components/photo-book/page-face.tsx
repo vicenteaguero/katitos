@@ -91,6 +91,15 @@ function PageFaceImpl({
    * the selection away in the middle of resizing something.
    */
   const gestureAt = useRef(0);
+  /**
+   * The sticker currently being manipulated, if any.
+   *
+   * One thing moves at a time. While a photo is being dragged, resized, turned
+   * or cropped, every OTHER sticker on the page stands still — otherwise a
+   * stray finger lands on a neighbour halfway through and drags that instead,
+   * which is the whole "it feels buggy" of arranging a page.
+   */
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   return (
     <div
@@ -115,8 +124,12 @@ function PageFaceImpl({
           interactive={interactive}
           eager={eager}
           cropping={croppingId === sticker.id}
-          // While ONE photo is being cropped, nothing else on the page moves.
-          frozen={!!croppingId && croppingId !== sticker.id}
+          // While ONE photo is being worked on, nothing else on the page moves.
+          frozen={
+            (!!croppingId && croppingId !== sticker.id) ||
+            (!!busyId && busyId !== sticker.id)
+          }
+          onBusy={setBusyId}
           // Depth is DERIVED from the sorted order, never from the raw `z`:
           // that number is a sparse comparator and can be negative or huge,
           // which would fight the slide overlay and the add button.
@@ -194,6 +207,7 @@ function Sticker({
   onMeasured,
   surface,
   gestureAt,
+  onBusy,
 }: {
   sticker: PlacedSticker;
   interactive: boolean;
@@ -212,6 +226,8 @@ function Sticker({
   surface: RefObject<HTMLDivElement | null>;
   /** Stamped when a two-finger gesture ends, so no tap is inferred from it. */
   gestureAt: RefObject<number>;
+  /** Announce that this sticker is being worked on, so the others hold still. */
+  onBusy: (id: string | null) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const photoRef = useRef<HTMLDivElement>(null);
@@ -267,6 +283,7 @@ function Sticker({
           const base = memo as { x: number; y: number } | undefined;
           if (base) setView((v) => ({ ...v, x: base.x, y: base.y }));
           busyRef.current = false;
+          onBusy(null);
           cancel();
           return;
         }
@@ -280,6 +297,7 @@ function Sticker({
           // Stop the page-turn gesture (on the stack) from also firing.
           event?.stopPropagation();
           busyRef.current = true;
+          onBusy(sticker.id);
         }
         const parent = ref.current?.offsetParent as HTMLElement | null;
         const pw = parent?.clientWidth || 1;
@@ -293,6 +311,7 @@ function Sticker({
         setView((v) => ({ ...v, x: nx, y: ny }));
         if (last) {
           busyRef.current = false;
+          onBusy(null);
           onTransform({
             x: nx,
             y: ny,
@@ -334,6 +353,7 @@ function Sticker({
         const pointer = { x: px, y: py };
         if (first) {
           busyRef.current = true;
+          onBusy(sticker.id);
           handleBase.current = {
             scale: view.scale,
             rotation: view.rotation,
@@ -347,6 +367,7 @@ function Sticker({
         setView((v) => ({ ...v, ...next }));
         if (last) {
           busyRef.current = false;
+          onBusy(null);
           handleBase.current = null;
           onTransform({ x: view.x, y: view.y, ...next });
         }
@@ -383,10 +404,14 @@ function Sticker({
     {
       onPinch: ({ event, first, last, offset: [scale, rotation] }) => {
         event?.stopPropagation();
-        if (first) busyRef.current = true;
+        if (first) {
+          busyRef.current = true;
+          onBusy(sticker.id);
+        }
         setView((v) => ({ ...v, scale, rotation }));
         if (last) {
           busyRef.current = false;
+          onBusy(null);
           gestureAt.current = Date.now();
           onTransform({ x: view.x, y: view.y, scale, rotation });
         }
@@ -419,6 +444,7 @@ function Sticker({
         if (!box) return;
         if (first) {
           busyRef.current = true;
+          onBusy(sticker.id);
           cropBase.current = crop;
         }
         setCrop((c) => {
@@ -434,16 +460,21 @@ function Sticker({
         });
         if (last) {
           busyRef.current = false;
+          onBusy(null);
           cropBase.current = null;
           onCrop(crop);
         }
       },
       onPinch: ({ event, first, last, offset: [z] }) => {
         event?.stopPropagation();
-        if (first) busyRef.current = true;
+        if (first) {
+          busyRef.current = true;
+          onBusy(sticker.id);
+        }
         setCrop((c) => ({ ...c, cropZoom: z }));
         if (last) {
           busyRef.current = false;
+          onBusy(null);
           gestureAt.current = Date.now();
           onCrop({ ...crop, cropZoom: z });
         }
