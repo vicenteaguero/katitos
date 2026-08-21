@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { nanoid } from 'nanoid';
 import { supabase } from '@kernel/supabase';
@@ -35,6 +35,10 @@ export interface UploadJob {
   name: string;
   state: JobState;
   error?: string;
+  /** A local preview, shown from the instant it is chosen. */
+  previewUrl?: string;
+  /** The library row, once it exists — so it can be taken back out again. */
+  photo?: AlbumPhoto;
 }
 
 /**
@@ -43,6 +47,11 @@ export interface UploadJob {
  * Each photo is shrunk, uploaded, and given its library row IMMEDIATELY — not
  * batched at the end — so the strip fills in as you watch and a failure halfway
  * through costs you only that one photo.
+ *
+ * The finished row is written STRAIGHT INTO the library cache rather than
+ * invalidating it. Twenty photos meant twenty refetches of the whole library,
+ * each one re-rendering the book and the sheet on top of it — which is why the
+ * buttons in that sheet needed pressing over and over to land.
  */
 export function useBulkAddToLibrary(bookId: string | undefined) {
   const qc = useQueryClient();
@@ -50,14 +59,26 @@ export function useBulkAddToLibrary(bookId: string | undefined) {
   const { uploadPhoto } = usePhotoUpload();
   const [jobs, setJobs] = useState<UploadJob[]>([]);
   const [running, setRunning] = useState(false);
+  /** A live mirror, so `run` and `remove` stay stable across renders. */
+  const jobsRef = useRef(jobs);
+  jobsRef.current = jobs;
 
   const run = useCallback(
     async (files: File[]) => {
       if (!bookId || !files.length) return;
       setRunning(true);
-      setJobs(
-        files.map((f) => ({ name: f.name, state: 'queued' as JobState }))
-      );
+      // Previews from the local file, so there is something to look at from
+      // the moment they are chosen — no waiting on a round trip to see what
+      // you picked.
+      setJobs((prev) => [
+        ...prev,
+        ...files.map((f) => ({
+          name: f.name,
+          state: 'queued' as JobState,
+          previewUrl: URL.createObjectURL(f),
+        })),
+      ]);
+      const offset = jobsRef.current.length;
 
       const results = await mapWithConcurrency(
         files,
@@ -86,40 +107,98 @@ export function useBulkAddToLibrary(bookId: string | undefined) {
           const path = storagePaths.albumPhoto(bookId, nanoid(12));
           await uploadPhoto(BUCKETS.album, path, blob);
 
-          const { error } = await supabase.from('album_photos').insert({
-            book_id: bookId,
-            image_path: path,
-            source: 'upload',
-            width: size?.width ?? null,
-            height: size?.height ?? null,
-            blur,
-            ...(userId ? { created_by: userId } : {}),
-          });
+          const { data: row, error } = await supabase
+            .from('album_photos')
+            .insert({
+              book_id: bookId,
+              image_path: path,
+              source: 'upload',
+              width: size?.width ?? null,
+              height: size?.height ?? null,
+              blur,
+              ...(userId ? { created_by: userId } : {}),
+            })
+            .select('*')
+            .single();
           if (error) throw error;
-          void qc.invalidateQueries({ queryKey: qk.album.library(bookId) });
-          return path;
+          // Into the cache, not a refetch: the strip fills in just the same and
+          // nothing else on screen has to be rebuilt to make it happen.
+          qc.setQueryData<AlbumPhoto[]>(qk.album.library(bookId), (old) =>
+            old ? [row as AlbumPhoto, ...old] : [row as AlbumPhoto]
+          );
+          return row as AlbumPhoto;
         },
         (p) =>
           setJobs((js) =>
             js.map((j, i) =>
-              i === p.index ? { ...j, state: p.state, error: p.error } : j
+              i === offset + p.index
+                ? { ...j, state: p.state, error: p.error }
+                : j
             )
           )
+      );
+
+      // Attach each finished row to its job, so a photo can be taken back out
+      // from the same place it was put in.
+      setJobs((js) =>
+        js.map((j, i) => {
+          const r = results[i - offset];
+          return r?.value ? { ...j, photo: r.value } : j;
+        })
       );
 
       setRunning(false);
       const failed = results.filter((r) => r.error).length;
       if (failed)
         toast.error(`${failed} photo${failed === 1 ? '' : 's'} failed`);
-      void qc.invalidateQueries({ queryKey: qk.album.library(bookId) });
+      // Once, at the end — the counts line on the shelf is the only thing that
+      // still needs telling.
       void qc.invalidateQueries({ queryKey: [...qk.album.books(), 'counts'] });
       return results;
     },
     [bookId, qc, uploadPhoto, userId]
   );
 
-  const reset = useCallback(() => setJobs([]), []);
-  return { run, jobs, running, reset };
+  /** Take one back out — the row, the bytes, and the tile. */
+  const remove = useCallback(
+    (index: number) => {
+      const job = jobsRef.current[index];
+      if (!job) return;
+      if (job.previewUrl) URL.revokeObjectURL(job.previewUrl);
+      setJobs((js) => js.filter((_, i) => i !== index));
+      const photo = job.photo;
+      if (!photo || !bookId) return;
+      // Optimistic, and the delete goes off on its own: nobody should have to
+      // watch a spinner to undo a photo they did not mean to add.
+      qc.setQueryData<AlbumPhoto[]>(qk.album.library(bookId), (old) =>
+        old?.filter((p) => p.id !== photo.id)
+      );
+      void supabase
+        .from('album_photos')
+        .delete()
+        .eq('id', photo.id)
+        .then(() => {
+          if (photo.image_path) {
+            void supabase.storage
+              .from(BUCKETS.album)
+              .remove([photo.image_path, proxyPath(photo.image_path)]);
+          }
+          void qc.invalidateQueries({
+            queryKey: [...qk.album.books(), 'counts'],
+          });
+        });
+    },
+    [bookId, qc]
+  );
+
+  const reset = useCallback(() => {
+    for (const j of jobsRef.current) {
+      if (j.previewUrl) URL.revokeObjectURL(j.previewUrl);
+    }
+    setJobs([]);
+  }, []);
+
+  return { run, jobs, running, remove, reset };
 }
 
 /** Add a single photo — the camera, or one picked from the polaroids. */
