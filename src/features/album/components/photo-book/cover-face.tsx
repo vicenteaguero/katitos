@@ -27,20 +27,33 @@ export const CoverFace = forwardRef<
       data-density="hard"
       className={cn('pb-cover', `pb-mat-${material}`, back && 'pb-cover--back')}
     >
-      {!back && coverUrl && (
-        <img className="pb-cover-photo" src={coverUrl} alt="" aria-hidden />
-      )}
-      <span className="pb-cover-plate" aria-hidden="true" />
-      {back ? (
-        <span className="pb-cover-mark">
-          <span className="pb-title">К</span>
-        </span>
-      ) : (
-        <span className="pb-cover-text">
-          <span className="pb-title pb-cover-title">{book.title}</span>
-          {span && <span className="pb-cover-span">{span}</span>}
-        </span>
-      )}
+      {/*
+        Everything lives in an inner, absolutely-positioned face — NOT on the
+        leaf itself.
+
+        StPageFlip rewrites each leaf's entire `cssText` on every draw, and
+        that template hard-codes `display: block`. Any layout put on the leaf
+        is therefore wiped: the title stopped being centred, fell to the top of
+        the board and had its ascenders sliced off by the rounded corner. The
+        paper pages have always done it this way (`.pb-page-host` > `.pb-page`)
+        for exactly this reason.
+      */}
+      <div className="pb-cover-face">
+        {!back && coverUrl && (
+          <img className="pb-cover-photo" src={coverUrl} alt="" aria-hidden />
+        )}
+        <span className="pb-cover-plate" aria-hidden="true" />
+        {back ? (
+          <span className="pb-cover-mark">
+            <span className="pb-title">К</span>
+          </span>
+        ) : (
+          <span className="pb-cover-text">
+            <span className="pb-title pb-cover-title">{book.title}</span>
+            {span && <span className="pb-cover-span">{span}</span>}
+          </span>
+        )}
+      </div>
     </div>
   );
 });
