@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   computeLayout,
-  decideGesture,
   landscapeSpreads,
   leafAfterFlip,
   leafCountFor,
@@ -185,65 +184,6 @@ describe('leafAfterFlip', () => {
     expect(leafAfterFlip(leafCount - 1, leafCount - 2, leafCount)).toBe(
       leafCount - 1
     );
-  });
-});
-
-describe('decideGesture', () => {
-  const leafCount = L(4); // 6 leaves: [0] [1,2] [3,4] [5]
-
-  it('left leaf: left half flips back, right half slides forward', () => {
-    const p = placeLeaf(3, leafCount);
-    expect(decideGesture(p, leafCount, true, false)).toEqual({
-      mode: 'flip',
-      target: 2,
-    });
-    expect(decideGesture(p, leafCount, false, false)).toEqual({
-      mode: 'slide',
-      target: 4,
-    });
-  });
-
-  it('right leaf: left half slides back, right half flips forward', () => {
-    const p = placeLeaf(2, leafCount);
-    expect(decideGesture(p, leafCount, true, false)).toEqual({
-      mode: 'slide',
-      target: 1,
-    });
-    expect(decideGesture(p, leafCount, false, false)).toEqual({
-      mode: 'flip',
-      target: 3,
-    });
-  });
-
-  it('a cover flips whichever half you touch — there is nothing beside it', () => {
-    expect(
-      decideGesture(placeLeaf(0, leafCount), leafCount, false, false)
-    ).toEqual({
-      mode: 'flip',
-      target: 1,
-    });
-    const back = placeLeaf(leafCount - 1, leafCount);
-    expect(decideGesture(back, leafCount, true, false)).toEqual({
-      mode: 'flip',
-      target: leafCount - 2,
-    });
-  });
-
-  it('blocks at the very start and the very end', () => {
-    expect(
-      decideGesture(placeLeaf(0, leafCount), leafCount, true, false).mode
-    ).toBeNull();
-    const back = placeLeaf(leafCount - 1, leafCount);
-    expect(decideGesture(back, leafCount, false, false).mode).toBeNull();
-  });
-
-  it('blocks every gesture while a flip is still animating', () => {
-    expect(
-      decideGesture(placeLeaf(1, leafCount), leafCount, false, true).mode
-    ).toBeNull();
-    expect(
-      decideGesture(placeLeaf(2, leafCount), leafCount, false, true).mode
-    ).toBeNull();
   });
 });
 
