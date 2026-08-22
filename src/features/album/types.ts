@@ -1,5 +1,8 @@
 import type { Tables } from '@kernel/supabase';
-export type { StickerShape } from './components/photo-book/sticker-math';
+export type {
+  MatWidth,
+  StickerShape,
+} from './components/photo-book/sticker-math';
 
 /* ── PhotoBook3D engine (shared Pololini + Summer Panini) ─────────────────── */
 
@@ -27,8 +30,26 @@ export type StickerFrame =
   | 'tape'
   | 'shadow';
 
-/** What the mount around a photo is made of. */
-export type FrameColor = 'cream' | 'white' | 'gold' | 'wine' | 'ink' | 'kraft';
+/**
+ * What the mount around a photo is made of.
+ *
+ * Ten are offered; `white` and `ink` are older values that still render, so a
+ * placement written by the previous build keeps looking like itself.
+ */
+export type FrameColor =
+  | 'snow'
+  | 'cream'
+  | 'sand'
+  | 'kraft'
+  | 'gold'
+  | 'moss'
+  | 'olive'
+  | 'wine'
+  | 'brown'
+  | 'charcoal'
+  | 'black'
+  | 'white'
+  | 'ink';
 
 /** What the covers are bound in. */
 export type CoverMaterial = 'leather' | 'linen' | 'kraft' | 'velvet';
