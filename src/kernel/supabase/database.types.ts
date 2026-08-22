@@ -209,6 +209,7 @@ export type Database = {
           frame_color: string
           id: string
           kind: string
+          mat_width: string
           page_id: string
           photo_id: string | null
           rotation: number
@@ -234,6 +235,7 @@ export type Database = {
           frame_color?: string
           id?: string
           kind?: string
+          mat_width?: string
           page_id: string
           photo_id?: string | null
           rotation?: number
@@ -259,6 +261,7 @@ export type Database = {
           frame_color?: string
           id?: string
           kind?: string
+          mat_width?: string
           page_id?: string
           photo_id?: string | null
           rotation?: number
