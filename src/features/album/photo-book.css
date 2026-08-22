@@ -599,10 +599,32 @@
     drop-shadow(0 9px 13px rgba(20, 4, 9, 0.4));
 }
 
-/* Instant film: a square window and a chin deeper than the other three edges.
-   It ignores the thickness control — film is film. */
+/* Instant film — the SAME object as `PolaroidPlate`, which is what the daily
+   photo and the flowers show. A square window, a chin deeper than the other
+   three edges, and the words printed on the chin.
+   No hairline: a printed rule around the picture is the one thing real film
+   does not have, and it was the "border" that gave this away as a different
+   object. */
 .pb-frame-polaroid {
-  padding: var(--pb-mat) var(--pb-mat) calc(var(--pb-mat) + 14%);
+  padding: var(--pb-mat) var(--pb-mat) 8%;
+  border-radius: 4px;
+  box-shadow: var(--shadow-loge, 0 10px 24px -14px rgba(20, 4, 9, 0.7));
+}
+.pb-frame-polaroid::after {
+  content: none;
+}
+/* Unexposed film, not a dark hole: whatever shows at the picture's rounded
+   corners has to read as part of the plate. Same value as the component. */
+.pb-frame-polaroid .pb-sticker-photo {
+  border-radius: 2px;
+  background: #e3d8c6;
+}
+/* The words sit ON the chin, with the component's own gap above them — and
+   only that gap: the base rule adds a flat 5px which, on top of this, made the
+   chin a fifth deeper than the object it is copying. */
+.pb-frame-polaroid .pb-sticker-cap {
+  padding-top: 5%;
+  margin-top: -5px;
 }
 
 /* Taped: sized in PER CENT, so the strips grow with the sticker. They were a
