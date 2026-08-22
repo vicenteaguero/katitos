@@ -240,9 +240,20 @@ const MOUNT_K: Record<MountFrame, number> = {
   shadow: 0.28,
 };
 
-/** Instant film has its own proportions and ignores the thickness control. */
-export const FILM_EDGE = 0.06;
-export const FILM_CHIN = 0.2;
+/**
+ * Instant film has its own proportions and ignores the thickness control.
+ *
+ * Taken from the app's own `PolaroidPlate` (`kernel/ui/polaroid-plate.tsx`),
+ * which is the same object the daily photo and the flowers show — at the size
+ * a sticker actually is that is its `sm` variant: `p-1.5 pb-2.5` on a ~120px
+ * card, so a 5% edge and an 8% chin, with the caption's own margin making up
+ * the rest. The album was guessing 6% and 20% and came out as a different
+ * object standing next to it.
+ */
+export const FILM_EDGE = 0.05;
+export const FILM_CHIN = 0.08;
+/** The gap above the words printed on the chin. */
+export const FILM_CAPTION_GAP = 0.05;
 
 /**
  * The mount's band, as a fraction of the sticker's width.
