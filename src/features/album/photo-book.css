@@ -353,11 +353,20 @@
      edge of the paper, but the leaf around it is free to curl. */
   overflow: hidden;
   color: var(--pb-ink);
+  /* Lit from one place. The highlight and the gutter shadow are MIRRORED per
+     side below — with the same gradient on both leaves the light appeared to
+     come from two different directions at once, which is what made an open
+     spread look wrong without anyone being able to say why. */
   background:
     radial-gradient(
-      120% 80% at 78% 8%,
+      120% 80% at var(--pb-lit, 78%) 8%,
       rgba(255, 252, 244, 0.9),
       transparent 60%
+    ),
+    linear-gradient(
+      var(--pb-gutter-dir, 90deg),
+      rgba(20, 4, 9, 0.16) 0%,
+      rgba(20, 4, 9, 0) 16%
     ),
     repeating-linear-gradient(
       102deg,
@@ -365,6 +374,17 @@
       rgba(120, 92, 48, 0) 2px 5px
     ),
     linear-gradient(160deg, var(--pb-paper) 0%, var(--pb-paper-2) 100%);
+}
+/* StPageFlip puts `--left` / `--right` on the leaf element itself, so the page
+   knows which half of the book it is. The fold is in the middle: a left-hand
+   page is darkest at its RIGHT edge, a right-hand page at its LEFT. */
+.pb-page-host.--right .pb-page {
+  --pb-lit: 78%;
+  --pb-gutter-dir: 90deg;
+}
+.pb-page-host.--left .pb-page {
+  --pb-lit: 22%;
+  --pb-gutter-dir: 270deg;
 }
 
 /* ── Arrange editor: the single focused page, no flip-book under it. ──────── */
@@ -382,11 +402,19 @@
     inset 0 0 0 1.5px rgba(228, 195, 106, 0.3);
 }
 
+/* While a BOARD is turning, the paper underneath holds its photographs back.
+   A cover is opaque: what is behind it cannot already be on screen. They fade
+   up as it lands, instead of being simply there the whole way through. */
+.pb-book--boarding .pb-page .pb-sticker {
+  opacity: 0;
+}
+
 /* ── Photo stickers (free, draggable) ───────────────────────────────────── */
 /* Depth is set inline from the sorted order — a fixed z-index here is exactly
    what made stacking depend on who was added first. */
 .pb-sticker {
   position: absolute;
+  transition: opacity 260ms ease;
   transform: translate(-50%, -50%);
   user-select: none;
   pointer-events: none; /* reader: a drag peels the page, not the photo */
@@ -400,57 +428,154 @@
 }
 
 .pb-sticker-frame {
+  /* Both set inline, per sticker: the band as a FRACTION of the sticker's
+     width (so the card grows with the photograph instead of staying a fixed
+     five pixels), and the cut the window was made with. */
+  --pb-mat: 4.5%;
+  --pb-cut-radius: 0px;
   position: relative;
-  background: var(--pb-mount, #fdfaf4);
+  padding: var(--pb-mat);
+  /* Concentric with the cut: the mount's corner is the photo's corner pushed
+     outward by exactly the width of the band, which is what a parallel curve
+     is. A fixed 6px here is what put a rounded photo in a square card. */
+  border-radius: calc(var(--pb-cut-radius) + var(--pb-mat));
+  background: var(--pb-mount, #f7efdd);
   color: var(--pb-mount-ink, var(--pb-ink));
-  padding: 5px 5px 7px;
-  border-radius: 6px;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
   transition: box-shadow 140ms ease;
 }
+/* The hairline where the picture meets the card. Without it a snowy photo
+   dissolves into a snow mount and a night photo into a charcoal one. */
+.pb-sticker-frame::after {
+  content: '';
+  position: absolute;
+  inset: var(--pb-mat);
+  border-radius: var(--pb-cut-radius);
+  box-shadow: inset 0 0 0 1px var(--pb-mount-edge, rgba(20, 4, 9, 0.14));
+  pointer-events: none;
+}
 
-/* ── What the mount is made of ────────────────────────────────────────────── */
+/* The selection ring lives on the STICKER, not on the mount.
+   `clip-path` and `mask-image` clip a box-shadow away along with everything
+   else, so a heart or a torn photo could never show that it was selected.
+   White, not gilt: a gold ring on a cream mount is barely a selection, and it
+   made the editor look like a picture-frame shop. */
+.pb-sticker--sel::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 10px;
+  pointer-events: none;
+  box-shadow:
+    0 0 0 2px rgba(251, 245, 240, 0.95),
+    0 0 0 3.5px rgba(20, 4, 9, 0.55);
+}
+
+/* ── What the mount is made of ──────────────────────────────────────────────
+   Hers: wine, brown, moss, black, snow. His: sand, olive, charcoal, snow.
+   Plus the paper neutrals. `--pb-mount-ink` is the caption colour, so words on
+   a black mat stay readable; `--pb-mount-edge` is the hairline against the
+   picture, which has to flip for a dark card. */
+.pb-mount-snow {
+  --pb-mount: #f2f5f6;
+  --pb-mount-ink: #23282b;
+  --pb-mount-edge: rgba(20, 4, 9, 0.16);
+}
 .pb-mount-cream {
-  --pb-mount: #fdfaf4;
+  --pb-mount: #f7efdd;
   --pb-mount-ink: #4a3520;
+  --pb-mount-edge: rgba(20, 4, 9, 0.15);
 }
-.pb-mount-white {
-  --pb-mount: #ffffff;
-  --pb-mount-ink: #3a2c1c;
-}
-.pb-mount-gold {
-  --pb-mount: #e8d3a0;
-  --pb-mount-ink: #4a3520;
-}
-.pb-mount-wine {
-  --pb-mount: #6e1423;
-  --pb-mount-ink: #f6e6c8;
-}
-.pb-mount-ink {
-  --pb-mount: #241019;
-  --pb-mount-ink: #efe3d2;
+.pb-mount-sand {
+  --pb-mount: #e6cb9e;
+  --pb-mount-ink: #463222;
+  --pb-mount-edge: rgba(20, 4, 9, 0.18);
 }
 .pb-mount-kraft {
   --pb-mount: #cbab7e;
   --pb-mount-ink: #3b2a17;
+  --pb-mount-edge: rgba(20, 4, 9, 0.2);
+}
+.pb-mount-gold {
+  --pb-mount: #e3c67f;
+  --pb-mount-ink: #4a3520;
+  --pb-mount-edge: rgba(20, 4, 9, 0.2);
+}
+.pb-mount-moss {
+  --pb-mount: #2e5b45;
+  --pb-mount-ink: #eaf1e9;
+  --pb-mount-edge: rgba(255, 255, 255, 0.16);
+}
+.pb-mount-olive {
+  --pb-mount: #565b41;
+  --pb-mount-ink: #f0eedf;
+  --pb-mount-edge: rgba(255, 255, 255, 0.15);
+}
+.pb-mount-wine {
+  --pb-mount: #6e1423;
+  --pb-mount-ink: #f6e6c8;
+  --pb-mount-edge: rgba(255, 255, 255, 0.15);
+}
+.pb-mount-brown {
+  --pb-mount: #4c3527;
+  --pb-mount-ink: #f2e6d6;
+  --pb-mount-edge: rgba(255, 255, 255, 0.14);
+}
+.pb-mount-charcoal {
+  --pb-mount: #2c2f33;
+  --pb-mount-ink: #e7e9eb;
+  --pb-mount-edge: rgba(255, 255, 255, 0.14);
+}
+/* Still rendered — rows already carry them — just no longer offered. */
+.pb-mount-white {
+  --pb-mount: #ffffff;
+  --pb-mount-ink: #3a2c1c;
+  --pb-mount-edge: rgba(20, 4, 9, 0.16);
+}
+.pb-mount-ink {
+  --pb-mount: #241019;
+  --pb-mount-ink: #efe3d2;
+  --pb-mount-edge: rgba(255, 255, 255, 0.14);
+}
+.pb-mount-black {
+  --pb-mount: #121212;
+  --pb-mount-ink: #edeae4;
+  --pb-mount-edge: rgba(255, 255, 255, 0.13);
 }
 
-/* ── The mounts ───────────────────────────────────────────────────────────── */
-/* Bare: the photograph, and nothing else. */
+/* ── The mounts ─────────────────────────────────────────────────────────────
+   Six, and every one of them works with every cut, because `--pb-cut-radius`
+   carries the shape all the way out to the mount's own edge. */
+
+/* Bare: the cut photograph and nothing else. */
 .pb-frame-none {
   padding: 0;
   background: none;
   border-radius: 0;
   box-shadow: none;
 }
-/* `plain` is what the previous build wrote for "not on film". Same thing. */
+.pb-frame-none::after {
+  content: none;
+}
+
+/* Card: the workhorse. `plain` is what the previous build writes for
+   "not on film" — same thing. */
 .pb-frame-plain,
 .pb-frame-white {
-  padding: 5px 5px 7px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.28) inset,
+    0 2px 7px -3px rgba(20, 4, 9, 0.42);
 }
-/* A hairline of gilt, tight to the picture. */
+
+/* Gilt: a RULE, not a slab of gold. The card is whatever colour you chose and
+   a foil line sits where the picture begins. */
 .pb-frame-gilt {
-  padding: 3px;
+  box-shadow: 0 2px 8px -3px rgba(20, 4, 9, 0.5);
+}
+.pb-frame-gilt::after {
+  inset: calc(var(--pb-mat) - 1.5px);
+  border-radius: calc(var(--pb-cut-radius) + 1.5px);
+  box-shadow: none;
+  padding: 1.5px;
   background: linear-gradient(
     135deg,
     var(--pb-gilt-deep),
@@ -458,105 +583,98 @@
     var(--pb-gilt-spark) 52%,
     var(--pb-gilt-deep)
   );
-  box-shadow: 0 2px 6px rgba(20, 4, 9, 0.4);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
 }
-/* Lifted off the paper. `filter`, not `box-shadow`: a box-shadow traces the
-   BORDER BOX, so a circular photo would get a rectangle of shadow behind it. */
+
+/* Lifted: a print's thin edge, and then it floats. `filter`, never
+   `box-shadow` — a box-shadow traces the border box, so a circle would get a
+   rectangle of shade behind it. */
 .pb-frame-shadow {
-  padding: 0;
-  background: none;
   box-shadow: none;
-  filter: drop-shadow(0 6px 10px rgba(20, 4, 9, 0.45));
+  filter: drop-shadow(0 1px 1px rgba(20, 4, 9, 0.28))
+    drop-shadow(0 9px 13px rgba(20, 4, 9, 0.4));
 }
-/* Two strips of washi across opposite corners, the way a photo actually gets
-   stuck into an album. */
+
+/* Instant film: a square window and a chin deeper than the other three edges.
+   It ignores the thickness control — film is film. */
+.pb-frame-polaroid {
+  padding: var(--pb-mat) var(--pb-mat) calc(var(--pb-mat) + 14%);
+}
+
+/* Taped: sized in PER CENT, so the strips grow with the sticker. They were a
+   hard 13px, which on a small photo was a plank. */
 .pb-frame-tape {
   padding: 0;
   background: none;
   box-shadow: none;
 }
-.pb-frame-tape::before,
 .pb-frame-tape::after {
+  content: none;
+}
+.pb-frame-tape::before,
+.pb-frame-tape .pb-tape-2 {
   content: '';
   position: absolute;
   z-index: 2;
-  width: 34%;
-  height: 13px;
+  width: 32%;
+  aspect-ratio: 4.6;
+  border-radius: 1px;
   background: repeating-linear-gradient(
     45deg,
-    rgba(255, 246, 224, 0.9) 0 5px,
-    rgba(233, 214, 173, 0.9) 5px 10px
+    rgba(255, 246, 224, 0.86) 0 5px,
+    rgba(233, 214, 173, 0.86) 5px 10px
   );
-  box-shadow: 0 1px 3px rgba(20, 4, 9, 0.35);
-  opacity: 0.82;
+  box-shadow: 0 1px 3px rgba(20, 4, 9, 0.3);
 }
 .pb-frame-tape::before {
-  top: -6px;
-  left: -8px;
+  top: -3%;
+  left: -6%;
   transform: rotate(-24deg);
 }
-.pb-frame-tape::after {
-  right: -8px;
-  bottom: -6px;
+.pb-frame-tape .pb-tape-2 {
+  right: -6%;
+  bottom: -3%;
   transform: rotate(-24deg);
 }
-/* A corner is only a corner on something with corners. Taped across the top
-   and bottom of a circle, an arch or a heart the strips sit ON the picture;
-   at the corners of its bounding box they floated in bare paper an inch away
-   from the photograph they were supposed to be holding. */
+/* A corner is only a corner on something with corners. */
 .pb-fshape-circle.pb-frame-tape::before,
 .pb-fshape-arch.pb-frame-tape::before,
 .pb-fshape-heart.pb-frame-tape::before {
-  top: -7px;
+  top: -4%;
   left: 50%;
   transform: translateX(-50%) rotate(-5deg);
 }
-.pb-fshape-circle.pb-frame-tape::after,
-.pb-fshape-arch.pb-frame-tape::after,
-.pb-fshape-heart.pb-frame-tape::after {
+.pb-fshape-circle.pb-frame-tape .pb-tape-2,
+.pb-fshape-arch.pb-frame-tape .pb-tape-2 {
   right: auto;
-  bottom: -7px;
+  bottom: -4%;
   left: 50%;
   transform: translateX(-50%) rotate(4deg);
 }
-/* A heart's bottom is a point, so one strip across the top is enough. */
-.pb-fshape-heart.pb-frame-tape::after {
+/* A heart ends in a point; one strip across the top is enough. */
+.pb-fshape-heart.pb-frame-tape .pb-tape-2 {
   display: none;
 }
-.pb-sticker--sel .pb-sticker-frame {
-  /* White, not gilt. A gold ring on a cream mount is barely a selection and
-     it made the editor look like a picture frame shop. */
-  box-shadow:
-    0 0 0 2px rgba(251, 245, 240, 0.95),
-    0 0 0 3.5px rgba(20, 4, 9, 0.55),
-    0 8px 18px rgba(20, 4, 9, 0.5);
-}
-/* A photo keeps its own shape (set inline from the stored pixel size) unless it
-   is mounted on film, where the square window is the point of the format.
-   The square here is only a FALLBACK: every photo from before the library knew
-   about pixel sizes has none stored, and a box with neither ratio nor height
-   collapsed to a sliver. `SlotPhoto` measures those on load and fills them in,
-   so this shows for one render and never again. */
-.pb-sticker-photo {
-  position: relative;
-  aspect-ratio: 1;
-  border-radius: 3px;
-  overflow: hidden;
-  background: rgba(58, 30, 16, 0.06);
-  /* iOS Safari lets a transformed child (the crop's `scale`) escape a clipped
-     parent while the leaf is mid-3D-curl. Its own compositing layer keeps the
-     picture inside the shape it was cut into. */
-  isolation: isolate;
-  transform: translateZ(0);
-}
 
-/* The mount, cut to follow the picture. Only the shapes that are not
-   rectangles need it — and never instant film, whose plate IS a rectangle. */
+/* ── The mount, cut to follow the picture ─────────────────────────────────── */
+.pb-fshape-natural,
+.pb-fshape-square {
+  --pb-cut-radius: 0px;
+}
+.pb-fshape-rounded {
+  --pb-cut-radius: 12%;
+}
 .pb-fshape-circle:not(.pb-frame-polaroid) {
-  border-radius: 50%;
+  --pb-cut-radius: 50%;
 }
 .pb-fshape-arch:not(.pb-frame-polaroid) {
-  border-radius: 50% 50% 8px 8px / 58% 58% 8px 8px;
+  --pb-cut-radius: 6px;
+  border-radius: 50% 50% calc(6px + var(--pb-mat)) calc(6px + var(--pb-mat)) /
+    58% 58% calc(6px + var(--pb-mat)) calc(6px + var(--pb-mat));
 }
 .pb-fshape-heart:not(.pb-frame-polaroid) {
   clip-path: url(#pb-heart);
@@ -566,14 +684,6 @@
   mask-image: var(--pb-torn);
   -webkit-mask-size: 100% 100%;
   mask-size: 100% 100%;
-}
-/* A round photo mounted on a round card wants the same margin all the way
-   round it, not a deeper chin. */
-.pb-fshape-circle.pb-frame-plain,
-.pb-fshape-circle.pb-frame-white,
-.pb-fshape-heart.pb-frame-plain,
-.pb-fshape-heart.pb-frame-white {
-  padding: 6px;
 }
 
 /* ── The cut of the window ────────────────────────────────────────────────
@@ -634,18 +744,7 @@
     calc(var(--pb-cy, 0.5) * 100%);
 }
 
-/* ── Moving the picture inside its frame ──────────────────────────────────── */
-.pb-editor--crop .pb-sticker:not(.pb-sticker--crop) {
-  opacity: 0.32;
-  filter: saturate(0.5);
-}
-.pb-sticker--crop .pb-sticker-photo {
-  cursor: move;
-  box-shadow:
-    0 0 0 2px rgba(251, 245, 240, 0.95),
-    0 0 0 3.5px rgba(20, 4, 9, 0.55);
-}
-/* Thirds, only while cropping — the one moment they help rather than clutter. */
+/* ── Framing a photo, in the studio ───────────────────────────────────────── */
 .pb-crop-grid {
   position: absolute;
   inset: 0;
@@ -680,20 +779,6 @@
         transparent calc(66.666% + 0.5px)
       )
       no-repeat;
-}
-.pb-crop-hint {
-  position: absolute;
-  bottom: -22px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: rgba(20, 4, 9, 0.8);
-  color: rgba(251, 245, 240, 0.85);
-  font-family: var(--font-sans);
-  font-size: 10px;
-  white-space: nowrap;
-  pointer-events: none;
 }
 /* Instant film: a square window and a chin deeper than the other three edges —
    the proportions the kernel PolaroidPlate uses everywhere else. The squareness
@@ -760,7 +845,10 @@
   font-weight: var(--pb-cap-weight, 400);
   line-height: 1.2;
   text-align: center;
-  color: var(--pb-ink);
+  /* The paper's ink by default — a caption under a photo sits ON THE PAGE.
+     Inside a film chin it inherits the mount's ink instead, which is why the
+     variable has a fallback rather than a fixed value. */
+  color: var(--pb-mount-ink, var(--pb-ink));
 }
 
 /* Text sticker — a title / little message on the page (no photo frame). The
@@ -1056,14 +1144,25 @@
   isolation: isolate;
 }
 .pb-swatch-frame {
+  /* A real mount at swatch size: it renders through the same
+     `.pb-frame-*` rules as the page, so Film shows its chin, Gilt its rule
+     and Taped its strips instead of five identical cream squares. */
   display: block;
-  width: auto;
+  width: 52px;
   height: auto;
   background: var(--pb-mount, #fdfaf4);
 }
 .pb-swatch-frame .pb-swatch-photo {
-  width: 34px;
-  height: 34px;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+}
+/* The preview box is a fixed square so the labels line up; a mount that is
+   taller than it is wide (film) simply centres inside it. */
+.pb-swatch > :first-child {
+  width: 54px;
+  height: 54px;
+  overflow: visible;
 }
 .pb-swatch-color {
   display: block;
@@ -1151,4 +1250,66 @@
 }
 .pb-upload-x:active {
   background: rgba(20, 4, 9, 0.92);
+}
+
+/* ── The studio: framing one photograph, big enough to use ────────────────── */
+.pb-studio-scrim {
+  background: rgba(20, 4, 9, 0.62);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  backdrop-filter: blur(14px) saturate(1.1);
+}
+/* No backdrop-filter (older WebKit): fall back to something opaque enough to
+   read against, rather than a see-through wash over a busy page. */
+@supports not (
+  (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+) {
+  .pb-studio-scrim {
+    background: rgba(20, 4, 9, 0.86);
+  }
+}
+/* The stage CLIPS. The preview is sized from a measured box, and a measurement
+   that is briefly stale must make the picture look small for one frame — never
+   push it off the top of the screen. */
+.pb-studio-stage {
+  position: relative;
+  overflow: hidden;
+}
+/* The preview is a real sticker, so it renders through exactly the same rules
+   as the page — it just sits in the middle of the stage instead of at a
+   fraction of a paper page. */
+.pb-studio-sticker {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+}
+/* A square control in a row, not a button stretched across it. */
+.pb-add--icon {
+  width: 44px;
+  flex: none;
+}
+/* The controls live on a surface of their own — the stage floats over the
+   blurred album above it, which is the part worth still seeing. */
+.pb-studio-deck {
+  padding: 10px 16px max(12px, env(safe-area-inset-bottom));
+  border-radius: 22px 22px 0 0;
+  background: var(--color-surface, #1a0b13);
+  box-shadow:
+    inset 0 1px 0 rgba(228, 195, 106, 0.14),
+    0 -18px 40px -14px rgba(0, 0, 0, 0.7);
+}
+.pb-studio-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 0 2px;
+  scrollbar-width: none;
+}
+.pb-studio-row::-webkit-scrollbar {
+  display: none;
+}
+.pb-studio-zoom {
+  height: 34px;
+  accent-color: var(--pb-gilt);
 }
