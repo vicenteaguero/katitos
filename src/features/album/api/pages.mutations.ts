@@ -3,36 +3,16 @@ import { supabase } from '@kernel/supabase';
 import { qk } from '@kernel/query';
 import { toast } from '@kernel/ui';
 
-/** Name a page, and say when it happened. */
-export function useUpdatePage() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (v: {
-      id: string;
-      bookId: string;
-      title?: string | null;
-      onDate?: string | null;
-    }) => {
-      const patch: { title?: string | null; on_date?: string | null } = {};
-      if (v.title !== undefined) patch.title = v.title?.trim() || null;
-      if (v.onDate !== undefined) patch.on_date = v.onDate || null;
-      const { error } = await supabase
-        .from('album_pages')
-        .update(patch)
-        .eq('id', v.id);
-      if (error) throw error;
-    },
-    onError: (e: Error) => toast.error(e.message),
-    onSuccess: (_d, v) =>
-      void qc.invalidateQueries({ queryKey: qk.album.pages(v.bookId) }),
-  });
-}
-
 /**
  * Tear a page out.
  *
  * Its placements go with it, but not the photos: they stay in the library, so
  * a page removed by mistake costs you an arrangement, never a picture.
+ *
+ * ONLY the page you chose. Pages are added in pairs because paper has two
+ * sides, but tearing out its twin to keep the physics tidy would throw away
+ * work you never asked to lose — so instead a fresh blank page is added at the
+ * end when what remains is odd. The book stays even; nothing you made goes.
  */
 export function useDeletePage() {
   const qc = useQueryClient();
@@ -43,6 +23,19 @@ export function useDeletePage() {
         .delete()
         .eq('id', v.id);
       if (error) throw error;
+
+      const { data: left, error: countErr } = await supabase
+        .from('album_pages')
+        .select('position')
+        .eq('book_id', v.bookId)
+        .order('position', { ascending: false });
+      if (countErr) throw countErr;
+      if (!left || left.length % 2 === 0) return;
+
+      const { error: insErr } = await supabase
+        .from('album_pages')
+        .insert({ book_id: v.bookId, position: (left[0]?.position ?? -1) + 1 });
+      if (insErr && insErr.code !== '23505') throw insErr;
     },
     onError: (e: Error) => toast.error(e.message),
     onSuccess: (_d, v) =>
