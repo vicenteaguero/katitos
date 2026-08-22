@@ -686,6 +686,24 @@
   mask-size: 100% 100%;
 }
 
+/* The window the photograph shows through.
+   Lost in a refactor, and its absence is subtle and horrible: `.pb-photo` is
+   `position: absolute; inset: 0`, so without a positioned parent it resolved
+   against the whole STICKER — the picture covered its own mount, a polaroid
+   showed as a hairline of white at the very edge, and a caption ended up
+   underneath the photograph. */
+.pb-sticker-photo {
+  position: relative;
+  overflow: hidden;
+  border-radius: 3px;
+  background: rgba(58, 30, 16, 0.06);
+  /* iOS Safari lets a transformed child (the crop's `scale`) escape a clipped
+     parent while the leaf is mid-3D-curl. Its own compositing layer keeps the
+     picture inside the shape it was cut into. */
+  isolation: isolate;
+  transform: translateZ(0);
+}
+
 /* ── The cut of the window ────────────────────────────────────────────────
    `clip-path` and `border-radius` only — no `path()`, which does not scale
    with the element, and no images to download. */
