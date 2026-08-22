@@ -34,8 +34,7 @@ export interface ChangelogEntry {
 /** Every release ever written, newest first — held ones included. */
 export const ALL_ENTRIES: ChangelogEntry[] = [
   {
-    // Shipped 21 August 2026, announced when he says so.
-    held: true,
+    // Shipped and announced 21 August 2026.
     title: 'The album, properly',
     date: '2026-08-21',
     lines: [
@@ -68,8 +67,7 @@ export const ALL_ENTRIES: ChangelogEntry[] = [
     ],
   },
   {
-    // Shipped 19 August 2026, announced when he says so.
-    held: true,
+    // Shipped 19 August 2026, announced on the 21st alongside the album.
     title: 'Your classroom',
     date: '2026-08-19',
     lines: [
