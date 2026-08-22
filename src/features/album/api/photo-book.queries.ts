@@ -36,8 +36,13 @@ async function findBook(
   return data;
 }
 
-/** A brand-new book opens with a few blank pages, so it feels like a book. */
-const SEED_PAGES = 5;
+/**
+ * A brand-new book opens with a few blank pages, so it feels like a book.
+ *
+ * EVEN, because paper has two sides: an odd count needs a blank endpaper at
+ * the end to keep the back board turning on its own.
+ */
+const SEED_PAGES = 6;
 
 /**
  * Give a book its first pages — ONCE, when it has none at all.
