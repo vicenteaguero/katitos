@@ -17,6 +17,43 @@ import { proxyPath } from './image';
  */
 const entriesToMap = (entries: Array<[string, string]>) => new Map(entries);
 
+/**
+ * Every signature we have handed out, by bucket and path.
+ *
+ * Two screens signing the SAME object get two different tokens, so the strip
+ * and the book each had their own URL for one photograph — a different address
+ * for bytes the browser already had, plus a round trip before it could even
+ * ask for them. That is the loading flash when a photo already sitting in the
+ * strip is placed on a page.
+ *
+ * Everything that signs writes here, and anything can read a signature that
+ * already exists rather than asking for a second one.
+ */
+const signed = new Map<string, { url: string; expiresAt: number }>();
+
+const memoKey = (bucket: BucketName, path: string) => `${bucket}|${path}`;
+
+/**
+ * A signature we already hold for this object, if it has life left in it.
+ *
+ * Synchronous and free: no query, no request. `undefined` simply means nobody
+ * has signed this path yet in this session.
+ */
+export function peekSignedUrl(
+  bucket: BucketName,
+  path: string | null | undefined
+): string | undefined {
+  if (!path) return undefined;
+  const hit = signed.get(memoKey(bucket, path));
+  if (!hit) return undefined;
+  // A minute of headroom, the same margin `staleTime` uses.
+  if (hit.expiresAt - 60_000 < Date.now()) {
+    signed.delete(memoKey(bucket, path));
+    return undefined;
+  }
+  return hit.url;
+}
+
 export function useSignedUrls(
   bucket: BucketName,
   paths: Array<string | null | undefined>,
@@ -75,10 +112,17 @@ export function useSignedUrls(
       // Entries, not a Map: query data must stay JSON-serializable (the cache
       // is snapshotted to localStorage). `select` turns it back into a Map.
       const out: Array<[string, string]> = [];
+      const expiresAt = Date.now() + expiresIn * 1000;
       for (const row of data ?? []) {
         if (!row?.signedUrl || !row.path) continue;
         const original = backToOriginal.get(row.path);
-        if (original) out.push([original, row.signedUrl]);
+        if (!original) continue;
+        out.push([original, row.signedUrl]);
+        // Remembered under the ORIGINAL path, which is what callers hold.
+        signed.set(memoKey(bucket, original), {
+          url: row.signedUrl,
+          expiresAt,
+        });
       }
       return out;
     },
