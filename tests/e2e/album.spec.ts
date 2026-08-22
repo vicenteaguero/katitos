@@ -47,7 +47,7 @@ test('a book opens on its cover, and the cover turns', async ({ page }) => {
   );
 
   await page.getByRole('button', { name: 'Next page' }).click();
-  await expect(page.getByText('1 / 5')).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText('1 / 6')).toBeVisible({ timeout: 20_000 });
 });
 
 test('the book opens and can be paged through', async ({ page }) => {
@@ -58,16 +58,16 @@ test('the book opens and can be paged through', async ({ page }) => {
   await expect(page.locator('.pb-viewport')).toBeVisible();
 
   await page.getByRole('button', { name: 'Next page' }).click();
-  await expect(page.getByText('1 / 5')).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText('1 / 6')).toBeVisible({ timeout: 20_000 });
   await page.getByRole('button', { name: 'Next page' }).click();
-  await expect(page.getByText('2 / 5')).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText('2 / 6')).toBeVisible({ timeout: 20_000 });
   expect(errors, errors.join('\n')).toEqual([]);
 });
 
 test('the curl is not clipped away by its container', async ({ page }) => {
   await openBook(page);
   await page.getByRole('button', { name: 'Next page' }).click();
-  await expect(page.getByText('1 / 5')).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText('1 / 6')).toBeVisible({ timeout: 20_000 });
 
   const overflow = await page.evaluate(() => {
     const read = (sel: string) => {
@@ -139,7 +139,7 @@ test('you can turn the page while arranging', async ({ page }) => {
   await expect(page.locator('.pb-strip')).toBeVisible();
 
   // Arranging always starts on a page, never on a board.
-  await expect(page.getByText('1 / 5')).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText('1 / 6')).toBeVisible({ timeout: 20_000 });
 
   const next = page.getByRole('button', { name: 'Next page' });
   await expect(next).toBeEnabled();
@@ -152,5 +152,26 @@ test('you can turn the page while arranging', async ({ page }) => {
   expect(btn!.y + btn!.height).toBeLessThanOrEqual(nav!.y);
 
   await next.click();
-  await expect(page.getByText('2 / 5')).toBeVisible();
+  await expect(page.getByText('2 / 6')).toBeVisible();
+});
+
+/**
+ * Paper has two sides.
+ *
+ * Adding one page at a time left the book odd, which meant a blank endpaper
+ * had to be conjured up to keep the back board flipping on its own — and the
+ * turn stopped making any physical sense.
+ */
+test('a new sheet is two pages, and the book stays even', async ({ page }) => {
+  await openBook(page);
+  const next = page.getByRole('button', { name: 'Next page' });
+  await next.waitFor({ state: 'visible', timeout: 20_000 });
+  for (let i = 0; i < 6; i++) {
+    await next.click();
+    await page.waitForTimeout(900);
+  }
+  await expect(page.getByText('6 / 6')).toBeVisible({ timeout: 20_000 });
+
+  await page.getByRole('button', { name: 'Add a page' }).click();
+  await expect(page.getByText('7 / 8')).toBeVisible({ timeout: 20_000 });
 });
