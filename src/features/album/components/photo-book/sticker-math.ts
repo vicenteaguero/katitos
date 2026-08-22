@@ -204,6 +204,65 @@ function clamp01(v: number): number {
 /** A sticker at scale 1, as a fraction of the page width. */
 export const BASE_W = 0.42;
 
+/** How wide the card around a photo is. */
+export type MatWidth = 'thin' | 'medium' | 'wide';
+
+/** How a photo is mounted. Kept in step with the DB's `frame` check. */
+export type MountFrame =
+  | 'none'
+  | 'plain'
+  | 'white'
+  | 'polaroid'
+  | 'gilt'
+  | 'tape'
+  | 'shadow';
+
+/** The mat band, as a fraction of the sticker's own WIDTH. */
+const MAT: Record<MatWidth, number> = {
+  thin: 0.022,
+  medium: 0.045,
+  wide: 0.09,
+};
+
+/**
+ * How much of that band each mount actually wants.
+ *
+ * A gilt rule is not a slab of gold, tape goes on the picture rather than on a
+ * card, and a lifted print has only the thin white edge a print has.
+ */
+const MOUNT_K: Record<MountFrame, number> = {
+  none: 0,
+  plain: 1,
+  white: 1,
+  polaroid: 1,
+  gilt: 0.34,
+  tape: 0,
+  shadow: 0.28,
+};
+
+/** Instant film has its own proportions and ignores the thickness control. */
+export const FILM_EDGE = 0.06;
+export const FILM_CHIN = 0.2;
+
+/**
+ * The mount's band, as a fraction of the sticker's width.
+ *
+ * ONE number, computed here and handed to CSS as `--pb-mat` and to the printed
+ * page as a fraction — so the card cannot come out one size on the screen and
+ * another on paper. A fraction, not pixels, because the old fixed 5px band
+ * meant a sticker at scale 0.3 was almost entirely card and one at scale 3 had
+ * a hairline: the mount has to grow with the photograph.
+ */
+export function matFraction(
+  frame: MountFrame | string | null | undefined,
+  width: MatWidth | string | null | undefined
+): number {
+  if (frame === 'polaroid') return FILM_EDGE;
+  const band = MAT[(width as MatWidth) ?? 'medium'] ?? MAT.medium;
+  const k = MOUNT_K[(frame as MountFrame) ?? 'white'] ?? 1;
+  return band * k;
+}
+
 /** The cut of the window a photo shows through. */
 export type StickerShape =
   | 'natural'
