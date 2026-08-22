@@ -23,7 +23,12 @@ import {
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import { cn } from '@kernel/lib';
-import { BUCKETS, usePrefetchImages, useSignedUrls } from '@kernel/storage';
+import {
+  BUCKETS,
+  peekSignedUrl,
+  usePrefetchImages,
+  useSignedUrls,
+} from '@kernel/storage';
 import {
   Button,
   Empty,
@@ -36,6 +41,7 @@ import {
   type AlbumPageWithPhotos,
   type AlbumPhoto,
   type BookScope,
+  type PaperStock,
   type PlacedSticker,
 } from '../../types';
 import {
@@ -64,7 +70,7 @@ import { LibraryStrip } from './library-strip';
 import { LibrarySheet } from './library-sheet';
 import { LibraryUploadSheet } from './library-upload-sheet';
 import { StickerToolbar } from './sticker-toolbar';
-import { StickerStyleSheet } from './sticker-style-sheet';
+import { PhotoStudio } from './photo-studio';
 import { TextStyleSheet } from './text-style-sheet';
 import { usePdfBridge } from './use-pdf-bridge';
 import {
@@ -216,11 +222,10 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
   const [mode, setMode] = useState<'read' | 'arrange'>('read');
   const navigate = useNavigate();
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [croppingId, setCroppingId] = useState<string | null>(null);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [styleFor, setStyleFor] = useState<PlacedSticker | null>(null);
-  const [dressFor, setDressFor] = useState<string | null>(null);
+  const [studioFor, setStudioFor] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [drag, setDrag] = useState<{ active: boolean; dx: number }>({
     active: false,
@@ -235,6 +240,8 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
    * starts with the turn instead.
    */
   const [slideAhead, setSlideAhead] = useState<number | null>(null);
+  /** A board — a cover — is mid-turn, so the paper holds its photos back. */
+  const [boarding, setBoarding] = useState(false);
   const flippingRef = useRef(false);
   const bookRef = useRef<FlipBookRef | null>(null);
   const vpRef = useRef<HTMLDivElement | null>(null);
@@ -411,9 +418,17 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
   const urlFor = useCallback(
     (photo: AlbumPhoto | null | undefined): string | undefined => {
       if (!photo?.image_path) return undefined;
+      const bucket =
+        photo.source === 'polaroid' ? BUCKETS.polaroids : BUCKETS.album;
       const map =
         photo.source === 'polaroid' ? polaroidUrls.data : albumUrls.data;
-      return map?.get(photo.image_path);
+      // The book's own batch first — and failing that, ANY signature already
+      // held for this path. A photo placed from the strip is already signed;
+      // waiting for the book to sign it again is a round trip and a flash for
+      // a picture the browser is currently displaying two centimetres away.
+      return (
+        map?.get(photo.image_path) ?? peekSignedUrl(bucket, photo.image_path)
+      );
     },
     [albumUrls.data, polaroidUrls.data]
   );
@@ -523,6 +538,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
     const { focused: f, leafCount: lc, pageCount: pc } = liveRef.current;
     flippingRef.current = false;
     setSlideAhead(null);
+    setBoarding(false);
     let leaf = leafAfterFlip(e.data, f, lc);
     // Never come to rest on the blank endpaper — carry on the way we were
     // already going.
@@ -556,12 +572,16 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
       if (e.data === 'read') {
         flippingRef.current = false;
         setSlideAhead(null);
+        setBoarding(false);
       }
       return;
     }
     flippingRef.current = true;
     const { focused: f, leafCount: lc } = liveRef.current;
     const p = placeLeaf(f, lc);
+    // Only a board hides what is behind it. An ordinary leaf is paper you can
+    // half-see through as it curls, and he says those already read right.
+    setBoarding(p.lone);
     const dir = p.lone ? (f === 0 ? 1 : -1) : p.side === 'left' ? -1 : 1;
     const target = Math.min(Math.max(f + dir, 0), lc - 1);
     setSlideAhead(target);
@@ -579,7 +599,6 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
       const hi = mode === 'arrange' ? pageCount : leafCount - 1;
       if (t < lo || t > hi) return;
       setSelectedId(null);
-      setCroppingId(null);
       // While arranging there is no flip book on screen — the editor shows one
       // page at a time — so turning is just moving the index. Without this the
       // arrows were dead the whole time you were editing, which is exactly
@@ -703,7 +722,6 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
 
   const toggleEdit = useCallback(() => {
     setSelectedId(null);
-    setCroppingId(null);
     // A board has nothing on it to arrange. Turn to the first page and start
     // there — which is what "let me put things in" means when you are looking
     // at a cover. (The cover's own settings live behind the gear.)
@@ -749,7 +767,6 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
     (sticker: PlacedSticker) => {
       if (!bookId) return;
       setSelectedId(null);
-      setCroppingId(null);
       unplace.mutate(
         { sticker, bookId },
         {
@@ -769,6 +786,10 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
                 : `${batch.length} taken off the page`,
               {
                 key: 'album-unplace',
+                // Short on purpose. Every removal resets this countdown, so a
+                // generous one kept the message parked over the page for the
+                // whole time you were clearing it.
+                duration: 2200,
                 action: {
                   label: 'Undo',
                   onClick: () => {
@@ -856,9 +877,8 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
   const arranging = mode === 'arrange';
   const selected =
     currentPage?.stickers.find((st) => st.id === selectedId) ?? null;
-  const cropping = !!croppingId;
-  const dressed =
-    currentPage?.stickers.find((st) => st.id === dressFor) ?? null;
+  const inStudio =
+    currentPage?.stickers.find((st) => st.id === studioFor) ?? null;
   const placedOnPage = new Set(
     (currentPage?.stickers ?? [])
       .map((st) => st.photo?.image_path)
@@ -994,7 +1014,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
                 <HTMLFlipBook
                   key={flipKey}
                   ref={bookRef}
-                  className="pb-book"
+                  className={cn('pb-book', boarding && 'pb-book--boarding')}
                   style={NO_STYLE}
                   startPage={focused}
                   width={pageW}
@@ -1043,11 +1063,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
 
         {pageW > 0 && !loading && arranging && currentPage && (
           <div
-            className={cn(
-              'pb-editor',
-              `pb-paper-${paper}`,
-              cropping && 'pb-editor--crop'
-            )}
+            className={cn('pb-editor', `pb-paper-${paper}`)}
             // The same page the book would draw, so what you arrange is what
             // you turn to. A CSS aspect-ratio here ignored the height budget.
             style={{ width: pageW, height: pageH }}
@@ -1060,11 +1076,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
               eager
               urls={pageUrls.get(currentPage.id) ?? EMPTY_URLS}
               selectedId={selectedId}
-              croppingId={croppingId}
-              onSelect={(id) => {
-                setSelectedId(id);
-                if (!id || id !== croppingId) setCroppingId(null);
-              }}
+              onSelect={setSelectedId}
             />
           </div>
         )}
@@ -1095,7 +1107,6 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
         {selected && bookId ? (
           <StickerToolbar
             sticker={selected}
-            cropping={cropping}
             onFront={() =>
               currentPage &&
               restack.mutate({
@@ -1114,8 +1125,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
                 to: 'back',
               })
             }
-            onCrop={() => setCroppingId((c) => (c ? null : selected.id))}
-            onStyle={() => setDressFor(selected.id)}
+            onStudio={() => setStudioFor(selected.id)}
             onEditText={() => setStyleFor(selected)}
             onRemove={() => removeSelected(selected)}
           />
@@ -1220,7 +1230,6 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
           onClose={() => setSettingsOpen(false)}
           book={book}
           page={currentPage}
-          pageNumber={focused}
           onDeleted={() => {
             setSettingsOpen(false);
             navigate('/album');
@@ -1228,17 +1237,19 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
         />
       )}
 
-      <StickerStyleSheet
-        open={!!dressed}
-        sticker={dressed}
-        url={urlFor(dressed?.photo)}
-        onClose={() => setDressFor(null)}
-        onChange={(patch) =>
-          dressed &&
-          bookId &&
-          styleSticker.mutate({ id: dressed.id, bookId, patch })
-        }
-      />
+      {inStudio && bookId && (
+        <PhotoStudio
+          key={inStudio.id}
+          sticker={inStudio}
+          url={urlFor(inStudio.photo)}
+          paper={paper as PaperStock}
+          onCancel={() => setStudioFor(null)}
+          onApply={(patch) => {
+            styleSticker.mutate({ id: inStudio.id, bookId, patch });
+            setStudioFor(null);
+          }}
+        />
+      )}
 
       <TextStyleSheet
         open={!!styleFor}
