@@ -26,6 +26,16 @@ export interface ToastOptions {
    * over the book you were trying to edit.
    */
   key?: string;
+  /**
+   * How long it stays, in ms. Defaults below.
+   *
+   * The default for a toast carrying an Undo is generous, because it is the
+   * only way back from a destructive tap. But a REPEATED action resets the
+   * countdown, so clearing a page of six stickers kept pushing the deadline
+   * further out — nine seconds of a message sitting over the thing you are
+   * editing. Callers that repeat should ask for something short.
+   */
+  duration?: number;
 }
 
 /** Nothing is worth more than this much of the screen. */
@@ -35,13 +45,15 @@ const timers = new Map<string, number>();
 
 interface ToastState {
   toasts: ToastItem[];
-  push: (t: Omit<ToastItem, 'id'> & { key?: string }) => void;
+  push: (
+    t: Omit<ToastItem, 'id'> & { key?: string; duration?: number }
+  ) => void;
   dismiss: (id: string) => void;
 }
 
 export const useToastStore = create<ToastState>((set) => ({
   toasts: [],
-  push: ({ key, ...t }) => {
+  push: ({ key, duration, ...t }) => {
     const id = key ?? nanoid(8);
     // Replacing: cancel the old countdown or it would take the NEW toast away
     // at the old one's deadline.
@@ -62,7 +74,7 @@ export const useToastStore = create<ToastState>((set) => ({
           timers.delete(id);
           set((s) => ({ toasts: s.toasts.filter((x) => x.id !== id) }));
         },
-        t.action ? 9000 : 3500
+        duration ?? (t.action ? 9000 : 3500)
       )
     );
   },
