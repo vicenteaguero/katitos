@@ -11,6 +11,7 @@ import type {
   AlbumPageWithPhotos,
   AlbumPhoto,
   FrameColor,
+  MatWidth,
   PlacedSticker,
   StickerFont,
   StickerFrame,
@@ -191,6 +192,7 @@ export interface StickerStyle {
   body?: string | null;
   frame?: StickerFrame;
   frame_color?: FrameColor;
+  mat_width?: MatWidth;
   shape?: StickerShape;
   crop_x?: number;
   crop_y?: number;
