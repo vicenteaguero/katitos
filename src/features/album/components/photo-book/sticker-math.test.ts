@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
   BASE_W,
+  FILM_EDGE,
   MAX_SCALE,
   MIN_SCALE,
   angleOf,
   dropSpot,
   handleTransform,
+  matFraction,
   needsNormalize,
   nextZBack,
   nextZFront,
@@ -337,5 +339,49 @@ describe('stepOrder', () => {
   it('tidies the sparse depths while it is there', () => {
     const rows = stepOrder(page(4), 's1', 1);
     for (const r of rows) expect(r.z).toBeLessThan(4);
+  });
+});
+
+describe('matFraction', () => {
+  it('grows with the thickness you asked for', () => {
+    expect(matFraction('white', 'thin')).toBeLessThan(
+      matFraction('white', 'medium')
+    );
+    expect(matFraction('white', 'medium')).toBeLessThan(
+      matFraction('white', 'wide')
+    );
+  });
+
+  it('is a FRACTION, so the card grows with the photograph', () => {
+    // The old band was a fixed 5px: at scale 0.3 the sticker was nearly all
+    // card, at scale 3 it was a hairline. Every value here is well under 1,
+    // i.e. a share of the sticker's own width.
+    for (const w of ['thin', 'medium', 'wide'] as const) {
+      expect(matFraction('white', w)).toBeGreaterThan(0);
+      expect(matFraction('white', w)).toBeLessThan(0.2);
+    }
+  });
+
+  it('gives each mount only as much card as it wants', () => {
+    expect(matFraction('none', 'wide')).toBe(0);
+    expect(matFraction('tape', 'wide')).toBe(0);
+    expect(matFraction('gilt', 'wide')).toBeLessThan(
+      matFraction('white', 'wide')
+    );
+    expect(matFraction('shadow', 'wide')).toBeLessThan(
+      matFraction('white', 'wide')
+    );
+  });
+
+  it('lets instant film keep its own proportions', () => {
+    // Film is film — the thickness control does not apply to it.
+    for (const w of ['thin', 'medium', 'wide'] as const) {
+      expect(matFraction('polaroid', w)).toBe(FILM_EDGE);
+    }
+  });
+
+  it('falls back rather than producing NaN for anything unexpected', () => {
+    expect(matFraction(null, null)).toBeGreaterThan(0);
+    expect(Number.isFinite(matFraction('nonsense', 'nonsense'))).toBe(true);
   });
 });
