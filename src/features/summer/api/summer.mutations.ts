@@ -209,50 +209,6 @@ export function useAddItemPhoto() {
   });
 }
 
-// ── Postcards (trip album grid) ─────────────────────────────────────────────
-export function useAddPhoto() {
-  const qc = useQueryClient();
-  const { uploadPhoto } = usePhotoUpload();
-  return useMutation({
-    onError: (e: Error) => toast.error(e.message),
-    mutationFn: async (v: {
-      tripId: string;
-      blob: Blob;
-      country?: string | null;
-      caption?: string | null;
-    }) => {
-      const fileId = nanoid(8);
-      const path = storagePaths.tripPhoto(v.tripId, fileId);
-      await uploadPhoto(BUCKETS.georgiaAlbum, path, v.blob);
-      const { error } = await supabase.from('trip_photos').insert({
-        trip_id: v.tripId,
-        image_path: path,
-        country: v.country ?? null,
-        caption: v.caption ?? null,
-      });
-      if (error) throw error;
-    },
-    onSuccess: (_d, v) =>
-      qc.invalidateQueries({ queryKey: qk.trips.photos(v.tripId) }),
-  });
-}
-
-export function useDeletePhoto() {
-  const qc = useQueryClient();
-  return useMutation({
-    onError: (e: Error) => toast.error(e.message),
-    mutationFn: async (v: { id: string; tripId: string }) => {
-      const { error } = await supabase
-        .from('trip_photos')
-        .delete()
-        .eq('id', v.id);
-      if (error) throw error;
-    },
-    onSuccess: (_d, v) =>
-      qc.invalidateQueries({ queryKey: qk.trips.photos(v.tripId) }),
-  });
-}
-
 // ── Reviews ─────────────────────────────────────────────────────────────────
 export function useAddReview() {
   const qc = useQueryClient();
@@ -290,33 +246,6 @@ export function useAddReview() {
         lng: v.lng ?? null,
         image_path,
       });
-      if (error) throw error;
-    },
-    onSuccess: (_d, v) =>
-      qc.invalidateQueries({ queryKey: qk.trips.reviews(v.tripId) }),
-  });
-}
-
-export function useUpdateReview() {
-  const qc = useQueryClient();
-  return useMutation({
-    onError: (e: Error) => toast.error(e.message),
-    mutationFn: async (v: {
-      id: string;
-      tripId: string;
-      patch: {
-        category?: string;
-        name?: string;
-        stars?: number | null;
-        notes?: string | null;
-        link?: string | null;
-        country?: string | null;
-      };
-    }) => {
-      const { error } = await supabase
-        .from('trip_reviews')
-        .update(v.patch)
-        .eq('id', v.id);
       if (error) throw error;
     },
     onSuccess: (_d, v) =>
