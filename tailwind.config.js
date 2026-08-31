@@ -44,6 +44,8 @@ export default {
       },
       maxWidth: {
         app: 'var(--app-max-width)',
+        // The shell's cap — the phone column, until a desk route lifts it.
+        shell: 'var(--shell-max-width)',
       },
       spacing: {
         stage: 'var(--space-stage)',
