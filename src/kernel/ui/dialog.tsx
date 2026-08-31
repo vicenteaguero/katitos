@@ -150,9 +150,16 @@ export function Dialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  // Focus in.
+  // What was on screen, kept for the exit animation: a sheet whose content
+  // comes from a nullable selection used to empty out a frame before it
+  // slid away.
+  const lastRef = useRef({ children, title });
+  if (open) lastRef.current = { children, title };
+
+  // Focus in — once the panel exists. `mounted` is a render behind `open`,
+  // so on the render where `open` turns true there is no panel yet to focus.
   useLayoutEffect(() => {
-    if (!open) return;
+    if (!open || !mounted) return;
     restoreRef.current = document.activeElement as HTMLElement | null;
     const panel = panelRef.current;
     if (panel && !panel.contains(document.activeElement)) {
@@ -161,19 +168,21 @@ export function Dialog({
       // first control from here.
       panel.focus({ preventScroll: true });
     }
-  }, [open]);
+  }, [open, mounted]);
 
   // On the stack while open — and focus back where it came from on the way
   // out, AFTER the pop has made the app behind live again: an element inside
   // an inert root refuses focus, so restoring first restored nothing.
   useEffect(() => {
     if (!open) return;
-    const panel = panelRef.current;
     stack.set(id, seq.current);
     notify();
     return () => {
       stack.delete(id);
       notify();
+      // Read now, not when the effect ran: the panel did not exist yet then.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      const panel = panelRef.current;
       const back = restoreRef.current;
       const active = document.activeElement;
       // Only if nobody moved it somewhere else meanwhile.
@@ -273,6 +282,9 @@ export function Dialog({
 
   if (!mounted) return null;
 
+  const shownTitle = closing ? lastRef.current.title : title;
+  const shownChildren = closing ? lastRef.current.children : children;
+
   const bottom = placement === 'bottom';
   const center = placement === 'center';
   const auto = placement === 'auto';
@@ -284,6 +296,9 @@ export function Dialog({
     <div
       className={cn(
         'fixed inset-0 z-50 flex justify-center',
+        // The app behind is live again the moment it closes; the layer that
+        // is only still here to animate out must not swallow the next tap.
+        closing && 'pointer-events-none',
         bottom && 'items-end',
         center && 'items-center p-4',
         auto && 'items-end md:items-center md:p-6'
@@ -306,8 +321,8 @@ export function Dialog({
         ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={title ? titleId : undefined}
-        aria-label={title ? undefined : label}
+        aria-labelledby={shownTitle ? titleId : undefined}
+        aria-label={shownTitle ? undefined : label}
         tabIndex={-1}
         onAnimationEnd={(e) => {
           // Children animate too, and animationend bubbles.
@@ -349,7 +364,7 @@ export function Dialog({
                 id={titleId}
                 className="min-w-0 truncate font-display text-xl font-semibold tracking-tight text-fg"
               >
-                {title}
+                {shownTitle}
               </h2>
             ) : (
               <span />
@@ -377,7 +392,7 @@ export function Dialog({
               : 'max(1.25rem, env(safe-area-inset-bottom))',
           }}
         >
-          {children}
+          {shownChildren}
         </div>
       </div>
     </div>,
