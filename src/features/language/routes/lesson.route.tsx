@@ -136,9 +136,12 @@ export function LessonRoute() {
 
   // So she can see he has been here: a quiet row, once per visit.
   const { mutate: noteOpened } = markOpened;
+  // Only once the lesson is known: before it loads `teacher` is false for
+  // everyone, and she was recorded as having opened her own lesson.
+  const targetLang = lesson?.targetLang;
   useEffect(() => {
-    if (lessonId && ready && !teacher) noteOpened(lessonId);
-  }, [lessonId, ready, teacher, noteOpened]);
+    if (lessonId && ready && targetLang && !teacher) noteOpened(lessonId);
+  }, [lessonId, ready, targetLang, teacher, noteOpened]);
 
   /** His newest go at each question — how many so far, and her margin on it. */
   const latest = useMemo(() => {
@@ -219,7 +222,8 @@ export function LessonRoute() {
     if (done) setRetrying(false);
     // Once she has marked it, a re-check is practice: the attempt is kept,
     // the mark is hers. (The database refuses the downgrade too.)
-    if (mine?.status === 'graded') return;
+    // …and a lesson already handed in is not handed in again on a re-check.
+    if (mine?.status === 'graded' || mine?.status === 'submitted') return;
     saveProgress.mutate({
       lessonId: lesson.id,
       status: done ? 'submitted' : 'in_progress',
