@@ -307,65 +307,6 @@ export type Database = {
         }
         Relationships: []
       }
-      baby_name_votes: {
-        Row: {
-          name_id: string
-          user_id: string
-          vote: number
-        }
-        Insert: {
-          name_id: string
-          user_id?: string
-          vote: number
-        }
-        Update: {
-          name_id?: string
-          user_id?: string
-          vote?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "baby_name_votes_name_id_fkey"
-            columns: ["name_id"]
-            isOneToOne: false
-            referencedRelation: "baby_names"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      baby_names: {
-        Row: {
-          created_at: string
-          gender: string | null
-          id: string
-          meaning: string | null
-          name: string
-          notes: string | null
-          origin: string | null
-          proposed_by: string
-        }
-        Insert: {
-          created_at?: string
-          gender?: string | null
-          id?: string
-          meaning?: string | null
-          name: string
-          notes?: string | null
-          origin?: string | null
-          proposed_by?: string
-        }
-        Update: {
-          created_at?: string
-          gender?: string | null
-          id?: string
-          meaning?: string | null
-          name?: string
-          notes?: string | null
-          origin?: string | null
-          proposed_by?: string
-        }
-        Relationships: []
-      }
       budget_lines: {
         Row: {
           created_at: string
@@ -484,39 +425,6 @@ export type Database = {
         }
         Relationships: []
       }
-      countdowns: {
-        Row: {
-          created_at: string
-          created_by: string
-          emoji: string | null
-          id: string
-          notes: string | null
-          target_at: string
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string
-          emoji?: string | null
-          id?: string
-          notes?: string | null
-          target_at: string
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string
-          emoji?: string | null
-          id?: string
-          notes?: string | null
-          target_at?: string
-          title?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       couple: {
         Row: {
           anniversary_day: number
@@ -625,36 +533,6 @@ export type Database = {
           fetched_at?: string
           quote?: string
           rate?: number
-        }
-        Relationships: []
-      }
-      cute_words: {
-        Row: {
-          audio_path: string | null
-          coined_by: string | null
-          created_at: string
-          example: string | null
-          id: string
-          meaning: string | null
-          term: string
-        }
-        Insert: {
-          audio_path?: string | null
-          coined_by?: string | null
-          created_at?: string
-          example?: string | null
-          id?: string
-          meaning?: string | null
-          term: string
-        }
-        Update: {
-          audio_path?: string | null
-          coined_by?: string | null
-          created_at?: string
-          example?: string | null
-          id?: string
-          meaning?: string | null
-          term?: string
         }
         Relationships: []
       }
@@ -770,71 +648,6 @@ export type Database = {
           title?: string
           updated_at?: string
           what_we_ate?: string | null
-        }
-        Relationships: []
-      }
-      decision_positions: {
-        Row: {
-          decision_id: string
-          note: string | null
-          position: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          decision_id: string
-          note?: string | null
-          position: string
-          updated_at?: string
-          user_id?: string
-        }
-        Update: {
-          decision_id?: string
-          note?: string | null
-          position?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "decision_positions_decision_id_fkey"
-            columns: ["decision_id"]
-            isOneToOne: false
-            referencedRelation: "decisions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      decisions: {
-        Row: {
-          agreed_value: string | null
-          created_at: string
-          created_by: string
-          description: string | null
-          id: string
-          status: string
-          topic: string
-          updated_at: string
-        }
-        Insert: {
-          agreed_value?: string | null
-          created_at?: string
-          created_by?: string
-          description?: string | null
-          id?: string
-          status?: string
-          topic: string
-          updated_at?: string
-        }
-        Update: {
-          agreed_value?: string | null
-          created_at?: string
-          created_by?: string
-          description?: string | null
-          id?: string
-          status?: string
-          topic?: string
-          updated_at?: string
         }
         Relationships: []
       }
@@ -957,110 +770,6 @@ export type Database = {
         }
         Relationships: []
       }
-      fights: {
-        Row: {
-          created_at: string
-          ended_at: string | null
-          id: string
-          reason: string | null
-          resolution: string | null
-          started_at: string
-          started_by: string | null
-        }
-        Insert: {
-          created_at?: string
-          ended_at?: string | null
-          id?: string
-          reason?: string | null
-          resolution?: string | null
-          started_at?: string
-          started_by?: string | null
-        }
-        Update: {
-          created_at?: string
-          ended_at?: string | null
-          id?: string
-          reason?: string | null
-          resolution?: string | null
-          started_at?: string
-          started_by?: string | null
-        }
-        Relationships: []
-      }
-      finance_contributions: {
-        Row: {
-          amount: number
-          contributed_at: string
-          goal_id: string
-          id: string
-          note: string | null
-          user_id: string
-        }
-        Insert: {
-          amount: number
-          contributed_at?: string
-          goal_id: string
-          id?: string
-          note?: string | null
-          user_id?: string
-        }
-        Update: {
-          amount?: number
-          contributed_at?: string
-          goal_id?: string
-          id?: string
-          note?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "finance_contributions_goal_id_fkey"
-            columns: ["goal_id"]
-            isOneToOne: false
-            referencedRelation: "finance_goals"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      finance_goals: {
-        Row: {
-          archived: boolean
-          created_at: string
-          created_by: string
-          currency: string
-          id: string
-          notes: string | null
-          target_amount: number
-          target_date: string | null
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          archived?: boolean
-          created_at?: string
-          created_by?: string
-          currency?: string
-          id?: string
-          notes?: string | null
-          target_amount: number
-          target_date?: string | null
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          archived?: boolean
-          created_at?: string
-          created_by?: string
-          currency?: string
-          id?: string
-          notes?: string | null
-          target_amount?: number
-          target_date?: string | null
-          title?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       flowers: {
         Row: {
           created_at: string
@@ -1088,66 +797,6 @@ export type Database = {
           note?: string | null
           occasion_date?: string
           uploaded_by?: string | null
-        }
-        Relationships: []
-      }
-      game_scores: {
-        Row: {
-          created_at: string
-          game_id: string
-          id: string
-          meta: Json
-          score: number
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          game_id: string
-          id?: string
-          meta?: Json
-          score: number
-          user_id?: string
-        }
-        Update: {
-          created_at?: string
-          game_id?: string
-          id?: string
-          meta?: Json
-          score?: number
-          user_id?: string
-        }
-        Relationships: []
-      }
-      ideas: {
-        Row: {
-          category: string | null
-          created_at: string
-          created_by: string
-          description: string | null
-          id: string
-          status: string
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          category?: string | null
-          created_at?: string
-          created_by?: string
-          description?: string | null
-          id?: string
-          status?: string
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          category?: string | null
-          created_at?: string
-          created_by?: string
-          description?: string | null
-          id?: string
-          status?: string
-          title?: string
-          updated_at?: string
         }
         Relationships: []
       }
@@ -2120,42 +1769,6 @@ export type Database = {
         }
         Relationships: []
       }
-      punitos: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          level: string
-          proposed_by: string
-          sealed_at: string | null
-          status: string
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          level?: string
-          proposed_by?: string
-          sealed_at?: string | null
-          status?: string
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          level?: string
-          proposed_by?: string
-          sealed_at?: string | null
-          status?: string
-          title?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       push_subscriptions: {
         Row: {
           auth: string
@@ -2185,35 +1798,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      scavenger_arguments: {
-        Row: {
-          body: string
-          card_id: string
-          created_at: string
-          user_id: string
-        }
-        Insert: {
-          body: string
-          card_id: string
-          created_at?: string
-          user_id?: string
-        }
-        Update: {
-          body?: string
-          card_id?: string
-          created_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "scavenger_arguments_card_id_fkey"
-            columns: ["card_id"]
-            isOneToOne: false
-            referencedRelation: "scavenger_cards"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       scavenger_cards: {
         Row: {
