@@ -37,6 +37,27 @@ export default defineConfig({
         orientation: 'any',
         start_url: '/',
         scope: '/',
+        // Long-press the icon on a phone, right-click it on a desk: straight
+        // to the three places the classroom is used from.
+        shortcuts: [
+          {
+            name: 'Language',
+            url: '/language',
+            icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }],
+          },
+          {
+            name: 'Practice',
+            url: '/language/study',
+            icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }],
+          },
+          {
+            name: 'Dictionary',
+            url: '/language/dictionary',
+            icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }],
+          },
+        ],
+        // A desk window with its own controls where the platform allows it.
+        display_override: ['window-controls-overlay', 'standalone'],
         icons: [
           {
             src: '/icons/icon-192.png',
