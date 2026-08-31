@@ -68,6 +68,9 @@ export function LessonRoute() {
   const [handingIn, setHandingIn] = useState(false);
   // "Try again": the screen starts over and the old answers stop seeding it.
   const [retrying, setRetrying] = useState(false);
+  // Checked THIS sitting. A verdict brought back from last time is shown but
+  // does not lock the question — homework is meant to be redone.
+  const [fresh, setFresh] = useState<Set<string>>(new Set());
 
   /**
    * An exam stays handed in across a reload.
@@ -140,7 +143,13 @@ export function LessonRoute() {
       for (const a of attempts) {
         const ex = byId.get(a.exercise_id);
         if (ex && !(a.exercise_id in next))
-          next[a.exercise_id] = gradeAnswer(ex, a.answer);
+          // The verdict as it was written, not re-graded against today's
+          // answer key: she may have fixed the key since, and the two of them
+          // must read the same tick.
+          next[a.exercise_id] =
+            a.correct == null
+              ? gradeAnswer(ex, a.answer)
+              : { correct: a.correct, score: a.score ?? (a.correct ? 1 : 0) };
       }
       return next;
     });
@@ -164,6 +173,7 @@ export function LessonRoute() {
     const grade = gradeAnswer(ex, given);
     const next = { ...grades, [ex.id]: grade };
     setGrades(next);
+    setFresh((f) => new Set(f).add(ex.id));
     answer.mutate({
       exercise: ex,
       lessonId: lesson.id,
@@ -215,6 +225,7 @@ export function LessonRoute() {
         })),
       });
       setGrades(Object.fromEntries(marks.map((m) => [m.exerciseId, m.grade])));
+      setFresh(new Set(marks.map((m) => m.exerciseId)));
       setHandedIn(true);
       setRetrying(false);
       await saveProgress.mutateAsync({
@@ -240,6 +251,7 @@ export function LessonRoute() {
   const tryAgain = () => {
     setAnswers({});
     setGrades({});
+    setFresh(new Set());
     setHandedIn(false);
     setRetrying(true);
   };
@@ -276,9 +288,19 @@ export function LessonRoute() {
           exercise={ex}
           support={support}
           value={answers[ex.id]}
-          onChange={(v) => setAnswers((a) => ({ ...a, [ex.id]: v }))}
+          onChange={(v) => {
+            setAnswers((a) => ({ ...a, [ex.id]: v }));
+            // A changed answer drops last time's verdict until it is checked.
+            if (!isExam)
+              setGrades((g) => {
+                if (!(ex.id in g)) return g;
+                const rest = { ...g };
+                delete rest[ex.id];
+                return rest;
+              });
+          }}
           grade={shown}
-          disabled={isExam ? submitted : !!grade}
+          disabled={isExam ? submitted : fresh.has(ex.id)}
         />
         {a?.teacher_note && (
           <p className="font-display text-sm italic text-fg">
@@ -298,7 +320,7 @@ export function LessonRoute() {
             </span>
           </div>
         )}
-        {!isExam && !grade && (
+        {!isExam && !fresh.has(ex.id) && (
           <Button
             full
             variant="secondary"
@@ -373,16 +395,9 @@ export function LessonRoute() {
                   </span>
                 </div>
               )}
-              {mine.status !== 'submitted' && (
-                <Button
-                  size="xs"
-                  variant={mine.status === 'returned' ? 'primary' : 'secondary'}
-                  onClick={tryAgain}
-                >
-                  <RotateCcw size={13} />{' '}
-                  {mine.status === 'returned'
-                    ? 'Try again'
-                    : 'Practise it again'}
+              {mine.status === 'returned' && (
+                <Button size="xs" onClick={tryAgain}>
+                  <RotateCcw size={13} /> Try again
                 </Button>
               )}
             </section>
