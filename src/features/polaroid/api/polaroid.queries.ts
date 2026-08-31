@@ -63,6 +63,28 @@ export function usePolaroidPages() {
 }
 
 /**
+ * Every photo across the days that are still open — at most two dates, so at
+ * most four rows. One request, so the nav button can know the whole picture
+ * (today's, and the day borrowed from the other clock) without firing a query
+ * per date from inside a loop.
+ */
+export function useOpenDayPolaroids(days: string[]) {
+  const key = [...days].sort().join(',');
+  return useQuery({
+    queryKey: qk.polaroids.openDays(key),
+    enabled: days.length > 0,
+    queryFn: async (): Promise<Polaroid[]> => {
+      const { data, error } = await supabase
+        .from('polaroids')
+        .select('*')
+        .in('day', days);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+/**
  * Every photo for one calendar day — up to two, one each.
  *
  * Deliberately NOT `.maybeSingle()`: that was correct when a day held one photo
