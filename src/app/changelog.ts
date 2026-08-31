@@ -35,6 +35,45 @@ export interface ChangelogEntry {
 export const ALL_ENTRIES: ChangelogEntry[] = [
   {
     // Written 30 August 2026. Held until he lifts it.
+    title: 'The classroom, on your computer',
+    date: '2026-08-30',
+    held: true,
+    lines: [
+      'Open Katitos on your computer or tablet and the classroom spreads out: the course on the left, the lesson in the middle, the details on the right. Your phone looks exactly as before.',
+      'Write a lesson the way you write a document: every box saves itself, you drag blocks into order, and a question can sit right after the paragraph it belongs to.',
+      'Russian, English and Spanish side by side while you write — no switching, and nothing typed in one ever ends up filed under another.',
+      'Marking from the keyboard: J and K move between his answers, Y and N tick or cross them, C leaves a note on one, and ⌘↵ gives it back. The mark writes itself from your ticks; change it if that is unfair.',
+      'You can hear him now. "Say it" records his voice, and you listen when you mark — and you can answer in yours, on one answer or on the whole lesson.',
+      'Send a lesson back for another go, with a note. He sees "sent back", tries again, and it comes to you again.',
+      'What he has handed in waits for you at the top of the courses and on your home screen, across every course — with when he opened it.',
+      'His phone stays quiet at night. Anything you mark or publish after eleven his time waits on his home screen instead of buzzing him — unless you say "buzz him anyway".',
+      'Paste a whole list of words — one per line, the meaning after a dash — and they are in the dictionary at once. Drop a folder of recordings on the list and each one finds the word it is named after.',
+      'Record every word that has no recording yet, one after the other, in one sitting.',
+      'The words he keeps forgetting now have a microphone on them: say the word for him and it is on his phone in a minute.',
+      'Teach mode for the call: one block at a time, big, with the answers held back until you show them, and a way to catch a word that comes up mid-class and put it straight into the lesson.',
+      'A question that asks where the stress falls, built from nothing but the word as you write it.',
+      'He can tap any word in a lesson for its meaning — and ask you when the dictionary does not know it.',
+      'Practice knows how well he knows each word, plays your voice on every reveal, explains why an answer was almost right, and picks up where he left off after a phone call.',
+      'Her voice keeps playing without a connection: anything played once stays on the phone.',
+    ],
+  },
+  {
+    // Written 30 August 2026. Held until he lifts it.
+    title: 'The day, before it goes',
+    date: '2026-08-30',
+    held: true,
+    lines: [
+      'Three hours before your day ends, your phone tells you if your polaroid still isn’t in — three hours in YOUR evening, not in his. Tap it and the camera opens.',
+      'And when the day you can still fill only because it is earlier where he is has one hour left, you get one last call, straight to that day.',
+      'The camera no longer asks permission every single time. Taking the daily polaroid uses your phone’s own camera now, so it just opens.',
+      'Recording words for a lesson asks once, not once per word.',
+      'The button in the middle of the bar tells you where you stand at a glance: a camera when your photo isn’t in, a green heart the moment it is, and grey when there is nothing left to do until tomorrow.',
+      'If today is done but yesterday is still open to you, that button turns into a heart with a gold dot and takes you straight to the day that is running out.',
+      'A day now closes when it is really over. It used to stay open for two hours after midnight, so you could fill in a date that had already ended in Chile AND in Russia — which was never what it was meant to be.',
+    ],
+  },
+  {
+    // Written 30 August 2026. Held until he lifts it.
     title: 'Nothing gets lost',
     date: '2026-08-30',
     held: true,
