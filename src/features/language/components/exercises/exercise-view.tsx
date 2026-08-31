@@ -238,43 +238,75 @@ function CompleteView({
   grade,
   disabled,
 }: ExerciseViewProps) {
-  const template = (exercise.payload as { template?: string })?.template ?? '';
+  const payload = exercise.payload as {
+    template?: string;
+    hints?: string[];
+    why?: string[];
+  };
+  const template = payload?.template ?? '';
   const parts = splitTemplate(template);
   const answers = Array.isArray(value) ? (value as string[]) : [];
+  const hints = payload?.hints ?? [];
+  const why = payload?.why ?? [];
+  // Wide enough for what is typed, never a 6rem box a long form scrolls in.
+  const width = (i: number) =>
+    `${Math.max(6, (answers[i] ?? hints[i] ?? '').length + 2)}ch`;
 
   return (
-    <p className="flex flex-wrap items-center gap-1 font-sans text-sm leading-8 text-fg">
-      {parts.map((part, i) => (
-        <span key={i} className="contents">
-          <span>{part}</span>
-          {i < parts.length - 1 && (
-            <input
-              value={answers[i] ?? ''}
-              disabled={disabled}
-              onChange={(e) => {
-                // A DENSE array. Writing to index 2 of an empty array left
-                // holes, the answer failed to parse, and filling the second
-                // gap correctly while leaving the first blank scored zero with
-                // both boxes painted red.
-                onChange(
-                  Array.from({ length: parts.length - 1 }, (_, k) =>
-                    k === i ? e.target.value : (answers[k] ?? '')
-                  )
-                );
-              }}
-              autoComplete="off"
-              autoCapitalize="off"
-              spellCheck={false}
-              className={cn(
-                'w-24 rounded-md bg-surface-2 px-2 py-1 text-center font-sans text-sm text-fg outline-none',
-                grade?.detail?.[i] === true && 'bg-success/20',
-                grade?.detail?.[i] === false && 'bg-danger/20'
-              )}
-            />
+    <div className="space-y-1">
+      <p className="flex flex-wrap items-center gap-1 font-sans text-sm leading-8 text-fg">
+        {parts.map((part, i) => (
+          <span key={i} className="contents">
+            <span>{part}</span>
+            {i < parts.length - 1 && (
+              <input
+                value={answers[i] ?? ''}
+                disabled={disabled}
+                onChange={(e) => {
+                  // A DENSE array. Writing to index 2 of an empty array left
+                  // holes, the answer failed to parse, and filling the second
+                  // gap correctly while leaving the first blank scored zero with
+                  // both boxes painted red.
+                  onChange(
+                    Array.from({ length: parts.length - 1 }, (_, k) =>
+                      k === i ? e.target.value : (answers[k] ?? '')
+                    )
+                  );
+                }}
+                autoComplete="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                placeholder={hints[i]}
+                style={{ width: width(i) }}
+                className={cn(
+                  'rounded-md bg-surface-2 px-2 py-1 text-center font-sans text-sm text-fg outline-none placeholder:text-muted/60',
+                  grade?.detail?.[i] === true && 'bg-success/20',
+                  grade?.detail?.[i] === false && 'bg-danger/20'
+                )}
+              />
+            )}
+          </span>
+        ))}
+      </p>
+      {grade && why.some(Boolean) && (
+        <ul className="space-y-0.5 font-sans text-xs text-muted">
+          {why.map((w, i) =>
+            w ? (
+              <li key={i}>
+                <span
+                  className={
+                    grade.detail?.[i] === false ? 'text-danger' : 'text-success'
+                  }
+                >
+                  {i + 1}.
+                </span>{' '}
+                {w}
+              </li>
+            ) : null
           )}
-        </span>
-      ))}
-    </p>
+        </ul>
+      )}
+    </div>
   );
 }
 
