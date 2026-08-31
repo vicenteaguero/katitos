@@ -49,7 +49,7 @@ import {
   useRestoreLesson,
   useUpdateUnit,
 } from '../api/lessons.mutations';
-import { LESSON_TEMPLATES } from '../lib/templates';
+import { defaultTemplateFor, LESSON_TEMPLATES } from '../lib/templates';
 import { isTeacherOf, useLanguages } from '../lib/languages';
 import { CoursesRail } from '../components/courses-rail';
 import { dueLabel } from '../lib/due';
@@ -114,7 +114,7 @@ export function CourseRoute() {
   const [lessonFor, setLessonFor] = useState<string | null>(null);
   const [lessonTitle, setLessonTitle] = useState('');
   const [lessonKind, setLessonKind] = useState<LessonKind>('lesson');
-  const [template, setTemplate] = useState(LESSON_TEMPLATES[0].id);
+  const [template, setTemplate] = useState(defaultTemplateFor('lesson'));
 
   // Only the one who teaches this course builds it.
   const teacher = ready && isTeacherOf(course, native);
@@ -189,7 +189,7 @@ export function CourseRoute() {
                           setLessonFor(unit.id);
                           setLessonTitle('');
                           setLessonKind('lesson');
-                          setTemplate(LESSON_TEMPLATES[0].id);
+                          setTemplate(defaultTemplateFor('lesson'));
                         }}
                         className="shrink-0 rounded px-2 py-1 font-sans text-xs text-gold hover:bg-fg/5"
                       >
@@ -316,7 +316,11 @@ export function CourseRoute() {
             <Segmented
               full
               value={lessonKind}
-              onChange={(v) => setLessonKind(v as LessonKind)}
+              onChange={(v) => {
+                // Homework and exams start from their own sheet, not a lesson's.
+                setLessonKind(v as LessonKind);
+                setTemplate(defaultTemplateFor(v as LessonKind));
+              }}
               options={[
                 { value: 'lesson', label: 'Lesson' },
                 { value: 'homework', label: 'Homework' },
@@ -336,18 +340,20 @@ export function CourseRoute() {
               hint="Empty blocks in the usual order — throw away what you do not need"
             >
               <div className="grid grid-cols-2 gap-1.5">
-                {LESSON_TEMPLATES.map((t) => (
-                  <OptionButton
-                    key={t.id}
-                    state={template === t.id ? 'picked' : 'idle'}
-                    onClick={() => setTemplate(t.id)}
-                  >
-                    <span className="block font-semibold">{t.title}</span>
-                    <span className="block text-[0.68rem] opacity-80">
-                      {t.hint}
-                    </span>
-                  </OptionButton>
-                ))}
+                {LESSON_TEMPLATES.filter((t) => t.for.includes(lessonKind)).map(
+                  (t) => (
+                    <OptionButton
+                      key={t.id}
+                      state={template === t.id ? 'picked' : 'idle'}
+                      onClick={() => setTemplate(t.id)}
+                    >
+                      <span className="block font-semibold">{t.title}</span>
+                      <span className="block text-[0.68rem] opacity-80">
+                        {t.hint}
+                      </span>
+                    </OptionButton>
+                  )
+                )}
               </div>
             </Fieldset>
             <Button
