@@ -13,12 +13,12 @@ import { qk } from '@kernel/query';
 import { cn } from '@kernel/lib';
 import {
   Button,
+  Dialog,
   Empty,
   Field,
   Input,
   LoadingScreen,
   Segmented,
-  Sheet,
   useTopBarAction,
 } from '@kernel/ui';
 import {
@@ -154,11 +154,12 @@ export function CourseRoute() {
         ))
       )}
 
-      <Sheet
+      <Dialog
+        placement="auto"
         open={unitOpen}
         onClose={() => setUnitOpen(false)}
         title="New unit"
-        size="half"
+        size="sm"
       >
         <div className="space-y-3">
           <Field label="Called">
@@ -188,13 +189,14 @@ export function CourseRoute() {
             Add unit
           </Button>
         </div>
-      </Sheet>
+      </Dialog>
 
-      <Sheet
+      <Dialog
+        placement="auto"
         open={!!lessonFor}
         onClose={() => setLessonFor(null)}
         title="New lesson"
-        size="half"
+        size="sm"
       >
         <div className="space-y-3">
           <Segmented
@@ -236,7 +238,7 @@ export function CourseRoute() {
             Add {KIND_LABEL[lessonKind].toLowerCase()}
           </Button>
         </div>
-      </Sheet>
+      </Dialog>
     </div>
   );
 }
