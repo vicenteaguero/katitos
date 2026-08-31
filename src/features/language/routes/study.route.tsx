@@ -1,6 +1,8 @@
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router';
-import { Check, RotateCcw, Volume2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router';
+import { DateTime } from 'luxon';
+import { ArrowLeft, Check, RotateCcw, Volume2 } from 'lucide-react';
+import { useHotkeys } from '@kernel/hooks';
 import { BUCKETS } from '@kernel/storage';
 import { cn } from '@kernel/lib';
 import {
@@ -8,108 +10,228 @@ import {
   Desk,
   Empty,
   Input,
+  Kbd,
   ListSkeleton,
   OptionButton,
   PlayButton,
   useDesk,
+  useIsDesk,
 } from '@kernel/ui';
+import { useLesson } from '../api/lessons.queries';
 import { useAllVocab, useGradeVocab, useMyReviews } from '../api/vocab';
 import { buildSession, type Grade } from '../lib/srs';
+import {
+  choicesFor,
+  clearSession,
+  expectedForms,
+  hash,
+  loadSession,
+  missMessage,
+  modeFor,
+  nearMiss,
+  saveSession,
+  suggestGrade,
+} from '../lib/study';
 import { LetterKeys } from '../components/letter-keys';
 import { VoiceThread } from '../components/kit/voice-thread';
-import { answerMatches } from '../lib/answer-match';
 import { useLanguages } from '../lib/languages';
-import { headword, meaningOf, noteOf, termOf, termLangOf } from '../lib/pick';
+import { headword, meaningOf, noteOf, termLangOf } from '../lib/pick';
 import { LANG_NATIVE_LABELS, type Vocab } from '../types';
 
-/** The four ways a card can be asked. */
-type Mode = 'recall' | 'choice' | 'type' | 'listen';
+/** Which words a session is made of. */
+type Scope = 'due' | 'lesson' | 'lapses';
+
+const TITLES: Record<Scope, string> = {
+  due: "Today's practice",
+  lesson: "This lesson's words",
+  lapses: 'The ones you keep missing',
+};
 
 /**
- * Today's practice.
+ * Practice.
  *
- * Pulls whatever is due across every deck, asks each card in whichever way it
- * can be asked, and remembers the answer. The old screen shuffled one deck and
- * forgot everything the moment you left.
+ * Today's due cards across every course — or one lesson's words, or the
+ * handful he keeps missing. Each card is asked in the way its mastery calls
+ * for; a blank comes round again before the session ends; a half-finished
+ * session survives a phone call; and on a desk the whole thing runs from
+ * the keyboard.
  */
 export function StudyRoute() {
   const { native: support, learning } = useLanguages();
+  const [params] = useSearchParams();
+  const lessonId = params.get('lesson');
+  const scope: Scope = lessonId
+    ? 'lesson'
+    : params.get('scope') === 'lapses'
+      ? 'lapses'
+      : 'due';
+  const scopeKey = lessonId ? `lesson:${lessonId}` : scope;
+
   const { data: words, isLoading } = useAllVocab(learning);
+  const { data: lesson } = useLesson(lessonId ?? undefined);
   const { data: reviews } = useMyReviews();
   const grade = useGradeVocab();
+  const desk = useIsDesk();
   useDesk();
 
+  // The queue is ids, so a card can come round twice.
+  const [queue, setQueue] = useState<string[] | null>(null);
   const [i, setI] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [typed, setTyped] = useState('');
   const [picked, setPicked] = useState<string | null>(null);
-  const [done, setDone] = useState(false);
   const [score, setScore] = useState({ right: 0, total: 0 });
+  const [missed, setMissed] = useState<string[]>([]);
+  const [requeued, setRequeued] = useState<Set<string>>(new Set());
+  /** Looking back at a card already answered — read only. */
+  const [peek, setPeek] = useState<number | null>(null);
+  const [done, setDone] = useState(false);
 
-  // Frozen for the session so answering a card doesn't reshuffle the queue
-  // under your feet.
-  const [sessionKey, setSessionKey] = useState(0);
-  /**
-   * Built once BOTH halves have arrived.
-   *
-   * The reviews query waits for the user id while the words query does not, so
-   * this reliably ran first with no reviews at all — every word looked due,
-   * and the frozen queue was twenty arbitrary cards instead of what the
-   * schedule actually asked for.
-   */
-  const ready = !!words && !!reviews;
-  const session = useMemo(
-    () => (ready ? buildSession(words, reviews) : []),
+  const byId = useMemo(
+    () => new Map((words ?? []).map((w) => [w.id, w])),
+    [words]
+  );
+  const ready = !!words && !!reviews && (!lessonId || !!lesson);
+
+  /** The cards this scope asks for, in order. */
+  const build = (): string[] => {
+    if (!words || !reviews) return [];
+    if (scope === 'lesson') {
+      const seen = new Set<string>();
+      const all = Object.values(lesson?.vocabByBlock ?? {}).flat();
+      return all
+        .filter((w) => (seen.has(w.id) ? false : (seen.add(w.id), true)))
+        .sort((a, b) => hash(a.id) - hash(b.id))
+        .map((w) => w.id);
+    }
+    if (scope === 'lapses') {
+      return words
+        .filter((w) => (reviews.get(w.id)?.lapses ?? 0) > 0)
+        .sort(
+          (a, b) =>
+            (reviews.get(b.id)?.lapses ?? 0) - (reviews.get(a.id)?.lapses ?? 0)
+        )
+        .slice(0, 8)
+        .map((w) => w.id);
+    }
+    return buildSession(words, reviews).map((w) => w.id);
+  };
+
+  // Built — or brought back — once both halves have arrived. The reviews
+  // query waits for the user id while the words query does not, so building
+  // on the first render gave a session of twenty arbitrary cards.
+  useEffect(() => {
+    if (!ready || queue) return;
+    const saved = loadSession(scopeKey);
+    if (saved && saved.ids.length && saved.ids.every((id) => byId.has(id))) {
+      setQueue(saved.ids);
+      setI(Math.min(saved.i, saved.ids.length - 1));
+      setScore(saved.score);
+      setMissed(saved.missed);
+      return;
+    }
+    setQueue(build());
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ready, sessionKey]
+  }, [ready, queue, scopeKey]);
+
+  useEffect(() => {
+    if (!queue || done) return;
+    saveSession(scopeKey, {
+      day: DateTime.now().toISODate()!,
+      ids: queue,
+      i,
+      score,
+      missed,
+    });
+  }, [queue, i, score, missed, done, scopeKey]);
+
+  const card = queue ? byId.get(queue[Math.min(i, queue.length - 1)]) : null;
+  const review = card ? (reviews?.get(card.id) ?? null) : null;
+  const mode = card ? modeFor(card, review, i) : 'recall';
+  const choices =
+    card && mode === 'choice' ? choicesFor(card, words ?? [], i) : [];
+  const forms = card ? expectedForms(card) : [];
+  const miss = card && mode === 'type' ? nearMiss(typed, forms) : null;
+
+  const reveal = () => {
+    if (!card || revealed) return;
+    setRevealed(true);
+  };
+
+  const answer = (g: Grade) => {
+    if (!card || !queue) return;
+    grade.mutate({ vocabId: card.id, grade: g, prev: review });
+    setScore((s) => ({
+      right: s.right + (g === 2 ? 1 : 0),
+      total: s.total + 1,
+    }));
+    if (g < 2) setMissed((m) => (m.includes(card.id) ? m : [...m, card.id]));
+    // A blank comes round again before the session ends — once.
+    let next = queue;
+    if (g === 0 && !requeued.has(card.id)) {
+      next = [...queue, card.id];
+      setQueue(next);
+      setRequeued((r) => new Set(r).add(card.id));
+    }
+    setRevealed(false);
+    setTyped('');
+    setPicked(null);
+    if (i + 1 >= next.length) {
+      setDone(true);
+      clearSession(scopeKey);
+    } else setI((n) => n + 1);
+  };
+
+  const start = (ids: string[]) => {
+    clearSession(scopeKey);
+    setQueue(ids);
+    setI(0);
+    setRevealed(false);
+    setTyped('');
+    setPicked(null);
+    setScore({ right: 0, total: 0 });
+    setMissed([]);
+    setRequeued(new Set());
+    setPeek(null);
+    setDone(false);
+  };
+
+  useHotkeys(
+    {
+      space: () => (mode === 'type' ? undefined : reveal()),
+      enter: () => (mode === 'type' ? undefined : reveal()),
+      '1': () => revealed && answer(0),
+      '2': () => revealed && answer(1),
+      '3': () => revealed && answer(2),
+      arrowleft: () => peek === null && i > 0 && setPeek(i - 1),
+      escape: () => setPeek(null),
+    },
+    { enabled: !!card && !done }
   );
 
-  if (isLoading || !ready) return <ListSkeleton rows={2} header={false} />;
-  if (session.length === 0) {
+  if (isLoading || !ready || !queue)
+    return <ListSkeleton rows={2} header={false} />;
+
+  if (queue.length === 0 || !card) {
     return (
       <Empty
         icon="🌙"
-        title="Nothing due right now"
-        hint="Everything you've learned is resting. Come back tomorrow."
+        title={
+          scope === 'due' ? 'Nothing due right now' : 'Nothing to practise here'
+        }
+        hint={
+          scope === 'due'
+            ? "Everything you've learned is resting. Come back tomorrow."
+            : undefined
+        }
         action={
           <Link to="/language">
-            <Button variant="secondary">Back to the decks</Button>
+            <Button variant="secondary">Back to the courses</Button>
           </Link>
         }
       />
     );
   }
-
-  const card = session[Math.min(i, session.length - 1)];
-  const mode = modeFor(card, i);
-  const choices = mode === 'choice' ? choicesFor(card, words ?? [], i) : [];
-
-  const answer = (g: Grade) => {
-    grade.mutate({
-      vocabId: card.id,
-      grade: g,
-      prev: reviews?.get(card.id) ?? null,
-    });
-    setScore((s) => ({
-      right: s.right + (g === 2 ? 1 : 0),
-      total: s.total + 1,
-    }));
-    setRevealed(false);
-    setTyped('');
-    setPicked(null);
-    if (i + 1 >= session.length) setDone(true);
-    else setI((n) => n + 1);
-  };
-
-  const restart = () => {
-    setI(0);
-    setRevealed(false);
-    setTyped('');
-    setPicked(null);
-    setDone(false);
-    setScore({ right: 0, total: 0 });
-    setSessionKey((k) => k + 1);
-  };
 
   if (done) {
     return (
@@ -123,101 +245,113 @@ export function StudyRoute() {
             knew it straight away
           </p>
         </div>
-        <div className="flex gap-3">
-          <Button variant="secondary" onClick={restart}>
-            <RotateCcw size={16} /> Again
+        <div className="flex flex-wrap justify-center gap-2">
+          {missed.length > 0 && (
+            <Button onClick={() => start(missed)}>
+              <RotateCcw size={16} /> The {missed.length} you missed
+            </Button>
+          )}
+          <Button variant="secondary" onClick={() => start(build())}>
+            Again
           </Button>
           <Link to="/language">
-            <Button>Done</Button>
+            <Button variant="secondary">Done</Button>
           </Link>
         </div>
       </div>
     );
   }
 
+  // Looking back: the card as it was, everything shown, nothing to grade.
+  if (peek !== null) {
+    const back = byId.get(queue[peek]);
+    if (back) {
+      return (
+        <Desk narrow>
+          <div className="curtain-reveal flex h-full flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setPeek(null)}
+                className="font-sans text-sm text-muted hover:text-fg"
+              >
+                ← Back to the card
+              </button>
+              <p className="font-sans text-xs tabular-nums text-muted">
+                {peek + 1} / {queue.length} · already answered
+              </p>
+            </div>
+            <Card card={back} support={support} revealed mode="recall" />
+          </div>
+        </Desk>
+      );
+    }
+  }
+
+  const suggested = miss ? suggestGrade(miss) : null;
+  const gradeVariant = (g: Grade) =>
+    revealed && suggested === g ? 'primary' : 'secondary';
+
   return (
     <Desk narrow>
       <div className="curtain-reveal flex h-full flex-col">
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex items-center justify-between gap-2">
           <Link to="/language" className="font-sans text-sm text-muted">
-            ✕ Exit
+            ✕ {TITLES[scope]}
           </Link>
           <p className="font-sans text-xs tabular-nums text-muted">
-            {i + 1} / {session.length}
+            {i > 0 && (
+              <button
+                type="button"
+                aria-label="The previous card"
+                onClick={() => setPeek(i - 1)}
+                className="mr-2 text-muted hover:text-fg"
+              >
+                <ArrowLeft className="inline h-3.5 w-3.5" />
+              </button>
+            )}
+            {i + 1} / {queue.length}
           </p>
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col justify-center gap-3">
-          {/* ── the prompt ─────────────────────────────────────────────── */}
-          <div className="marble gilt-hairline shadow-loge rounded-lg px-4 py-6 text-center">
-            {mode === 'listen' ? (
-              <div className="space-y-3">
-                <Volume2 className="mx-auto h-6 w-6 text-brown/60" />
-                {card.audio_path ? (
-                  <PlayButton
-                    bucket={BUCKETS.languageAudio}
-                    path={card.audio_path}
-                    className="h-9 w-full"
-                  />
-                ) : null}
-                <p className="font-sans text-xs uppercase tracking-[0.18em] text-brown/60">
-                  what did she say?
-                </p>
-              </div>
-            ) : mode === 'recall' ? (
-              <>
-                <p className="font-display text-4xl font-semibold leading-tight text-accent">
-                  {headword(card)}
-                </p>
-                {card.transliteration && (
-                  <p className="mt-2 font-display text-base italic text-copper">
-                    {card.transliteration}
-                  </p>
-                )}
-              </>
-            ) : (
-              <p className="font-display text-3xl font-semibold text-brown">
-                {meaningOf(card, support) || headword(card)}
-              </p>
-            )}
-
-            {revealed && (
-              <div className="km-reveal mt-3 space-y-1 border-t border-brown/15 pt-3">
-                <p className="font-display text-2xl text-brown">
-                  {mode === 'recall'
-                    ? meaningOf(card, support)
-                    : headword(card)}
-                </p>
-                {card.transliteration && mode !== 'recall' && (
-                  <p className="font-display text-sm italic text-copper">
-                    {card.transliteration}
-                  </p>
-                )}
-                {noteOf(card, support) && (
-                  <p className="font-sans text-xs italic text-brown/70">
-                    {noteOf(card, support)}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
+          <Card
+            card={card}
+            support={support}
+            revealed={revealed}
+            mode={mode}
+            autoPlay
+          />
 
           {/* ── the answer ─────────────────────────────────────────────── */}
-          {!revealed && mode === 'choice' && (
+          {mode === 'choice' && (
             <div className="space-y-2">
-              {choices.map((c) => (
-                <OptionButton
-                  key={c.id}
-                  state={picked === c.id ? 'picked' : 'idle'}
-                  onClick={() => {
-                    setPicked(c.id);
-                    setRevealed(true);
-                  }}
-                  className="px-4 py-3 font-display text-lg"
-                >
-                  {headword(c)}
-                </OptionButton>
-              ))}
+              {choices.map((c) => {
+                const right = revealed && c.id === card.id;
+                const wrong = revealed && picked === c.id && c.id !== card.id;
+                return (
+                  <OptionButton
+                    key={c.id}
+                    state={
+                      right
+                        ? 'right'
+                        : wrong
+                          ? 'wrong'
+                          : picked === c.id
+                            ? 'picked'
+                            : 'idle'
+                    }
+                    disabled={revealed}
+                    onClick={() => {
+                      setPicked(c.id);
+                      setRevealed(true);
+                    }}
+                    className="px-4 py-3 font-display text-lg"
+                  >
+                    {headword(c)}
+                  </OptionButton>
+                );
+              })}
             </div>
           )}
 
@@ -225,10 +359,6 @@ export function StudyRoute() {
             <div className="space-y-2">
               <Input
                 value={typed}
-                // A real keyboard types here — it was read-only, so on a
-                // computer nothing could be typed at all, and on a phone every
-                // answer with a space in it was impossible (no space key). The
-                // on-screen letters stay for the phone with no Cyrillic layout.
                 onChange={(e) => setTyped(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && typed) setRevealed(true);
@@ -237,6 +367,7 @@ export function StudyRoute() {
                 autoCapitalize="off"
                 autoCorrect="off"
                 spellCheck={false}
+                autoFocus={desk}
                 placeholder={`type it in ${LANG_NATIVE_LABELS[termLangOf(card)]}…`}
                 className="text-center font-display text-xl"
               />
@@ -252,23 +383,23 @@ export function StudyRoute() {
           )}
 
           {!revealed && (mode === 'recall' || mode === 'listen') && (
-            <Button full variant="secondary" onClick={() => setRevealed(true)}>
+            <Button full variant="secondary" onClick={reveal}>
               Show me
             </Button>
           )}
 
-          {revealed && mode === 'type' && (
+          {revealed && mode === 'type' && miss && (
             <p
               className={cn(
                 'text-center font-sans text-sm',
-                answerMatches(typed, termOf(card))
+                miss === 'exact'
                   ? 'text-success'
-                  : 'text-danger'
+                  : miss === 'wrong'
+                    ? 'text-danger'
+                    : 'text-warning'
               )}
             >
-              {answerMatches(typed, termOf(card))
-                ? 'Exactly right 🌟'
-                : `You wrote "${typed}"`}
+              {missMessage(miss, typed, forms[0] ?? '')}
             </p>
           )}
 
@@ -278,16 +409,23 @@ export function StudyRoute() {
 
           {revealed && (
             <div className="flex gap-2">
-              <Button full variant="secondary" onClick={() => answer(0)}>
+              <Button full variant={gradeVariant(0)} onClick={() => answer(0)}>
                 No idea
               </Button>
-              <Button full variant="secondary" onClick={() => answer(1)}>
+              <Button full variant={gradeVariant(1)} onClick={() => answer(1)}>
                 Almost
               </Button>
-              <Button full onClick={() => answer(2)}>
+              <Button full variant={gradeVariant(2)} onClick={() => answer(2)}>
                 Knew it
               </Button>
             </div>
+          )}
+
+          {desk && (
+            <p className="text-center font-sans text-xs leading-6 text-muted">
+              <Kbd>space</Kbd> show · <Kbd>1</Kbd> <Kbd>2</Kbd> <Kbd>3</Kbd>{' '}
+              grade · <Kbd>←</Kbd> the last card
+            </p>
           )}
         </div>
       </div>
@@ -295,34 +433,84 @@ export function StudyRoute() {
   );
 }
 
-/**
- * Vary how a card is asked so it's practice, not memorising one prompt.
- * A card with no audio is never asked by ear; one with no translation can only
- * be recalled.
- */
-function modeFor(card: Vocab, index: number): Mode {
-  const wheel: Mode[] = ['recall', 'choice', 'type', 'recall', 'listen'];
-  const want = wheel[index % wheel.length];
-  if (want === 'listen' && !card.audio_path) return 'recall';
-  // A card with nothing but the word itself can only be recalled — asking
-  // "which of these means it" with no meaning to show is a blank screen.
-  if (want === 'choice' && !meaningOf(card, 'en')) return 'recall';
-  if (want === 'type' && termOf(card).length > 24) return 'recall';
-  return want;
-}
+/** The card itself: the prompt, and the answer once it is turned over. */
+function Card({
+  card,
+  support,
+  revealed,
+  mode,
+  autoPlay = false,
+}: {
+  card: Vocab;
+  support: ReturnType<typeof useLanguages>['native'];
+  revealed: boolean;
+  mode: 'recall' | 'choice' | 'type' | 'listen';
+  /** Her voice plays by itself when the answer is shown. */
+  autoPlay?: boolean;
+}) {
+  return (
+    <div className="marble gilt-hairline shadow-loge rounded-lg px-4 py-6 text-center">
+      {mode === 'listen' ? (
+        <div className="space-y-3">
+          <Volume2 className="mx-auto h-6 w-6 text-brown/60" />
+          {card.audio_path ? (
+            <PlayButton
+              bucket={BUCKETS.languageAudio}
+              path={card.audio_path}
+              className="h-9 w-full"
+            />
+          ) : null}
+          <p className="font-sans text-xs uppercase tracking-[0.18em] text-brown/60">
+            what did she say?
+          </p>
+        </div>
+      ) : mode === 'recall' ? (
+        <>
+          <p className="font-display text-4xl font-semibold leading-tight text-accent">
+            {headword(card)}
+          </p>
+          {card.transliteration && (
+            <p className="mt-2 font-display text-base italic text-copper">
+              {card.transliteration}
+            </p>
+          )}
+        </>
+      ) : (
+        <p className="font-display text-3xl font-semibold text-brown">
+          {meaningOf(card, support) || headword(card)}
+        </p>
+      )}
 
-/** Three wrong answers and the right one, stable for a given card. */
-function choicesFor(card: Vocab, all: Vocab[], seed: number): Vocab[] {
-  const others = all.filter((p) => p.id !== card.id && termOf(p));
-  const picked: Vocab[] = [];
-  for (let k = 0; k < others.length && picked.length < 3; k++) {
-    // Deterministic stride so the options don't reshuffle on every render.
-    const idx = (seed * 7 + k * 13) % others.length;
-    const cand = others[idx];
-    if (cand && !picked.some((p) => p.id === cand.id)) picked.push(cand);
-  }
-  const pool = [...picked, card];
-  // Rotate rather than shuffle — again, stable across renders.
-  const offset = seed % pool.length;
-  return [...pool.slice(offset), ...pool.slice(0, offset)];
+      {revealed && (
+        <div className="km-reveal mt-3 space-y-1 border-t border-brown/15 pt-3">
+          <p className="font-display text-2xl text-brown">
+            {mode === 'recall' ? meaningOf(card, support) : headword(card)}
+          </p>
+          {card.transliteration && mode !== 'recall' && (
+            <p className="font-display text-sm italic text-copper">
+              {card.transliteration}
+            </p>
+          )}
+          {noteOf(card, support) && (
+            <p className="font-sans text-xs italic text-brown/70">
+              {noteOf(card, support)}
+            </p>
+          )}
+          {/* Every reveal is a chance to hear it in her voice — not only the
+              listening cards. Plays by itself; the button is there for again. */}
+          {card.audio_path && mode !== 'listen' && (
+            <div className="flex justify-center pt-1">
+              <PlayButton
+                bucket={BUCKETS.languageAudio}
+                path={card.audio_path}
+                size="sm"
+                label="Hear her"
+                autoPlayKey={autoPlay ? card.id : undefined}
+              />
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
