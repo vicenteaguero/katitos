@@ -24,7 +24,10 @@ export function Checkbox({
       aria-checked={checked}
       aria-label={label}
       onClick={onChange}
-      className={cn('lift-press shrink-0 outline-none', className)}
+      className={cn(
+        'lift-press shrink-0 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-gold',
+        className
+      )}
     >
       <span
         className={cn(
