@@ -1,9 +1,6 @@
 import type { Tables } from '@kernel/supabase';
 
 export type KnowMeQuestion = Tables<'know_me_questions'>;
-export type KnowMeDay = Tables<'know_me_days'>;
-export type KnowMeAnswer = Tables<'know_me_answers'>;
-
 /** One of the exactly-four choices on a question. */
 export interface KnowMeOption {
   id: string;
