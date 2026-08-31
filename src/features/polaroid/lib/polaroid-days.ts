@@ -11,10 +11,9 @@ import type { Polaroid } from '../types';
  * server will reject, and never hides one it would accept.
  */
 
-/** The ±2h slack `polaroid_day_open()` uses. Mirrored here on purpose. */
-const GRACE_HOURS = 2;
-
-/** The civil date in a zone right now, as 'YYYY-MM-DD'. */
+/**
+ * The civil date in a zone right now, as 'YYYY-MM-DD'.
+ */
 export function localDay(
   zone: string | null | undefined,
   now: DateTime = DateTime.now()
@@ -25,27 +24,33 @@ export function localDay(
 }
 
 /**
- * Every date that is still "today" for at least one of us, newest first.
+ * Every date that is CURRENTLY being lived by one of us, newest first.
  *
- * This is the whole rule. While it's the 12th in Novosibirsk and still the
- * 11th in Curicó, BOTH are open — so she can still post her 11th and he can
- * already post the 12th. Once it's the 12th in both, the 11th closes for good.
+ * This is the whole rule, and it is deliberately literal: a day is open while
+ * it is the date on somebody's wall clock, and not one minute longer. While
+ * it's the 12th in Novosibirsk and still the 11th in Curicó, BOTH are open —
+ * so she can still post her 11th and he can already post the 12th. The instant
+ * it's the 12th in both, the 11th is gone.
  *
- * The grace hours are included because the DB includes them: at 00:30 her
- * yesterday is still writable server-side, and it would be cruel to grey it out
- * in the UI while the server would happily take it.
+ * There used to be ±2h of "grace" here, which meant that between midnight and
+ * 02:00 in Curicó you could still fill a day that had already ended in BOTH
+ * countries — a date nobody anywhere was living. That is not a day you missed
+ * narrowly, it is yesterday, and offering it made the whole rule meaningless.
+ *
+ * The midnight race it was meant to protect (shoot at 23:59:58, upload lands at
+ * 00:00:03) is still protected — but by the DATABASE, which accepts a write for
+ * five more minutes after a day ends. That window exists to keep a photo you
+ * already took, never to offer you a day you can no longer live.
  */
 export function openDays(
   selfZone: string | null | undefined,
   partnerZone: string | null | undefined,
   now: DateTime = DateTime.now()
 ): string[] {
-  const days = new Set<string>();
-  for (const zone of [selfZone, partnerZone]) {
-    for (const shift of [-GRACE_HOURS, 0, GRACE_HOURS]) {
-      days.add(localDay(zone, now.plus({ hours: shift })));
-    }
-  }
+  const days = new Set<string>([
+    localDay(selfZone, now),
+    localDay(partnerZone, now),
+  ]);
   return [...days].sort((a, b) => (a < b ? 1 : -1));
 }
 
@@ -62,18 +67,44 @@ export function isDayOpen(
 /**
  * Why a given open day is on offer — so the picker can say "Aug 12 — already
  * today in Novosibirsk" instead of dumping bare dates on someone at midnight.
+ *
+ * Only two answers now. The third used to be 'grace', for a day that had ended
+ * everywhere but was still writable; there is no such day any more — and with
+ * it went the need to know your love's zone here, because an open day that
+ * isn't yours can only be theirs.
+ *
+ * Call it on a day `openDays()` returned. On any other date the answer is
+ * meaningless, because that date belongs to nobody.
  */
-export type DayKind = 'mine' | 'theirs' | 'grace';
+export type DayKind = 'mine' | 'theirs';
 
 export function dayKind(
   day: string,
   selfZone: string | null | undefined,
-  partnerZone: string | null | undefined,
   now: DateTime = DateTime.now()
 ): DayKind {
-  if (day === localDay(selfZone, now)) return 'mine';
-  if (day === localDay(partnerZone, now)) return 'theirs';
-  return 'grace';
+  return day === localDay(selfZone, now) ? 'mine' : 'theirs';
+}
+
+/**
+ * The open day that is already behind you — the one you can actually LOSE.
+ *
+ * She wakes on the 12th while Curicó is still on the 11th, so her 11th is open
+ * for a few more hours and then it is gone forever. That day is the whole point
+ * of this function: it is the only date that can expire on you unfilled.
+ *
+ * Deliberately NOT the mirror case. When it is already the 12th where your love
+ * is and still the 11th here, the 12th is open to you too — but you are not
+ * about to lose it, you are about to LIVE it. Nothing needs saving, so nothing
+ * is returned.
+ */
+export function borrowedDay(
+  selfZone: string | null | undefined,
+  partnerZone: string | null | undefined,
+  now: DateTime = DateTime.now()
+): string | null {
+  const mine = localDay(selfZone, now);
+  return openDays(selfZone, partnerZone, now).find((d) => d < mine) ?? null;
 }
 
 /** One calendar day, with each of us on our own side of it. */
