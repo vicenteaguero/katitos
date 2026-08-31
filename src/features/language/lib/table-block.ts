@@ -14,7 +14,11 @@ import type { Lang, TableBlockData } from '../types';
  * Leading empty cell on the heading line is normal: the corner of the grid has
  * no title.
  */
-export function parseTable(text: string, support: Lang): TableBlockData {
+export function parseTable(
+  text: string,
+  support: Lang,
+  previous?: TableBlockData
+): TableBlockData {
   const lines = text
     .split('\n')
     .map((l) => l.trim())
@@ -28,18 +32,30 @@ export function parseTable(text: string, support: Lang): TableBlockData {
   // empty table.
   if (!rest.length) return { headings: [], rows: [cells(first)] };
 
-  const headings = cells(first).map((label) =>
-    support === 'es' ? { es: label } : { en: label }
-  );
+  // Each heading is filed under the language she is writing in, ON TOP of
+  // whatever the other languages already said. Rebuilding the row from
+  // scratch meant translating the headings into Spanish deleted the English.
+  const before = previous?.headings ?? [];
+  const headings = cells(first).map((label, i) => ({
+    ...(before[i] ?? {}),
+    [support]: label,
+  }));
   return { headings, rows: rest.map(cells) };
 }
 
-/** Turn a stored table back into the text she typed, so she can edit it. */
+/**
+ * Turn a stored table back into the text she typed, so she can edit it.
+ *
+ * Only the headings in THIS language. Filling the box from another language
+ * looked helpful, but the next blur saved that text under the language being
+ * edited — the English headings quietly became the Spanish ones. An empty
+ * heading cell now honestly means "not translated yet".
+ */
 export function formatTable(data: TableBlockData, support: Lang): string {
   const headings = data.headings ?? [];
   const rows = data.rows ?? [];
   const label = (h: { ru?: string; en?: string; es?: string }) =>
-    (support === 'es' ? h.es : h.en) || h.en || h.es || h.ru || '';
+    h[support] ?? '';
   const lines = rows.map((r) => r.join(', '));
   if (headings.length) lines.unshift(headings.map(label).join(', '));
   return lines.join('\n');
