@@ -146,8 +146,15 @@ textarea,
    A route that calls `useDesk()` gets the whole window once the screen has
    room for one, and lays itself out with `Desk`: a rail, a canvas and an
    inspector, each scrolling on its own, told apart by tone. Phones are
-   untouched: the queries never match there, and `.desk` is a plain block. */
-@media (min-width: 768px) {
+   untouched: the queries never match there, and `.desk` is a plain block.
+   Height is part of "room": a phone on its side is 850px wide and 390px
+   tall, and it must stay a phone. */
+/* The rail waits for a laptop: a phone has screens for what it lists, and a
+   tablet has room for two panes, not three. */
+.desk__rail {
+  display: none;
+}
+@media (min-width: 768px) and (min-height: 600px) {
   :root[data-desk] {
     --shell-max-width: none;
   }
@@ -160,10 +167,6 @@ textarea,
   }
   [data-desk] .desk[data-panes~='inspector'] {
     grid-template-columns: minmax(0, 1fr) 18rem;
-  }
-  /* The rail waits for a laptop; a tablet has room for two panes, not three. */
-  [data-desk] .desk__rail {
-    display: none;
   }
   [data-desk] .desk__canvas,
   [data-desk] .desk__inspector,
@@ -184,7 +187,7 @@ textarea,
     background: var(--color-surface-2);
   }
 }
-@media (min-width: 1024px) {
+@media (min-width: 1024px) and (min-height: 600px) {
   [data-desk] .desk[data-panes~='rail'] {
     grid-template-columns: 16rem minmax(0, 1fr);
   }
@@ -218,7 +221,9 @@ textarea,
   user-select: text;
   -webkit-user-select: text;
 }
-/* Prose she wrote is hers to copy — a lesson on a computer is a document. */
+/* Prose she wrote is hers to copy — a lesson is a document, on the computer
+   AND on the phone: long-press on a word to look it up is the point. So this
+   is deliberately not scoped to the desk. */
 [data-readable],
 [data-readable] * {
   user-select: text;
@@ -238,7 +243,10 @@ summary,
 label[for] {
   cursor: pointer;
 }
-:focus-visible {
+/* `:where` keeps this at zero specificity, so a control's own `outline-none`
+   actually wins — without it the sheet itself drew a gold box when opened
+   from the keyboard. */
+:where(:focus-visible) {
   outline: 2px solid rgba(228, 195, 106, 0.8);
   outline-offset: 2px;
 }
@@ -1130,5 +1138,115 @@ button {
   50% {
     opacity: 1;
     transform: scale(1) rotate(90deg);
+  }
+}
+
+/* ── The centre button, once the photo is in ──────────────────────────────── */
+
+/* DONE — everything fillable is filled. Grey, flat, quiet: not a failure state,
+ * a finished one. It stays tappable (it opens the album) because a nav item
+ * that goes dead is worse than one that says "nothing until tomorrow". */
+.photo-btn--done {
+  background: #3a3236;
+  color: var(--color-muted);
+  box-shadow: inset 0 0 0 1px rgba(251, 245, 240, 0.06);
+}
+
+/* RESCUE — today is in, but the day borrowed from the other clock is still
+ * empty and running out. Her glossy green with a full white heart, breathing
+ * slowly: not the urgent twinkle of an empty day, a tug on the sleeve. */
+.photo-btn--rescue {
+  background: var(--color-green);
+  color: #fff;
+  animation: photo-tug 2.8s var(--ease-settle) infinite;
+}
+
+/* One gold pip on the rim: something is waiting, and it has a deadline. */
+.photo-pip {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background: var(--gold);
+  box-shadow: 0 0 0 2px var(--color-surface-2);
+  animation: photo-pip-pulse 2.8s ease-in-out infinite;
+}
+
+@keyframes photo-tug {
+  0%,
+  62%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  70% {
+    transform: translateY(-2px) rotate(-5deg);
+  }
+  78% {
+    transform: translateY(-2px) rotate(4deg);
+  }
+  86% {
+    transform: translateY(-1px) rotate(-2deg);
+  }
+}
+
+@keyframes photo-pip-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photo-btn--rescue,
+  .photo-pip {
+    animation: none !important;
+  }
+  /* The green and the pip still say it; only the movement goes. */
+  .photo-pip {
+    opacity: 1;
+  }
+}
+
+/* ── Sent here by a notification ──────────────────────────────────────────── */
+
+/* The day you were warned about, lit and breathing so you land on it rather
+ * than hunt for it. A gilt edge, not a border — the one metal line, glowing. */
+.catchup-urgent {
+  box-shadow: inset 0 0 0 1px rgba(228, 195, 106, 0.55);
+  animation: urgent-breathe 2.4s ease-in-out infinite;
+}
+
+/* "Take today's photo", when a notification asked for the camera and the
+ * browser wouldn't open it without a tap. It waits under your thumb. */
+.shoot-cta {
+  animation: urgent-breathe 1.8s ease-in-out infinite;
+}
+
+@keyframes urgent-breathe {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 0 0 1px rgba(228, 195, 106, 0.45),
+      0 0 0 0 rgba(228, 195, 106, 0);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 1px rgba(228, 195, 106, 0.9),
+      0 0 14px 0 rgba(228, 195, 106, 0.28);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .catchup-urgent,
+  .shoot-cta {
+    animation: none !important;
+    box-shadow: inset 0 0 0 1px rgba(228, 195, 106, 0.7) !important;
   }
 }
