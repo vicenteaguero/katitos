@@ -126,6 +126,7 @@ const ES_ENDINGS = [
   'e',
   'é',
   'ó',
+  'í',
 ];
 const ES_TAILS = ['', 'o', 'a', 'e', 'ar', 'er', 'ir'];
 
