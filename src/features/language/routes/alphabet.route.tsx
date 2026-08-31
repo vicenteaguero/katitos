@@ -12,7 +12,6 @@ import {
 } from '@kernel/ui';
 import { useAlphabet, useRecordLetter } from '../api/alphabet';
 import { useLanguages } from '../lib/languages';
-import type { Letter } from '../types';
 
 /**
  * The thirty-three letters — the only place Russian can start.
@@ -24,13 +23,17 @@ import type { Letter } from '../types';
 export function AlphabetRoute() {
   const { data: letters, isLoading } = useAlphabet();
   const { native: support } = useLanguages();
-  const [open, setOpen] = useState<Letter | null>(null);
+  // The id, not the row: the row is looked up fresh each render, so the sheet
+  // shows "Hear it" the moment a recording lands instead of after reopening.
+  const [openId, setOpenId] = useState<string | null>(null);
   const [audio, setAudio] = useState<AudioClip | null>(null);
+  const [kept, setKept] = useState(0);
   const record = useRecordLetter();
 
   if (isLoading) return <LoadingScreen />;
 
   const list = letters ?? [];
+  const open = list.find((l) => l.id === openId) ?? null;
 
   return (
     <div className="curtain-reveal space-y-3">
@@ -47,7 +50,7 @@ export function AlphabetRoute() {
             key={l.id}
             type="button"
             onClick={() => {
-              setOpen(l);
+              setOpenId(l.id);
               setAudio(null);
             }}
             className={cn(
@@ -68,7 +71,7 @@ export function AlphabetRoute() {
 
       <Sheet
         open={!!open}
-        onClose={() => setOpen(null)}
+        onClose={() => setOpenId(null)}
         title={open ? `${open.letter} ${open.lower}` : ''}
         size="half"
       >
@@ -111,15 +114,23 @@ export function AlphabetRoute() {
               <p className="flex items-center gap-1.5 font-sans text-xs text-muted">
                 <Mic className="h-3.5 w-3.5" /> Say it for him
               </p>
-              <AudioRecorder onRecorded={setAudio} />
+              <AudioRecorder
+                onRecorded={setAudio}
+                resetKey={`${openId}:${kept}`}
+              />
               {audio && (
                 <Button
                   full
                   disabled={record.isPending}
                   onClick={() =>
                     record.mutate(
-                      { id: open.id, audio },
-                      { onSuccess: () => setAudio(null) }
+                      { id: open.id, audio, previousPath: open.audio_path },
+                      {
+                        onSuccess: () => {
+                          setAudio(null);
+                          setKept((n) => n + 1);
+                        },
+                      }
                     )
                   }
                 >
