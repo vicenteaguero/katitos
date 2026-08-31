@@ -52,9 +52,12 @@ export function SortableList<T>({
     dy: number;
   } | null>(null);
 
+  // This list's OWN rows: the course page nests lessons inside units, and a
+  // descendant query measured both lists at once.
   const rows = () => [
-    ...(listRef.current?.querySelectorAll<HTMLElement>('[data-sortable-row]') ??
-      []),
+    ...(listRef.current?.querySelectorAll<HTMLElement>(
+      ':scope > [data-sortable-row]'
+    ) ?? []),
   ];
 
   const start = (index: number) => (e: ReactPointerEvent<HTMLElement>) => {
