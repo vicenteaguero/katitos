@@ -527,22 +527,6 @@ button {
   will-change: opacity, transform;
 }
 
-/* Countdown tick — the seconds digit drops in fresh each second. */
-@keyframes count-tick {
-  0% {
-    opacity: 0.35;
-    transform: translateY(-2px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-.count-tick {
-  display: inline-block;
-  animation: count-tick 0.35s ease;
-}
-
 /* Lift-press — the button press; deepens + sinks on active. */
 .lift-press {
   transition:
@@ -787,23 +771,6 @@ button {
     transform: scaleY(1.06);
   }
 }
-.flower-stage::after {
-  content: '';
-  position: absolute;
-  inset: auto -12% -34%;
-  height: 62%;
-  pointer-events: none;
-  transform-origin: center bottom;
-  background: radial-gradient(
-    58% 100% at 50% 100%,
-    rgba(181, 99, 58, 0.22) 0%,
-    rgba(107, 115, 68, 0.1) 42%,
-    transparent 74%
-  );
-  animation: flower-footlight 6s ease-in-out infinite;
-  z-index: 0;
-}
-
 /* ──────────────────────────────────────────────────────────────────────────
  * Know Me — the daily intimate question on a candle-lit stage. Its signature is
  * the REVEAL: when both have answered the card illuminates — a purple candle
@@ -913,9 +880,6 @@ button {
     animation-delay: 0ms !important;
     transform: none !important;
   }
-  .flower-stage::after {
-    animation: none !important;
-  }
   /* The instant photo: the develop fades calmly in; the over-exposed wash
      simply isn't there, so the image reads clean and still. */
   .polaroid-develop {
@@ -933,7 +897,6 @@ button {
   .candle-flicker,
   .heart-beat,
   .love-halo,
-  .count-tick,
   .sway-branch,
   .tree-bloom,
   .chalk-note,
