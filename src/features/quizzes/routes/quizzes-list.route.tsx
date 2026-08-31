@@ -5,13 +5,14 @@ import { qk } from '@kernel/query';
 import { useTableSync } from '@kernel/realtime';
 import {
   Badge,
+  confirmDialog,
   Empty,
-  TopBarAdd,
   IconButton,
   LoadingScreen,
   PageHeader,
   Sheet,
   toast,
+  TopBarAdd,
 } from '@kernel/ui';
 import { useDecks } from '../api/decks.queries';
 import { useDeleteDeck } from '../api/decks.mutations';
@@ -68,11 +69,18 @@ export function QuizzesListRoute() {
                 <IconButton
                   label="Delete"
                   onClick={() => {
-                    if (confirm(`Delete "${d.title}"?`))
+                    void confirmDialog({
+                      title: `Delete "${d.title}"?`,
+                      body: 'The deck and every answer in it.',
+                      confirmLabel: 'Delete it',
+                      danger: true,
+                    }).then((ok) => {
+                      if (!ok) return;
                       del.mutate(d.id, {
                         onSuccess: () => toast.success('Deleted'),
                         onError: (e) => toast.error(e.message),
                       });
+                    });
                   }}
                 >
                   <Trash2 className="h-4 w-4" />
