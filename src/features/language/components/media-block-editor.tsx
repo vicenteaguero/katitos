@@ -1,5 +1,13 @@
 import { useState } from 'react';
-import { Link2, Paperclip, Trash2 } from 'lucide-react';
+import {
+  FileText,
+  Image as ImageIcon,
+  Link2,
+  Music,
+  Paperclip,
+  Trash2,
+  Youtube,
+} from 'lucide-react';
 import {
   Button,
   Dialog,
@@ -10,7 +18,7 @@ import {
   Spinner,
   toast,
 } from '@kernel/ui';
-import { useAddLink, useUploadMedia } from '../api/media';
+import { useAddLink, useCourseMedia, useUploadMedia } from '../api/media';
 import type { Media } from '../types';
 
 /**
@@ -40,7 +48,8 @@ export function MediaBlockEditor({
 }) {
   const upload = useUploadMedia();
   const addLink = useAddLink();
-  const [mode, setMode] = useState<'file' | 'link'>('file');
+  const [mode, setMode] = useState<'file' | 'link' | 'library'>('file');
+  const { data: library } = useCourseMedia(courseId);
   const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
 
@@ -113,22 +122,68 @@ export function MediaBlockEditor({
         <Segmented
           full
           value={mode}
-          onChange={(v) => setMode(v as 'file' | 'link')}
+          onChange={(v) => setMode(v as 'file' | 'link' | 'library')}
+          label="Where from"
           options={[
             { value: 'file', label: 'A file' },
             { value: 'link', label: 'A link' },
+            { value: 'library', label: 'Already here' },
           ]}
         />
 
-        <Field label="Call it" hint="What he'll see">
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Worksheet — the six cases"
-          />
-        </Field>
+        {mode !== 'library' && (
+          <Field label="Call it" hint="What he'll see">
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Worksheet — the six cases"
+            />
+          </Field>
+        )}
 
-        {mode === 'file' ? (
+        {mode === 'library' ? (
+          // Everything ever attached in this course: a worksheet uploaded for
+          // lesson 3 is one tap away in lesson 9.
+          <ul className="max-h-72 divide-y divide-fg/5 overflow-y-auto rounded-lg bg-surface px-3">
+            {(library ?? [])
+              .filter((m) => m.id !== current?.id)
+              .map((m) => {
+                const Icon =
+                  m.kind === 'image'
+                    ? ImageIcon
+                    : m.kind === 'audio'
+                      ? Music
+                      : m.kind === 'youtube'
+                        ? Youtube
+                        : m.kind === 'link'
+                          ? Link2
+                          : FileText;
+                return (
+                  <li key={m.id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onAttached(m.id);
+                        onClose();
+                      }}
+                      className="flex w-full items-center gap-2 py-2 text-left hover:bg-fg/5"
+                    >
+                      <Icon className="h-4 w-4 shrink-0 text-gold" />
+                      <span className="min-w-0 flex-1 truncate font-sans text-sm text-fg">
+                        {m.title ?? m.url ?? m.kind}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            {(library ?? []).filter((m) => m.id !== current?.id).length ===
+              0 && (
+              <li className="py-3 font-sans text-xs text-muted">
+                Nothing in this course yet.
+              </li>
+            )}
+          </ul>
+        ) : mode === 'file' ? (
           <FilePickerButton
             // Worksheets and documents, not only images.
             accept="image/*,application/pdf,.doc,.docx,.odt,.rtf,audio/*"
