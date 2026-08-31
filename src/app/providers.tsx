@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { onlineManager, QueryClientProvider } from '@tanstack/react-query';
 import {
   createQueryClient,
   hydrateFromStorage,
@@ -19,6 +19,18 @@ export function Providers({ children }: { children: ReactNode }) {
 
   // Mirror successful queries back to storage for the next open.
   useEffect(() => startPersisting(queryClient), [queryClient]);
+
+  // Offline, a signing query resolves to whatever the phone holds — and that
+  // answer is "fresh" for an hour. The moment the network is back, ask again.
+  useEffect(
+    () =>
+      onlineManager.subscribe((online) => {
+        if (!online) return;
+        void queryClient.invalidateQueries({ queryKey: ['signed-url'] });
+        void queryClient.invalidateQueries({ queryKey: ['signed-urls'] });
+      }),
+    [queryClient]
+  );
 
   return (
     <QueryClientProvider client={queryClient}>
