@@ -14,9 +14,12 @@ const TRIED = 'katitos:update-tried';
  * was something quietly not working. Now: on launch, if the server is serving a
  * different build, it applies it and reloads. Two seconds under the splash.
  *
- * Only on launch. A version found later (coming back to the app) is left for
- * the Version row in Settings, because reloading someone mid-sentence to save
- * them four seconds is not a trade worth making.
+ * Only on launch — and that is enforced, not just intended. The status hook
+ * asks the server again every time the app comes back to the foreground, so
+ * without a window the first "stale" could arrive an hour into a session and
+ * reload the lesson she was half-way through writing. A version found later is
+ * left for the Version row in Settings, because reloading someone mid-sentence
+ * to save them four seconds is not a trade worth making.
  */
 export function AutoUpdate() {
   const { state, server, update } = useBuildStatus();
@@ -27,7 +30,17 @@ export function AutoUpdate() {
     // Never in dev: the stamp changes with every commit, and reloading the app
     // out from under a test run or a hot reload helps nobody.
     if (!import.meta.env.PROD || fired.current) return;
-    if (!shouldAutoUpdate(state, server, sessionStorage.getItem(TRIED))) return;
+    // performance.now() counts from this page's own load, so it is exactly
+    // "how long since launch" — a backgrounded-and-resumed app keeps counting.
+    if (
+      !shouldAutoUpdate(
+        state,
+        server,
+        sessionStorage.getItem(TRIED),
+        performance.now()
+      )
+    )
+      return;
     fired.current = true;
     try {
       sessionStorage.setItem(TRIED, server!.sha);
