@@ -1,17 +1,22 @@
 import { useState } from 'react';
+import { nanoid } from 'nanoid';
 import { Mic } from 'lucide-react';
 import { cn } from '@kernel/lib';
-import { BUCKETS } from '@kernel/storage';
+import { supabase } from '@kernel/supabase';
+import { BUCKETS, storagePaths, useUpload } from '@kernel/storage';
 import {
+  AudioRecorder,
   Button,
   Input,
   OptionButton,
   PlayButton,
+  type AudioClip,
   type OptionState,
 } from '@kernel/ui';
 import type { Exercise, Lang } from '../../types';
 import {
   acceptedForms,
+  speakAnswer,
   splitTemplate,
   type ExerciseOption,
   type Grade,
@@ -467,6 +472,36 @@ function MatchView({
  */
 function SpeakView({ exercise, value, onChange, disabled }: ExerciseViewProps) {
   const path = (exercise.payload as { audioPath?: string })?.audioPath;
+  const given = speakAnswer(value);
+  const { upload } = useUpload();
+  const [busy, setBusy] = useState(false);
+  const [take, setTake] = useState(0);
+
+  /**
+   * His recording goes up the moment he stops. Until now "say it" was a
+   * button he pressed alone in a room; now she hears him when she marks.
+   */
+  const recorded = async (clip: AudioClip | null) => {
+    if (!clip) return;
+    setBusy(true);
+    try {
+      const audio = storagePaths.languageSpeech(nanoid(10), clip.ext);
+      await upload(BUCKETS.languageAudio, audio, clip.blob, {
+        contentType: clip.mime,
+        cacheControl: '31536000',
+      });
+      onChange({ ok: given.ok, audio });
+    } finally {
+      setBusy(false);
+    }
+  };
+  const again = () => {
+    if (given.audio)
+      void supabase.storage.from(BUCKETS.languageAudio).remove([given.audio]);
+    onChange({ ok: given.ok, audio: null });
+    setTake((t) => t + 1);
+  };
+
   return (
     <div className="space-y-2">
       {path && (
@@ -476,23 +511,50 @@ function SpeakView({ exercise, value, onChange, disabled }: ExerciseViewProps) {
           label="Hear how it sounds"
         />
       )}
+      {given.audio ? (
+        <div className="flex items-center gap-2">
+          <PlayButton
+            bucket={BUCKETS.languageAudio}
+            path={given.audio}
+            size="sm"
+            label="Hear yourself"
+          />
+          <span className="min-w-0 flex-1 font-sans text-xs text-muted">
+            Your recording — she hears it too.
+          </span>
+          {!disabled && (
+            <button
+              type="button"
+              onClick={again}
+              className="shrink-0 font-sans text-xs text-gold hover:underline"
+            >
+              again
+            </button>
+          )}
+        </div>
+      ) : disabled ? null : (
+        <AudioRecorder resetKey={take} onRecorded={(c) => void recorded(c)} />
+      )}
+      {busy && (
+        <p className="font-sans text-xs text-muted">Sending your voice…</p>
+      )}
       <p className="flex items-center gap-1.5 font-sans text-xs text-muted">
         <Mic className="h-3.5 w-3.5" /> Say it out loud, then mark yourself.
       </p>
       <div className="flex gap-2">
         <Button
           full
-          variant={value === true ? 'primary' : 'secondary'}
+          variant={given.ok === true ? 'primary' : 'secondary'}
           disabled={disabled}
-          onClick={() => onChange(true)}
+          onClick={() => onChange({ ok: true, audio: given.audio })}
         >
           Got it
         </Button>
         <Button
           full
-          variant={value === false ? 'danger' : 'secondary'}
+          variant={given.ok === false ? 'danger' : 'secondary'}
           disabled={disabled}
-          onClick={() => onChange(false)}
+          onClick={() => onChange({ ok: false, audio: given.audio })}
         >
           Not yet
         </Button>
