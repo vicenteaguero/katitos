@@ -21,6 +21,7 @@ import {
   Segmented,
   Sheet,
   Textarea,
+  toast,
   useTopBarAction,
   useWideLayout,
 } from '@kernel/ui';
@@ -30,6 +31,8 @@ import {
   useDeleteBlock,
   useDeleteExercise,
   useReorderBlocks,
+  useRestoreBlock,
+  useRestoreExercise,
   useUpdateBlock,
   useUpdateLesson,
 } from '../api/lessons.mutations';
@@ -53,6 +56,21 @@ import type {
 } from '../types';
 import { LANG_NATIVE_LABELS } from '../types';
 
+/** "Write it here" — in the language of the box. */
+const PROSE_PLACEHOLDER: Record<Lang, string> = {
+  ru: 'По-русски…',
+  es: 'En español…',
+  en: 'In English…',
+};
+
+/** The column a language's prose belongs in — all three exist, none is special. */
+function bodyPatch(lang: Lang, text: string) {
+  const value = text || null;
+  if (lang === 'ru') return { body_ru: value };
+  if (lang === 'es') return { body_es: value };
+  return { body_en: value };
+}
+
 /**
  * Where she builds the lesson.
  *
@@ -70,6 +88,8 @@ export function BuildRoute() {
   const reorder = useReorderBlocks();
   const updateLesson = useUpdateLesson();
   const deleteExercise = useDeleteExercise();
+  const restoreBlock = useRestoreBlock();
+  const restoreExercise = useRestoreExercise();
   const { native } = useLanguages();
   // The two languages this lesson can be EXPLAINED in — everything except the
   // one it teaches. A Russian lesson offers Español and English; a Spanish one
@@ -167,6 +187,7 @@ export function BuildRoute() {
               key={`${block.id}:${support}`}
               block={block}
               support={support}
+              target={lesson.targetLang}
               first={i === 0}
               last={i === blocks.length - 1}
               onMove={(by) => move(i, by)}
@@ -175,9 +196,31 @@ export function BuildRoute() {
               }
               words={lesson.vocabByBlock[block.id]}
               media={mediaFor(block)}
-              onDelete={() =>
-                deleteBlock.mutate({ id: block.id, lessonId: lesson.id })
-              }
+              onDelete={() => {
+                // Gone from the page at once — and back in one tap for the
+                // next nine seconds, words and all.
+                const words = (lesson.vocabByBlock[block.id] ?? []).map(
+                  (w) => w.id
+                );
+                deleteBlock.mutate(
+                  { id: block.id, lessonId: lesson.id },
+                  {
+                    onSuccess: () =>
+                      toast.success('Block removed', {
+                        key: 'block-removed',
+                        action: {
+                          label: 'Undo',
+                          onClick: () =>
+                            restoreBlock.mutate({
+                              block,
+                              vocabIds: words,
+                              lessonId: lesson.id,
+                            }),
+                        },
+                      }),
+                  }
+                );
+              }}
               onPickWords={() => setWordsFor(block)}
               onAttach={() => setAttachFor(block)}
               onSaveData={(data) =>
@@ -214,7 +257,23 @@ export function BuildRoute() {
                 type="button"
                 aria-label="Delete question"
                 onClick={() =>
-                  deleteExercise.mutate({ id: ex.id, lessonId: lesson.id })
+                  deleteExercise.mutate(
+                    { id: ex.id, lessonId: lesson.id },
+                    {
+                      onSuccess: () =>
+                        toast.success('Question removed', {
+                          key: 'question-removed',
+                          action: {
+                            label: 'Undo',
+                            onClick: () =>
+                              restoreExercise.mutate({
+                                exercise: ex,
+                                lessonId: lesson.id,
+                              }),
+                          },
+                        }),
+                    }
+                  )
                 }
                 className="shrink-0 text-muted"
               >
@@ -255,18 +314,25 @@ export function BuildRoute() {
         </div>
       </div>
 
-      <LessonSettingsSheet
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        lesson={lesson}
-        onSave={(patch) =>
-          updateLesson.mutate({
-            id: lesson.id,
-            wasPublished: lesson.status === 'published',
-            ...patch,
-          })
-        }
-      />
+      {/* Mounted only while open, so it always starts from the lesson as it
+          is now — an edit abandoned with the X used to sit in the sheet and go
+          out with the next publish. */}
+      {settingsOpen && (
+        <LessonSettingsSheet
+          open
+          onClose={() => setSettingsOpen(false)}
+          lesson={lesson}
+          onSave={(patch) =>
+            updateLesson.mutate({
+              id: lesson.id,
+              // So the course list learns the new title and status too.
+              courseId: lesson.courseId,
+              wasPublished: lesson.status === 'published',
+              ...patch,
+            })
+          }
+        />
+      )}
 
       {wordsFor && (
         <VocabPickerSheet
@@ -309,6 +375,7 @@ export function BuildRoute() {
           lessonId={lesson.id}
           position={lesson.exercises.length}
           exercise={editing === 'new' ? null : editing}
+          target={lesson.targetLang}
           onClose={() => setEditing(null)}
         />
       )}
@@ -326,6 +393,7 @@ export function BuildRoute() {
 function BlockEditor({
   block,
   support,
+  target,
   first,
   last,
   words,
@@ -339,6 +407,8 @@ function BlockEditor({
 }: {
   block: Block;
   support: Lang;
+  /** The language the lesson teaches — the top box. */
+  target: Lang;
   first: boolean;
   last: boolean;
   /** What this block currently holds, so the row can say so. */
@@ -355,10 +425,12 @@ function BlockEditor({
   onAttach: () => void;
   onSaveData: (data: TableBlockData) => void;
 }) {
-  const [ru, setRu] = useState(block.body_ru ?? '');
-  const [gloss, setGloss] = useState(
-    (support === 'es' ? block.body_es : block.body_en) ?? ''
-  );
+  // The language being taught on top, the explanation under it — each box
+  // reads and writes ITS OWN column. "Russian on top, English or Spanish
+  // under" was hardwired, so a Spanish course filed its Spanish as Russian
+  // and her Russian explanations as English.
+  const [head, setHead] = useState(block[`body_${target}`] ?? '');
+  const [gloss, setGloss] = useState(block[`body_${support}`] ?? '');
   const [grid, setGrid] = useState(() =>
     formatTable((block.data ?? {}) as TableBlockData, support)
   );
@@ -414,16 +486,20 @@ function BlockEditor({
         <Textarea
           value={grid}
           onChange={(e) => setGrid(e.target.value)}
-          onBlur={() => onSaveData(parseTable(grid, support))}
+          onBlur={() =>
+            onSaveData(
+              parseTable(grid, support, (block.data ?? {}) as TableBlockData)
+            )
+          }
           rows={4}
           spellCheck={false}
           placeholder={', singular, plural\nnominative, стол, столы'}
           className="font-display"
         />
         <Input
-          value={ru}
-          onChange={(e) => setRu(e.target.value)}
-          onBlur={() => onSave({ body_ru: ru || null })}
+          value={head}
+          onChange={(e) => setHead(e.target.value)}
+          onBlur={() => onSave(bodyPatch(target, head))}
           placeholder="What the table is (optional)"
         />
       </div>
@@ -527,25 +603,19 @@ function BlockEditor({
       </div>
 
       <Textarea
-        value={ru}
-        onChange={(e) => setRu(e.target.value)}
-        onBlur={() => onSave({ body_ru: ru || null })}
+        value={head}
+        onChange={(e) => setHead(e.target.value)}
+        onBlur={() => onSave(bodyPatch(target, head))}
         rows={2}
-        placeholder="По-русски…"
+        placeholder={PROSE_PLACEHOLDER[target]}
         className="font-display"
       />
       <Textarea
         value={gloss}
         onChange={(e) => setGloss(e.target.value)}
-        onBlur={() =>
-          onSave(
-            support === 'es'
-              ? { body_es: gloss || null }
-              : { body_en: gloss || null }
-          )
-        }
+        onBlur={() => onSave(bodyPatch(support, gloss))}
         rows={2}
-        placeholder={support === 'es' ? 'En español…' : 'In English…'}
+        placeholder={PROSE_PLACEHOLDER[support]}
       />
     </div>
   );
@@ -578,6 +648,24 @@ function LessonSettingsSheet({
   const [subtitle, setSubtitle] = useState(lesson.subtitle ?? '');
   const [kind, setKind] = useState(lesson.kind as LessonKind);
   const [dueOn, setDueOn] = useState(lesson.due_on ?? '');
+
+  /**
+   * Only what she actually changed.
+   *
+   * Sending every field meant a rename made on the phone was overwritten by
+   * whatever this device had when the sheet opened.
+   */
+  const changes = () => {
+    const patch: Parameters<typeof onSave>[0] = {};
+    if (title !== lesson.title) patch.title = title;
+    if ((subtitle || null) !== (lesson.subtitle ?? null)) {
+      patch.subtitle = subtitle || null;
+    }
+    if (kind !== lesson.kind) patch.kind = kind;
+    if ((dueOn || null) !== (lesson.due_on ?? null))
+      patch.dueOn = dueOn || null;
+    return patch;
+  };
 
   return (
     <Sheet open={open} onClose={onClose} title="This lesson" size="half">
@@ -614,7 +702,8 @@ function LessonSettingsSheet({
           full
           variant="secondary"
           onClick={() => {
-            onSave({ title, subtitle: subtitle || null, kind, dueOn });
+            const patch = changes();
+            if (Object.keys(patch).length) onSave(patch);
             onClose();
           }}
         >
@@ -626,10 +715,7 @@ function LessonSettingsSheet({
           full
           onClick={() => {
             onSave({
-              title,
-              subtitle: subtitle || null,
-              kind,
-              dueOn,
+              ...changes(),
               status: lesson.status === 'published' ? 'draft' : 'published',
             });
             onClose();
