@@ -24,7 +24,8 @@ import { usePolaroidDraft, usePolaroidNudge } from '@features/polaroid';
  * never go through it. The file it gets is handed to the Polaroid screen
  * through the draft store, because a File cannot travel in a URL.
  */
-export function PhotoButton() {
+/** `raised`: the bar's version hangs out of its slot; the rail's sits flat. */
+export function PhotoButton({ raised = true }: { raised?: boolean } = {}) {
   const navigate = useNavigate();
   const { state, today, rescueDay, isLoading } = usePolaroidNudge();
   const setDraft = usePolaroidDraft((s) => s.setDraft);
@@ -51,7 +52,12 @@ export function PhotoButton() {
       : "Take today's photo";
 
   return (
-    <div className="relative flex w-16 shrink-0 items-stretch justify-center">
+    <div
+      className={cn(
+        'relative flex shrink-0 justify-center',
+        raised ? 'w-16 items-stretch' : 'w-14 items-center'
+      )}
+    >
       {settled && state === 'shoot' && (
         <span className="photo-beacon" aria-hidden="true">
           <i className="photo-spark photo-spark--1">✦</i>
@@ -65,7 +71,8 @@ export function PhotoButton() {
         onClick={tap}
         aria-label={label}
         className={cn(
-          'lift-press absolute -top-5 z-[1] flex h-14 w-14 flex-col items-center justify-center gap-0.5',
+          'lift-press flex h-14 w-14 flex-col items-center justify-center gap-0.5',
+          raised ? 'absolute -top-5 z-[1]' : 'relative',
           'rounded-full transition-colors duration-300',
           done
             ? 'photo-btn--done'
