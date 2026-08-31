@@ -82,7 +82,6 @@ export function StudyRoute() {
   const [picked, setPicked] = useState<string | null>(null);
   const [score, setScore] = useState({ right: 0, total: 0 });
   const [missed, setMissed] = useState<string[]>([]);
-  const [requeued, setRequeued] = useState<Set<string>>(new Set());
   /** Looking back at a card already answered — read only. */
   const [peek, setPeek] = useState<number | null>(null);
   const [done, setDone] = useState(false);
@@ -154,24 +153,24 @@ export function StudyRoute() {
   const miss = card && mode === 'type' ? nearMiss(typed, forms) : null;
 
   const reveal = () => {
-    if (!card || revealed) return;
+    if (!card || revealed || peek !== null) return;
     setRevealed(true);
   };
 
   const answer = (g: Grade) => {
-    if (!card || !queue) return;
+    if (!card || !queue || peek !== null) return;
     grade.mutate({ vocabId: card.id, grade: g, prev: review });
     setScore((s) => ({
       right: s.right + (g === 2 ? 1 : 0),
       total: s.total + 1,
     }));
     if (g < 2) setMissed((m) => (m.includes(card.id) ? m : [...m, card.id]));
-    // A blank comes round again before the session ends — once.
+    // A blank comes round again before the session ends — once. The queue
+    // itself is the record, so a resumed session does not add it again.
     let next = queue;
-    if (g === 0 && !requeued.has(card.id)) {
+    if (g === 0 && !queue.slice(i + 1).includes(card.id)) {
       next = [...queue, card.id];
       setQueue(next);
-      setRequeued((r) => new Set(r).add(card.id));
     }
     setRevealed(false);
     setTyped('');
@@ -191,15 +190,14 @@ export function StudyRoute() {
     setPicked(null);
     setScore({ right: 0, total: 0 });
     setMissed([]);
-    setRequeued(new Set());
     setPeek(null);
     setDone(false);
   };
 
   useHotkeys(
     {
-      space: () => (mode === 'type' ? undefined : reveal()),
-      enter: () => (mode === 'type' ? undefined : reveal()),
+      // Space and Enter belong to the typed answer's own box in type mode.
+      ...(mode === 'type' ? {} : { space: reveal, enter: reveal }),
       '1': () => revealed && answer(0),
       '2': () => revealed && answer(1),
       '3': () => revealed && answer(2),
