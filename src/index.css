@@ -231,6 +231,39 @@ textarea,
   -webkit-touch-callout: default;
 }
 
+/* ── Teach mode ────────────────────────────────────────────────────────────
+   The lesson, projected on a call: the same blocks, set bigger, nothing
+   else on the screen. */
+.teach-stage {
+  font-size: 1.15rem;
+}
+.teach-stage .font-display.text-lg {
+  font-size: 2.25rem;
+  line-height: 1.15;
+}
+.teach-stage .font-display.text-base {
+  font-size: 1.6rem;
+}
+.teach-stage .font-sans.text-sm {
+  font-size: 1.15rem;
+  line-height: 1.6;
+}
+.teach-stage .text-\[0\.95rem\] {
+  font-size: 1.35rem;
+}
+
+/* A word in a lesson you can tap for its meaning: set exactly like the text
+   around it, with a dotted underline that says "there is more". */
+.glossary-word {
+  all: unset;
+  cursor: pointer;
+  border-bottom: 1px dotted rgba(228, 195, 106, 0.55);
+}
+.glossary-word:hover,
+.glossary-word:focus-visible {
+  border-bottom-style: solid;
+}
+
 /* ── A mouse exists now ─────────────────────────────────────────────────────
    Buttons and links look pressable under it, and a control that has focus
    from the keyboard shows it — in gilt, not the browser's blue. The kernel
