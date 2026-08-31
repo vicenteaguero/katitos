@@ -1,13 +1,6 @@
 import { useState } from 'react';
 import { useParams } from 'react-router';
-import {
-  Minus,
-  Plus,
-  Send,
-  SlidersHorizontal,
-  Trash2,
-  Type,
-} from 'lucide-react';
+import { Send, SlidersHorizontal, Trash2 } from 'lucide-react';
 import { cn } from '@kernel/lib';
 import {
   Button,
@@ -17,11 +10,13 @@ import {
   Field,
   FieldRow,
   Input,
-  LoadingScreen,
+  Kicker,
+  ListSkeleton,
   RowToolbar,
   Segmented,
   Textarea,
   toast,
+  TopBarButton,
   useDesk,
   useTopBarAction,
 } from '@kernel/ui';
@@ -42,11 +37,11 @@ import { formatTable, parseTable } from '../lib/table-block';
 import { ExerciseEditor } from '../components/exercises/exercise-editor';
 import { MediaBlockEditor } from '../components/media-block-editor';
 import { LessonTree } from '../components/lesson-tree';
+import { BlockCard, BlockPalette } from '../components/kit';
 import { VocabPickerSheet } from '../components/vocab-picker-sheet';
 import type { Json } from '@kernel/supabase';
 import type {
   Block,
-  BlockKind,
   Exercise,
   LessonKind,
   Media,
@@ -122,20 +117,18 @@ export function BuildRoute() {
           label: LANG_NATIVE_LABELS[l],
         }))}
       />
-      <button
-        type="button"
+      <TopBarButton
+        label="Lesson settings"
         onClick={() => setSettingsOpen(true)}
-        aria-label="Lesson settings"
-        className="lift-press flex h-8 w-8 items-center justify-center rounded-full bg-surface-2 text-gold shadow-loge"
-        style={{ border: '1px solid rgba(228,195,106,.4)' }}
+        variant="quiet"
       >
         <SlidersHorizontal className="h-4 w-4" />
-      </button>
+      </TopBarButton>
     </div>,
     [support]
   );
 
-  if (isLoading) return <LoadingScreen />;
+  if (isLoading) return <ListSkeleton rows={6} />;
   if (!lesson) return <Empty icon="📄" title="No such lesson" />;
 
   const blocks = lesson.blocks;
@@ -156,39 +149,23 @@ export function BuildRoute() {
 
   /** The desk's right pane: what to add, and what this lesson is. */
   const inspector = (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="space-y-1.5">
-        <p className="eyebrow">Add</p>
-        <div className="flex flex-wrap gap-1.5">
-          {(['text', 'vocab', 'table', 'media', 'divider'] as BlockKind[]).map(
-            (kind) => (
-              <Button
-                key={kind}
-                size="sm"
-                variant="secondary"
-                onClick={() =>
-                  createBlock.mutate({
-                    lessonId: lesson.id,
-                    kind,
-                    position: blocks.length,
-                  })
-                }
-              >
-                <Plus size={13} /> {kind}
-              </Button>
-            )
-          )}
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => setEditing('new')}
-          >
-            <Type size={13} /> question
-          </Button>
-        </div>
+        <Kicker as="p">Add</Kicker>
+        <BlockPalette
+          busy={createBlock.isPending}
+          onAdd={(kind) =>
+            createBlock.mutate({
+              lessonId: lesson.id,
+              kind,
+              position: blocks.length,
+            })
+          }
+          onQuestion={() => setEditing('new')}
+        />
       </div>
       <div className="space-y-1.5 rounded-lg bg-surface px-3 py-2.5">
-        <p className="eyebrow">This lesson</p>
+        <Kicker as="p">This lesson</Kicker>
         <p className="font-sans text-sm text-fg">
           {KIND_LABEL[lesson.kind as LessonKind] ?? lesson.kind}
           {lesson.due_on ? ` · due ${lesson.due_on}` : ''}
@@ -308,9 +285,9 @@ export function BuildRoute() {
               className="flex items-center gap-2 rounded-lg bg-surface px-3 py-2"
             >
               <span className="min-w-0 flex-1">
-                <span className="block font-sans text-[0.68rem] uppercase tracking-[0.12em] text-gold">
+                <Kicker as="span" className="block">
                   {ex.kind}
-                </span>
+                </Kicker>
                 <span className="block truncate font-sans text-sm text-fg">
                   {pick(ex, 'prompt', support) || 'Untitled question'}
                 </span>
@@ -476,13 +453,17 @@ function BlockEditor({
 
   if (block.kind === 'divider') {
     return (
-      <div className="flex items-center gap-2 rounded-lg bg-surface px-3 py-2">
-        <Minus className="h-4 w-4 text-muted" />
-        <span className="flex-1 font-sans text-xs text-muted">A break</span>
-        <button type="button" onClick={onDelete} className="text-muted">
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
-      </div>
+      <BlockCard
+        kind="a break"
+        toolbar={
+          <RowToolbar
+            first={first}
+            last={last}
+            onMove={onMove}
+            onDelete={onDelete}
+          />
+        }
+      />
     );
   }
 
@@ -490,18 +471,17 @@ function BlockEditor({
 
   if (block.kind === 'table') {
     return (
-      <div className="space-y-1.5 rounded-lg bg-surface px-3 py-2.5">
-        <div className="flex items-center gap-2">
-          <span className="flex-1 font-sans text-[0.68rem] uppercase tracking-[0.12em] text-gold">
-            table
-          </span>
+      <BlockCard
+        kind="table"
+        toolbar={
           <RowToolbar
             first={first}
             last={last}
             onMove={onMove}
             onDelete={onDelete}
           />
-        </div>
+        }
+      >
         <Textarea
           value={grid}
           onChange={(e) => setGrid(e.target.value)}
@@ -521,7 +501,7 @@ function BlockEditor({
           onBlur={() => onSave(bodyPatch(target, head))}
           placeholder="What the table is (optional)"
         />
-      </div>
+      </BlockCard>
     );
   }
 
@@ -533,54 +513,44 @@ function BlockEditor({
         : 'No words yet — tap to choose them'
       : (media?.title ?? 'Nothing attached yet — tap to add a file or a link');
     return (
-      <div className="flex items-center gap-2 rounded-lg bg-surface px-3 py-2.5">
+      <BlockCard
+        kind={isVocab ? 'words' : 'material'}
+        toolbar={
+          <RowToolbar
+            first={first}
+            last={last}
+            onMove={onMove}
+            onDelete={onDelete}
+          />
+        }
+      >
         <button
           type="button"
           onClick={isVocab ? onPickWords : onAttach}
-          className="min-w-0 flex-1 text-left"
+          className={cn(
+            'block w-full truncate rounded text-left font-sans text-sm hover:bg-fg/5',
+            (isVocab ? words?.length : media) ? 'text-fg' : 'text-muted'
+          )}
         >
-          <span className="block font-sans text-[0.68rem] uppercase tracking-[0.12em] text-gold">
-            {isVocab ? 'words' : 'material'}
-          </span>
-          <span
-            className={cn(
-              'block truncate font-sans text-sm',
-              (isVocab ? words?.length : media) ? 'text-fg' : 'text-muted'
-            )}
-          >
-            {summary}
-          </span>
+          {summary}
         </button>
-        <RowToolbar
-          first={first}
-          last={last}
-          onMove={onMove}
-          onDelete={onDelete}
-        />
-      </div>
+      </BlockCard>
     );
   }
 
   return (
-    <div className="space-y-1.5 rounded-lg bg-surface px-3 py-2.5">
-      <div className="flex items-center gap-2">
-        <span className="flex-1 font-sans text-[0.68rem] uppercase tracking-[0.12em] text-gold">
-          {block.kind}
-        </span>
-        {missing && (
-          <span
-            className="h-1.5 w-1.5 rounded-full bg-copper"
-            title="No translation yet"
-          />
-        )}
+    <BlockCard
+      kind={block.kind}
+      missing={missing}
+      toolbar={
         <RowToolbar
           first={first}
           last={last}
           onMove={onMove}
           onDelete={onDelete}
         />
-      </div>
-
+      }
+    >
       <Textarea
         value={head}
         onChange={(e) => setHead(e.target.value)}
@@ -596,7 +566,7 @@ function BlockEditor({
         rows={2}
         placeholder={PROSE_PLACEHOLDER[support]}
       />
-    </div>
+    </BlockCard>
   );
 }
 
