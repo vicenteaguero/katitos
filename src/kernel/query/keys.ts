@@ -90,15 +90,18 @@ export const qk = {
     course: (id: string) => ['lang', 'course', id] as const,
     units: (courseId: string) => ['lang', 'course', courseId, 'units'] as const,
     lesson: (id: string) => ['lang', 'lesson', id] as const,
-    blocks: (lessonId: string) =>
-      ['lang', 'lesson', lessonId, 'blocks'] as const,
-    exercises: (lessonId: string) =>
-      ['lang', 'lesson', lessonId, 'exercises'] as const,
-    attempts: (lessonId: string) =>
-      ['lang', 'lesson', lessonId, 'attempts'] as const,
+    /**
+     * Deliberately NOT under `lesson(id)`: that key is invalidated by every
+     * edit in the builder, and attempts nested beneath it were wiped along
+     * with it — his answers refetched mid-lesson because she fixed a typo.
+     * (The album keys below learned the same lesson: a prefix is an
+     * invalidation.)
+     */
+    attempts: (lessonId: string) => ['lang', 'attempts', lessonId] as const,
     progress: () => ['lang', 'progress'] as const,
     vocab: () => ['lang', 'vocab'] as const,
-    vocabReviews: () => ['lang', 'vocab', 'reviews'] as const,
+    /** Not under `vocab()` — adding a word must not refetch every review row. */
+    vocabReviews: () => ['lang', 'reviews'] as const,
     media: (courseId: string) => ['lang', 'course', courseId, 'media'] as const,
     alphabet: () => ['lang', 'alphabet'] as const,
   },
