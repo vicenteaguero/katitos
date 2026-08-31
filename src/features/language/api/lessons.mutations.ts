@@ -501,9 +501,32 @@ export function useUpdateBlock() {
         .eq('id', v.id);
       if (error) throw error;
     },
-    onError: (e: Error) => toast.error(e.message),
-    onSuccess: (_d, v) =>
-      void qc.invalidateQueries({ queryKey: qk.lang.lesson(v.lessonId) }),
+    // Optimistic: the text she just typed is the truth of the page, and every
+    // blur used to re-run the lesson's three round-trips before showing it.
+    onMutate: async (v) => {
+      const key = qk.lang.lesson(v.lessonId);
+      await qc.cancelQueries({ queryKey: key });
+      const before = qc.getQueryData<LessonFull>(key);
+      if (before) {
+        const blocks = before.blocks
+          .map((b) =>
+            b.id === v.id ? { ...b, ...(v.patch as Partial<Block>) } : b
+          )
+          .sort((a, b) => a.position - b.position);
+        qc.setQueryData<LessonFull>(key, { ...before, blocks });
+      }
+      return { before };
+    },
+    onError: (e: Error, v, ctx) => {
+      if (ctx?.before) qc.setQueryData(qk.lang.lesson(v.lessonId), ctx.before);
+      toast.error(e.message);
+    },
+    // Only a change of SHAPE needs the server's view back; a body edit is
+    // already on screen, and the realtime sync reconciles it in the background.
+    onSuccess: (_d, v) => {
+      if (v.patch.position !== undefined || v.patch.data !== undefined)
+        void qc.invalidateQueries({ queryKey: qk.lang.lesson(v.lessonId) });
+    },
   });
 }
 
