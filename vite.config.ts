@@ -68,9 +68,9 @@ export default defineConfig({
         // webp so the Wall's slate ships with the shell instead of being a cold
         // network fetch on every first visit to a primary tab. Workbox
         // revision-hashes each entry, so the cost is once per file change.
-        // NOT jpg: the old 150 KB chalkboard.jpg has to stay on disk for the
-        // one session an old bundle still asks for it, but precaching it would
-        // hand every install 150 KB nobody will ever look at again.
+        // jpg is deliberately absent: the slate ships as webp only. The old
+        // jpg lingered for the one session a pre-switch bundle might still ask
+        // for it — the app now takes a new build at launch, so nobody does.
         globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2}'],
         // iOS reads launch images directly at startup — no need to precache the
         // large splash PNGs into the runtime cache.
