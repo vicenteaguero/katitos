@@ -1,5 +1,11 @@
-import { useEffect } from 'react';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router';
+import { useEffect, useRef } from 'react';
+import {
+  Link,
+  Outlet,
+  useLocation,
+  useNavigate,
+  useNavigationType,
+} from 'react-router';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@kernel/auth';
 import { useEnsurePushSubscription } from '@kernel/push';
@@ -22,6 +28,7 @@ import { SplashScreen } from './splash-screen';
 import { LoveBurst } from './love-burst';
 import { NotificationPrompt } from './notification-prompt';
 import { ChangelogModal } from './changelog-modal';
+import { PendingPill } from './pending-pill';
 import { useAnnounceRelease } from './use-announce-release';
 import { featureRegistry } from '../features.registry';
 
@@ -92,14 +99,34 @@ function TopBar() {
   );
 }
 
-/** Reset the scroll container to the top on every route change. */
+/**
+ * A new screen starts at the top; the screen you came BACK to is where you
+ * left it. Marking one lesson from the middle of a long course used to land
+ * her back at the top of the course every time.
+ */
 function ScrollToTop() {
   const { pathname } = useLocation();
+  const navType = useNavigationType();
+  const positions = useRef(new Map<string, number>());
+  const previous = useRef(pathname);
   useEffect(() => {
-    document.querySelector('main')?.scrollTo({ top: 0, left: 0 });
-    // On a desk the canvas scrolls, not <main>.
-    document.querySelector('[data-desk-canvas]')?.scrollTo({ top: 0, left: 0 });
-  }, [pathname]);
+    const scroller = () =>
+      // On a desk the canvas scrolls, not <main>.
+      (document.querySelector('[data-desk-canvas]') as HTMLElement | null) ??
+      document.querySelector('main');
+    const el = scroller();
+    if (previous.current !== pathname) {
+      positions.current.set(previous.current, el?.scrollTop ?? 0);
+      previous.current = pathname;
+    }
+    const back =
+      navType === 'POP' ? positions.current.get(pathname) : undefined;
+    // The route's content mounts after this effect; give it a frame.
+    const t = window.requestAnimationFrame(() =>
+      scroller()?.scrollTo({ top: back ?? 0, left: 0 })
+    );
+    return () => window.cancelAnimationFrame(t);
+  }, [pathname, navType]);
   return null;
 }
 
@@ -138,6 +165,7 @@ export function AppShell() {
             {desk && <SideRail />}
             <div className="flex min-h-0 min-w-0 flex-1 flex-col">
               <TopBar />
+              <PendingPill />
               <main
                 className={cn(
                   'min-h-0 flex-1 overflow-x-hidden [-webkit-overflow-scrolling:touch]',
