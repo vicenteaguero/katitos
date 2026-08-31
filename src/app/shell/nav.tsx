@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router';
 import type { LucideIcon } from 'lucide-react';
-import { Home, BookHeart, Camera, StickyNote, LayoutGrid } from 'lucide-react';
+import { Home, BookHeart, StickyNote, LayoutGrid } from 'lucide-react';
 import { cn } from '@kernel/lib';
-import { useMyTodayPolaroid } from '@features/polaroid';
 import { MoreDrawer } from './more-drawer';
+import { PhotoButton } from './photo-button';
 
 function NavTab({
   active,
@@ -43,14 +43,6 @@ function NavTab({
 
 export function BottomNav() {
   const [moreOpen, setMoreOpen] = useState(false);
-  // No portrait taken today → invite it with a magical, twinkling beacon.
-  // It follows YOUR day, not the couple's: apart, our "todays" are 11 hours
-  // out of step, and the nudge belongs to whoever still owes a photo.
-  const { mine, isLoading } = useMyTodayPolaroid();
-  // Un-gated on purpose. Hiding this inside /polaroid meant the one screen
-  // showing it was the screen you'd already opened — the reminder never
-  // reminded anyone. Now it twinkles wherever you are, until you've posted.
-  const needsPhoto = !isLoading && !mine;
 
   return (
     <>
@@ -73,30 +65,11 @@ export function BottomNav() {
             )}
           </NavLink>
 
-          {/* Raised central Polaroid camera button — wine on white, gently
-            overlapping the bar. */}
-          <div className="relative flex w-16 shrink-0 items-stretch justify-center">
-            {needsPhoto && (
-              <span className="photo-beacon" aria-hidden="true">
-                <i className="photo-spark photo-spark--1">✦</i>
-                <i className="photo-spark photo-spark--2">✦</i>
-                <i className="photo-spark photo-spark--3">✦</i>
-              </span>
-            )}
-            <NavLink
-              to="/polaroid?shoot=1"
-              aria-label="Take a photo"
-              className={cn(
-                'lift-press absolute -top-5 z-[1] flex h-14 w-14 flex-col items-center justify-center gap-0.5',
-                'rounded-full bg-accent text-accent-fg shadow-loge transition-shadow duration-200'
-              )}
-            >
-              <Camera size={22} strokeWidth={1.75} />
-              <span className="font-sans text-[0.5rem] font-bold uppercase tracking-[0.12em]">
-                Photo
-              </span>
-            </NavLink>
-          </div>
+          {/* The raised centre button. It is the daily habit, so it says which
+            of the three things is true rather than always saying "Photo" —
+            un-gated, on every screen, because the one place a reminder is
+            useless is the screen you already opened. */}
+          <PhotoButton />
 
           <NavLink to="/wall" className="flex flex-1 lift-press">
             {({ isActive }) => (
