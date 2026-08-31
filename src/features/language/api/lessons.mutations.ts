@@ -852,6 +852,8 @@ export function useSaveProgress() {
       status: Exclude<ProgressStatus, 'not_started'>;
       score?: number | null;
       teacherNote?: string | null;
+      /** Her voice on the whole lesson, already uploaded. */
+      teacherAudioPath?: string | null;
       forUserId?: string;
       /** The lesson's title — with it, the other phone is told. */
       title?: string;
@@ -864,6 +866,7 @@ export function useSaveProgress() {
         status: string;
         score?: number | null;
         teacher_note?: string | null;
+        teacher_audio_path?: string | null;
         submitted_at?: string;
         graded_at?: string;
       } = {
@@ -873,6 +876,8 @@ export function useSaveProgress() {
       };
       if (v.score !== undefined) row.score = v.score;
       if (v.teacherNote !== undefined) row.teacher_note = v.teacherNote;
+      if (v.teacherAudioPath !== undefined)
+        row.teacher_audio_path = v.teacherAudioPath;
       if (v.status === 'submitted') row.submitted_at = new Date().toISOString();
       if (v.status === 'graded') row.graded_at = new Date().toISOString();
       const { error } = await supabase
@@ -889,7 +894,10 @@ export function useSaveProgress() {
           : v.status === 'graded'
             ? [
                 `Marked${pct}`,
-                v.teacherNote || v.title,
+                v.teacherNote ||
+                  (v.teacherAudioPath
+                    ? 'With a word from her, out loud'
+                    : v.title),
                 `/language/lesson/${v.lessonId}`,
               ]
             : [
@@ -950,13 +958,18 @@ export function useMarkAttempt() {
       /** 1 right, 0 wrong, null back to the app's verdict. */
       teacherScore?: number | null;
       teacherNote?: string | null;
+      /** Her voice on this one answer, already uploaded. */
+      teacherAudioPath?: string | null;
     }) => {
       const patch: {
         teacher_score?: number | null;
         teacher_note?: string | null;
+        teacher_audio_path?: string | null;
       } = {};
       if (v.teacherScore !== undefined) patch.teacher_score = v.teacherScore;
       if (v.teacherNote !== undefined) patch.teacher_note = v.teacherNote;
+      if (v.teacherAudioPath !== undefined)
+        patch.teacher_audio_path = v.teacherAudioPath;
       const { error } = await supabase
         .from('lang_attempts')
         .update(patch)
