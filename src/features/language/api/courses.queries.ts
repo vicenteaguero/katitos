@@ -74,6 +74,7 @@ export function useUnits(courseId: string | undefined) {
           // A draft belongs to whoever is writing it. The migration says "he
           // only ever sees published" and nothing enforced it — half-written
           // lessons appeared in his list and opened.
+          .filter((l) => !l.deleted_at)
           .filter((l) => l.status === 'published' || l.created_by === userId)
           .sort((a, b) => a.position - b.position),
       }));
