@@ -15,11 +15,15 @@ export function StudyBanner() {
   const { data: words } = useAllVocab(learning);
   const { data: reviews } = useMyReviews();
 
-  const cards = words ?? [];
-  const map = reviews ?? new Map();
-  const due = cards.filter((c) => isDue(map.get(c.id))).length;
-  const known = cards.filter((c) => mastery(map.get(c.id)) === 'known').length;
-  const session = buildSession(cards, map).length;
+  // Only once BOTH halves are here — with the reviews still on their way,
+  // every word looked due and the number jumped after a second.
+  if (!words || !reviews) return null;
+  const cards = words;
+  const due = cards.filter((c) => isDue(reviews.get(c.id))).length;
+  const known = cards.filter(
+    (c) => mastery(reviews.get(c.id)) === 'known'
+  ).length;
+  const session = buildSession(cards, reviews).length;
 
   if (cards.length === 0) return null;
 
@@ -36,8 +40,10 @@ export function StudyBanner() {
           {session > 0 ? 'Practice' : 'All caught up'}
         </span>
         <span className="block font-sans text-xs text-muted">
+          {/* The session is what a tap actually gives: twenty cards, not the
+              whole backlog. The backlog is said too when it is bigger. */}
           {session > 0
-            ? `${due} waiting for you`
+            ? `${session} to practise${due > session ? ` · ${due} due` : ''}`
             : 'nothing due — come back tomorrow'}
         </span>
       </span>
