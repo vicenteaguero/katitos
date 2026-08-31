@@ -5,6 +5,7 @@ import {
   AudioRecorder,
   Button,
   Field,
+  Fieldset,
   FieldRow,
   Input,
   Sheet,
@@ -53,6 +54,8 @@ export function VocabPickerSheet({
   const [newTerm, setNewTerm] = useState('');
   const [newMeaning, setNewMeaning] = useState('');
   const [newAudio, setNewAudio] = useState<AudioClip | null>(null);
+  // Bumped after each word goes in, so the recorder starts clean for the next.
+  const [added, setAdded] = useState(0);
 
   // Re-seed when the sheet is opened for a different block.
   useEffect(() => {
@@ -93,6 +96,7 @@ export function VocabPickerSheet({
           setNewTerm('');
           setNewMeaning('');
           setNewAudio(null);
+          setAdded((n) => n + 1);
         },
       }
     );
@@ -181,9 +185,11 @@ export function VocabPickerSheet({
             />
           </Field>
         </FieldRow>
-        <Field label="Say it" hint="So the word is not silent in the lesson">
-          <AudioRecorder onRecorded={setNewAudio} />
-        </Field>
+        {/* A Fieldset, not a Field: tapping a label's caption presses the
+            first button inside it — which was Record. */}
+        <Fieldset label="Say it" hint="So the word is not silent in the lesson">
+          <AudioRecorder onRecorded={setNewAudio} resetKey={added} />
+        </Fieldset>
         <Button
           variant="secondary"
           full
