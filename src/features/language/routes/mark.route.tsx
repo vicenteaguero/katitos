@@ -79,6 +79,13 @@ type Margin = {
  */
 export function MarkRoute() {
   const { lessonId } = useParams<{ lessonId: string }>();
+  // Remount per lesson: "next in the queue" navigates in place, and the
+  // previous lesson's typed score, note and focus were carried into it.
+  return <MarkLesson key={lessonId ?? 'none'} />;
+}
+
+function MarkLesson() {
+  const { lessonId } = useParams<{ lessonId: string }>();
   const { data: lesson, isLoading } = useLesson(lessonId);
   const { data: attempts } = useAttemptsForMarking(lessonId);
   const { data: hisRows } = usePartnerProgress();
