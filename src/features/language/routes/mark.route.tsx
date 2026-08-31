@@ -1,13 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { DateTime } from 'luxon';
-import { Check, MessageSquare, RotateCcw, X } from 'lucide-react';
+import { nanoid } from 'nanoid';
+import { Check, MessageSquare, Mic, RotateCcw, X } from 'lucide-react';
 import { usePartner } from '@kernel/auth';
 import { useHotkeys } from '@kernel/hooks';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import { cn } from '@kernel/lib';
+import { supabase } from '@kernel/supabase';
+import { BUCKETS, storagePaths, useUpload } from '@kernel/storage';
 import {
+  AudioRecorder,
   Button,
   Checkbox,
   Desk,
@@ -17,18 +21,20 @@ import {
   Kbd,
   Kicker,
   ListSkeleton,
+  PlayButton,
   ROW_TOOL,
   Textarea,
   toast,
   useDesk,
   useIsDesk,
+  type AudioClip,
 } from '@kernel/ui';
 import { usePartnerProgress } from '../api/courses.queries';
 import { useAttemptsForMarking, useLesson } from '../api/lessons.queries';
 import { useMarkAttempt, useSaveProgress } from '../api/lessons.mutations';
 import { useLanguages } from '../lib/languages';
 import { LessonTree } from '../components/lesson-tree';
-import { acceptedForms } from '../lib/exercise-schema';
+import { acceptedForms, speakAnswer } from '../lib/exercise-schema';
 import { verdictOf, weightedScore } from '../lib/marking';
 import { clockIn, isAsleep } from '../lib/quiet';
 import { pick } from '../lib/pick';
@@ -54,17 +60,22 @@ function at(iso: string | null | undefined): string | null {
   return t.isValid ? t.toFormat('ccc HH:mm') : null;
 }
 
-/** Her tick and her note, kept on screen until the refetch brings them back. */
-type Margin = { teacher_score?: number | null; teacher_note?: string | null };
+/** Her tick, her note and her voice, kept on screen until the refetch brings them back. */
+type Margin = {
+  teacher_score?: number | null;
+  teacher_note?: string | null;
+  teacher_audio_path?: string | null;
+};
 
 /**
  * Marking his work.
  *
  * The app can say whether an answer matched; it cannot say whether he has
  * understood, and it certainly cannot write him a note. So everything here
- * is her reading HIS answers: a tick or a cross of her own on each, a word
- * in the margin, a mark that writes itself from the ticks until she says
- * otherwise — and, on a desk, all of it from the home row.
+ * is her reading HIS answers — and hearing them, when he was asked to speak:
+ * a tick or a cross of her own on each, a word in the margin, typed or said,
+ * a mark that writes itself from the ticks until she says otherwise. On a
+ * desk, all of it from the home row.
  */
 export function MarkRoute() {
   const { lessonId } = useParams<{ lessonId: string }>();
@@ -74,6 +85,7 @@ export function MarkRoute() {
   const { partner } = usePartner();
   const saveProgress = useSaveProgress();
   const markAttempt = useMarkAttempt();
+  const { upload } = useUpload();
   const { native: support } = useLanguages();
   const navigate = useNavigate();
   const desk = useIsDesk();
@@ -87,11 +99,14 @@ export function MarkRoute() {
   const [scoreText, setScoreText] = useState('');
   const [scoreTouched, setScoreTouched] = useState(false);
   const [note, setNote] = useState('');
+  const [voice, setVoice] = useState<AudioClip | null>(null);
   const [wake, setWake] = useState(false);
   const [margin, setMargin] = useState<Record<string, Margin>>({});
   const [focus, setFocus] = useState(0);
   const [noteFor, setNoteFor] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
+  const [voiceFor, setVoiceFor] = useState<string | null>(null);
+  const [sending, setSending] = useState<string | null>(null);
   const noteSaved = useRef(false);
   const rows = useRef<(HTMLLIElement | null)[]>([]);
 
@@ -170,6 +185,37 @@ export function MarkRoute() {
     setNoteFor(null);
   };
 
+  /** Her voice on one answer: up the moment she stops, replacing the last. */
+  const uploadVoice = async (clip: AudioClip) => {
+    const path = storagePaths.languageVoice(nanoid(10), clip.ext);
+    await upload(BUCKETS.languageAudio, path, clip.blob, {
+      contentType: clip.mime,
+      cacheControl: '31536000',
+    });
+    return path;
+  };
+  const sendVoice = async (attemptId: string, clip: AudioClip | null) => {
+    if (!clip || !lessonId) return;
+    setSending(attemptId);
+    try {
+      const path = await uploadVoice(clip);
+      const old = [...his.values()].find(
+        (a) => a.id === attemptId
+      )?.teacher_audio_path;
+      setMargin((m) => ({
+        ...m,
+        [attemptId]: { ...m[attemptId], teacher_audio_path: path },
+      }));
+      markAttempt.mutate({ id: attemptId, lessonId, teacherAudioPath: path });
+      if (old) void supabase.storage.from(BUCKETS.languageAudio).remove([old]);
+      setVoiceFor(null);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setSending(null);
+    }
+  };
+
   const asleep = isAsleep(partner?.timezone);
   const clock = clockIn(partner?.timezone);
 
@@ -178,9 +224,18 @@ export function MarkRoute() {
     .filter((r) => r.status === 'submitted' && r.lesson_id !== lessonId)
     .sort((a, b) => (a.submitted_at ?? '').localeCompare(b.submitted_at ?? ''));
 
-  const giveBack = (status: 'graded' | 'returned') => {
-    if (!lesson || !partner) return;
+  const giveBack = async (status: 'graded' | 'returned') => {
+    if (!lesson || !partner || saveProgress.isPending) return;
     if (noteFor) saveNote();
+    let teacherAudioPath: string | undefined;
+    if (voice) {
+      try {
+        teacherAudioPath = await uploadVoice(voice);
+      } catch (e) {
+        toast.error((e as Error).message);
+        return;
+      }
+    }
     saveProgress.mutate(
       {
         lessonId: lesson.id,
@@ -193,6 +248,7 @@ export function MarkRoute() {
               : null
             : undefined,
         teacherNote: note.trim() || null,
+        teacherAudioPath,
         title: lesson.title,
         wake,
       },
@@ -227,7 +283,11 @@ export function MarkRoute() {
       n: () => focused && setVerdict(focused, 0),
       u: () => focused && setVerdict(focused, null),
       c: () => focused && openNote(focused),
-      'mod+enter': () => giveBack('graded'),
+      v: () => {
+        const a = focused && his.get(focused.id);
+        if (a) setVoiceFor(voiceFor === a.id ? null : a.id);
+      },
+      'mod+enter': () => void giveBack('graded'),
     },
     { enabled: !!lesson && answered.length > 0 }
   );
@@ -291,6 +351,23 @@ export function MarkRoute() {
           placeholder="почти! watch the ending on the second one"
         />
       </Field>
+      <div className="space-y-1">
+        <Kicker as="p">Or say it</Kicker>
+        {hisProgress?.teacher_audio_path && !voice && (
+          <div className="flex items-center gap-2">
+            <PlayButton
+              bucket={BUCKETS.languageAudio}
+              path={hisProgress.teacher_audio_path}
+              size="sm"
+              label="Your voice note"
+            />
+            <span className="font-sans text-xs text-muted">
+              your voice note from last time
+            </span>
+          </div>
+        )}
+        <AudioRecorder resetKey={lessonId} onRecorded={setVoice} />
+      </div>
       {clock && (
         <p className="font-sans text-xs text-muted">
           It's {clock} for him
@@ -313,7 +390,7 @@ export function MarkRoute() {
       <Button
         full
         disabled={saveProgress.isPending || !partner}
-        onClick={() => giveBack('graded')}
+        onClick={() => void giveBack('graded')}
       >
         Give it back to him
       </Button>
@@ -321,15 +398,15 @@ export function MarkRoute() {
         full
         variant="secondary"
         disabled={saveProgress.isPending || !partner}
-        onClick={() => giveBack('returned')}
+        onClick={() => void giveBack('returned')}
       >
         <RotateCcw size={14} /> Send it back for another go
       </Button>
       {desk && (
         <p className="font-sans text-xs leading-6 text-muted">
           <Kbd>J</Kbd> <Kbd>K</Kbd> move · <Kbd>Y</Kbd> <Kbd>N</Kbd> tick, cross
-          · <Kbd>U</Kbd> undo · <Kbd>C</Kbd> a word in the margin ·{' '}
-          <Kbd>⌘↵</Kbd> give it back
+          · <Kbd>U</Kbd> undo · <Kbd>C</Kbd> a word in the margin · <Kbd>V</Kbd>{' '}
+          say it · <Kbd>⌘↵</Kbd> give it back
         </p>
       )}
     </div>
@@ -362,6 +439,7 @@ export function MarkRoute() {
             const a = his.get(ex.id)!;
             const v = verdicts[i]!;
             const isFocused = i === focus;
+            const spoken = ex.kind === 'speak' ? speakAnswer(a.answer) : null;
             return (
               <li
                 key={ex.id}
@@ -400,10 +478,28 @@ export function MarkRoute() {
                     <p className="font-sans text-sm text-fg">
                       {pick(ex, 'prompt', support) || 'Untitled question'}
                     </p>
-                    <p className="font-display text-base text-fg">
-                      {shown(a.answer)}
-                    </p>
-                    {!v.correct && (
+                    {spoken?.audio ? (
+                      <div className="flex items-center gap-2">
+                        <PlayButton
+                          bucket={BUCKETS.languageAudio}
+                          path={spoken.audio}
+                          size="sm"
+                          label="Hear him"
+                        />
+                        <span className="font-sans text-sm text-fg">
+                          {spoken.ok === true
+                            ? 'he says he got it'
+                            : spoken.ok === false
+                              ? 'he says not yet'
+                              : 'he did not mark himself'}
+                        </span>
+                      </div>
+                    ) : (
+                      <p className="font-display text-base text-fg">
+                        {shown(a.answer)}
+                      </p>
+                    )}
+                    {!v.correct && ex.kind !== 'speak' && (
                       <p className="font-sans text-xs text-muted">
                         wanted: {acceptedForms(ex.answer).join(' · ') || '—'}
                       </p>
@@ -412,6 +508,19 @@ export function MarkRoute() {
                       <p className="font-display text-sm italic text-fg">
                         — {a.teacher_note}
                       </p>
+                    )}
+                    {a.teacher_audio_path && voiceFor !== a.id && (
+                      <div className="flex items-center gap-2">
+                        <PlayButton
+                          bucket={BUCKETS.languageAudio}
+                          path={a.teacher_audio_path}
+                          size="sm"
+                          label="Your voice on this one"
+                        />
+                        <span className="font-sans text-xs text-muted">
+                          your voice
+                        </span>
+                      </div>
                     )}
                   </div>
                   <div className="flex shrink-0 items-center">
@@ -451,6 +560,20 @@ export function MarkRoute() {
                     >
                       <MessageSquare className="h-4 w-4" />
                     </button>
+                    <button
+                      type="button"
+                      aria-label="Say it for him"
+                      aria-pressed={voiceFor === a.id}
+                      onClick={() =>
+                        setVoiceFor(voiceFor === a.id ? null : a.id)
+                      }
+                      className={cn(
+                        ROW_TOOL,
+                        voiceFor === a.id && 'bg-accent text-accent-fg'
+                      )}
+                    >
+                      <Mic className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
                 {noteFor === a.id && (
@@ -469,6 +592,19 @@ export function MarkRoute() {
                     rows={2}
                     placeholder="почти — watch the ending"
                   />
+                )}
+                {voiceFor === a.id && (
+                  <div className="space-y-1">
+                    <AudioRecorder
+                      resetKey={a.id}
+                      onRecorded={(c) => void sendVoice(a.id, c)}
+                    />
+                    <p className="font-sans text-xs text-muted">
+                      {sending === a.id
+                        ? 'Sending your voice…'
+                        : 'Stop, and it goes to him with the mark.'}
+                    </p>
+                  </div>
                 )}
               </li>
             );
