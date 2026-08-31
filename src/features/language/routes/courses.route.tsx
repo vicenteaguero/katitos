@@ -96,9 +96,10 @@ export function CoursesRoute() {
       <StudyBanner />
 
       <div className="flex gap-2">
-        {/* The alphabet is Cyrillic. It is worth a button to him and nothing
-            at all to her, so it only appears for the one who needs it. */}
-        {learning === 'ru' && (
+        {/* The alphabet is Cyrillic: for the one learning it — and for the one
+            who records the letters in her own voice, which is the point of the
+            screen. Gating it on "learning Russian" hid it from her entirely. */}
+        {(learning === 'ru' || native === 'ru') && (
           <Link to="/language/alphabet" className="flex-1">
             <Button full variant="secondary">
               <Type size={15} /> Alphabet
