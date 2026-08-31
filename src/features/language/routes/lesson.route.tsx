@@ -235,16 +235,19 @@ export function LessonRoute() {
         </section>
       )}
 
-      {lesson.blocks.map((block) => (
-        <BlockView
-          key={block.id}
-          block={block}
-          support={support}
-          target={lesson.targetLang}
-          vocab={lesson.vocabByBlock[block.id]}
-          media={mediaFor(block)}
-        />
-      ))}
+      {/* Hers to select and copy — a lesson on a computer is a document. */}
+      <div data-readable className="space-y-4">
+        {lesson.blocks.map((block) => (
+          <BlockView
+            key={block.id}
+            block={block}
+            support={support}
+            target={lesson.targetLang}
+            vocab={lesson.vocabByBlock[block.id]}
+            media={mediaFor(block)}
+          />
+        ))}
+      </div>
 
       {exercises.length > 0 && (
         <section className="space-y-3">
