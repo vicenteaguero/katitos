@@ -30,6 +30,10 @@ export const storagePaths = {
    * record twice. The old object is removed by whoever replaces it.
    */
   languageAudio: (id: string, ext = 'webm') => `${id}.${ext}`,
+  /** His answer to a "say it" question — the recording she marks. */
+  languageSpeech: (id: string, ext: string) => `speech/${id}.${ext}`,
+  /** One of us saying a word for the other: a try, or the answer to one. */
+  languageVoice: (id: string, ext: string) => `voice/${id}.${ext}`,
   /** A lesson attachment: a PDF, a doc, an image, a video she uploaded. */
   languageMedia: (courseId: string, fileId: string, ext: string) =>
     `${courseId}/${fileId}.${ext}`,
