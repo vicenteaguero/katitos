@@ -23,7 +23,7 @@ import {
   validateExercise,
   type ExerciseOption,
 } from '../../lib/exercise-schema';
-import type { Exercise, ExerciseKind } from '../../types';
+import type { Exercise, ExerciseKind, Lang } from '../../types';
 
 /**
  * Read a list of acceptable answers out of one field.
@@ -36,6 +36,14 @@ function splitAnswers(text: string, sep = '/'): string[] {
     .split(sep)
     .map((s) => s.trim())
     .filter(Boolean);
+}
+
+/** The prompt goes under the language it was written in — all three exist. */
+function promptPatch(lang: Lang, prompt: string) {
+  const value = prompt || null;
+  if (lang === 'ru') return { prompt_ru: value };
+  if (lang === 'es') return { prompt_es: value };
+  return { prompt_en: value };
 }
 
 const KINDS: { value: ExerciseKind; label: string }[] = [
@@ -61,12 +69,15 @@ export function ExerciseEditor({
   lessonId,
   position,
   exercise,
+  target,
   onClose,
 }: {
   open: boolean;
   lessonId: string;
   position: number;
   exercise: Exercise | null;
+  /** The language the lesson teaches — the one the answer options are in. */
+  target: Lang;
   onClose: () => void;
 }) {
   const save = useSaveExercise();
@@ -88,16 +99,32 @@ export function ExerciseEditor({
   useEffect(() => {
     if (!exercise) return;
     setKind(exercise.kind as ExerciseKind);
-    setPrompt(
-      (support === 'es' ? exercise.prompt_es : exercise.prompt_en) ??
-        exercise.prompt_ru ??
-        ''
-    );
+    // This language's prompt, or nothing. Falling back to another language
+    // read well and then SAVED that text under this one on the next save —
+    // a Russian prompt quietly became the English prompt too.
+    setPrompt(exercise[`prompt_${support}`] ?? '');
     const payload = exercise.payload as Record<string, unknown>;
     if (payload?.options) setOptions(payload.options as ExerciseOption[]);
     setAudioPath((payload?.audioPath as string) ?? null);
     if (payload?.template) setText(String(payload.template));
-    if (payload?.tokens) setText((payload.tokens as string[]).join(' '));
+    if (exercise.kind === 'order') {
+      // From the ANSWER, never from the pool: the pool is stored jumbled on
+      // purpose, and seeding from it made every reopen-and-save promote the
+      // jumble to the correct sentence.
+      const answer = exercise.answer as unknown;
+      const first =
+        Array.isArray(answer) && Array.isArray(answer[0]) ? answer[0] : answer;
+      if (Array.isArray(first)) setText((first as string[]).join(' '));
+    }
+    if (payload?.pairs) {
+      // Back into the shape she typed, so a match question can be corrected
+      // instead of retyped — it used to open empty and refuse to save.
+      setText(
+        (payload.pairs as { left: string; right: string }[])
+          .map((p) => `${p.left} = ${p.right}`)
+          .join('\n')
+      );
+    }
     if (exercise.kind === 'multi') {
       setCorrect((exercise.answer as string[]) ?? []);
     } else if (exercise.kind === 'choice') {
@@ -146,11 +173,17 @@ export function ExerciseEditor({
         return { payload: { tokens: scrambleTokens(tokens) }, answer: tokens };
       }
       case 'match': {
+        // Split on the FIRST "=" only — a right-hand side may contain one.
         const pairs = text
           .split('\n')
-          .map((line) => line.split('=').map((s) => s.trim()))
-          .filter(([l, r]) => l && r)
-          .map(([left, right]) => ({ left, right }));
+          .map((line) => {
+            const at = line.indexOf('=');
+            if (at < 0) return null;
+            const left = line.slice(0, at).trim();
+            const right = line.slice(at + 1).trim();
+            return left && right ? { left, right } : null;
+          })
+          .filter((p): p is { left: string; right: string } => p !== null);
         return {
           payload: { pairs },
           answer: Object.fromEntries(pairs.map((p) => [p.left, p.right])),
@@ -162,6 +195,21 @@ export function ExerciseEditor({
   };
 
   const needsAudio = kind === 'listen' || kind === 'speak';
+
+  /**
+   * A different shape starts clean.
+   *
+   * Switching Choose → Match and back used to carry the old option ids and
+   * answers along, and they were saved with the new question.
+   */
+  const changeKind = (next: ExerciseKind) => {
+    if (next === kind) return;
+    setKind(next);
+    setOptions([{ id: nanoid(4) }, { id: nanoid(4) }]);
+    setCorrect([]);
+    setText('');
+    setAnswerText('');
+  };
 
   const submit = async () => {
     // The recording has to exist in storage before the question can point at it.
@@ -185,9 +233,7 @@ export function ExerciseEditor({
         lessonId,
         kind,
         position: exercise?.position ?? position,
-        ...(support === 'es'
-          ? { prompt_es: prompt || null }
-          : { prompt_en: prompt || null }),
+        ...promptPatch(support, prompt),
         payload,
         answer,
       },
@@ -208,13 +254,13 @@ export function ExerciseEditor({
         <Segmented
           full
           value={kind}
-          onChange={(v) => setKind(v as ExerciseKind)}
+          onChange={(v) => changeKind(v as ExerciseKind)}
           options={KINDS.slice(0, 4)}
         />
         <Segmented
           full
           value={kind}
-          onChange={(v) => setKind(v as ExerciseKind)}
+          onChange={(v) => changeKind(v as ExerciseKind)}
           options={KINDS.slice(4)}
         />
 
@@ -249,11 +295,13 @@ export function ExerciseEditor({
                   }
                 />
                 <Input
-                  value={o.ru ?? ''}
+                  // In the language being taught — a Spanish course's options
+                  // are Spanish, not Russian.
+                  value={o[target] ?? ''}
                   onChange={(e) =>
                     setOptions((os) =>
                       os.map((x, k) =>
-                        k === i ? { ...x, ru: e.target.value } : x
+                        k === i ? { ...x, [target]: e.target.value } : x
                       )
                     )
                   }
@@ -262,9 +310,11 @@ export function ExerciseEditor({
                 <button
                   type="button"
                   aria-label="Remove option"
-                  onClick={() =>
-                    setOptions((os) => os.filter((_, k) => k !== i))
-                  }
+                  onClick={() => {
+                    setOptions((os) => os.filter((_, k) => k !== i));
+                    // Or the question keeps a right answer nobody can pick.
+                    setCorrect((c) => c.filter((x) => x !== o.id));
+                  }}
                   className="shrink-0 text-muted"
                 >
                   <Trash2 className="h-4 w-4" />
