@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { nanoid } from 'nanoid';
 import { supabase } from '@kernel/supabase';
 import { qk } from '@kernel/query';
 import { BUCKETS, storagePaths, useUpload } from '@kernel/storage';
@@ -37,26 +38,38 @@ export function useRecordLetter() {
   const qc = useQueryClient();
   const { upload } = useUpload();
   return useMutation({
-    mutationFn: async (v: { id: string; audio: AudioClip }) => {
-      const path = storagePaths.languageAudio(`alphabet/${v.id}`, v.audio.ext);
+    mutationFn: async (v: {
+      id: string;
+      audio: AudioClip;
+      /** The clip this one replaces, so it can be taken out of storage. */
+      previousPath?: string | null;
+    }) => {
+      // A NEW path per recording. Re-using `alphabet/<id>` meant the browser
+      // kept serving the old clip from its cache for an hour, whatever the
+      // signed URL said — she had to record every letter twice.
+      const path = storagePaths.languageAudio(
+        `alphabet/${v.id}-${nanoid(6)}`,
+        v.audio.ext
+      );
       await upload(BUCKETS.languageAudio, path, v.audio.blob, {
         contentType: v.audio.mime,
+        cacheControl: '31536000',
       });
       const { error } = await supabase
         .from('lang_alphabet')
         .update({ audio_path: path })
         .eq('id', v.id);
       if (error) throw error;
+      if (v.previousPath && v.previousPath !== path) {
+        // Best effort: a clip nothing points at any more is only clutter.
+        void supabase.storage
+          .from(BUCKETS.languageAudio)
+          .remove([v.previousPath]);
+      }
       return path;
     },
     onError: (e: Error) => toast.error(e.message),
-    onSuccess: (path, _v) => {
-      void qc.invalidateQueries({ queryKey: qk.lang.alphabet() });
-      // A re-recording reuses the same path, so the old signed URL would keep
-      // playing the old sound.
-      qc.removeQueries({
-        queryKey: ['signed-url', BUCKETS.languageAudio, path],
-      });
-    },
+    onSuccess: () =>
+      void qc.invalidateQueries({ queryKey: qk.lang.alphabet() }),
   });
 }
