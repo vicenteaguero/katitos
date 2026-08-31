@@ -9,7 +9,7 @@ import {
   Send,
 } from 'lucide-react';
 import { useTableSync } from '@kernel/realtime';
-import { BUCKETS } from '@kernel/storage';
+import { BUCKETS, useSignedUrls } from '@kernel/storage';
 import { qk } from '@kernel/query';
 import { cn } from '@kernel/lib';
 import {
@@ -41,6 +41,7 @@ import { LessonTree } from '../components/lesson-tree';
 import { dueLabel } from '../lib/due';
 import { verdictOf, weightedScore } from '../lib/marking';
 import { useToday } from '../lib/use-today';
+import { useClassChannel, type SlideMessage } from '../lib/class-channel';
 import type { Attempt, Exercise, MediaBlockData } from '../types';
 
 /**
@@ -75,6 +76,18 @@ export function LessonRoute() {
   const [handedIn, setHandedIn] = useState(false);
   /** The word he tapped, waiting for its meaning. */
   const [lookup, setLookup] = useState<string | null>(null);
+  /** Where she is in the lesson, when she is teaching it live. */
+  const [live, setLive] = useState<SlideMessage | null>(null);
+  useClassChannel(lessonId ?? undefined, setLive);
+
+  // ONE signing request for every recording on the page.
+  const { data: clips } = useSignedUrls(
+    BUCKETS.languageAudio,
+    Object.values(lesson?.vocabByBlock ?? {})
+      .flat()
+      .map((w) => w.audio_path),
+    { proxy: false }
+  );
   const [handingIn, setHandingIn] = useState(false);
   // "Try again": the screen starts over and the old answers stop seeding it.
   const [retrying, setRetrying] = useState(false);
@@ -432,10 +445,25 @@ export function LessonRoute() {
             </section>
           )}
 
+        {/* She is teaching this right now: a line that follows her. */}
+        {live && !teacher && live.blockId && (
+          <button
+            type="button"
+            onClick={() =>
+              document
+                .getElementById(`block-${live.blockId}`)
+                ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }
+            className="lift-press sticky top-0 z-10 w-full rounded-full bg-accent px-3 py-1.5 font-sans text-xs text-accent-fg shadow-loge"
+          >
+            She is on {live.index + 1} of {live.total} — follow along
+          </button>
+        )}
+
         {/* Hers to select and copy — a lesson on a computer is a document. The
             questions sit where she put them: after the block they belong to. */}
         {lesson.blocks.map((block) => (
-          <div key={block.id} className="space-y-3">
+          <div key={block.id} id={`block-${block.id}`} className="space-y-3">
             <div data-readable>
               <BlockView
                 block={block}
@@ -444,6 +472,7 @@ export function LessonRoute() {
                 vocab={lesson.vocabByBlock[block.id]}
                 media={mediaFor(block)}
                 onWord={setLookup}
+                clips={clips}
               />
             </div>
             {(lesson.exercisesByBlock[block.id] ?? []).map(exerciseCard)}
