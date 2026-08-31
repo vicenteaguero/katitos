@@ -293,16 +293,54 @@ export function useAddVocabMany() {
       }[];
     }) => {
       if (!v.words.length) return 0;
-      const rows = v.words.map((w) => ({
+      // Against the WHOLE dictionary, put-away rows included — the screen's
+      // list is search-filtered and would have let duplicates through. A
+      // word that was put away comes back rather than being made twice.
+      const { data: have, error: lookErr } = await supabase
+        .from('lang_vocab')
+        .select(`id, deleted_at, ${v.termLang}`)
+        .eq('term_lang', v.termLang);
+      if (lookErr) throw lookErr;
+      const byTerm = new Map<
+        string,
+        { id: string; deleted_at: string | null }
+      >();
+      for (const row of (have ?? []) as unknown as Record<
+        string,
+        string | null
+      >[]) {
+        const t = (row[v.termLang] ?? '').trim().toLowerCase();
+        if (t && !byTerm.has(t))
+          byTerm.set(t, { id: row.id as string, deleted_at: row.deleted_at });
+      }
+      const restore: string[] = [];
+      const fresh = v.words.filter((w) => {
+        const hit = byTerm.get(w.term.trim().toLowerCase());
+        if (!hit) return true;
+        if (hit.deleted_at) restore.push(hit.id);
+        return false;
+      });
+      if (restore.length) {
+        const { error } = await supabase
+          .from('lang_vocab')
+          .update({ deleted_at: null })
+          .in('id', restore);
+        if (error) throw error;
+      }
+      const rows = fresh.map((w) => ({
         term_lang: v.termLang,
         [v.termLang]: w.term.trim(),
         ...(w.meaning.trim() ? { [v.meaningLang]: w.meaning.trim() } : {}),
         transliteration: w.transliteration?.trim() || null,
         tags: w.tags,
       }));
-      const { error } = await supabase.from('lang_vocab').insert(rows as never);
-      if (error) throw error;
-      return rows.length;
+      if (rows.length) {
+        const { error } = await supabase
+          .from('lang_vocab')
+          .insert(rows as never);
+        if (error) throw error;
+      }
+      return rows.length + restore.length;
     },
     onError: (e: Error) => toast.error(e.message),
     onSuccess: () => void qc.invalidateQueries({ queryKey: qk.lang.vocab() }),
