@@ -214,7 +214,18 @@ export function StudyRoute() {
           <div className="space-y-2">
             <Input
               value={typed}
-              readOnly
+              // A real keyboard types here — it was read-only, so on a
+              // computer nothing could be typed at all, and on a phone every
+              // answer with a space in it was impossible (no space key). The
+              // on-screen letters stay for the phone with no Cyrillic layout.
+              onChange={(e) => setTyped(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && typed) setRevealed(true);
+              }}
+              lang={termLangOf(card)}
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
               placeholder={`type it in ${LANG_NATIVE_LABELS[termLangOf(card)]}…`}
               className="text-center font-display text-xl"
             />
