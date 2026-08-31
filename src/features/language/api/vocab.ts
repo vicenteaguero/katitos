@@ -101,9 +101,8 @@ export function useAddVocab() {
       const pattern = term.replace(/[\\%_]/g, '\\$&');
       const { data: existing, error: lookErr } = await supabase
         .from('lang_vocab')
-        .select('id, ru, en, es, audio_path')
+        .select('id, ru, en, es, audio_path, deleted_at')
         .eq('term_lang', v.termLang)
-        .is('deleted_at', null)
         .ilike(v.termLang, pattern)
         .limit(1);
       if (lookErr) throw lookErr;
@@ -114,6 +113,9 @@ export function useAddVocab() {
         // which is why a word had to be recorded twice.
         const row = existing[0];
         const patch: Partial<Vocab> = {};
+        // A word that was put away comes back — with its recording, its
+        // lessons and both people's history — rather than being made twice.
+        if (row.deleted_at) patch.deleted_at = null;
         if (!row.ru && v.ru?.trim()) patch.ru = v.ru.trim();
         if (!row.en && v.en?.trim()) patch.en = v.en.trim();
         if (!row.es && v.es?.trim()) patch.es = v.es.trim();
