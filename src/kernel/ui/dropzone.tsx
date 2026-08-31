@@ -1,4 +1,10 @@
-import { useRef, useState, type DragEvent, type ReactNode } from 'react';
+import {
+  useRef,
+  useState,
+  type DragEvent,
+  type KeyboardEvent,
+  type ReactNode,
+} from 'react';
 import { cn } from '../lib/cn';
 
 /**
@@ -13,6 +19,7 @@ export function Dropzone({
   accept,
   multiple = false,
   disabled = false,
+  pick = true,
   children,
   className,
   activeClassName = 'ring-2 ring-gold',
@@ -21,6 +28,12 @@ export function Dropzone({
   accept?: string;
   multiple?: boolean;
   disabled?: boolean;
+  /**
+   * Tapping opens the picker. Off for a zone that wraps a whole list of
+   * controls — a list that was itself a giant button opened the picker on
+   * every tap inside it and ate Space on every checkbox.
+   */
+  pick?: boolean;
   children: ReactNode;
   className?: string;
   activeClassName?: string;
@@ -54,16 +67,20 @@ export function Dropzone({
 
   return (
     <div
-      role="button"
-      tabIndex={disabled ? -1 : 0}
-      aria-disabled={disabled}
-      onClick={() => !disabled && input.current?.click()}
-      onKeyDown={(e) => {
-        if ((e.key === 'Enter' || e.key === ' ') && !disabled) {
-          e.preventDefault();
-          input.current?.click();
-        }
-      }}
+      {...(pick
+        ? {
+            role: 'button',
+            tabIndex: disabled ? -1 : 0,
+            'aria-disabled': disabled,
+            onClick: () => !disabled && input.current?.click(),
+            onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => {
+              if ((e.key === 'Enter' || e.key === ' ') && !disabled) {
+                e.preventDefault();
+                input.current?.click();
+              }
+            },
+          }
+        : {})}
       onDragOver={(e) => {
         e.preventDefault();
         if (!disabled) setOver(true);
@@ -71,7 +88,8 @@ export function Dropzone({
       onDragLeave={() => setOver(false)}
       onDrop={onDrop}
       className={cn(
-        'lift-press cursor-pointer rounded-lg transition',
+        'rounded-lg transition',
+        pick && 'lift-press cursor-pointer',
         over && activeClassName,
         disabled && 'opacity-50',
         className
