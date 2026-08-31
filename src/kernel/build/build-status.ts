@@ -65,6 +65,14 @@ export const BUILD_STATE_LABEL: Record<BuildState, string> = {
 };
 
 /**
+ * How long after launch the app may still take a version by itself.
+ *
+ * Generous enough for a cold start on a slow connection to finish asking the
+ * server, short enough that nobody has started writing anything yet.
+ */
+export const AUTO_UPDATE_WINDOW_MS = 30_000;
+
+/**
  * Should the app take the newer version by itself, right now?
  *
  * The service worker installs a new build and then waits, which means a phone
@@ -74,12 +82,20 @@ export const BUILD_STATE_LABEL: Record<BuildState, string> = {
  * `triedSha` is the version we already tried to apply this session. Without it
  * a build that installs but cannot take over (a service worker error, a browser
  * that never fires controllerchange) would reload the app forever.
+ *
+ * `sinceLaunchMs` is how long the app has been open. The check re-runs every
+ * time the app comes back to the foreground, and the reload it leads to throws
+ * away whatever is being typed — the lesson she is half-way through writing.
+ * So a version found after the launch window is left for the Version row in
+ * Settings, and taken on the next launch instead.
  */
 export function shouldAutoUpdate(
   state: BuildState,
   server: BuildStamp | null | undefined,
-  triedSha: string | null
+  triedSha: string | null,
+  sinceLaunchMs = 0
 ): boolean {
+  if (sinceLaunchMs > AUTO_UPDATE_WINDOW_MS) return false;
   if (state !== 'stale' || !server?.sha) return false;
   return server.sha !== triedSha;
 }
