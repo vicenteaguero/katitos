@@ -6,6 +6,7 @@ import {
   Eye,
   HelpCircle,
   Pencil,
+  Presentation,
   Send,
   SlidersHorizontal,
   Trash2,
@@ -327,6 +328,11 @@ export function BuildRoute() {
           <Link to={`/language/lesson/${lesson.id}`}>
             <Button size="xs" variant="secondary">
               <Eye size={13} /> Preview
+            </Button>
+          </Link>
+          <Link to={`/language/teach/${lesson.id}`}>
+            <Button size="xs" variant="secondary">
+              <Presentation size={13} /> Teach it
             </Button>
           </Link>
         </div>
