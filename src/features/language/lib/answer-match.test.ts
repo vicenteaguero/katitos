@@ -56,3 +56,21 @@ describe('when ё is the lesson', () => {
     expect(answerMatches('все', 'всё')).toBe(true);
   });
 });
+
+describe('answerMatches across Unicode forms', () => {
+  it('treats a decomposed accent and a precomposed one as the same letter', () => {
+    // "está" with the acute as a separate combining mark, vs baked in.
+    expect(answerMatches('esta\u0301', 'est\u00e1')).toBe(true);
+    expect(answerMatches('est\u00e1', 'esta\u0301')).toBe(true);
+  });
+
+  it('keeps й whole when it arrives decomposed', () => {
+    // и + combining breve is й; stripping the breve turned it into и.
+    expect(answerMatches('мо\u0438\u0306', 'мой')).toBe(true);
+    expect(answerMatches('мои', 'мой')).toBe(false);
+  });
+
+  it('still forgives the stress mark she writes on a vowel', () => {
+    expect(answerMatches('спасибо', 'спаси\u0301бо')).toBe(true);
+  });
+});
