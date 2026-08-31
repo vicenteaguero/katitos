@@ -2,14 +2,10 @@ import { useEffect, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { nanoid } from 'nanoid';
 import {
-  AudioRecorder,
   Button,
   Dialog,
   Field,
-  Fieldset,
   Input,
-  PlayButton,
-  Segmented,
   Textarea,
   toast,
   type AudioClip,
@@ -17,6 +13,7 @@ import {
 import { BUCKETS, storagePaths, useUpload } from '@kernel/storage';
 import { supabase } from '@kernel/supabase';
 import { useSaveExercise } from '../../api/lessons.mutations';
+import { AudioField, ExerciseKindGallery } from '../kit';
 import { useLanguages } from '../../lib/languages';
 import {
   acceptedForms,
@@ -47,17 +44,6 @@ function promptPatch(lang: Lang, prompt: string) {
   if (lang === 'es') return { prompt_es: value };
   return { prompt_en: value };
 }
-
-const KINDS: { value: ExerciseKind; label: string }[] = [
-  { value: 'choice', label: 'Choose' },
-  { value: 'multi', label: 'Choose several' },
-  { value: 'type', label: 'Type it' },
-  { value: 'complete', label: 'Fill the gaps' },
-  { value: 'order', label: 'Put in order' },
-  { value: 'match', label: 'Match' },
-  { value: 'listen', label: 'Listen' },
-  { value: 'speak', label: 'Say it' },
-];
 
 /**
  * Writing a question, on a phone.
@@ -259,18 +245,7 @@ export function ExerciseEditor({
       size="md"
     >
       <div className="space-y-3">
-        <Segmented
-          full
-          value={kind}
-          onChange={(v) => changeKind(v as ExerciseKind)}
-          options={KINDS.slice(0, 4)}
-        />
-        <Segmented
-          full
-          value={kind}
-          onChange={(v) => changeKind(v as ExerciseKind)}
-          options={KINDS.slice(4)}
-        />
+        <ExerciseKindGallery value={kind} onChange={changeKind} />
 
         <Field label="Ask him">
           <Input
@@ -330,11 +305,9 @@ export function ExerciseEditor({
               </div>
             ))}
             <Button
-              size="sm"
+              size="xs"
               variant="secondary"
-              onClick={() =>
-                setOptions((os) => [...os, { id: nanoid(4), ru: '' }])
-              }
+              onClick={() => setOptions((os) => [...os, { id: nanoid(4) }])}
             >
               <Plus size={13} /> Option
             </Button>
@@ -390,26 +363,14 @@ export function ExerciseEditor({
         )}
 
         {needsAudio && (
-          // A Fieldset, not a Field: tapping a label's caption presses the
-          // first button inside it — Play, or Record.
-          <Fieldset
+          <AudioField
             label={
               kind === 'listen' ? 'What he will hear' : 'How it should sound'
             }
             hint="In your voice — that is the point"
-          >
-            <div className="space-y-2">
-              {audioPath && !audio && (
-                <PlayButton
-                  bucket={BUCKETS.languageAudio}
-                  path={audioPath}
-                  size="sm"
-                  label="What is on it now"
-                />
-              )}
-              <AudioRecorder onRecorded={setAudio} />
-            </div>
-          </Fieldset>
+            currentPath={audioPath}
+            onClip={setAudio}
+          />
         )}
 
         {(kind === 'type' || kind === 'listen') && (
