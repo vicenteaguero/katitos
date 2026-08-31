@@ -2,7 +2,13 @@
 
 ## Waiting
 
-Nothing is waiting right now.
+- `20260830000001_drop_retired_features.sql` — 2026-08-30. Drops the 13 tables
+  behind the features deleted in the same cleanup (Tier B and C, plus the long
+  dead `scavenger_arguments`). **Gate: none technical — every table was verified
+  empty on production with exact `count(*)`, and the code that touched them is
+  already gone.** It waits because dropping a table is irreversible and nobody
+  has asked for the space back. Move it to `migrations/` only on a deliberate
+  decision. The app is correct with these tables sitting empty forever.
 
 This folder exists for migrations that are **valid and tested but must not run
 yet** — `make db-push` applies everything in `supabase/migrations/`, so anything
