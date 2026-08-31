@@ -17,34 +17,6 @@ import {
 } from '../types';
 
 /**
- * Today's day row (already ensured by the route) joined to its question.
- * The `couple_day` on the returned row is canonical. Reads the existing row
- * only — the route fires the ensure-today RPC.
- */
-export function useToday() {
-  return useQuery({
-    queryKey: qk.knowMe.today(),
-    queryFn: async (): Promise<QuestionWithDay | null> => {
-      const { data: day, error } = await supabase
-        .from('know_me_days')
-        .select('*, question:know_me_questions(*)')
-        .order('couple_day', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (error) throw error;
-      if (!day) return null;
-      const question = day.question as KnowMeQuestion;
-      return {
-        dayId: day.id,
-        coupleDay: day.couple_day,
-        question,
-        options: parseOptions(question.options),
-      };
-    },
-  });
-}
-
-/**
  * Every question assigned for the latest couple-day (1 legacy, up to 3 now),
  * ordered by slot. The route renders one block per entry; each is answered and
  * revealed independently (all already keyed by day_id).
