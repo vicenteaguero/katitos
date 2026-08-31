@@ -80,7 +80,12 @@ export interface UnitWithLessons extends Unit {
 
 export interface LessonFull extends Lesson {
   blocks: Block[];
+  /** Every question, in order — for counts, marking and hand-in. */
   exercises: Exercise[];
+  /** Questions that sit INSIDE the lesson, keyed by the block they follow. */
+  exercisesByBlock: Record<string, Exercise[]>;
+  /** Questions with no block — the ones at the end, as before. */
+  looseExercises: Exercise[];
   /** The language this lesson teaches, from its course. */
   targetLang: Lang;
   /** The course this lesson belongs to — two hops up, but everything needs it. */
