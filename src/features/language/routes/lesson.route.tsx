@@ -307,8 +307,6 @@ export function LessonRoute() {
         key={ex.id}
         className={cn(
           'space-y-2 rounded-lg bg-surface px-3 py-2.5',
-          // No alpha on a ring: `ring-success/40` renders Tailwind's
-          // default blue, not green.
           right && 'ring-1 ring-success'
         )}
       >
