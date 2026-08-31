@@ -4,7 +4,8 @@ import { cn } from '@kernel/lib';
 import { BUCKETS, useSignedUrl } from '@kernel/storage';
 import { PlayButton } from '@kernel/ui';
 import type { Block, Media, Lang, TableBlockData, Vocab } from '../types';
-import { headword, meaningOf, pick } from '../lib/pick';
+import { pick } from '../lib/pick';
+import { VocabRow } from './kit';
 import { youtubeId } from '../api/media';
 
 /** One piece of a lesson, whatever kind it is. */
@@ -160,28 +161,7 @@ function VocabBlock({ words, support }: { words: Vocab[]; support: Lang }) {
   return (
     <ul className="divide-y divide-fg/5 rounded-lg bg-surface px-3">
       {words.map((w) => (
-        <li key={w.id} className="flex items-center gap-2 py-2">
-          <span className="min-w-0 flex-1">
-            <span className="block font-display text-base text-fg">
-              {headword(w)}
-              {w.transliteration && (
-                <span className="ml-2 font-sans text-[0.68rem] text-muted">
-                  {w.transliteration}
-                </span>
-              )}
-            </span>
-            <span className="block truncate font-sans text-xs text-muted">
-              {meaningOf(w, support)}
-            </span>
-          </span>
-          {w.audio_path && (
-            <PlayButton
-              bucket={BUCKETS.languageAudio}
-              path={w.audio_path}
-              size="sm"
-            />
-          )}
-        </li>
+        <VocabRow key={w.id} word={w} support={support} />
       ))}
     </ul>
   );
