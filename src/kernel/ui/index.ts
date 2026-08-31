@@ -4,7 +4,7 @@ export type { ButtonProps } from './button';
 export { IconButton } from './icon-button';
 export { Card, CardTitle } from './card';
 export { Spinner, LoadingScreen } from './spinner';
-export { Skeleton, SkeletonText, SkeletonList } from './skeleton';
+export { Skeleton } from './skeleton';
 export { Empty } from './empty';
 export { Badge } from './badge';
 export { Input, Textarea, Select, Field, Fieldset } from './field';
@@ -36,7 +36,6 @@ export type { ViewerPhoto } from './photo-viewer';
 export type { SquareCropperProps } from './square-cropper';
 export { AudioRecorder } from './audio/audio-recorder';
 export { AudioFromPath, PlayButton } from './audio/audio-player';
-export { stopSharedAudio } from './audio/shared-audio';
 export {
   useAudioRecorder,
   extForMime,
