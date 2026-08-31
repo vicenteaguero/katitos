@@ -15,8 +15,10 @@ export function WrongList() {
   const userId = useUserId();
   const { data: members } = useMembers();
   const { data: reviews } = useAllReviews();
-  const { native: support, learning } = useLanguages();
-  const { data: words } = useAllVocab(learning);
+  const { native: support } = useLanguages();
+  // HIS lapses are in the language I TEACH — my own language. Looking them
+  // up in the dictionary I am learning found nothing, ever, for either of us.
+  const { data: words } = useAllVocab(support);
 
   const partner = members?.find((m) => m.user_id !== userId);
 
