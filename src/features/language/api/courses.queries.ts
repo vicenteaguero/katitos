@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@kernel/supabase';
 import { qk } from '@kernel/query';
-import { useUserId } from '@kernel/auth';
+import { usePartner, useUserId } from '@kernel/auth';
 import type {
   Course,
   Lesson,
@@ -153,6 +153,51 @@ export function useDueLessons(target: TargetLang) {
         unit: { course: { target_lang: string } | null } | null;
       })[];
       return rows.filter((l) => l.unit?.course?.target_lang === target);
+    },
+  });
+}
+
+/** A progress row with the lesson it is about, for her inbox. */
+export interface PartnerProgressRow extends LessonProgress {
+  lesson:
+    | (Pick<
+        Lesson,
+        'id' | 'title' | 'kind' | 'status' | 'due_on' | 'deleted_at'
+      > & {
+        unit: {
+          course_id: string;
+          course: { target_lang: string } | null;
+        } | null;
+      })
+    | null;
+}
+
+/**
+ * Everything he has done in the courses, lesson by lesson.
+ *
+ * The inbox, the home screen and the "opened Tuesday 14:02" line under a
+ * title all read this: his rows only, with the lesson joined so nothing has
+ * to look it up.
+ */
+export function usePartnerProgress() {
+  const { partner } = usePartner();
+  const id = partner?.user_id;
+  return useQuery({
+    queryKey: [...qk.lang.progress(), 'partner', id ?? 'none'] as const,
+    enabled: !!id,
+    staleTime: 30_000,
+    queryFn: async (): Promise<PartnerProgressRow[]> => {
+      const { data, error } = await supabase
+        .from('lang_lesson_progress')
+        .select(
+          '*, lesson:lang_lessons(id, title, kind, status, due_on, deleted_at, unit:lang_units(course_id, course:lang_courses(target_lang)))'
+        )
+        .eq('user_id', id as string)
+        .order('updated_at', { ascending: false });
+      if (error) throw error;
+      return ((data ?? []) as unknown as PartnerProgressRow[]).filter(
+        (r) => r.lesson && !r.lesson.deleted_at
+      );
     },
   });
 }
