@@ -208,7 +208,17 @@ export function ExerciseEditor({
    */
   const changeKind = (next: ExerciseKind) => {
     if (next === kind) return;
+    const between = (a: ExerciseKind, b: ExerciseKind) =>
+      (kind === a && next === b) || (kind === b && next === a);
     setKind(next);
+    // Choose and Choose-several share their options — one tap between them
+    // used to wipe every option she had typed. A typed answer survives
+    // Type ↔ Listen the same way.
+    if (between('choice', 'multi')) {
+      if (next === 'choice') setCorrect((c) => c.slice(0, 1));
+      return;
+    }
+    if (between('type', 'listen')) return;
     setOptions([{ id: nanoid(4) }, { id: nanoid(4) }]);
     setCorrect([]);
     setText('');
@@ -226,12 +236,15 @@ export function ExerciseEditor({
         contentType: audio.mime,
         cacheControl: '31536000',
       });
-      // The clip this one replaces is nobody's now.
-      if (audioPath && audioPath !== path) {
-        void supabase.storage.from(BUCKETS.languageAudio).remove([audioPath]);
-      }
       setAudioPath(path);
+      // Uploaded once: a second press of Save must not send it again.
+      setAudio(null);
     }
+    // The clip this one replaces is nobody's — once the save has gone
+    // through. Removing it first meant a refused save left the question
+    // pointing at a recording that no longer existed.
+    const stored =
+      (exercise?.payload as { audioPath?: string } | null)?.audioPath ?? null;
     const { payload, answer } = buildWith(path);
     const problem = validateExercise({ kind, payload, answer });
     if (problem) {
@@ -250,7 +263,13 @@ export function ExerciseEditor({
         payload,
         answer,
       },
-      { onSuccess: onClose }
+      {
+        onSuccess: () => {
+          if (stored && stored !== path)
+            void supabase.storage.from(BUCKETS.languageAudio).remove([stored]);
+          onClose();
+        },
+      }
     );
   };
 
@@ -299,8 +318,10 @@ export function ExerciseEditor({
                 />
                 <Input
                   // In the language being taught — a Spanish course's options
-                  // are Spanish, not Russian.
-                  value={o[target] ?? ''}
+                  // are Spanish, not Russian. Read with a fallback: every
+                  // option written before this was filed under `ru` whatever
+                  // the course, and opened as an empty box.
+                  value={o[target] ?? o.ru ?? o.en ?? o.es ?? ''}
                   onChange={(e) =>
                     setOptions((os) =>
                       os.map((x, k) =>
