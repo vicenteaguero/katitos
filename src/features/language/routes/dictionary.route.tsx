@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router';
 import { ClipboardPaste, Mic, Pencil, Plus, Tag, Trash2 } from 'lucide-react';
 import { BUCKETS, useSignedUrls } from '@kernel/storage';
 import {
@@ -40,7 +40,7 @@ import {
   useWordUses,
 } from '../api/vocab';
 import { useLanguages, supportLangs } from '../lib/languages';
-import { AudioField, VocabRow } from '../components/kit';
+import { AudioField, VocabRow, VoiceThread } from '../components/kit';
 import { headword as headwordOf, termLangOf } from '../lib/pick';
 import { matchClips } from '../lib/match-clips';
 import { ImportWordsDialog } from '../components/import-words-dialog';
@@ -63,8 +63,14 @@ import {
 export function DictionaryRoute() {
   useDesk();
   const { native, learning } = useLanguages();
-  const [lang, setLang] = useState<Lang>(learning);
-  useEffect(() => setLang(learning), [learning]);
+  // A push about a word lands on that word: `?word=<id>&lang=ru`.
+  const [params] = useSearchParams();
+  const paramLang = (['ru', 'es', 'en'] as Lang[]).find(
+    (l) => l === params.get('lang')
+  );
+  const wanted = params.get('word');
+  const [lang, setLang] = useState<Lang>(paramLang ?? learning);
+  useEffect(() => setLang(paramLang ?? learning), [learning, paramLang]);
 
   const [search, setSearch] = useState('');
   // What the QUERY sees, a beat behind the box. Typing "привет" used to fire
@@ -97,6 +103,16 @@ export function DictionaryRoute() {
   );
 
   const list = useMemo(() => words ?? [], [words]);
+  // Once: the list refetches, and the sheet must not reopen after she closes it.
+  const landed = useRef(false);
+  useEffect(() => {
+    if (!wanted || landed.current) return;
+    const w = list.find((x) => x.id === wanted);
+    if (w) {
+      landed.current = true;
+      setEditing(w);
+    }
+  }, [wanted, list]);
   const del = useDeleteVocab();
   const restore = useRestoreVocab();
   const delMany = useDeleteVocabMany();
@@ -602,6 +618,14 @@ function WordSheet({
           currentPath={word?.audio_path}
           onClip={setAudio}
         />
+        {word && (
+          <Fieldset
+            label="Said aloud"
+            hint="Every recording of this word — tries and answers"
+          >
+            <VoiceThread word={word} />
+          </Fieldset>
+        )}
         <Button
           full
           onClick={submit}
