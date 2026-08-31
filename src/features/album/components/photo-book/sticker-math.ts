@@ -252,9 +252,6 @@ const MOUNT_K: Record<MountFrame, number> = {
  */
 export const FILM_EDGE = 0.05;
 export const FILM_CHIN = 0.08;
-/** The gap above the words printed on the chin. */
-export const FILM_CAPTION_GAP = 0.05;
-
 /**
  * The mount's band, as a fraction of the sticker's width.
  *
