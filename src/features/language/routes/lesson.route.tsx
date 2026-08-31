@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { Check, Pencil, RotateCcw, Send } from 'lucide-react';
 import { useTableSync } from '@kernel/realtime';
+import { BUCKETS } from '@kernel/storage';
 import { qk } from '@kernel/query';
 import { cn } from '@kernel/lib';
 import {
@@ -10,6 +11,7 @@ import {
   Empty,
   Kicker,
   ListSkeleton,
+  PlayButton,
   toast,
   TopBarButton,
   useDesk,
@@ -283,6 +285,19 @@ export function LessonRoute() {
             — {a.teacher_note}
           </p>
         )}
+        {a?.teacher_audio_path && (
+          <div className="flex items-center gap-2">
+            <PlayButton
+              bucket={BUCKETS.languageAudio}
+              path={a.teacher_audio_path}
+              size="sm"
+              label="Her voice on this one"
+            />
+            <span className="font-sans text-xs text-muted">
+              a word from her, out loud
+            </span>
+          </div>
+        )}
         {!isExam && !grade && (
           <Button
             full
@@ -344,6 +359,19 @@ export function LessonRoute() {
                 <p className="font-display text-base italic leading-snug text-fg">
                   {mine.teacher_note}
                 </p>
+              )}
+              {mine.status !== 'submitted' && mine.teacher_audio_path && (
+                <div className="flex items-center gap-2">
+                  <PlayButton
+                    bucket={BUCKETS.languageAudio}
+                    path={mine.teacher_audio_path}
+                    size="sm"
+                    label="A voice note from her"
+                  />
+                  <span className="font-sans text-xs text-muted">
+                    she left you a voice note
+                  </span>
+                </div>
               )}
               {mine.status !== 'submitted' && (
                 <Button
