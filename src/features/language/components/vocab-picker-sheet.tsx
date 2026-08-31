@@ -1,21 +1,23 @@
 import { useEffect, useState } from 'react';
-import { Check, Plus, Search } from 'lucide-react';
+import { Check, Plus } from 'lucide-react';
 import { cn } from '@kernel/lib';
 import {
-  AudioRecorder,
   Button,
+  Chip,
+  ChipRow,
   Dialog,
   Field,
   FieldRow,
-  Fieldset,
   Input,
+  SearchInput,
   Spinner,
   type AudioClip,
 } from '@kernel/ui';
 import { useAddVocab, useVocab } from '../api/vocab';
 import { useSetBlockVocab } from '../api/block-vocab';
 import { useLanguages } from '../lib/languages';
-import { headword, meaningOf } from '../lib/pick';
+import { headword } from '../lib/pick';
+import { AudioField, VocabRow } from './kit';
 import { LANG_NATIVE_LABELS, type Lang, type Vocab } from '../types';
 
 /**
@@ -110,31 +112,27 @@ export function VocabPickerSheet({
       title="The words"
       size="lg"
     >
-      <div className="space-y-3">
+      <div className="space-y-2">
         {chosen.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
+          <ChipRow>
             {chosen.map((w) => (
-              <button
+              <Chip
                 key={w.id}
-                type="button"
-                onClick={() => toggle(w)}
-                className="lift-press rounded-full bg-accent px-3 py-1 font-sans text-sm text-accent-fg"
+                selected
+                onRemove={() => toggle(w)}
+                removeLabel={`Take ${headword(w)} out`}
               >
-                {headword(w)} ×
-              </button>
+                {headword(w)}
+              </Chip>
             ))}
-          </div>
+          </ChipRow>
         )}
 
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Look for a word"
-            className="pl-9"
-          />
-        </div>
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Look for a word"
+        />
 
         {isLoading ? (
           <Spinner className="mx-auto h-5 w-5" />
@@ -143,12 +141,13 @@ export function VocabPickerSheet({
             {(words ?? []).map((w) => {
               const on = chosen.some((c) => c.id === w.id);
               return (
-                <li key={w.id}>
-                  <button
-                    type="button"
-                    onClick={() => toggle(w)}
-                    className="flex w-full items-center gap-2 py-2 text-left"
-                  >
+                <VocabRow
+                  key={w.id}
+                  word={w}
+                  support={support}
+                  selected={on}
+                  onClick={() => toggle(w)}
+                  trailing={
                     <span
                       className={cn(
                         'grid h-5 w-5 shrink-0 place-items-center rounded-full',
@@ -157,16 +156,8 @@ export function VocabPickerSheet({
                     >
                       {on && <Check className="h-3 w-3" />}
                     </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate font-display text-base text-fg">
-                        {headword(w)}
-                      </span>
-                      <span className="block truncate font-sans text-xs text-muted">
-                        {meaningOf(w, support)}
-                      </span>
-                    </span>
-                  </button>
-                </li>
+                  }
+                />
               );
             })}
           </ul>
@@ -193,9 +184,12 @@ export function VocabPickerSheet({
         </FieldRow>
         {/* A Fieldset, not a Field: tapping a label's caption presses the
             first button inside it — which was Record. */}
-        <Fieldset label="Say it" hint="So the word is not silent in the lesson">
-          <AudioRecorder onRecorded={setNewAudio} resetKey={added} />
-        </Fieldset>
+        <AudioField
+          label="Say it"
+          hint="So the word is not silent in the lesson"
+          onClip={setNewAudio}
+          resetKey={added}
+        />
         <Button
           variant="secondary"
           full
