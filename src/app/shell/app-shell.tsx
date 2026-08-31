@@ -3,10 +3,12 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@kernel/auth';
 import { useEnsurePushSubscription } from '@kernel/push';
+import { cn } from '@kernel/lib';
 import {
   IconButton,
   KatitosMark,
   TopBarSlotProvider,
+  useIsDesk,
   useTopBarSlot,
 } from '@kernel/ui';
 import { PresenceTracker, PartnerStatusDot } from '@features/presence';
@@ -14,6 +16,7 @@ import { ExchangeIcon } from '@features/currency';
 import { LoginScreen } from './login';
 import { DevUserSwitcher } from './dev-switcher';
 import { BottomNav } from './nav';
+import { SideRail } from './side-rail';
 import { CacheWarmer } from './cache-warmer';
 import { SplashScreen } from './splash-screen';
 import { LoveBurst } from './love-burst';
@@ -94,12 +97,17 @@ function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => {
     document.querySelector('main')?.scrollTo({ top: 0, left: 0 });
+    // On a desk the canvas scrolls, not <main>.
+    document.querySelector('[data-desk-canvas]')?.scrollTo({ top: 0, left: 0 });
   }, [pathname]);
   return null;
 }
 
 export function AppShell() {
   const { status } = useAuth();
+  // A desk route on a screen with room: the shell drops its cap, the tab bar
+  // stands on its side, and the route's own panes do the scrolling.
+  const desk = useIsDesk();
   // Heal this device's push subscription on every launch (no prompt) so loves
   // keep landing as real notifications even after the browser rotates it.
   useEnsurePushSubscription();
@@ -118,15 +126,30 @@ export function AppShell() {
       {status === 'anon' && <LoginScreen />}
       {status === 'authed' && (
         <TopBarSlotProvider>
-          <div className="mx-auto flex h-full max-w-app flex-col overflow-hidden bg-surface">
+          <div
+            className={cn(
+              'mx-auto flex h-full max-w-shell overflow-hidden bg-surface',
+              desk ? 'flex-row' : 'flex-col'
+            )}
+          >
             <PresenceTracker />
             <ScrollToTop />
             <CacheWarmer />
-            <TopBar />
-            <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-[0.875rem] pb-8 pt-[0.44rem] [-webkit-overflow-scrolling:touch]">
-              <Outlet />
-            </main>
-            <BottomNav />
+            {desk && <SideRail />}
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+              <TopBar />
+              <main
+                className={cn(
+                  'min-h-0 flex-1 overflow-x-hidden [-webkit-overflow-scrolling:touch]',
+                  desk
+                    ? 'overflow-hidden'
+                    : 'overflow-y-auto px-[0.875rem] pb-8 pt-[0.44rem]'
+                )}
+              >
+                <Outlet />
+              </main>
+            </div>
+            {!desk && <BottomNav />}
             <LoveBurst />
             <NotificationPrompt />
             <ChangelogModal />
