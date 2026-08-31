@@ -35,6 +35,13 @@ export const languageFeature = defineFeature({
         })),
     },
     {
+      path: 'teach/:lessonId',
+      lazy: () =>
+        import('./routes/teach.route').then((m) => ({
+          Component: m.TeachRoute,
+        })),
+    },
+    {
       path: 'mark/:lessonId',
       lazy: () =>
         import('./routes/mark.route').then((m) => ({ Component: m.MarkRoute })),
