@@ -20,7 +20,10 @@ import { dehydrate, hydrate, type QueryClient } from '@tanstack/react-query';
 //        and a mount, books gained a material and a paper. A v3 snapshot would
 //        paint the deleted books back onto the shelf, with pages made of
 //        columns that no longer describe how anything looks.
-const KEY = 'katitos:rq-cache:v4';
+//   v5 — the language keys moved: attempts and reviews left their parents'
+//        prefixes. A v4 snapshot would keep copies under the old keys that
+//        nothing invalidates any more.
+const KEY = 'katitos:rq-cache:v5';
 const MAX_AGE = 24 * 60 * 60 * 1000; // a day — older snapshots are dropped
 const WRITE_DEBOUNCE = 1000;
 
