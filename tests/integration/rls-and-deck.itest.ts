@@ -19,11 +19,13 @@ describe('Supabase RLS + deck reveal (local stack)', () => {
 
   it('blocks anon reads (RLS) but allows members', async () => {
     const anon = anonClient();
-    const { data: anonRows } = await anon.from('countdowns').select('id');
+    const { data: anonRows } = await anon.from('chalkboard_notes').select('id');
     expect(anonRows ?? []).toHaveLength(0);
 
     const a = await signedInClient(USER_A);
-    const { data: memberRows, error } = await a.from('countdowns').select('id');
+    const { data: memberRows, error } = await a
+      .from('chalkboard_notes')
+      .select('id');
     expect(error).toBeNull();
     expect((memberRows ?? []).length).toBeGreaterThan(0);
   });
@@ -31,15 +33,15 @@ describe('Supabase RLS + deck reveal (local stack)', () => {
   it('lets a member CRUD a row', async () => {
     const a = await signedInClient(USER_A);
     const { data: created, error: insErr } = await a
-      .from('countdowns')
-      .insert({ title: 'itest-temp', target_at: '2030-01-01T00:00:00Z' })
+      .from('chalkboard_notes')
+      .insert({ body: 'itest-temp' })
       .select('id')
       .single();
     expect(insErr).toBeNull();
     expect(created?.id).toBeTruthy();
 
     const { error: delErr } = await a
-      .from('countdowns')
+      .from('chalkboard_notes')
       .delete()
       .eq('id', created!.id);
     expect(delErr).toBeNull();
