@@ -20,10 +20,10 @@ export interface NavEntry {
 }
 
 export interface FeatureModule {
-  /** Unique slug, e.g. 'countdowns'. */
+  /** Unique slug, e.g. 'wishlists'. */
   id: string;
   title: string;
-  /** URL prefix the routes mount under, e.g. '/countdowns'. */
+  /** URL prefix the routes mount under, e.g. '/wishlists'. */
   basePath: string;
   /** react-router children mounted under basePath. */
   routes: RouteObject[];
