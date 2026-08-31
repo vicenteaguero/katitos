@@ -25,6 +25,16 @@ describe('parseTable', () => {
   it('files the headings in the language she is writing in', () => {
     expect(parseTable(DECLENSION, 'es').headings?.[1].es).toBe('singular');
     expect(parseTable(DECLENSION, 'es').headings?.[1].en).toBeUndefined();
+    // Russian is a language the headings can be written in, like the others.
+    expect(parseTable(DECLENSION, 'ru').headings?.[1].ru).toBe('singular');
+  });
+
+  it('keeps the other languages when the headings are re-typed in one', () => {
+    // Translating the headings into Spanish used to delete the English.
+    const english = parseTable(DECLENSION, 'en');
+    const both = parseTable(', singular, plural\nx, y, z', 'es', english);
+    expect(both.headings?.[1]).toEqual({ en: 'singular', es: 'singular' });
+    expect(both.headings?.[2]).toEqual({ en: 'plural', es: 'plural' });
   });
 
   it('treats a lone line as data, not as headings for an empty table', () => {
@@ -59,9 +69,11 @@ describe('formatTable', () => {
     expect(twice).toEqual(once);
   });
 
-  it('falls back to the other language rather than showing a blank heading', () => {
+  it('shows only the headings in the language being edited', () => {
+    // Pre-filling from English meant the next blur saved English AS Spanish.
     const data = { headings: [{ en: 'singular' }], rows: [['стол']] };
-    expect(formatTable(data, 'es')).toContain('singular');
+    expect(formatTable(data, 'es')).toBe('\nстол');
+    expect(formatTable(data, 'en')).toBe('singular\nстол');
   });
 });
 
