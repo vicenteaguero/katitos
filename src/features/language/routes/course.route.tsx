@@ -18,8 +18,9 @@ import {
   Empty,
   Field,
   Input,
-  LoadingScreen,
+  ListSkeleton,
   Segmented,
+  TopBarButton,
   useDesk,
   useTopBarAction,
 } from '@kernel/ui';
@@ -85,26 +86,20 @@ export function CourseRoute() {
   const [lessonKind, setLessonKind] = useState<LessonKind>('lesson');
 
   useTopBarAction(
-    <button
-      type="button"
-      onClick={() => setUnitOpen(true)}
-      aria-label="New unit"
-      className="lift-press flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-fg shadow-loge"
-      style={{ border: '1px solid rgba(228,195,106,.4)' }}
-    >
+    <TopBarButton label="New unit" onClick={() => setUnitOpen(true)}>
       <Plus className="h-4 w-4" />
-    </button>,
+    </TopBarButton>,
     []
   );
 
-  if (isLoading) return <LoadingScreen />;
+  if (isLoading) return <ListSkeleton rows={4} />;
   if (!course) return <Empty icon="📕" title="No such course" />;
 
   const list = units ?? [];
 
   return (
     <Desk rail={<CoursesRail currentId={courseId} />} narrow>
-      <div className="curtain-reveal space-y-4">
+      <div className="curtain-reveal space-y-3">
         <header className="min-w-0">
           <p className="eyebrow">{course.description ?? 'A course of ours'}</p>
           <h1 className="mt-0.5 truncate font-display text-2xl font-semibold text-fg">
