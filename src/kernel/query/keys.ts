@@ -99,10 +99,6 @@ export const qk = {
     list: () => ['wishlists', 'list'] as const,
     items: (listId: string) => ['wishlists', listId, 'items'] as const,
   },
-  phrases: {
-    list: (language?: string) =>
-      ['phrases', 'list', language ?? 'all'] as const,
-  },
   currency: {
     rates: () => ['currency', 'rates'] as const,
   },
