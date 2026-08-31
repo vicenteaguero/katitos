@@ -3,7 +3,14 @@ import { Link } from 'react-router';
 import { Check, RotateCcw, Volume2 } from 'lucide-react';
 import { BUCKETS } from '@kernel/storage';
 import { cn } from '@kernel/lib';
-import { PlayButton, Button, Empty, Input, LoadingScreen } from '@kernel/ui';
+import {
+  Button,
+  Empty,
+  Input,
+  LoadingScreen,
+  OptionButton,
+  PlayButton,
+} from '@kernel/ui';
 import { useAllVocab, useGradeVocab, useMyReviews } from '../api/vocab';
 import { buildSession, type Grade } from '../lib/srs';
 import { LetterKeys } from '../components/letter-keys';
@@ -192,20 +199,17 @@ export function StudyRoute() {
         {!revealed && mode === 'choice' && (
           <div className="space-y-2">
             {choices.map((c) => (
-              <button
+              <OptionButton
                 key={c.id}
-                type="button"
+                state={picked === c.id ? 'picked' : 'idle'}
                 onClick={() => {
                   setPicked(c.id);
                   setRevealed(true);
                 }}
-                className={cn(
-                  'lift-press w-full rounded-lg bg-surface-2 px-4 py-3 text-left font-display text-lg text-fg',
-                  picked === c.id && 'ring-1 ring-gold'
-                )}
+                className="px-4 py-3 font-display text-lg"
               >
                 {headword(c)}
-              </button>
+              </OptionButton>
             ))}
           </div>
         )}
