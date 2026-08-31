@@ -248,6 +248,7 @@ function WordSheet({
             notes_es: notes.es || null,
           },
           audio,
+          previousAudioPath: word.audio_path,
         },
         { onSuccess: onClose }
       );
@@ -342,9 +343,12 @@ function WordSheet({
         {/* Recording can be added or replaced at ANY time now — it used to be
             only at creation, so fixing a bad clip meant deleting the word and
             every review of it. */}
-        <Field label="Say it">
+        {/* A Fieldset, not a Field: a Field is a <label>, and tapping the
+            caption of a label presses the first button inside it — which was
+            Record. */}
+        <Fieldset label="Say it">
           <AudioRecorder onRecorded={setAudio} />
-        </Field>
+        </Fieldset>
         <Button
           full
           onClick={submit}
