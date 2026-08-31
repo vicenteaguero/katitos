@@ -6,7 +6,9 @@ import { notifyPartner } from '@kernel/push';
 import { toast } from '@kernel/ui';
 import type { Json } from '@kernel/supabase';
 import type {
+  Block,
   BlockKind,
+  Exercise,
   ExerciseKind,
   LessonKind,
   LessonStatus,
@@ -247,6 +249,47 @@ export function useDeleteBlock() {
   });
 }
 
+/**
+ * Put a deleted block back, exactly as it was — its own id, its text, its
+ * table, and the words it taught.
+ *
+ * This is what makes deleting safe with one tap: the toast's Undo has nine
+ * seconds to call it. Blocks do not soft-delete the way words do because a
+ * block that is gone from the page is gone from everything.
+ */
+export function useRestoreBlock() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: {
+      block: Block;
+      vocabIds: string[];
+      lessonId: string;
+    }) => {
+      const { error } = await supabase.from('lang_blocks').insert({
+        id: v.block.id,
+        lesson_id: v.block.lesson_id,
+        position: v.block.position,
+        kind: v.block.kind,
+        body_ru: v.block.body_ru,
+        body_en: v.block.body_en,
+        body_es: v.block.body_es,
+        data: v.block.data as never,
+      });
+      if (error) throw error;
+      if (v.vocabIds.length) {
+        const { error: linkErr } = await supabase.rpc('set_block_vocab', {
+          p_block: v.block.id,
+          p_vocab: v.vocabIds,
+        });
+        if (linkErr) throw linkErr;
+      }
+    },
+    onError: (e: Error) => toast.error(e.message),
+    onSuccess: (_d, v) =>
+      void qc.invalidateQueries({ queryKey: qk.lang.lesson(v.lessonId) }),
+  });
+}
+
 /** Re-order the blocks of a lesson after a drag. */
 export function useReorderBlocks() {
   const qc = useQueryClient();
@@ -326,6 +369,34 @@ export function useSaveExercise() {
   });
 }
 
+/** Put a deleted question back, id and all, for the Undo in the toast. */
+export function useRestoreExercise() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { exercise: Exercise; lessonId: string }) => {
+      const ex = v.exercise;
+      const { error } = await supabase.from('lang_exercises').insert({
+        id: ex.id,
+        lesson_id: ex.lesson_id,
+        block_id: ex.block_id,
+        kind: ex.kind,
+        position: ex.position,
+        prompt_ru: ex.prompt_ru,
+        prompt_en: ex.prompt_en,
+        prompt_es: ex.prompt_es,
+        payload: ex.payload as never,
+        answer: ex.answer as never,
+        points: ex.points,
+        media_id: ex.media_id,
+      });
+      if (error) throw error;
+    },
+    onError: (e: Error) => toast.error(e.message),
+    onSuccess: (_d, v) =>
+      void qc.invalidateQueries({ queryKey: qk.lang.lesson(v.lessonId) }),
+  });
+}
+
 export function useDeleteExercise() {
   const qc = useQueryClient();
   return useMutation({
@@ -373,6 +444,48 @@ export function useAnswerExercise() {
       });
       if (error) throw error;
       return grade;
+    },
+    onError: (e: Error) => toast.error(e.message),
+    onSuccess: (_d, v) =>
+      void qc.invalidateQueries({ queryKey: qk.lang.attempts(v.lessonId) }),
+  });
+}
+
+/**
+ * Hand in several answers at once.
+ *
+ * An exam is one act. It used to be one request per question, each with its
+ * own refetch, and the screen said "Handed in" before any of them had landed.
+ */
+export function useAnswerExercises() {
+  const qc = useQueryClient();
+  const userId = useUserId();
+  return useMutation({
+    mutationFn: async (v: {
+      lessonId: string;
+      answers: {
+        exercise: ExerciseLike & { id: string };
+        answer: unknown;
+        attemptNo: number;
+      }[];
+    }) => {
+      const marks = v.answers.map((a) => ({
+        exerciseId: a.exercise.id,
+        grade: gradeAnswer(a.exercise, a.answer),
+      }));
+      const rows = v.answers.map((a, i) => ({
+        exercise_id: a.exercise.id,
+        answer: a.answer as never,
+        correct: marks[i].grade.correct,
+        score: marks[i].grade.score,
+        attempt_no: a.attemptNo,
+        ...(userId ? { user_id: userId } : {}),
+      }));
+      if (rows.length) {
+        const { error } = await supabase.from('lang_attempts').insert(rows);
+        if (error) throw error;
+      }
+      return marks;
     },
     onError: (e: Error) => toast.error(e.message),
     onSuccess: (_d, v) =>
