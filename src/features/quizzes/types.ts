@@ -34,5 +34,3 @@ export const DECK_KINDS = [
     emoji: '💬',
   },
 ] as const;
-
-export type DeckKind = (typeof DECK_KINDS)[number]['kind'];
