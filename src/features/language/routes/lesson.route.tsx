@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { Check, Pencil, Send } from 'lucide-react';
 import { useTableSync } from '@kernel/realtime';
@@ -13,7 +13,11 @@ import {
 } from '@kernel/ui';
 import { useMyProgress } from '../api/courses.queries';
 import { useLesson, useMyAttempts } from '../api/lessons.queries';
-import { useAnswerExercise, useSaveProgress } from '../api/lessons.mutations';
+import {
+  useAnswerExercise,
+  useAnswerExercises,
+  useSaveProgress,
+} from '../api/lessons.mutations';
 import { useLanguages } from '../lib/languages';
 import { gradeAnswer, type Grade } from '../lib/exercise-schema';
 import { ExerciseView } from '../components/exercises/exercise-view';
@@ -30,8 +34,10 @@ import type { Exercise, MediaBlockData } from '../types';
 export function LessonRoute() {
   const { lessonId } = useParams<{ lessonId: string }>();
   const { data: lesson, isLoading } = useLesson(lessonId);
-  const { data: attempts } = useMyAttempts(lessonId);
+  const { data: attempts, isLoading: attemptsLoading } =
+    useMyAttempts(lessonId);
   const answer = useAnswerExercise();
+  const answerMany = useAnswerExercises();
   const saveProgress = useSaveProgress();
   const { native: support } = useLanguages();
   // Filtered to THIS lesson: unfiltered, editing any lesson anywhere re-ran
@@ -45,6 +51,7 @@ export function LessonRoute() {
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
   const [grades, setGrades] = useState<Record<string, Grade>>({});
   const [handedIn, setHandedIn] = useState(false);
+  const [handingIn, setHandingIn] = useState(false);
 
   /**
    * An exam stays handed in across a reload.
@@ -78,6 +85,39 @@ export function LessonRoute() {
     return out;
   }, [attempts]);
 
+  /**
+   * What he already answered, back on the screen.
+   *
+   * Answers and verdicts lived only in component state, so a refresh offered
+   * every question again — and homework done in two sittings never counted as
+   * done, because "done" was computed from that state. The attempts query
+   * already holds the newest answer to each question; it was only being
+   * counted. Local state wins where both exist: what he is typing now beats
+   * what he typed last time.
+   */
+  useEffect(() => {
+    if (!attempts || !lesson) return;
+    const byId = new Map(lesson.exercises.map((ex) => [ex.id, ex]));
+    setAnswers((current) => {
+      const next = { ...current };
+      for (const a of attempts) {
+        if (!(a.exercise_id in next) && byId.has(a.exercise_id)) {
+          next[a.exercise_id] = a.answer;
+        }
+      }
+      return next;
+    });
+    setGrades((current) => {
+      const next = { ...current };
+      for (const a of attempts) {
+        const ex = byId.get(a.exercise_id);
+        if (ex && !(a.exercise_id in next))
+          next[a.exercise_id] = gradeAnswer(ex, a.answer);
+      }
+      return next;
+    });
+  }, [attempts, lesson]);
+
   if (isLoading) return <LoadingScreen />;
   if (!lesson) return <Empty icon="📄" title="No such lesson" />;
 
@@ -110,6 +150,9 @@ export function LessonRoute() {
       (sum, x) => sum + (next[x.id]?.score ?? 0),
       0
     );
+    // Once she has marked it, a re-check is practice: the attempt is kept,
+    // the mark is hers. (The database refuses the downgrade too.)
+    if (mine?.status === 'graded') return;
     saveProgress.mutate({
       lessonId: lesson.id,
       status: done ? 'submitted' : 'in_progress',
@@ -124,26 +167,34 @@ export function LessonRoute() {
    * not what an exam is — and the score goes straight onto the progress row
    * she reads.
    */
-  const handIn = () => {
-    const marks = exercises.map((ex) => {
-      const grade = gradeAnswer(ex, answers[ex.id]);
-      answer.mutate({
-        exercise: ex,
+  const handIn = async () => {
+    if (handingIn) return;
+    setHandingIn(true);
+    try {
+      // One insert for the whole exam, not one request per question — and
+      // nothing on screen says "Handed in" until the answers are actually in.
+      const marks = await answerMany.mutateAsync({
         lessonId: lesson.id,
-        answer: answers[ex.id] ?? null,
-        attemptNo: (priorAttempts.get(ex.id) ?? 0) + 1,
+        answers: exercises.map((ex) => ({
+          exercise: ex,
+          answer: answers[ex.id] ?? null,
+          attemptNo: (priorAttempts.get(ex.id) ?? 0) + 1,
+        })),
       });
-      return [ex.id, grade] as const;
-    });
-    setGrades(Object.fromEntries(marks));
-    setHandedIn(true);
-    const total = marks.reduce((sum, [, g]) => sum + g.score, 0);
-    saveProgress.mutate({
-      lessonId: lesson.id,
-      status: 'submitted',
-      score: marks.length ? total / marks.length : null,
-    });
-    toast.success('Handed in');
+      setGrades(Object.fromEntries(marks.map((m) => [m.exerciseId, m.grade])));
+      setHandedIn(true);
+      const total = marks.reduce((sum, m) => sum + m.grade.score, 0);
+      await saveProgress.mutateAsync({
+        lessonId: lesson.id,
+        status: 'submitted',
+        score: marks.length ? total / marks.length : null,
+      });
+      toast.success('Handed in');
+    } catch {
+      /* the mutation has already said what went wrong */
+    } finally {
+      setHandingIn(false);
+    }
   };
 
   const answeredCount = Object.keys(grades).length;
@@ -189,6 +240,7 @@ export function LessonRoute() {
           key={block.id}
           block={block}
           support={support}
+          target={lesson.targetLang}
           vocab={lesson.vocabByBlock[block.id]}
           media={mediaFor(block)}
         />
@@ -205,7 +257,9 @@ export function LessonRoute() {
                 key={ex.id}
                 className={cn(
                   'space-y-2 rounded-lg bg-surface px-3 py-3',
-                  shown?.correct && 'ring-1 ring-success/40'
+                  // No alpha on a ring: `ring-success/40` renders Tailwind's
+                  // default blue, not green.
+                  shown?.correct && 'ring-1 ring-success'
                 )}
               >
                 <p className="eyebrow">
@@ -225,7 +279,9 @@ export function LessonRoute() {
                     full
                     variant="secondary"
                     onClick={() => markOne(ex)}
-                    disabled={answers[ex.id] === undefined}
+                    // Not until his earlier attempts are known — the attempt
+                    // number would collide with one already written.
+                    disabled={answers[ex.id] === undefined || attemptsLoading}
                   >
                     Check
                   </Button>
@@ -235,7 +291,11 @@ export function LessonRoute() {
           })}
 
           {isExam && !submitted && (
-            <Button full onClick={handIn}>
+            <Button
+              full
+              onClick={() => void handIn()}
+              disabled={handingIn || attemptsLoading}
+            >
               <Send size={15} /> Hand it in
             </Button>
           )}
