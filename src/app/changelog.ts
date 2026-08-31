@@ -34,6 +34,35 @@ export interface ChangelogEntry {
 /** Every release ever written, newest first — held ones included. */
 export const ALL_ENTRIES: ChangelogEntry[] = [
   {
+    // Written 30 August 2026. Held until he lifts it.
+    title: 'Nothing gets lost',
+    date: '2026-08-30',
+    held: true,
+    lines: [
+      'Deleting a word puts it away instead of destroying it, and there is an Undo for nine seconds. The same for a block or a question in a lesson, and for a file on a block: taking it off keeps the file, and one tap puts it back.',
+      'Recording a word again keeps the newer one, everywhere, first time. It used to play the old clip until you had recorded it twice.',
+      'A word that is already in the dictionary takes the recording you just made, instead of quietly dropping it.',
+      'Russian is finally set in the app’s own typefaces — the stress mark on a vowel too. It had been falling back to whatever the phone had.',
+      'Your Spanish lessons keep their Russian explanations as Russian, and show the Spanish sentence on top. Every box in the builder now writes to its own language.',
+      'Reopening a “put in order” question no longer scrambles the right answer, and a “match the pairs” question can be corrected instead of retyped.',
+      'Taking an option off a question no longer leaves a right answer nobody can pick, and switching the kind of question starts it clean.',
+      'Translating a table’s headings keeps the headings in the other language.',
+      'His answers survive a reload, homework finished in two sittings counts as finished, and an exam is handed in once.',
+      'Once you have marked a lesson, it stays marked, whatever he does with it afterwards.',
+      'The lesson settings open fresh each time. An edit you abandoned no longer goes out with the next publish, and the course list learns a new title straight away.',
+      'The app no longer reloads itself while you are typing. A new version waits for the next launch.',
+      'Signing out on a shared computer clears everything of yours from it.',
+      'On a computer you can type an answer with the keyboard. On a phone, the on-screen letters now have a space bar — and ё.',
+      'An accent typed as a separate mark counts the same as one typed as a letter.',
+      'The “you got it right” ring is green now. It was blue.',
+      'The alphabet is there for you too, so you can record the letters in your own voice — and “Hear it” appears the moment a recording lands.',
+      'The card on the home screen names the language it is about, points at homework that is actually still waiting, and counts words only once it knows.',
+      'What he keeps forgetting shows up on your side at last.',
+      'Homework due today says “today” all day, not “1 day late” from lunchtime.',
+      'Tapping the words “Say it” no longer starts a recording by itself.',
+    ],
+  },
+  {
     // Shipped and announced 21 August 2026.
     title: 'The album, properly',
     date: '2026-08-21',
