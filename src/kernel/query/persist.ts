@@ -50,6 +50,21 @@ export function hydrateFromStorage(qc: QueryClient): void {
   }
 }
 
+/**
+ * Drop the snapshot — on sign-out, or when a different person signs in.
+ *
+ * The snapshot is painted before the server is asked, for whoever opens the
+ * app next. On a shared computer that was the previous person's data, hidden
+ * gifts included.
+ */
+export function clearPersisted(): void {
+  try {
+    localStorage.removeItem(KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 /** Begin mirroring successful queries to localStorage (debounced). Returns an unsubscribe. */
 export function startPersisting(qc: QueryClient): () => void {
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -71,6 +86,12 @@ export function startPersisting(qc: QueryClient): () => void {
           const root = q.queryKey[0];
           return root !== 'signed-url' && root !== 'signed-urls';
         },
+        // Never a mutation. The default keeps PAUSED ones — an answer given
+        // offline — and on the next open rebuilds them with no function to
+        // run, so they fail on the first reconnect and the homework is gone
+        // while the snapshot had made it look safe. Until there is a real
+        // outbox, offline writes are honestly in memory only.
+        shouldDehydrateMutation: () => false,
       });
       const snap: Snapshot = { at: Date.now(), state };
       localStorage.setItem(KEY, JSON.stringify(snap));
