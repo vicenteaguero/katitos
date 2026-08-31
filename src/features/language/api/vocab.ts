@@ -270,6 +270,128 @@ export function useDeleteVocab() {
   });
 }
 
+/**
+ * Many words at once, from a pasted list.
+ *
+ * One insert for the lot. The ones already in the dictionary are left alone
+ * (the caller has already set them aside with `splitKnown`), so pasting the
+ * same list twice adds nothing twice.
+ */
+export function useAddVocabMany() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: {
+      termLang: Lang;
+      meaningLang: Lang;
+      words: {
+        term: string;
+        meaning: string;
+        transliteration?: string;
+        tags: string[];
+      }[];
+    }) => {
+      if (!v.words.length) return 0;
+      const rows = v.words.map((w) => ({
+        term_lang: v.termLang,
+        [v.termLang]: w.term.trim(),
+        ...(w.meaning.trim() ? { [v.meaningLang]: w.meaning.trim() } : {}),
+        transliteration: w.transliteration?.trim() || null,
+        tags: w.tags,
+      }));
+      const { error } = await supabase.from('lang_vocab').insert(rows as never);
+      if (error) throw error;
+      return rows.length;
+    },
+    onError: (e: Error) => toast.error(e.message),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: qk.lang.vocab() }),
+  });
+}
+
+/** The same tags onto many words at once — added, never replaced. */
+export function useTagVocabMany() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { words: Vocab[]; tags: string[] }) => {
+      const results = await Promise.all(
+        v.words.map((w) =>
+          supabase
+            .from('lang_vocab')
+            .update({ tags: [...new Set([...(w.tags ?? []), ...v.tags])] })
+            .eq('id', w.id)
+        )
+      );
+      const failed = results.find((r) => r.error);
+      if (failed?.error) throw failed.error;
+    },
+    onError: (e: Error) => toast.error(e.message),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: qk.lang.vocab() }),
+  });
+}
+
+/** Put many words away — one statement, one Undo. */
+export function useDeleteVocabMany() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      if (!ids.length) return;
+      const { error } = await supabase
+        .from('lang_vocab')
+        .update({ deleted_at: new Date().toISOString() })
+        .in('id', ids);
+      if (error) throw error;
+    },
+    onError: (e: Error) => toast.error(e.message),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: qk.lang.vocab() }),
+  });
+}
+
+/** And bring them all back. */
+export function useRestoreVocabMany() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      if (!ids.length) return;
+      const { error } = await supabase
+        .from('lang_vocab')
+        .update({ deleted_at: null })
+        .in('id', ids);
+      if (error) throw error;
+    },
+    onError: (e: Error) => toast.error(e.message),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: qk.lang.vocab() }),
+  });
+}
+
+/** The lessons a word appears in — so a word knows where it is taught. */
+export function useWordUses(vocabId: string | undefined) {
+  return useQuery({
+    queryKey: [...qk.lang.vocab(), 'uses', vocabId ?? 'none'] as const,
+    enabled: !!vocabId,
+    staleTime: 60_000,
+    queryFn: async (): Promise<{ id: string; title: string }[]> => {
+      const { data, error } = await supabase
+        .from('lang_block_vocab')
+        .select('block:lang_blocks(lesson:lang_lessons(id, title, deleted_at))')
+        .eq('vocab_id', vocabId as string);
+      if (error) throw error;
+      const seen = new Map<string, string>();
+      for (const row of (data ?? []) as unknown as {
+        block: {
+          lesson: {
+            id: string;
+            title: string;
+            deleted_at: string | null;
+          } | null;
+        } | null;
+      }[]) {
+        const lesson = row.block?.lesson;
+        if (lesson && !lesson.deleted_at) seen.set(lesson.id, lesson.title);
+      }
+      return [...seen].map(([id, title]) => ({ id, title }));
+    },
+  });
+}
+
 /** Bring a word back, exactly as it was. */
 export function useRestoreVocab() {
   const qc = useQueryClient();
