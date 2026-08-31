@@ -53,6 +53,7 @@ import { LESSON_TEMPLATES } from '../lib/templates';
 import { isTeacherOf, useLanguages } from '../lib/languages';
 import { CoursesRail } from '../components/courses-rail';
 import { dueLabel } from '../lib/due';
+import { useToday } from '../lib/use-today';
 import type { Lesson, LessonKind } from '../types';
 
 const KIND_ICON = {
@@ -104,6 +105,7 @@ export function CourseRoute() {
   const deleteLesson = useDeleteLesson();
   const restoreLesson = useRestoreLesson();
   const { native, ready } = useLanguages();
+  const today = useToday();
   useTableSync('lang_lessons', qk.lang.units(courseId ?? 'none'));
   useDesk();
 
@@ -232,6 +234,7 @@ export function CourseRoute() {
                         done={progress?.get(lesson.id)?.status === 'graded'}
                         score={progress?.get(lesson.id)?.score ?? null}
                         waiting={toMark.has(lesson.id)}
+                        today={today}
                         handle={teacher ? lessonHandle : undefined}
                         onDelete={
                           teacher
@@ -386,6 +389,7 @@ function LessonRow({
   done,
   score,
   waiting,
+  today,
   handle,
   onDelete,
 }: {
@@ -394,6 +398,8 @@ function LessonRow({
   score: number | null;
   /** He has handed this in and it has not been marked. */
   waiting: boolean;
+  /** The couple's day, for "due tomorrow". */
+  today: string;
   /** Drag to reorder — the teacher's, not his. */
   handle?: DragHandleProps;
   onDelete?: () => void;
@@ -424,7 +430,7 @@ function LessonRow({
             {lesson.due_on && (
               <span className="inline-flex items-center gap-1">
                 <CalendarClock className="h-3 w-3" />
-                {dueLabel(lesson.due_on)}
+                {dueLabel(lesson.due_on, today)}
               </span>
             )}
             {done && score != null && (
