@@ -22,6 +22,7 @@ import { useCreateBlock } from '../api/lessons.mutations';
 import { useAddVocab } from '../api/vocab';
 import { useSetBlockVocab } from '../api/block-vocab';
 import { useLanguages } from '../lib/languages';
+import { useClassChannel } from '../lib/class-channel';
 import { acceptedForms, type ExerciseOption } from '../lib/exercise-schema';
 import { BlockView } from '../components/block-view';
 import { ExerciseView } from '../components/exercises/exercise-view';
@@ -125,6 +126,7 @@ export function TeachRoute() {
   const [i, setI] = useState(0);
   const [shown, setShown] = useState<Set<string>>(new Set());
   const [catching, setCatching] = useState(false);
+  const { send } = useClassChannel(lessonId ?? undefined);
 
   const slides = useMemo<Slide[]>(() => {
     if (!lesson) return [];
@@ -141,6 +143,15 @@ export function TeachRoute() {
   const next = () => setI((n) => Math.min(n + 1, last));
   const prev = () => setI((n) => Math.max(n - 1, 0));
   const slide = slides[Math.min(i, last)];
+  // His lesson page follows: every turn of the page is broadcast.
+  useEffect(() => {
+    if (!slide) return;
+    send({
+      blockId: slide.block?.id ?? null,
+      index: Math.min(i, last),
+      total: slides.length,
+    });
+  }, [slide, i, last, slides.length, send]);
   const revealAll = () =>
     slide &&
     setShown((s) => {
