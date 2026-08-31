@@ -4,13 +4,13 @@ import type { LucideIcon } from 'lucide-react';
 import {
   Home,
   BookHeart,
-  Camera,
   StickyNote,
   LayoutGrid,
   Settings,
 } from 'lucide-react';
 import { cn } from '@kernel/lib';
 import { MoreDrawer } from './more-drawer';
+import { PhotoButton } from './photo-button';
 
 function RailItem({
   to,
@@ -55,18 +55,16 @@ export function SideRail() {
     <>
       <nav
         aria-label="Main"
-        className="flex w-16 shrink-0 flex-col items-center gap-1 bg-surface-2 pb-3 pt-3"
+        className="flex w-16 shrink-0 flex-col items-center gap-1 bg-surface-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] pl-[env(safe-area-inset-left)] pt-3"
       >
         <RailItem to="/" icon={Home} label="Home" end />
         <RailItem to="/album" icon={BookHeart} label="Albums" />
-        <NavLink
-          to="/polaroid?shoot=1"
-          aria-label="Take a photo"
-          title="Take a photo"
-          className="lift-press my-1 flex h-11 w-11 items-center justify-center rounded-full bg-accent text-accent-fg shadow-loge"
-        >
-          <Camera size={20} strokeWidth={1.75} />
-        </NavLink>
+        {/* The same button as the bar's, states and all: the beacon that
+            says today's photo is still owed, the rescue for the day that is
+            closing, and the system camera rather than getUserMedia. */}
+        <div className="my-1 flex h-12 items-center">
+          <PhotoButton />
+        </div>
         <RailItem to="/wall" icon={StickyNote} label="Wall" />
         <button
           type="button"
