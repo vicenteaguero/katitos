@@ -77,14 +77,6 @@ export function daysBetween(
   return Math.floor(b.diff(a, 'days').days);
 }
 
-/** Days the couple has been together (>= 0). */
-export function daysTogether(
-  startDate: string | Date | null | undefined
-): number {
-  if (!startDate) return 0;
-  return Math.max(0, daysBetween(startDate, new Date()));
-}
-
 /**
  * The hour it started: about 3 a.m. on 15 June 2025, Novosibirsk time.
  *
@@ -137,10 +129,6 @@ export function monthsversaryCount(
   return Math.max(0, months);
 }
 
-export function formatDate(value: string | Date, fmt = 'DDD'): string {
-  return DateTime.fromJSDate(new Date(value)).toFormat(fmt);
-}
-
 export function formatDateTime(value: string | Date): string {
   return DateTime.fromJSDate(new Date(value)).toLocaleString(
     DateTime.DATETIME_MED
@@ -158,17 +146,6 @@ export function timeInZone(
   now: DateTime = DateTime.now()
 ): string {
   return now.setZone(zone).toFormat('HH:mm');
-}
-
-/** Offset in hours between two IANA zones (b relative to a). */
-export function zoneOffsetHours(
-  zoneA: string,
-  zoneB: string,
-  now: DateTime = DateTime.now()
-): number {
-  const a = now.setZone(zoneA).offset;
-  const b = now.setZone(zoneB).offset;
-  return (b - a) / 60;
 }
 
 export { DateTime };
