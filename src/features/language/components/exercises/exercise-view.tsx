@@ -1,8 +1,14 @@
 import { useState } from 'react';
-import { Check, Mic, X } from 'lucide-react';
+import { Mic } from 'lucide-react';
 import { cn } from '@kernel/lib';
 import { BUCKETS } from '@kernel/storage';
-import { Button, Input, PlayButton } from '@kernel/ui';
+import {
+  Button,
+  Input,
+  OptionButton,
+  PlayButton,
+  type OptionState,
+} from '@kernel/ui';
 import type { Exercise, Lang } from '../../types';
 import {
   acceptedForms,
@@ -80,43 +86,9 @@ function Body(props: ExerciseViewProps) {
   }
 }
 
-/** The shared look of a tappable answer. */
-function Choice({
-  label,
-  picked,
-  right,
-  wrong,
-  disabled,
-  onClick,
-}: {
-  label: string;
-  picked: boolean;
-  right?: boolean;
-  wrong?: boolean;
-  disabled?: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className={cn(
-        'lift-press flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left font-sans text-sm transition',
-        right
-          ? 'bg-success/20 text-fg'
-          : wrong
-            ? 'bg-danger/20 text-fg'
-            : picked
-              ? 'bg-accent text-accent-fg'
-              : 'bg-surface-2 text-fg'
-      )}
-    >
-      {right && <Check className="h-4 w-4 shrink-0 text-success" />}
-      {wrong && <X className="h-4 w-4 shrink-0 text-danger" />}
-      <span className="min-w-0 flex-1">{label}</span>
-    </button>
-  );
+/** Which of the four looks an option has earned. */
+function stateOf(picked: boolean, right: boolean, wrong: boolean): OptionState {
+  return right ? 'right' : wrong ? 'wrong' : picked ? 'picked' : 'idle';
 }
 
 function ChoiceView({
@@ -135,15 +107,18 @@ function ChoiceView({
         const picked = value === o.id;
         const marked = !!grade;
         return (
-          <Choice
+          <OptionButton
             key={o.id}
-            label={optionLabel(o, support)}
-            picked={picked}
-            right={marked && o.id === exercise.answer}
-            wrong={marked && picked && o.id !== exercise.answer}
+            state={stateOf(
+              picked,
+              marked && o.id === exercise.answer,
+              marked && picked && o.id !== exercise.answer
+            )}
             disabled={disabled}
             onClick={() => onChange(o.id)}
-          />
+          >
+            {optionLabel(o, support)}
+          </OptionButton>
         );
       })}
     </div>
@@ -170,19 +145,22 @@ function MultiView({
         const picked = chosen.includes(o.id);
         const marked = !!grade;
         return (
-          <Choice
+          <OptionButton
             key={o.id}
-            label={optionLabel(o, support)}
-            picked={picked}
-            right={marked && answer.includes(o.id)}
-            wrong={marked && picked && !answer.includes(o.id)}
+            state={stateOf(
+              picked,
+              marked && answer.includes(o.id),
+              marked && picked && !answer.includes(o.id)
+            )}
             disabled={disabled}
             onClick={() =>
               onChange(
                 picked ? chosen.filter((id) => id !== o.id) : [...chosen, o.id]
               )
             }
-          />
+          >
+            {optionLabel(o, support)}
+          </OptionButton>
         );
       })}
     </div>
