@@ -50,4 +50,4 @@ export {
   extForMime,
   type AudioClip,
 } from './audio/use-audio-recorder';
-export { useWideLayout } from './use-wide-layout';
+export { Desk, useDesk, useIsDesk, DESK_QUERY } from './desk';
