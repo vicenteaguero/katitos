@@ -26,7 +26,9 @@ export function useVocab(target?: Lang, search?: string) {
     queryKey: [...qk.lang.vocab(), target ?? 'all', search ?? ''] as const,
     staleTime: 30_000,
     queryFn: async (): Promise<Vocab[]> => {
-      let q = supabase.from('lang_vocab').select('*');
+      // A word that was put away stays out of every list until Undo brings
+      // it back — the row itself is kept, so nothing about it is lost.
+      let q = supabase.from('lang_vocab').select('*').is('deleted_at', null);
       if (target) q = q.eq('term_lang', target);
       if (search?.trim()) {
         // Quoted and escaped. PostgREST's `or=()` is a comma-separated list,
@@ -59,7 +61,8 @@ export function useAllVocab(target: Lang) {
       const { data, error } = await supabase
         .from('lang_vocab')
         .select('*')
-        .eq('term_lang', target);
+        .eq('term_lang', target)
+        .is('deleted_at', null);
       if (error) throw error;
       return data ?? [];
     },
@@ -97,6 +100,7 @@ export function useAddVocab() {
         .from('lang_vocab')
         .select('id')
         .eq('term_lang', v.termLang)
+        .is('deleted_at', null)
         .ilike(v.termLang, term)
         .limit(1);
       if (existing?.length) return existing[0].id as string;
@@ -189,22 +193,38 @@ export function useUpdateVocab() {
   });
 }
 
+/**
+ * Put a word away.
+ *
+ * Not a delete: deleting the row took its recording, every lesson's link to
+ * it and BOTH people's review history with it, from one tap with no way back.
+ * The row is marked instead and drops out of every list; Undo unmarks it.
+ */
 export function useDeleteVocab() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (word: Vocab) => {
       const { error } = await supabase
         .from('lang_vocab')
-        .delete()
+        .update({ deleted_at: new Date().toISOString() })
         .eq('id', word.id);
       if (error) throw error;
-      // Take the recording with it, rather than leaving it orphaned in the
-      // bucket forever the way the old delete did.
-      if (word.audio_path) {
-        await supabase.storage
-          .from(BUCKETS.languageAudio)
-          .remove([word.audio_path]);
-      }
+    },
+    onError: (e: Error) => toast.error(e.message),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: qk.lang.vocab() }),
+  });
+}
+
+/** Bring a word back, exactly as it was. */
+export function useRestoreVocab() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('lang_vocab')
+        .update({ deleted_at: null })
+        .eq('id', id);
+      if (error) throw error;
     },
     onError: (e: Error) => toast.error(e.message),
     onSuccess: () => void qc.invalidateQueries({ queryKey: qk.lang.vocab() }),
