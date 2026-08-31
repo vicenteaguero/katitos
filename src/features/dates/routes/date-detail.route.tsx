@@ -8,9 +8,10 @@ import { useTableSync } from '@kernel/realtime';
 import {
   Badge,
   Button,
+  CameraCapture,
   Card,
   CardTitle,
-  CameraCapture,
+  confirmDialog,
   Empty,
   IconButton,
   Input,
@@ -321,14 +322,21 @@ function RatingsCard({ date }: { date: DateWithRatings }) {
 function PhotoTile({ photo }: { photo: DatePhotoRow }) {
   const del = useDeleteDatePhoto();
   const onDelete = () => {
-    if (!confirm('Delete this photo?')) return;
-    del.mutate(
-      { id: photo.id, dateId: photo.date_id },
-      {
-        onSuccess: () => toast.success('Photo deleted'),
-        onError: (e) => toast.error(e.message),
-      }
-    );
+    void confirmDialog({
+      title: 'Delete this photo?',
+      body: 'It comes off this date for good.',
+      confirmLabel: 'Delete it',
+      danger: true,
+    }).then((ok) => {
+      if (!ok) return;
+      del.mutate(
+        { id: photo.id, dateId: photo.date_id },
+        {
+          onSuccess: () => toast.success('Photo deleted'),
+          onError: (e) => toast.error(e.message),
+        }
+      );
+    });
   };
   return (
     <div className="relative overflow-hidden rounded-lg bg-surface-2">
