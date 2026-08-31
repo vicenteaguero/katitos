@@ -25,30 +25,43 @@ export function StudyBanner() {
     (c) => mastery(reviews.get(c.id)) === 'known'
   ).length;
   const session = buildSession(cards, reviews).length;
+  const lapsed = cards.filter(
+    (c) => (reviews.get(c.id)?.lapses ?? 0) > 0
+  ).length;
 
   if (cards.length === 0) return null;
 
   return (
-    <Link
-      to="/language/study"
-      className="lift-press flex items-center gap-3 rounded-lg rounded-tl-xl bg-surface-2 px-4 py-3 shadow-loge"
-    >
-      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent text-accent-fg">
-        <GraduationCap className="h-5 w-5" />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block font-display text-lg font-semibold text-fg">
-          {session > 0 ? 'Practice' : 'All caught up'}
+    <div className="space-y-1">
+      <Link
+        to="/language/study"
+        className="lift-press flex items-center gap-3 rounded-lg rounded-tl-xl bg-surface-2 px-4 py-3 shadow-loge"
+      >
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent text-accent-fg">
+          <GraduationCap className="h-5 w-5" />
         </span>
-        <span className="block font-sans text-xs text-muted">
-          {/* The session is what a tap actually gives: twenty cards, not the
+        <span className="min-w-0 flex-1">
+          <span className="block font-display text-lg font-semibold text-fg">
+            {session > 0 ? 'Practice' : 'All caught up'}
+          </span>
+          <span className="block font-sans text-xs text-muted">
+            {/* The session is what a tap actually gives: twenty cards, not the
               whole backlog. The backlog is said too when it is bigger. */}
-          {session > 0
-            ? `${session} to practise${due > session ? ` · ${due} due` : ''}`
-            : 'nothing due — come back tomorrow'}
+            {session > 0
+              ? `${session} to practise${due > session ? ` · ${due} due` : ''}`
+              : 'nothing due — come back tomorrow'}
+          </span>
         </span>
-      </span>
-      <StatPill value={known} label="known" />
-    </Link>
+        <StatPill value={known} label="known" />
+      </Link>
+      {lapsed > 0 && (
+        <Link
+          to="/language/study?scope=lapses"
+          className="block px-1 font-sans text-xs text-muted hover:text-fg"
+        >
+          or just the {Math.min(lapsed, 8)} you keep missing →
+        </Link>
+      )}
+    </div>
   );
 }
