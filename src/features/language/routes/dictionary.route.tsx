@@ -1,17 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { BUCKETS, useSignedUrls } from '@kernel/storage';
 import {
   AudioRecorder,
   Button,
+  Dialog,
   Empty,
   Field,
   FieldRow,
   Fieldset,
   Input,
   PlayButton,
+  SearchInput,
   Segmented,
-  Sheet,
   Textarea,
   toast,
   useTopBarAction,
@@ -98,15 +99,11 @@ export function DictionaryRoute() {
 
   return (
     <div className="curtain-reveal space-y-2">
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Look for a word"
-          className="pl-9"
-        />
-      </div>
+      <SearchInput
+        value={search}
+        onChange={setSearch}
+        placeholder="Look for a word"
+      />
 
       {list.length === 0 ? (
         <Empty
@@ -268,11 +265,12 @@ function WordSheet({
   };
 
   return (
-    <Sheet
+    <Dialog
+      placement="auto"
       open
       onClose={onClose}
       title={word ? 'This word' : `A new word in ${LANG_LABELS[lang]}`}
-      size="half"
+      size="md"
     >
       <div className="space-y-3">
         <Field label={`In ${LANG_LABELS[lang]}`}>
@@ -357,6 +355,6 @@ function WordSheet({
           {word ? 'Save' : 'Add to the dictionary'}
         </Button>
       </div>
-    </Sheet>
+    </Dialog>
   );
 }
