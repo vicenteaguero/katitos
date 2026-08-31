@@ -450,7 +450,6 @@ export function MarkRoute() {
                 className={cn(
                   'space-y-1 rounded-lg px-3 py-2.5',
                   v.correct ? 'bg-surface' : 'bg-danger/10',
-                  // No alpha on a ring — `ring-gold/40` renders the default blue.
                   isFocused && desk && 'ring-1 ring-gold'
                 )}
               >
