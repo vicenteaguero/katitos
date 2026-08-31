@@ -154,6 +154,14 @@ textarea,
 .desk__rail {
   display: none;
 }
+/* Where a dragged row will land — an inset line, not a border. */
+.drop-before {
+  box-shadow: inset 0 2px 0 0 var(--gold);
+}
+.drop-after {
+  box-shadow: inset 0 -2px 0 0 var(--gold);
+}
+
 /* The drawer button exists only on a tablet-sized desk. */
 .desk__inspector-toggle {
   display: none;
