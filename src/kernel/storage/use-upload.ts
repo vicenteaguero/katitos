@@ -32,11 +32,21 @@ export async function evictStoredObject(
   bucket: BucketName,
   path: string
 ): Promise<void> {
-  for (const p of [path, proxyPath(path)]) {
+  const paths = [path, proxyPath(path)];
+  for (const p of paths) {
     forgetSignedUrl(bucket, p);
     qc.removeQueries({ queryKey: ['signed-url', bucket, p] });
   }
-  void qc.invalidateQueries({ queryKey: ['signed-urls', bucket] });
+  // Only the batches that actually hold this path. The whole bucket used to
+  // be invalidated, so a forty-photo import refetched every mounted batch
+  // forty times — the storm the album's bulk add had just been cured of.
+  void qc.invalidateQueries({
+    queryKey: ['signed-urls', bucket],
+    predicate: (q) => {
+      const wanted = q.queryKey[3];
+      return Array.isArray(wanted) && paths.some((p) => wanted.includes(p));
+    },
+  });
 
   if (typeof caches === 'undefined') return;
   const base = import.meta.env.VITE_SUPABASE_URL as string | undefined;
