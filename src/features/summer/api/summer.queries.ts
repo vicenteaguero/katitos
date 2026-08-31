@@ -9,7 +9,6 @@ import {
   type Trip,
   type TripItem,
   type TripLeg,
-  type TripPhoto,
   type TripReview,
   type WorkBlock,
 } from '../types';
@@ -43,22 +42,6 @@ export function useSummerItems(tripId: string | undefined) {
         .eq('trip_id', tripId as string)
         .order('position', { ascending: true })
         .order('created_at', { ascending: true });
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-}
-
-export function useSummerPhotos(tripId: string | undefined) {
-  return useQuery({
-    queryKey: qk.trips.photos(tripId ?? 'none'),
-    enabled: !!tripId,
-    queryFn: async (): Promise<TripPhoto[]> => {
-      const { data, error } = await supabase
-        .from('trip_photos')
-        .select('*')
-        .eq('trip_id', tripId as string)
-        .order('created_at', { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
