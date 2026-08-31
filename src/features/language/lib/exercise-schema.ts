@@ -233,6 +233,25 @@ const sameSet = (a: string[], b: string[]) =>
  * punctuation and the two Russian letters that look alike — being marked wrong
  * over a missing diaeresis teaches nobody anything.
  */
+/** What a spoken answer holds: the old bare self-mark, or a recording with one. */
+export interface SpeakAnswer {
+  ok: boolean | null;
+  /** Where his recording is, in the language-audio bucket. */
+  audio: string | null;
+}
+
+export function speakAnswer(given: unknown): SpeakAnswer {
+  if (typeof given === 'boolean') return { ok: given, audio: null };
+  if (given && typeof given === 'object') {
+    const g = given as { ok?: unknown; audio?: unknown };
+    return {
+      ok: typeof g.ok === 'boolean' ? g.ok : null,
+      audio: typeof g.audio === 'string' ? g.audio : null,
+    };
+  }
+  return { ok: null, audio: null };
+}
+
 export function gradeAnswer(ex: ExerciseLike, given: unknown): Grade {
   switch (ex.kind) {
     case 'choice':
@@ -328,8 +347,11 @@ export function gradeAnswer(ex: ExerciseLike, given: unknown): Grade {
 
     case 'speak':
       // Self-marked: nothing in a browser can judge a Russian accent, and
-      // pretending otherwise would be worse than trusting him.
-      return given === true ? { correct: true, score: 1 } : WRONG;
+      // pretending otherwise would be worse than trusting him. The recording
+      // is for her — she can overrule him from the marking screen.
+      return speakAnswer(given).ok === true
+        ? { correct: true, score: 1 }
+        : WRONG;
 
     default:
       return WRONG;
