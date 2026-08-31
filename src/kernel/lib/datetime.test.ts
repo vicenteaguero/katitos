@@ -3,7 +3,6 @@ import { DateTime } from 'luxon';
 import {
   countdownTo,
   daysBetween,
-  daysTogether,
   daysTogetherNow,
   nextMonthsversary,
 } from './datetime';
@@ -12,11 +11,6 @@ describe('datetime', () => {
   it('counts whole days between dates', () => {
     expect(daysBetween('2026-01-01', '2026-01-08')).toBe(7);
     expect(daysBetween('2026-01-01', '2026-01-01')).toBe(0);
-  });
-
-  it('daysTogether is never negative and 0 for nullish', () => {
-    expect(daysTogether(null)).toBe(0);
-    expect(daysTogether(undefined)).toBe(0);
   });
 
   it('breaks a future target into positive parts', () => {
