@@ -133,21 +133,26 @@ export function useDueLessons(target: TargetLang) {
     queryFn: async (): Promise<Lesson[]> => {
       // Only the language you are LEARNING. Without this the home screen told
       // him his own Spanish homework was due — the homework he set for her.
+      // Filtered on the SERVER: filtering after the limit meant the twenty
+      // oldest rows were mostly the other course's, and one person's widget
+      // went blank as the other's history grew.
       const { data, error } = await supabase
         .from('lang_lessons')
-        .select('*, unit:lang_units(course:lang_courses(target_lang))')
+        .select(
+          '*, unit:lang_units!inner(course:lang_courses!inner(target_lang))'
+        )
+        .eq('unit.course.target_lang', target)
         .eq('status', 'published')
         .in('kind', ['homework', 'exam'])
         .not('due_on', 'is', null)
+        .is('deleted_at', null)
         .order('due_on', { ascending: true })
         .limit(20);
       if (error) throw error;
       const rows = (data ?? []) as (Lesson & {
         unit: { course: { target_lang: string } | null } | null;
       })[];
-      return rows
-        .filter((l) => l.unit?.course?.target_lang === target)
-        .slice(0, 5);
+      return rows.filter((l) => l.unit?.course?.target_lang === target);
     },
   });
 }
