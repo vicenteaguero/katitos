@@ -28,6 +28,7 @@ import {
   useUnits,
 } from '../api/courses.queries';
 import { useCreateLesson, useCreateUnit } from '../api/lessons.mutations';
+import { dueLabel } from '../lib/due';
 import type { Lesson, LessonKind } from '../types';
 
 const KIND_ICON = {
@@ -41,18 +42,6 @@ const KIND_LABEL: Record<LessonKind, string> = {
   homework: 'Homework',
   exam: 'Exam',
 };
-
-/** "in 3 days" · "today" · "2 days late" — a date you can act on. */
-function dueLabel(due: string): string {
-  const days = Math.round(
-    (new Date(`${due}T00:00:00`).getTime() - Date.now()) / 86_400_000
-  );
-  if (days === 0) return 'today';
-  if (days === 1) return 'tomorrow';
-  if (days > 1) return `in ${days} days`;
-  if (days === -1) return '1 day late';
-  return `${Math.abs(days)} days late`;
-}
 
 /**
  * One course: its units, and the lessons inside them.
