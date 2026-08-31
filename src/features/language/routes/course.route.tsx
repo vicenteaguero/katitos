@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router';
 import {
   CalendarClock,
   ClipboardCheck,
   FileText,
   Pencil,
   Plus,
+  Trash2,
 } from 'lucide-react';
 import { usePartner } from '@kernel/auth';
 import { useTableSync } from '@kernel/realtime';
@@ -15,14 +16,22 @@ import {
   Button,
   Desk,
   Dialog,
+  DragHandle,
   Empty,
   Field,
+  Fieldset,
+  InlineEdit,
   Input,
   ListSkeleton,
+  OptionButton,
+  ROW_TOOL,
   Segmented,
+  SortableList,
+  toast,
   TopBarButton,
   useDesk,
   useTopBarAction,
+  type DragHandleProps,
 } from '@kernel/ui';
 import {
   useCourse,
@@ -30,7 +39,18 @@ import {
   useProgress,
   useUnits,
 } from '../api/courses.queries';
-import { useCreateLesson, useCreateUnit } from '../api/lessons.mutations';
+import {
+  useCreateLesson,
+  useCreateUnit,
+  useDeleteLesson,
+  useDeleteUnit,
+  useReorderLessons,
+  useReorderUnits,
+  useRestoreLesson,
+  useUpdateUnit,
+} from '../api/lessons.mutations';
+import { LESSON_TEMPLATES } from '../lib/templates';
+import { isTeacherOf, useLanguages } from '../lib/languages';
 import { CoursesRail } from '../components/courses-rail';
 import { dueLabel } from '../lib/due';
 import type { Lesson, LessonKind } from '../types';
@@ -61,6 +81,7 @@ export function CourseRoute() {
   const { data: progress } = useMyProgress();
   const { data: everyone } = useProgress();
   const { partner } = usePartner();
+  const navigate = useNavigate();
 
   /** Lessons he has handed in and she has not marked yet. */
   const toMark = useMemo(
@@ -76,6 +97,13 @@ export function CourseRoute() {
   );
   const createUnit = useCreateUnit();
   const createLesson = useCreateLesson();
+  const updateUnit = useUpdateUnit();
+  const deleteUnit = useDeleteUnit();
+  const reorderUnits = useReorderUnits();
+  const reorderLessons = useReorderLessons();
+  const deleteLesson = useDeleteLesson();
+  const restoreLesson = useRestoreLesson();
+  const { native, ready } = useLanguages();
   useTableSync('lang_lessons', qk.lang.units(courseId ?? 'none'));
   useDesk();
 
@@ -84,12 +112,17 @@ export function CourseRoute() {
   const [lessonFor, setLessonFor] = useState<string | null>(null);
   const [lessonTitle, setLessonTitle] = useState('');
   const [lessonKind, setLessonKind] = useState<LessonKind>('lesson');
+  const [template, setTemplate] = useState(LESSON_TEMPLATES[0].id);
 
+  // Only the one who teaches this course builds it.
+  const teacher = ready && isTeacherOf(course, native);
   useTopBarAction(
-    <TopBarButton label="New unit" onClick={() => setUnitOpen(true)}>
-      <Plus className="h-4 w-4" />
-    </TopBarButton>,
-    []
+    teacher ? (
+      <TopBarButton label="New unit" onClick={() => setUnitOpen(true)}>
+        <Plus className="h-4 w-4" />
+      </TopBarButton>
+    ) : null,
+    [teacher]
   );
 
   if (isLoading) return <ListSkeleton rows={4} />;
@@ -118,42 +151,118 @@ export function CourseRoute() {
             }
           />
         ) : (
-          list.map((unit) => (
-            <section key={unit.id} className="space-y-1.5">
-              <div className="flex items-baseline justify-between gap-2">
-                <h2 className="min-w-0 truncate font-display text-lg text-fg">
-                  {unit.title}
-                </h2>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLessonFor(unit.id);
-                    setLessonTitle('');
-                    setLessonKind('lesson');
-                  }}
-                  className="shrink-0 font-sans text-xs text-gold"
-                >
-                  add
-                </button>
-              </div>
+          <SortableList
+            items={list}
+            keyOf={(u) => u.id}
+            disabled={!teacher || reorderUnits.isPending}
+            className="space-y-4"
+            onReorder={(next) =>
+              courseId &&
+              reorderUnits.mutate({ courseId, ids: next.map((u) => u.id) })
+            }
+          >
+            {(unit, _i, handle) => (
+              <section className="space-y-1.5">
+                <div className="flex items-center gap-1">
+                  {teacher && <DragHandle {...handle} />}
+                  <h2 className="min-w-0 flex-1 truncate font-display text-lg text-fg">
+                    {teacher ? (
+                      <InlineEdit
+                        value={unit.title}
+                        label="Unit"
+                        onSave={(title) =>
+                          courseId &&
+                          updateUnit.mutate({ id: unit.id, courseId, title })
+                        }
+                      />
+                    ) : (
+                      unit.title
+                    )}
+                  </h2>
+                  {teacher && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLessonFor(unit.id);
+                          setLessonTitle('');
+                          setLessonKind('lesson');
+                          setTemplate(LESSON_TEMPLATES[0].id);
+                        }}
+                        className="shrink-0 rounded px-2 py-1 font-sans text-xs text-gold hover:bg-fg/5"
+                      >
+                        add
+                      </button>
+                      {unit.lessons.length === 0 && (
+                        <button
+                          type="button"
+                          aria-label="Delete this empty unit"
+                          onClick={() =>
+                            courseId &&
+                            deleteUnit.mutate({ id: unit.id, courseId })
+                          }
+                          className={ROW_TOOL}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
 
-              {unit.lessons.length === 0 ? (
-                <p className="font-sans text-xs text-muted">Empty for now.</p>
-              ) : (
-                <ul className="space-y-1">
-                  {unit.lessons.map((lesson) => (
-                    <LessonRow
-                      key={lesson.id}
-                      lesson={lesson}
-                      done={progress?.get(lesson.id)?.status === 'graded'}
-                      score={progress?.get(lesson.id)?.score ?? null}
-                      waiting={toMark.has(lesson.id)}
-                    />
-                  ))}
-                </ul>
-              )}
-            </section>
-          ))
+                {unit.lessons.length === 0 ? (
+                  <p className="font-sans text-xs text-muted">Empty for now.</p>
+                ) : (
+                  <SortableList
+                    items={unit.lessons}
+                    keyOf={(l) => l.id}
+                    disabled={!teacher || reorderLessons.isPending}
+                    className="space-y-1"
+                    onReorder={(next) =>
+                      courseId &&
+                      reorderLessons.mutate({
+                        courseId,
+                        ids: next.map((l) => l.id),
+                      })
+                    }
+                  >
+                    {(lesson, _k, lessonHandle) => (
+                      <LessonRow
+                        lesson={lesson}
+                        done={progress?.get(lesson.id)?.status === 'graded'}
+                        score={progress?.get(lesson.id)?.score ?? null}
+                        waiting={toMark.has(lesson.id)}
+                        handle={teacher ? lessonHandle : undefined}
+                        onDelete={
+                          teacher
+                            ? () =>
+                                courseId &&
+                                deleteLesson.mutate(
+                                  { id: lesson.id, courseId },
+                                  {
+                                    onSuccess: () =>
+                                      toast.success('Lesson put away', {
+                                        key: 'lesson-put-away',
+                                        action: {
+                                          label: 'Undo',
+                                          onClick: () =>
+                                            restoreLesson.mutate({
+                                              id: lesson.id,
+                                              courseId,
+                                            }),
+                                        },
+                                      }),
+                                  }
+                                )
+                            : undefined
+                        }
+                      />
+                    )}
+                  </SortableList>
+                )}
+              </section>
+            )}
+          </SortableList>
         )}
 
         <Dialog
@@ -219,6 +328,25 @@ export function CourseRoute() {
                 autoFocus
               />
             </Field>
+            <Fieldset
+              label="Start from"
+              hint="Empty blocks in the usual order — throw away what you do not need"
+            >
+              <div className="grid grid-cols-2 gap-1.5">
+                {LESSON_TEMPLATES.map((t) => (
+                  <OptionButton
+                    key={t.id}
+                    state={template === t.id ? 'picked' : 'idle'}
+                    onClick={() => setTemplate(t.id)}
+                  >
+                    <span className="block font-semibold">{t.title}</span>
+                    <span className="block text-[0.68rem] opacity-80">
+                      {t.hint}
+                    </span>
+                  </OptionButton>
+                ))}
+              </div>
+            </Fieldset>
             <Button
               full
               disabled={!lessonTitle.trim() || createLesson.isPending}
@@ -232,8 +360,15 @@ export function CourseRoute() {
                     title: lessonTitle,
                     kind: lessonKind,
                     position: unit.lessons.length,
+                    blocks: LESSON_TEMPLATES.find((t) => t.id === template)
+                      ?.blocks,
                   },
-                  { onSuccess: () => setLessonFor(null) }
+                  {
+                    onSuccess: (id) => {
+                      setLessonFor(null);
+                      navigate(`/language/build/${id}`);
+                    },
+                  }
                 );
               }}
             >
@@ -251,17 +386,23 @@ function LessonRow({
   done,
   score,
   waiting,
+  handle,
+  onDelete,
 }: {
   lesson: Lesson;
   done: boolean;
   score: number | null;
   /** He has handed this in and it has not been marked. */
   waiting: boolean;
+  /** Drag to reorder — the teacher's, not his. */
+  handle?: DragHandleProps;
+  onDelete?: () => void;
 }) {
   const Icon = KIND_ICON[lesson.kind as LessonKind] ?? FileText;
   const draft = lesson.status === 'draft';
   return (
-    <li>
+    <div className="flex items-center gap-1">
+      {handle && <DragHandle {...handle} />}
       <Link
         to={
           waiting
@@ -269,7 +410,7 @@ function LessonRow({
             : `/language/lesson/${lesson.id}`
         }
         className={cn(
-          'lift-press flex items-center gap-2.5 rounded-lg bg-surface-2 px-3 py-2.5',
+          'lift-press flex min-w-0 flex-1 items-center gap-2.5 rounded-lg bg-surface-2 px-3 py-2.5',
           draft && 'opacity-60'
         )}
       >
@@ -298,6 +439,16 @@ function LessonRow({
           </span>
         )}
       </Link>
-    </li>
+      {onDelete && (
+        <button
+          type="button"
+          aria-label="Put this lesson away"
+          onClick={onDelete}
+          className={ROW_TOOL}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      )}
+    </div>
   );
 }
