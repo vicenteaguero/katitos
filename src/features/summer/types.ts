@@ -2,7 +2,6 @@ import type { Tables } from '@kernel/supabase';
 
 export type Trip = Tables<'trips'>;
 export type TripItem = Tables<'trip_items'>;
-export type TripPhoto = Tables<'trip_photos'>;
 export type TripLeg = Tables<'trip_legs'>;
 export type TripReview = Tables<'trip_reviews'>;
 export type BudgetSprint = Tables<'budget_sprints'>;
