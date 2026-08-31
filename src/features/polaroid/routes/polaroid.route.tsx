@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { Camera, ImagePlus } from 'lucide-react';
 import { DateTime } from 'luxon';
@@ -17,12 +17,12 @@ import {
   toast,
   useTopBarAction,
 } from '@kernel/ui';
-import { PolaroidCamera } from '../components/polaroid-camera';
 import { PolaroidViewer } from '../components/polaroid-viewer';
 import { DoublePolaroid } from '../components/double-polaroid';
 import { CatchUpSheet } from '../components/catch-up-sheet';
 import { PolaroidImage } from '../components/polaroid-image';
 import { usePolaroidPages } from '../api/polaroid.queries';
+import { usePolaroidDraft } from '../lib/draft-store';
 import {
   polaroidErrorMessage,
   useSetPolaroidCaption,
@@ -52,8 +52,11 @@ export function PolaroidRoute() {
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
     usePolaroidPages();
 
-  const [camOpen, setCamOpen] = useState(false);
   const [catchUpOpen, setCatchUpOpen] = useState(false);
+  /** The day a notification sent us here for — its row glows in the sheet. */
+  const [urgentDay, setUrgentDay] = useState<string | null>(null);
+  /** A notification asked for the camera and the browser wouldn't open it. */
+  const [pulseShoot, setPulseShoot] = useState(false);
   const [cropping, setCropping] = useState<{ day: string; file: File } | null>(
     null
   );
@@ -61,6 +64,11 @@ export function PolaroidRoute() {
   // Her day sits on top when you open the app. Tapping mine brings it forward.
   const [todayFocus, setTodayFocus] = useState<Focus>('theirs');
   const [params, setParams] = useSearchParams();
+  // The system camera, not getUserMedia: the photo taken every single day is
+  // the one that must never re-ask for permission. See PhotoButton.
+  const shootRef = useRef<HTMLInputElement>(null);
+  const draft = usePolaroidDraft((s) => s.draft);
+  const clearDraft = usePolaroidDraft((s) => s.clearDraft);
 
   const selfId = self?.user_id ?? null;
   const myToday = localDay(self?.timezone);
@@ -100,13 +108,45 @@ export function PolaroidRoute() {
   );
   const openSet = useMemo(() => new Set(eligible), [eligible]);
 
-  // The middle nav button deep-links here with ?shoot=1 → straight to camera.
+  const openCamera = useCallback(() => shootRef.current?.click(), []);
+
+  /**
+   * A photo already taken elsewhere — the bottom bar owns the camera input so
+   * that tapping it IS the gesture that opens the phone's camera. It lands here
+   * as a draft; crop it and it is saved.
+   */
   useEffect(() => {
-    if (params.get('shoot') === '1') {
-      setCamOpen(true);
-      params.delete('shoot');
-      setParams(params, { replace: true });
-    }
+    if (!draft) return;
+    setCropping({ day: draft.day, file: draft.file });
+    clearDraft();
+  }, [draft, clearDraft]);
+
+  /**
+   * The end-of-day notification links to `?shoot=1`, wanting the camera open.
+   *
+   * We try, and we do not rely on it: opening a file input needs a gesture the
+   * browser will not credit a notification tap with, and Safari refuses. So the
+   * fallback is not an error message, it is the button below going gold and
+   * pulsing under your thumb — one tap, on the thing you came here to do.
+   */
+  useEffect(() => {
+    if (params.get('shoot') !== '1') return;
+    params.delete('shoot');
+    setParams(params, { replace: true });
+    openCamera();
+    setPulseShoot(true);
+    const id = setTimeout(() => setPulseShoot(false), 8000);
+    return () => clearTimeout(id);
+  }, [params, setParams, openCamera]);
+
+  /** The last-call notification links to `?catchup=<day>` — that exact day. */
+  useEffect(() => {
+    const day = params.get('catchup');
+    if (!day) return;
+    params.delete('catchup');
+    setParams(params, { replace: true });
+    setUrgentDay(day);
+    setCatchUpOpen(true);
   }, [params, setParams]);
 
   useTopBarAction(
@@ -157,7 +197,7 @@ export function PolaroidRoute() {
             onOpen={setViewer}
             isToday
             stillOpen
-            onShoot={() => setCamOpen(true)}
+            onShoot={openCamera}
           />
         )}
 
@@ -185,14 +225,17 @@ export function PolaroidRoute() {
 
         {today.mine ? (
           <div className="flex justify-center">
-            <Button variant="secondary" onClick={() => setCamOpen(true)}>
+            <Button variant="secondary" onClick={openCamera}>
               <Camera size={18} /> Retake mine
             </Button>
           </div>
         ) : (
           !isLoading && (
             <div className="flex justify-center">
-              <Button onClick={() => setCamOpen(true)}>
+              <Button
+                onClick={openCamera}
+                className={pulseShoot ? 'shoot-cta' : undefined}
+              >
                 <Camera size={18} /> Take today&apos;s photo
               </Button>
             </div>
@@ -230,27 +273,36 @@ export function PolaroidRoute() {
         )}
       </section>
 
-      {camOpen && (
-        <PolaroidCamera
-          facingMode="user"
-          onCapture={(blob) => {
-            setCamOpen(false);
-            save(myToday, blob);
-          }}
-          onCancel={() => setCamOpen(false)}
-        />
-      )}
+      {/* The phone's own camera. Front lens, no preview of ours, no permission
+          prompt — the shot comes back as a file and the cropper below makes it
+          square, so what gets saved is still a polaroid. */}
+      <input
+        ref={shootRef}
+        type="file"
+        accept="image/*"
+        capture="user"
+        hidden
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = '';
+          if (file) setCropping({ day: myToday, file });
+        }}
+      />
 
       <CatchUpSheet
         open={catchUpOpen}
-        onClose={() => setCatchUpOpen(false)}
+        onClose={() => {
+          setCatchUpOpen(false);
+          setUrgentDay(null);
+        }}
         days={eligible}
         filled={filled}
         selfZone={self?.timezone}
-        partnerZone={partner?.timezone}
         partnerName={partnerName}
+        urgentDay={urgentDay}
         onPick={(day, file) => {
           setCatchUpOpen(false);
+          setUrgentDay(null);
           setCropping({ day, file });
         }}
       />
