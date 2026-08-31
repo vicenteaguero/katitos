@@ -18,6 +18,15 @@ export interface FilePickerButtonProps {
   accept?: string;
   /** Drop all built-in styling — the caller supplies the whole appearance. */
   bare?: boolean;
+  /**
+   * Ask for the phone's own camera instead of its photo library.
+   *
+   * This is how the daily polaroid is taken now. `getUserMedia` re-asks for
+   * permission on every cold launch of an installed PWA on iOS — there is no
+   * setting and no API that stops it — so the one camera you use every single
+   * day uses the system camera, which asks nothing. 'user' is the front lens.
+   */
+  capture?: 'user' | 'environment';
 }
 
 /**
@@ -36,6 +45,7 @@ export function FilePickerButton({
   disabled,
   accept = 'image/*',
   bare = false,
+  capture,
 }: FilePickerButtonProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -67,6 +77,7 @@ export function FilePickerButton({
         type="file"
         accept={accept}
         multiple={multiple}
+        capture={capture}
         hidden
         onChange={(e) => {
           const files = Array.from(e.target.files ?? []);
