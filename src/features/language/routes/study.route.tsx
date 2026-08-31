@@ -5,11 +5,13 @@ import { BUCKETS } from '@kernel/storage';
 import { cn } from '@kernel/lib';
 import {
   Button,
+  Desk,
   Empty,
   Input,
   LoadingScreen,
   OptionButton,
   PlayButton,
+  useDesk,
 } from '@kernel/ui';
 import { useAllVocab, useGradeVocab, useMyReviews } from '../api/vocab';
 import { buildSession, type Grade } from '../lib/srs';
@@ -34,6 +36,7 @@ export function StudyRoute() {
   const { data: words, isLoading } = useAllVocab(learning);
   const { data: reviews } = useMyReviews();
   const grade = useGradeVocab();
+  useDesk();
 
   const [i, setI] = useState(0);
   const [revealed, setRevealed] = useState(false);
@@ -132,154 +135,158 @@ export function StudyRoute() {
   }
 
   return (
-    <div className="curtain-reveal flex h-full flex-col">
-      <div className="mb-3 flex items-center justify-between">
-        <Link to="/language" className="font-sans text-sm text-muted">
-          ✕ Exit
-        </Link>
-        <p className="font-sans text-xs tabular-nums text-muted">
-          {i + 1} / {session.length}
-        </p>
-      </div>
+    <Desk narrow>
+      <div className="curtain-reveal flex h-full flex-col">
+        <div className="mb-3 flex items-center justify-between">
+          <Link to="/language" className="font-sans text-sm text-muted">
+            ✕ Exit
+          </Link>
+          <p className="font-sans text-xs tabular-nums text-muted">
+            {i + 1} / {session.length}
+          </p>
+        </div>
 
-      <div className="flex min-h-0 flex-1 flex-col justify-center gap-5">
-        {/* ── the prompt ─────────────────────────────────────────────── */}
-        <div className="marble gilt-hairline shadow-loge rounded-lg px-5 py-8 text-center">
-          {mode === 'listen' ? (
-            <div className="space-y-3">
-              <Volume2 className="mx-auto h-6 w-6 text-brown/60" />
-              {card.audio_path ? (
-                <PlayButton
-                  bucket={BUCKETS.languageAudio}
-                  path={card.audio_path}
-                  className="h-9 w-full"
-                />
-              ) : null}
-              <p className="font-sans text-xs uppercase tracking-[0.18em] text-brown/60">
-                what did she say?
-              </p>
-            </div>
-          ) : mode === 'recall' ? (
-            <>
-              <p className="font-display text-4xl font-semibold leading-tight text-accent">
-                {headword(card)}
-              </p>
-              {card.transliteration && (
-                <p className="mt-2 font-display text-base italic text-copper">
-                  {card.transliteration}
+        <div className="flex min-h-0 flex-1 flex-col justify-center gap-5">
+          {/* ── the prompt ─────────────────────────────────────────────── */}
+          <div className="marble gilt-hairline shadow-loge rounded-lg px-5 py-8 text-center">
+            {mode === 'listen' ? (
+              <div className="space-y-3">
+                <Volume2 className="mx-auto h-6 w-6 text-brown/60" />
+                {card.audio_path ? (
+                  <PlayButton
+                    bucket={BUCKETS.languageAudio}
+                    path={card.audio_path}
+                    className="h-9 w-full"
+                  />
+                ) : null}
+                <p className="font-sans text-xs uppercase tracking-[0.18em] text-brown/60">
+                  what did she say?
                 </p>
+              </div>
+            ) : mode === 'recall' ? (
+              <>
+                <p className="font-display text-4xl font-semibold leading-tight text-accent">
+                  {headword(card)}
+                </p>
+                {card.transliteration && (
+                  <p className="mt-2 font-display text-base italic text-copper">
+                    {card.transliteration}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="font-display text-3xl font-semibold text-brown">
+                {meaningOf(card, support) || headword(card)}
+              </p>
+            )}
+
+            {revealed && (
+              <div className="km-reveal mt-5 space-y-1 border-t border-brown/15 pt-4">
+                <p className="font-display text-2xl text-brown">
+                  {mode === 'recall'
+                    ? meaningOf(card, support)
+                    : headword(card)}
+                </p>
+                {card.transliteration && mode !== 'recall' && (
+                  <p className="font-display text-sm italic text-copper">
+                    {card.transliteration}
+                  </p>
+                )}
+                {noteOf(card, support) && (
+                  <p className="font-sans text-xs italic text-brown/70">
+                    {noteOf(card, support)}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* ── the answer ─────────────────────────────────────────────── */}
+          {!revealed && mode === 'choice' && (
+            <div className="space-y-2">
+              {choices.map((c) => (
+                <OptionButton
+                  key={c.id}
+                  state={picked === c.id ? 'picked' : 'idle'}
+                  onClick={() => {
+                    setPicked(c.id);
+                    setRevealed(true);
+                  }}
+                  className="px-4 py-3 font-display text-lg"
+                >
+                  {headword(c)}
+                </OptionButton>
+              ))}
+            </div>
+          )}
+
+          {!revealed && mode === 'type' && (
+            <div className="space-y-2">
+              <Input
+                value={typed}
+                // A real keyboard types here — it was read-only, so on a
+                // computer nothing could be typed at all, and on a phone every
+                // answer with a space in it was impossible (no space key). The
+                // on-screen letters stay for the phone with no Cyrillic layout.
+                onChange={(e) => setTyped(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && typed) setRevealed(true);
+                }}
+                lang={termLangOf(card)}
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck={false}
+                placeholder={`type it in ${LANG_NATIVE_LABELS[termLangOf(card)]}…`}
+                className="text-center font-display text-xl"
+              />
+              <LetterKeys
+                lang={termLangOf(card)}
+                onKey={(ch) => setTyped((t) => t + ch)}
+                onBackspace={() => setTyped((t) => t.slice(0, -1))}
+              />
+              <Button full onClick={() => setRevealed(true)} disabled={!typed}>
+                <Check size={16} /> Check
+              </Button>
+            </div>
+          )}
+
+          {!revealed && (mode === 'recall' || mode === 'listen') && (
+            <Button full variant="secondary" onClick={() => setRevealed(true)}>
+              Show me
+            </Button>
+          )}
+
+          {revealed && mode === 'type' && (
+            <p
+              className={cn(
+                'text-center font-sans text-sm',
+                answerMatches(typed, termOf(card))
+                  ? 'text-success'
+                  : 'text-danger'
               )}
-            </>
-          ) : (
-            <p className="font-display text-3xl font-semibold text-brown">
-              {meaningOf(card, support) || headword(card)}
+            >
+              {answerMatches(typed, termOf(card))
+                ? 'Exactly right 🌟'
+                : `You wrote "${typed}"`}
             </p>
           )}
 
           {revealed && (
-            <div className="km-reveal mt-5 space-y-1 border-t border-brown/15 pt-4">
-              <p className="font-display text-2xl text-brown">
-                {mode === 'recall' ? meaningOf(card, support) : headword(card)}
-              </p>
-              {card.transliteration && mode !== 'recall' && (
-                <p className="font-display text-sm italic text-copper">
-                  {card.transliteration}
-                </p>
-              )}
-              {noteOf(card, support) && (
-                <p className="font-sans text-xs italic text-brown/70">
-                  {noteOf(card, support)}
-                </p>
-              )}
+            <div className="flex gap-2">
+              <Button full variant="secondary" onClick={() => answer(0)}>
+                No idea
+              </Button>
+              <Button full variant="secondary" onClick={() => answer(1)}>
+                Almost
+              </Button>
+              <Button full onClick={() => answer(2)}>
+                Knew it
+              </Button>
             </div>
           )}
         </div>
-
-        {/* ── the answer ─────────────────────────────────────────────── */}
-        {!revealed && mode === 'choice' && (
-          <div className="space-y-2">
-            {choices.map((c) => (
-              <OptionButton
-                key={c.id}
-                state={picked === c.id ? 'picked' : 'idle'}
-                onClick={() => {
-                  setPicked(c.id);
-                  setRevealed(true);
-                }}
-                className="px-4 py-3 font-display text-lg"
-              >
-                {headword(c)}
-              </OptionButton>
-            ))}
-          </div>
-        )}
-
-        {!revealed && mode === 'type' && (
-          <div className="space-y-2">
-            <Input
-              value={typed}
-              // A real keyboard types here — it was read-only, so on a
-              // computer nothing could be typed at all, and on a phone every
-              // answer with a space in it was impossible (no space key). The
-              // on-screen letters stay for the phone with no Cyrillic layout.
-              onChange={(e) => setTyped(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && typed) setRevealed(true);
-              }}
-              lang={termLangOf(card)}
-              autoCapitalize="off"
-              autoCorrect="off"
-              spellCheck={false}
-              placeholder={`type it in ${LANG_NATIVE_LABELS[termLangOf(card)]}…`}
-              className="text-center font-display text-xl"
-            />
-            <LetterKeys
-              lang={termLangOf(card)}
-              onKey={(ch) => setTyped((t) => t + ch)}
-              onBackspace={() => setTyped((t) => t.slice(0, -1))}
-            />
-            <Button full onClick={() => setRevealed(true)} disabled={!typed}>
-              <Check size={16} /> Check
-            </Button>
-          </div>
-        )}
-
-        {!revealed && (mode === 'recall' || mode === 'listen') && (
-          <Button full variant="secondary" onClick={() => setRevealed(true)}>
-            Show me
-          </Button>
-        )}
-
-        {revealed && mode === 'type' && (
-          <p
-            className={cn(
-              'text-center font-sans text-sm',
-              answerMatches(typed, termOf(card))
-                ? 'text-success'
-                : 'text-danger'
-            )}
-          >
-            {answerMatches(typed, termOf(card))
-              ? 'Exactly right 🌟'
-              : `You wrote "${typed}"`}
-          </p>
-        )}
-
-        {revealed && (
-          <div className="flex gap-2">
-            <Button full variant="secondary" onClick={() => answer(0)}>
-              No idea
-            </Button>
-            <Button full variant="secondary" onClick={() => answer(1)}>
-              Almost
-            </Button>
-            <Button full onClick={() => answer(2)}>
-              Knew it
-            </Button>
-          </div>
-        )}
       </div>
-    </div>
+    </Desk>
   );
 }
 
