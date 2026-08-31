@@ -135,12 +135,25 @@ describe('buildSession', () => {
       review({
         reps: 4,
         lapses: 2,
+        last_grade: 0,
         due_on: '2026-08-01',
       }),
     ],
     ['steady', review({ reps: 4, due_on: '2026-08-10' })],
     ['not-yet', review({ reps: 4, due_on: '2026-09-01' })],
   ]);
+
+  it('lets a word forgotten long ago back into the normal band', () => {
+    const healed = new Map(reviews);
+    healed.set(
+      'forgotten',
+      review({ reps: 4, lapses: 2, last_grade: 2, due_on: '2026-08-01' })
+    );
+    const s = buildSession(cards, healed, { today: TODAY });
+    // Still due, still in — but ordered by its date like any other review.
+    expect(s.map((c) => c.id).indexOf('forgotten')).toBeGreaterThanOrEqual(0);
+    expect(s[0].id).toBe('forgotten'); // the longest overdue of the band
+  });
 
   it('leaves out what is not due yet', () => {
     const s = buildSession(cards, reviews, { today: TODAY });
