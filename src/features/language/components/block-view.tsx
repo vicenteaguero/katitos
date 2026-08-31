@@ -16,6 +16,7 @@ export function BlockView({
   target,
   vocab,
   media,
+  onWord,
 }: {
   block: Block;
   support: Lang;
@@ -24,6 +25,8 @@ export function BlockView({
   /** Words this block points at, already looked up. */
   vocab?: Vocab[];
   media?: Media;
+  /** Given, every word of the headline can be tapped for its meaning. */
+  onWord?: (word: string) => void;
 }) {
   switch (block.kind) {
     case 'divider':
@@ -57,7 +60,7 @@ export function BlockView({
         <div className="space-y-1">
           {head && (
             <p className="font-display text-lg leading-snug text-fg">
-              <Rich text={head} />
+              <Rich text={head} onWord={onWord} />
             </p>
           )}
           {gloss && (
@@ -72,20 +75,58 @@ export function BlockView({
 }
 
 /** A paragraph's **bold**, *italic* and ==highlight==, and nothing else. */
-function Rich({ text }: { text: string }) {
+function Rich({
+  text,
+  onWord,
+}: {
+  text: string;
+  onWord?: (word: string) => void;
+}) {
+  const inner = (s: string) =>
+    onWord ? <Words text={s} onWord={onWord} /> : s;
   return (
     <>
       {parseInline(text).map((t, i) => {
-        if (t.kind === 'bold') return <strong key={i}>{t.text}</strong>;
-        if (t.kind === 'italic') return <em key={i}>{t.text}</em>;
+        if (t.kind === 'bold') return <strong key={i}>{inner(t.text)}</strong>;
+        if (t.kind === 'italic') return <em key={i}>{inner(t.text)}</em>;
         if (t.kind === 'mark')
           return (
             <mark key={i} className="rounded bg-gold/25 px-0.5 text-fg">
-              {t.text}
+              {inner(t.text)}
             </mark>
           );
-        return <span key={i}>{t.text}</span>;
+        return <span key={i}>{inner(t.text)}</span>;
       })}
+    </>
+  );
+}
+
+/** Every word a button, set exactly like the text — a tap asks what it means. */
+function Words({
+  text,
+  onWord,
+}: {
+  text: string;
+  onWord: (word: string) => void;
+}) {
+  // Odd parts are the words; even parts the space and punctuation between.
+  const parts = text.split(/(\p{L}[\p{L}\p{M}'’-]*)/u);
+  return (
+    <>
+      {parts.map((part, i) =>
+        i % 2 === 1 ? (
+          <button
+            key={i}
+            type="button"
+            className="glossary-word"
+            onClick={() => onWord(part)}
+          >
+            {part}
+          </button>
+        ) : (
+          part
+        )
+      )}
     </>
   );
 }
