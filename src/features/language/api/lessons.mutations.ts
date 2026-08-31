@@ -630,6 +630,18 @@ export function useDuplicateBlock() {
 }
 
 /** Re-order the blocks of a lesson after a drag. */
+/** Questions move too — within their block, or among the ones at the end. */
+export function useReorderExercises() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { lessonId: string; ids: string[] }) =>
+      writePositions('lang_exercises', v.ids),
+    onError: (e: Error) => toast.error(e.message),
+    onSuccess: (_d, v) =>
+      void qc.invalidateQueries({ queryKey: qk.lang.lesson(v.lessonId) }),
+  });
+}
+
 export function useReorderBlocks() {
   const qc = useQueryClient();
   return useMutation({
