@@ -62,56 +62,13 @@ const tstr = (offsetDays) => { const d = new Date(today); d.setDate(d.getDate() 
 async function main() {
   console.log('Wiping feature tables…');
   for (const t of [
-    'date_photos', 'date_ratings', 'dates', 'baby_name_votes', 'baby_names',
-    'finance_contributions', 'finance_goals', 'wishlist_votes', 'wishlist_items', 'wishlists',
-    'decision_positions', 'decisions', 'trip_photos', 'trip_items',
-    'scavenger_arguments', 'scavenger_claims', 'scavenger_cards',
-    'album_stickers', 'know_me_answers', 'know_me_presence', 'know_me_days',
-    'polaroids', 'flowers', 'fights', 'punitos', 'cute_words', 'ideas', 'countdowns',
-    'chalkboard_notes', 'phrases', 'language_decks', 'deck_responses',
-    'game_scores', 'app_opens', 'tree_waterings', 'tree_milestones',
+    'date_photos', 'date_ratings', 'dates', 'wishlist_votes', 'wishlist_items', 'wishlists',
+    'trip_photos', 'trip_items',
+    'scavenger_claims', 'scavenger_cards',
+    'know_me_answers', 'know_me_presence', 'know_me_days',
+    'polaroids', 'flowers', 'chalkboard_notes', 'phrases', 'language_decks', 'deck_responses',
+    'app_opens', 'tree_waterings', 'tree_milestones',
   ]) await wipe(t);
-
-  // ── Countdowns ──
-  await ins('countdowns', [
-    { title: 'Georgia trip ✈️', target_at: tstr(29), emoji: '✈️', created_by: A },
-    { title: 'Our anniversary 💍', target_at: tstr(65), emoji: '💍', created_by: B },
-    { title: "Anastasia's birthday 🎂", target_at: tstr(12), emoji: '🎂', created_by: A },
-    { title: 'Next reunion ❤️', target_at: tstr(96), emoji: '❤️', created_by: B },
-    { title: 'Visa appointment', target_at: tstr(5), emoji: '🛂', created_by: A },
-  ]);
-
-  // ── Cute words ──
-  await ins('cute_words', [
-    { term: 'katito', meaning: 'our pet name for each other', example: 'buenas noches, katito', coined_by: A },
-    { term: 'pololo', meaning: 'boyfriend (Chilean slang)', coined_by: A },
-    { term: 'maieie', meaning: 'an untranslatable cute sound', coined_by: B },
-    { term: 'zaika', meaning: 'little bunny (зайка)', example: 'spokoynoy nochi, zaika', coined_by: B },
-    { term: 'mi vida', meaning: 'my life', coined_by: A },
-    { term: 'solnyshko', meaning: 'little sun (солнышко)', coined_by: B },
-  ]);
-
-  // ── Ideas ──
-  await ins('ideas', [
-    { title: 'Watch the sunrise on a video call', description: 'set alarms across timezones', category: 'ritual', status: 'idea', created_by: A },
-    { title: 'Cook each other’s national dish', description: 'pastel de choclo vs. borscht', category: 'food', status: 'planned', created_by: B },
-    { title: 'Read the same book together', description: 'one chapter a night', category: 'ritual', status: 'done', created_by: A },
-    { title: 'Learn a song in both languages', category: 'music', status: 'idea', created_by: B },
-    { title: 'Plan the Georgia itinerary', category: 'travel', status: 'planned', created_by: A },
-  ]);
-
-  // ── Punitos ──
-  await ins('punitos', [
-    { title: 'Always say goodnight', description: 'No matter the fight, we say goodnight.', level: 'serious', status: 'sealed', proposed_by: B, sealed_at: tstr(-40) },
-    { title: 'Loser cooks next call', description: 'Whoever loses the game cooks on camera.', level: 'soft', status: 'proposed', proposed_by: A },
-    { title: 'No phones at dinner', description: 'Even on video.', level: 'soft', status: 'broken', proposed_by: A, sealed_at: tstr(-20) },
-  ]);
-
-  // ── Fights (fight-timer) ──
-  await ins('fights', [
-    { reason: 'Misunderstanding over a text', started_at: tstr(-9), started_by: A, resolution: 'Talked it out on a long call. All good. ❤️' },
-    { reason: 'Timezone mix-up for a call', started_at: tstr(-2), started_by: B, resolution: null },
-  ]);
 
   // ── Language: decks ("a course your love built for you") + cards ──
   {
@@ -134,53 +91,6 @@ async function main() {
       { deck_id: dEs, language: 'es', text: 'Te amo', translation: 'I love you', example: 'Te amo, mi vida', category: 'love', added_by: A },
       { deck_id: dEs, language: 'es', text: 'Buenos días', translation: 'Good morning', category: 'daily', added_by: A },
       { deck_id: dEs, language: 'es', text: '¿Cómo amaneciste?', translation: 'How did you wake up?', category: 'daily', added_by: A },
-    ]);
-  }
-
-  // ── Baby names + votes ──
-  {
-    const names = [
-      { name: 'Mateo', gender: 'boy', meaning: 'Gift of God', origin: 'Spanish' },
-      { name: 'Sofía', gender: 'girl', meaning: 'Wisdom', origin: 'Greek/Russian' },
-      { name: 'Nikolái', gender: 'boy', meaning: 'Victory of the people', origin: 'Russian' },
-      { name: 'Valentina', gender: 'girl', meaning: 'Strong, healthy', origin: 'Latin' },
-      { name: 'Tomás', gender: 'boy', meaning: 'Twin', origin: 'Spanish' },
-      { name: 'Mila', gender: 'girl', meaning: 'Dear, gracious', origin: 'Slavic' },
-    ].map((n) => ({ id: crypto.randomUUID(), proposed_by: Math.random() > 0.5 ? A : B, ...n }));
-    await ins('baby_names', names);
-    const votes = [];
-    for (const n of names) { votes.push({ name_id: n.id, user_id: A, vote: Math.random() > 0.3 ? 1 : -1 }); votes.push({ name_id: n.id, user_id: B, vote: Math.random() > 0.3 ? 1 : -1 }); }
-    await ins('baby_name_votes', votes);
-  }
-
-  // ── Finance ──
-  {
-    const g1 = crypto.randomUUID(), g2 = crypto.randomUUID();
-    await ins('finance_goals', [
-      { id: g1, title: 'Visit to Russia', target_amount: 2000, currency: 'USD', target_date: dstr(180), created_by: A },
-      { id: g2, title: 'Our first apartment', target_amount: 8000, currency: 'USD', target_date: dstr(540), created_by: B },
-    ]);
-    await ins('finance_contributions', [
-      { goal_id: g1, user_id: A, amount: 300, note: 'first savings' },
-      { goal_id: g1, user_id: B, amount: 250, note: 'from my side' },
-      { goal_id: g1, user_id: A, amount: 180, note: 'sold some stuff' },
-      { goal_id: g2, user_id: B, amount: 500, note: 'apartment fund start' },
-      { goal_id: g2, user_id: A, amount: 420 },
-    ]);
-  }
-
-  // ── Decisions ──
-  {
-    const d1 = crypto.randomUUID(), d2 = crypto.randomUUID();
-    await ins('decisions', [
-      { id: d1, topic: 'Number of kids', description: 'How many kids do we want?', status: 'open', created_by: A },
-      { id: d2, topic: 'Where to live first', description: 'Whose country do we start in?', status: 'agreed', agreed_value: 'A neutral third country for a year', created_by: B },
-    ]);
-    await ins('decision_positions', [
-      { decision_id: d1, user_id: A, position: '15', note: 'more is more 😎' },
-      { decision_id: d1, user_id: B, position: '3.5', note: 'be reasonable!' },
-      { decision_id: d2, user_id: A, position: 'Chile', note: 'sunshine' },
-      { decision_id: d2, user_id: B, position: 'Russia', note: 'family is here' },
     ]);
   }
 
@@ -213,14 +123,6 @@ async function main() {
       { body: 'pastel de choclo soon 🌽', color: C.gold, x: 30, y: 300, rotation: -3, author: A },
     ];
     await ins('chalkboard_notes', notes);
-  }
-
-  // ── Game scores (leaderboard) ──
-  {
-    const rows = [];
-    for (let i = 0; i < 7; i++) rows.push({ game_id: 'reaction', user_id: i % 2 ? A : B, score: 220 + Math.floor(Math.random() * 260), created_at: tstr(-i) });
-    for (let i = 0; i < 7; i++) rows.push({ game_id: 'memory-match', user_id: i % 2 ? B : A, score: 12 + Math.floor(Math.random() * 22), created_at: tstr(-i) });
-    await ins('game_scores', rows);
   }
 
   // ── App opens (presence) ──
@@ -354,7 +256,7 @@ async function main() {
       claims.push({ card_id: cards[i].id, claimed_by: i % 2 ? B : A, image_path: path, note: 'Done! 🎉' });
     }
     await ins('scavenger_claims', claims);
-    await ins('scavenger_arguments', [
+    await ins([
       { card_id: cards[2].id, user_id: A, body: 'We should do this one at sunset.' },
       { card_id: cards[2].id, user_id: B, body: 'Agreed, with the good wine.' },
     ]);
@@ -431,31 +333,6 @@ async function main() {
     }
   }
 
-  // ── Album: fill ~28 slots with stickers (images) across chapters ──
-  {
-    const { data: slots } = await sb.from('album_slots')
-      .select('id, chapter_id, title, is_duo, position, album_chapters!inner(position)')
-      .order('position', { foreignTable: 'album_chapters' })
-      .order('position')
-      .limit(30);
-    if (slots?.length) {
-      const rows = [];
-      const emojis = ['📸', '💌', '📞', '✈️', '🍳', '🎁', '🤝', '👨‍👩‍👧', '🤳', '🌹', '🎂', '🌅', '🏖️', '🎄', '💍'];
-      let n = 0;
-      for (const s of slots) {
-        const halves = s.is_duo ? ['a', 'b'] : ['solo'];
-        for (const half of halves) {
-          const path = `${s.chapter_id}/${s.id}-${half}.jpg`;
-          await up('album', path, s.title, emojis[n % emojis.length], pick(n), pick(n + 4));
-          rows.push({ slot_id: s.id, half, image_path: path, caption: s.title,
-            taken_on: dstr(-(n * 9)), created_by: half === 'b' ? B : A });
-          n++;
-        }
-        if (n >= 34) break;
-      }
-      await ins('album_stickers', rows);
-    }
-  }
 
   console.log('\nDONE. Seeded every feature with demo data + images.');
 }
