@@ -15,6 +15,7 @@ import { Sheet } from '@kernel/ui';
 import { cn } from '@kernel/lib';
 import { useMyTodayPolaroid } from '@features/polaroid';
 import { featureRegistry } from '../features.registry';
+import { SOON } from '../soon';
 
 /** Drawer section order; anything untagged falls into 'More'. */
 const CATEGORY_ORDER = ['Utilities', 'Play', 'Memories', 'Pololos'];
@@ -203,7 +204,12 @@ export function BottomNav() {
         <div className="curtain-stagger flex flex-col gap-4 pb-2">
           {(() => {
             const open = entries.filter((e) => !e.locked);
-            const locked = entries.filter((e) => e.locked);
+            // Shipped-but-locked features, plus the ideas that have no code at
+            // all yet (see soon.ts) — both read the same on the shelf.
+            const locked = [
+              ...entries.filter((e) => e.locked),
+              ...SOON.map((e) => ({ ...e, locked: true })),
+            ].sort((a, b) => (a.order ?? 100) - (b.order ?? 100));
 
             // Locked rows grouped by category (categories exist only here now).
             const groups = new Map<string, typeof entries>();
