@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { Link2, Paperclip, Trash2 } from 'lucide-react';
 import {
   Button,
+  Dialog,
   Field,
   FilePickerButton,
   Input,
   Segmented,
-  Sheet,
   Spinner,
   toast,
 } from '@kernel/ui';
@@ -71,7 +71,13 @@ export function MediaBlockEditor({
   const busy = upload.isPending || addLink.isPending;
 
   return (
-    <Sheet open={open} onClose={onClose} title="Attach something" size="half">
+    <Dialog
+      placement="auto"
+      open={open}
+      onClose={onClose}
+      title="Attach something"
+      size="md"
+    >
       <div className="space-y-3">
         {current && (
           <div className="flex items-center gap-2 rounded-lg bg-surface-2 px-3 py-2">
@@ -154,6 +160,6 @@ export function MediaBlockEditor({
           </>
         )}
       </div>
-    </Sheet>
+    </Dialog>
   );
 }
