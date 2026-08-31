@@ -487,9 +487,32 @@ export function useGradeVocab() {
         { onConflict: 'vocab_id,user_id' }
       );
       if (error) throw error;
+      return next;
     },
     onError: (e: Error) => toast.error(e.message),
-    onSuccess: () =>
-      void qc.invalidateQueries({ queryKey: qk.lang.vocabReviews() }),
+    // Straight into every cached list, no refetch: a session of twenty
+    // cards used to pull every review row back down twenty times.
+    onSuccess: (next, v) => {
+      if (!userId) return;
+      const row: VocabReview = {
+        vocab_id: v.vocabId,
+        user_id: userId,
+        ...next,
+        last_grade: v.grade,
+        last_seen_at: new Date().toISOString(),
+      };
+      qc.setQueriesData<VocabReview[]>(
+        { queryKey: qk.lang.vocabReviews() },
+        (rows) => {
+          if (!rows) return rows;
+          const at = rows.findIndex(
+            (r) => r.vocab_id === row.vocab_id && r.user_id === row.user_id
+          );
+          return at >= 0
+            ? rows.map((r, k) => (k === at ? { ...r, ...row } : r))
+            : [...rows, row];
+        }
+      );
+    },
   });
 }
