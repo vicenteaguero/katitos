@@ -82,6 +82,9 @@ export function useLesson(lessonId: string | undefined) {
               .from('lang_block_vocab')
               .select('block_id, position, vocab:lang_vocab(*)')
               .in('block_id', vocabBlockIds)
+              // A word that was put away leaves the lesson too (its link is
+              // kept, so Undo brings it straight back).
+              .is('vocab.deleted_at', null)
               .order('position', { ascending: true })
           : Promise.resolve({ data: [], error: null }),
         supabase
