@@ -84,6 +84,9 @@ async function storeObject(
   resp: Response,
   max: number
 ) {
+  // A media element asks with a Range header and gets a 206 — a partial
+  // body that `cache.put` refuses. Only a whole object is worth keeping.
+  if (resp.status !== 200) return;
   // Drop the token before storing: the object path IS the identity, and this
   // is what makes `ignoreSearch` reads and writes agree with each other.
   const key = new Request(new URL(req.url).origin + new URL(req.url).pathname, {
@@ -167,13 +170,20 @@ self.addEventListener('fetch', (event) => {
         const cached = await cache.match(req, { ignoreSearch: true });
         const network = fetch(req)
           .then((resp) => {
-            if (resp.ok)
-              void storeObject(
-                cache,
-                req,
-                resp.clone(),
-                audio ? AUDIO_CACHE_MAX : IMG_CACHE_MAX
-              );
+            const max = audio ? AUDIO_CACHE_MAX : IMG_CACHE_MAX;
+            if (resp.status === 200) {
+              storeObject(cache, req, resp.clone(), max).catch(() => {});
+            } else if (resp.status === 206 && !cached) {
+              // A clip being played arrives in ranges; fetch it whole, once,
+              // so the next play works on a train.
+              fetch(req.url, { mode: 'cors', credentials: 'omit' })
+                .then((full) =>
+                  full.status === 200
+                    ? storeObject(cache, req, full, max)
+                    : undefined
+                )
+                .catch(() => {});
+            }
             return resp;
           })
           .catch(() => undefined);
