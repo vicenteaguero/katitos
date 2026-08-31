@@ -348,6 +348,7 @@ export function DictionaryRoute() {
           <Dropzone
             accept="audio/*,.m4a,.mp3,.ogg,.webm,.wav"
             multiple
+            pick={false}
             disabled={update.isPending}
             onFiles={(files) => void dropClips(files)}
           >
