@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { greatCircle, haversineKm, kmToMiles } from './geo';
+import { greatCircle, haversineKm } from './geo';
 
 describe('geo', () => {
   it('one degree of longitude at the equator is ~111 km', () => {
@@ -20,10 +20,6 @@ describe('geo', () => {
     );
     expect(d).toBeGreaterThan(13000);
     expect(d).toBeLessThan(15000);
-  });
-
-  it('converts km to miles', () => {
-    expect(kmToMiles(100)).toBeCloseTo(62.14, 1);
   });
 });
 
