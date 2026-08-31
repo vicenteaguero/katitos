@@ -1,4 +1,4 @@
-import { useEffect, useId } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@kernel/supabase';
 import type {
@@ -64,10 +64,15 @@ export function useTableSync(
   opts: { filter?: string; enabled?: boolean } = {}
 ): void {
   const qc = useQueryClient();
+  // Read at fire time, not subscribe time. The subscription outlives a key
+  // change when only the key changed — course A to course B on the same
+  // table — and the closure it was given kept invalidating A.
+  const keyRef = useRef(queryKey);
+  keyRef.current = queryKey;
   useRealtimeSubscription(
     { table, filter: opts.filter, enabled: opts.enabled },
     () => {
-      void qc.invalidateQueries({ queryKey });
+      void qc.invalidateQueries({ queryKey: keyRef.current });
     }
   );
 }
