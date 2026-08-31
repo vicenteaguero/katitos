@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { Check, TriangleAlert, Sparkles } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '../lib/cn';
@@ -20,7 +21,9 @@ const toneChip: Record<ToastTone, string> = {
 export function Toaster() {
   const toasts = useToastStore((s) => s.toasts);
   const dismiss = useToastStore((s) => s.dismiss);
-  return (
+  // Portaled like every other overlay: a dialog makes the app root inert,
+  // and a toast inside it painted above the sheet with a dead Undo button.
+  return createPortal(
     <div className="pointer-events-none fixed inset-x-0 top-stage z-[60] flex flex-col items-center gap-2 px-stage">
       {toasts.map((t) => {
         const Icon = toneIcon[t.tone];
@@ -60,6 +63,7 @@ export function Toaster() {
           </div>
         );
       })}
-    </div>
+    </div>,
+    document.body
   );
 }
