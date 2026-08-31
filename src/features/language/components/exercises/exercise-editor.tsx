@@ -78,7 +78,7 @@ export function ExerciseEditor({
 
   const [kind, setKind] = useState<ExerciseKind>('choice');
   // Choose, asked as "where is the stress?" — the options are made for her.
-  const [variant, setVariant] = useState<'stress' | null>(null);
+  const [variant, setVariant] = useState<'stress' | 'pair' | null>(null);
   const [prompt, setPrompt] = useState('');
   const [options, setOptions] = useState<ExerciseOption[]>([
     { id: nanoid(4), ru: '' },
@@ -140,11 +140,19 @@ export function ExerciseEditor({
     } else {
       setAnswerText(acceptedForms(exercise.answer).join(' / '));
     }
-    if (payload?.variant === 'stress') {
-      setVariant('stress');
+    if (payload?.variant === 'stress' || payload?.variant === 'pair') {
+      setVariant(payload.variant);
       const opts = (payload.options as ExerciseOption[] | undefined) ?? [];
+      const label = (o: ExerciseOption) => o[target] ?? o.ru ?? '';
       const right = opts.find((o) => o.id === exercise.answer);
-      setAnswerText(right?.[target] ?? right?.ru ?? '');
+      setAnswerText(right ? label(right) : '');
+      if (payload.variant === 'pair')
+        setText(
+          opts
+            .filter((o) => o !== right)
+            .map(label)
+            .join('\n')
+        );
     } else {
       setVariant(null);
     }
@@ -160,6 +168,22 @@ export function ExerciseEditor({
   ): { payload: unknown; answer: unknown } => {
     switch (kind) {
       case 'choice': {
+        if (variant === 'pair') {
+          // Her word first, its lookalikes after; the reader shuffles nothing —
+          // the order is stable and the answer is by id.
+          const words = [
+            answerText.trim(),
+            ...text
+              .split('\n')
+              .map((l) => l.trim())
+              .filter(Boolean),
+          ];
+          const opts = words.map((w, k) => ({ id: `p${k}`, [target]: w }));
+          return {
+            payload: { options: opts, variant: 'pair', audioPath },
+            answer: opts[0]?.id ?? '',
+          };
+        }
         if (variant === 'stress') {
           const { variants, answer } = stressVariants(answerText);
           const opts = variants.map((v, k) => ({ id: `s${k}`, [target]: v }));
@@ -218,7 +242,8 @@ export function ExerciseEditor({
     }
   };
 
-  const needsAudio = kind === 'listen' || kind === 'speak';
+  const needsAudio =
+    kind === 'listen' || kind === 'speak' || variant === 'pair';
 
   /**
    * A different shape starts clean.
@@ -265,6 +290,10 @@ export function ExerciseEditor({
     // pointing at a recording that no longer existed.
     const stored =
       (exercise?.payload as { audioPath?: string } | null)?.audioPath ?? null;
+    if (variant === 'pair' && !path) {
+      toast.error('Record the word — the whole question is your voice');
+      return;
+    }
     if (variant === 'stress' && stressVariants(answerText).answer < 0) {
       toast.error('Put the accent on a vowel — спаси́бо');
       return;
@@ -285,7 +314,12 @@ export function ExerciseEditor({
         points: Math.max(0, Number(points) || 1),
         ...promptPatch(
           support,
-          prompt || (variant === 'stress' ? 'Where is the stress?' : '')
+          prompt ||
+            (variant === 'stress'
+              ? 'Where is the stress?'
+              : variant === 'pair'
+                ? 'Which one did you hear?'
+                : '')
         ),
         payload,
         answer,
@@ -314,9 +348,9 @@ export function ExerciseEditor({
         <ExerciseKindGallery
           value={variant ?? kind}
           onChange={(v) => {
-            if (v === 'stress') {
+            if (v === 'stress' || v === 'pair') {
               changeKind('choice');
-              setVariant('stress');
+              setVariant(v);
             } else {
               setVariant(null);
               changeKind(v);
@@ -346,7 +380,34 @@ export function ExerciseEditor({
           </Field>
         )}
 
-        {optionsKind && variant !== 'stress' && (
+        {variant === 'pair' && (
+          <>
+            <Field
+              label="The word you say"
+              hint="Recorded below — he hears it and picks"
+            >
+              <Input
+                value={answerText}
+                onChange={(e) => setAnswerText(e.target.value)}
+                placeholder="дом"
+                className="font-display text-lg"
+              />
+            </Field>
+            <Field
+              label="Its lookalikes"
+              hint="One per line — the words it is easy to mistake it for"
+            >
+              <Textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                rows={2}
+                placeholder={'том\nдым'}
+              />
+            </Field>
+          </>
+        )}
+
+        {optionsKind && variant !== 'stress' && variant !== 'pair' && (
           <div className="space-y-1.5">
             {options.map((o, i) => (
               <div key={o.id} className="flex items-center gap-2">
