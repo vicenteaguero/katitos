@@ -1,6 +1,7 @@
 import { Link, NavLink } from 'react-router';
 import { BookMarked, ChevronLeft } from 'lucide-react';
 import { cn } from '@kernel/lib';
+import { Kicker } from '@kernel/ui';
 import { useCourse, useUnits } from '../api/courses.queries';
 
 /**
@@ -59,9 +60,9 @@ export function LessonTree({
                     {lesson.title}
                   </span>
                   {lesson.status === 'draft' && (
-                    <span className="shrink-0 text-[0.6rem] uppercase tracking-[0.12em] text-muted">
+                    <Kicker tone="muted" className="shrink-0">
                       draft
-                    </span>
+                    </Kicker>
                   )}
                 </NavLink>
               </li>
