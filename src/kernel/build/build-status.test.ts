@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  AUTO_UPDATE_WINDOW_MS,
   compareBuilds,
   shouldAutoUpdate,
   type BuildStamp,
@@ -99,5 +100,19 @@ describe('shouldAutoUpdate', () => {
   it('leaves a build with uncommitted work alone', () => {
     // That is someone's own build in their hands; do not yank it away.
     expect(shouldAutoUpdate('dirty', server, null)).toBe(false);
+  });
+
+  it('only takes a version by itself soon after launch', () => {
+    // The check re-runs whenever the app comes back to the foreground, and the
+    // reload it leads to throws away whatever is being typed. A version found
+    // mid-session waits for the next launch.
+    expect(shouldAutoUpdate('stale', server, null, 0)).toBe(true);
+    expect(shouldAutoUpdate('stale', server, null, AUTO_UPDATE_WINDOW_MS)).toBe(
+      true
+    );
+    expect(
+      shouldAutoUpdate('stale', server, null, AUTO_UPDATE_WINDOW_MS + 1)
+    ).toBe(false);
+    expect(shouldAutoUpdate('stale', server, null, 45 * 60_000)).toBe(false);
   });
 });
