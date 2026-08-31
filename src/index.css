@@ -164,6 +164,35 @@ textarea,
   user-select: text;
   -webkit-user-select: text;
 }
+/* Prose she wrote is hers to copy — a lesson on a computer is a document. */
+[data-readable],
+[data-readable] * {
+  user-select: text;
+  -webkit-user-select: text;
+  -webkit-touch-callout: default;
+}
+
+/* ── A mouse exists now ─────────────────────────────────────────────────────
+   Buttons and links look pressable under it, and a control that has focus
+   from the keyboard shows it — in gilt, not the browser's blue. The kernel
+   controls draw their own ring and opt out with `outline-none`. */
+button:not(:disabled),
+[role='button']:not([aria-disabled='true']),
+[role='radio'],
+a[href],
+summary,
+label[for] {
+  cursor: pointer;
+}
+:focus-visible {
+  outline: 2px solid rgba(228, 195, 106, 0.8);
+  outline-offset: 2px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .lift-press:hover {
+    filter: brightness(1.08);
+  }
+}
 
 /* ── Native date & time fields ─────────────────────────────────────────────
    These have bitten us in every sheet that holds one. Safari lays a date input
@@ -419,6 +448,46 @@ button {
   animation: curtain-rise var(--dur-settle) var(--ease-settle) both;
   will-change: transform, opacity;
 }
+/* Curtain exit — the reverse, for a dialog going away instead of vanishing. */
+@keyframes curtain-fall {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+.curtain-exit {
+  animation: curtain-fall var(--dur-glint) var(--ease-exit) both;
+  pointer-events: none;
+}
+/* The veil behind a dialog fades in with it and out with it. */
+@keyframes veil-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes veil-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+.veil-in {
+  animation: veil-fade-in var(--dur-settle) ease both;
+}
+.veil-out {
+  animation: veil-fade-out var(--dur-glint) ease both;
+  pointer-events: none;
+}
+
 /* Staggered children — a list ascends like a stage filling (set --i per child). */
 .curtain-stagger > * {
   animation: curtain-rise var(--dur-settle) var(--ease-settle) both;
@@ -897,6 +966,15 @@ button {
     transition: none !important;
   }
   /* Entrances collapse to a brief opacity fade — no transform. */
+  /* A dialog leaving collapses to a short fade, like one arriving. */
+  .curtain-exit,
+  .veil-out {
+    animation: veil-fade-out 120ms ease both !important;
+    transform: none !important;
+  }
+  .veil-in {
+    animation: veil-fade-in 120ms ease both !important;
+  }
   .curtain-reveal,
   .curtain-stagger > * {
     animation: curtain-rise 200ms ease both !important;
