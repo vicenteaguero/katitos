@@ -5,6 +5,7 @@ import { BUCKETS, useSignedUrl } from '@kernel/storage';
 import { PlayButton } from '@kernel/ui';
 import type { Block, Media, Lang, TableBlockData, Vocab } from '../types';
 import { pick } from '../lib/pick';
+import { parseInline } from '../lib/markdown';
 import { VocabRow } from './kit';
 import { youtubeId } from '../api/media';
 
@@ -55,17 +56,38 @@ export function BlockView({
       return (
         <div className="space-y-1">
           {head && (
-            <p className="font-display text-lg leading-snug text-fg">{head}</p>
+            <p className="font-display text-lg leading-snug text-fg">
+              <Rich text={head} />
+            </p>
           )}
           {gloss && (
             <p className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-fg/90">
-              {gloss}
+              <Rich text={gloss} />
             </p>
           )}
         </div>
       );
     }
   }
+}
+
+/** A paragraph's **bold**, *italic* and ==highlight==, and nothing else. */
+function Rich({ text }: { text: string }) {
+  return (
+    <>
+      {parseInline(text).map((t, i) => {
+        if (t.kind === 'bold') return <strong key={i}>{t.text}</strong>;
+        if (t.kind === 'italic') return <em key={i}>{t.text}</em>;
+        if (t.kind === 'mark')
+          return (
+            <mark key={i} className="rounded bg-gold/25 px-0.5 text-fg">
+              {t.text}
+            </mark>
+          );
+        return <span key={i}>{t.text}</span>;
+      })}
+    </>
+  );
 }
 
 /**
