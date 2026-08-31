@@ -16,6 +16,13 @@ export type Letter = Tables<'lang_alphabet'>;
 /** A lesson to read, homework to hand in, or an exam to sit. */
 export type LessonKind = 'lesson' | 'homework' | 'exam';
 export type LessonStatus = 'draft' | 'published';
+/** Where a lesson stands for one of us; `returned` is hers — "have another go". */
+export type ProgressStatus =
+  | 'not_started'
+  | 'in_progress'
+  | 'submitted'
+  | 'graded'
+  | 'returned';
 export type BlockKind =
   | 'text'
   | 'vocab'
