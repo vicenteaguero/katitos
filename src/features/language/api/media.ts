@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { nanoid } from 'nanoid';
 import { supabase } from '@kernel/supabase';
 import { qk } from '@kernel/query';
@@ -18,6 +18,27 @@ export function kindForFile(file: File): MediaKind {
 
 const extOf = (name: string) =>
   name.includes('.') ? name.split('.').pop()!.toLowerCase() : 'bin';
+
+/**
+ * Everything ever attached in a course — the library a media block can pick
+ * from, so a worksheet uploaded for lesson 3 is one tap away in lesson 9.
+ */
+export function useCourseMedia(courseId: string | undefined) {
+  return useQuery({
+    queryKey: qk.lang.media(courseId ?? 'none'),
+    enabled: !!courseId,
+    staleTime: 30_000,
+    queryFn: async (): Promise<Media[]> => {
+      const { data, error } = await supabase
+        .from('lang_media')
+        .select('*')
+        .eq('course_id', courseId as string)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as Media[];
+    },
+  });
+}
 
 /** Attach a worksheet, a photo, a recording. */
 export function useUploadMedia() {
@@ -52,7 +73,12 @@ export function useUploadMedia() {
         // The row comes back so the block can be told which attachment it owns.
         .select('*')
         .single();
-      if (error) throw error;
+      if (error) {
+        // No row, no file: a refused insert used to leave the upload sitting
+        // in the bucket with nothing pointing at it.
+        void supabase.storage.from(BUCKETS.languageMedia).remove([path]);
+        throw error;
+      }
       return data as Media;
     },
     onError: (e: Error) => toast.error(e.message),
@@ -126,16 +152,19 @@ export function useDeleteMedia() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (v: { media: Media; courseId: string }) => {
+      // The file first: a row that outlives its file is a broken link; a file
+      // that outlives its row is only clutter.
+      if (v.media.storage_path) {
+        const { error: rmErr } = await supabase.storage
+          .from(BUCKETS.languageMedia)
+          .remove([v.media.storage_path]);
+        if (rmErr) throw rmErr;
+      }
       const { error } = await supabase
         .from('lang_media')
         .delete()
         .eq('id', v.media.id);
       if (error) throw error;
-      if (v.media.storage_path) {
-        await supabase.storage
-          .from(BUCKETS.languageMedia)
-          .remove([v.media.storage_path]);
-      }
     },
     onError: (e: Error) => toast.error(e.message),
     onSuccess: (_d, v) => {
