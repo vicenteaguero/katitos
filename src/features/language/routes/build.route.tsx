@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
+import { usePartner } from '@kernel/auth';
 import {
   Copy,
   Eye,
@@ -15,6 +16,7 @@ import { qk } from '@kernel/query';
 import { useTableSync } from '@kernel/realtime';
 import {
   Button,
+  Checkbox,
   Desk,
   Dialog,
   DragHandle,
@@ -73,6 +75,7 @@ import type {
   Vocab,
 } from '../types';
 import { LANG_NATIVE_LABELS } from '../types';
+import { clockIn, isAsleep } from '../lib/quiet';
 
 const KIND_LABEL: Record<LessonKind, string> = {
   lesson: 'Lesson',
@@ -848,6 +851,7 @@ function LessonSettingsSheet({
     status?: 'draft' | 'published';
     dueOn?: string | null;
     estMinutes?: number | null;
+    wake?: boolean;
   }) => void;
 }) {
   const [title, setTitle] = useState(lesson.title);
@@ -857,6 +861,11 @@ function LessonSettingsSheet({
   const [minutes, setMinutes] = useState(
     lesson.est_minutes ? String(lesson.est_minutes) : ''
   );
+  // His clock, next to the button that reaches his phone.
+  const { partner } = usePartner();
+  const asleep = isAsleep(partner?.timezone);
+  const clock = clockIn(partner?.timezone);
+  const [wake, setWake] = useState(false);
 
   /**
    * Only what she actually changed.
@@ -946,6 +955,7 @@ function LessonSettingsSheet({
             onSave({
               ...changes(),
               status: lesson.status === 'published' ? 'draft' : 'published',
+              wake,
             });
             onClose();
           }}
@@ -955,6 +965,25 @@ function LessonSettingsSheet({
             ? 'Put back to draft'
             : 'Give it to him'}
         </Button>
+        {lesson.status !== 'published' && clock && (
+          <p className="font-sans text-xs text-muted">
+            It's {clock} for him
+            {asleep
+              ? ' — his phone stays quiet; he will find it on his home screen'
+              : ''}
+            .
+          </p>
+        )}
+        {lesson.status !== 'published' && asleep && (
+          <label className="flex items-center gap-2 font-sans text-xs text-fg">
+            <Checkbox
+              checked={wake}
+              onChange={() => setWake((w) => !w)}
+              label="Buzz him anyway"
+            />
+            Buzz him anyway
+          </label>
+        )}
         <p className="font-sans text-xs text-muted">
           <Trash2 className="mr-1 inline h-3 w-3" />
           To put the whole lesson away, use the course screen.
