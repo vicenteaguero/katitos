@@ -5,9 +5,9 @@ import { cn } from '@kernel/lib';
 import {
   AudioRecorder,
   Button,
+  Dialog,
   LoadingScreen,
   PlayButton,
-  Sheet,
   type AudioClip,
 } from '@kernel/ui';
 import { useAlphabet, useRecordLetter } from '../api/alphabet';
@@ -69,11 +69,12 @@ export function AlphabetRoute() {
         ))}
       </div>
 
-      <Sheet
+      <Dialog
+        placement="auto"
         open={!!open}
         onClose={() => setOpenId(null)}
         title={open ? `${open.letter} ${open.lower}` : ''}
-        size="half"
+        size="sm"
       >
         {open && (
           <div className="space-y-3">
@@ -140,7 +141,7 @@ export function AlphabetRoute() {
             </div>
           </div>
         )}
-      </Sheet>
+      </Dialog>
     </div>
   );
 }
