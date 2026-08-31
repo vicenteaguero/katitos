@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
   ArrowDownUp,
   CheckSquare,
+  Ear,
   CircleDot,
   Headphones,
   Link2,
@@ -15,7 +16,7 @@ import { useRovingFocus } from '@kernel/hooks';
 import type { ExerciseKind } from '../../types';
 
 /** The eight kinds, plus a shape of Choose that is its own question. */
-export type GalleryValue = ExerciseKind | 'stress';
+export type GalleryValue = ExerciseKind | 'stress' | 'pair';
 
 const KINDS: {
   value: GalleryValue;
@@ -61,6 +62,12 @@ const KINDS: {
     label: "Where's the stress?",
     hint: 'One word, every vowel',
     icon: Sparkles,
+  },
+  {
+    value: 'pair',
+    label: 'Which did you hear?',
+    hint: 'Two lookalikes, your voice',
+    icon: Ear,
   },
 ];
 
