@@ -32,14 +32,20 @@ export interface AudioRecorderState {
 }
 
 /**
- * Container types we're willing to record, best first. Opus in WebM is the
- * smallest and is what Chrome/Android produce; MP4/AAC is the ONLY thing iOS
- * Safari can make. Everything else is a long-tail fallback.
+ * Container types we're willing to record, best first.
+ *
+ * MP4/AAC first: it is the only thing iOS Safari can make, and — the half
+ * that matters now that lessons are written on a computer — the thing every
+ * phone can PLAY. Chrome records it too these days. Opus in WebM is smaller,
+ * but WebM audio through an <audio> element was broken on iOS for two years
+ * and only came right in Safari 18.4; a clip she records on the PC must not
+ * gamble on which iOS his phone is running. It stays as the fallback for a
+ * browser that cannot mux MP4 (Firefox).
  */
 const CANDIDATES = [
+  'audio/mp4',
   'audio/webm;codecs=opus',
   'audio/webm',
-  'audio/mp4',
   'audio/aac',
   'audio/ogg;codecs=opus',
 ] as const;
@@ -91,6 +97,9 @@ export function useAudioRecorder(): AudioRecorderState {
   const chunksRef = useRef<Blob[]>([]);
   const startedAtRef = useRef(0);
   const tickRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  // True between the tap and the moment the recorder actually exists — the
+  // permission prompt can sit in that gap for seconds.
+  const startingRef = useRef(false);
 
   const supported =
     typeof navigator !== 'undefined' &&
@@ -115,7 +124,12 @@ export function useAudioRecorder(): AudioRecorderState {
   );
 
   const start = useCallback(async () => {
-    if (!supported) return;
+    // A second tap while the first is still asking for the microphone used to
+    // create a second recorder over the first; the orphan kept the mic open
+    // (the red pill on iOS, the light on a laptop) until the tab was closed.
+    if (!supported || startingRef.current) return;
+    if (recorderRef.current?.state === 'recording') return;
+    startingRef.current = true;
     setError(null);
     let stream: MediaStream;
     try {
@@ -124,6 +138,7 @@ export function useAudioRecorder(): AudioRecorderState {
       // Used to reject into a bare `void start()` — unhandled, and the user saw
       // nothing at all happen.
       setError('No microphone. Check the permission for this app.');
+      startingRef.current = false;
       return;
     }
 
@@ -159,6 +174,7 @@ export function useAudioRecorder(): AudioRecorderState {
       recorderRef.current = recorder;
       startedAtRef.current = performance.now();
       recorder.start();
+      startingRef.current = false;
       setClip(null);
       setElapsedMs(0);
       setRecording(true);
@@ -170,6 +186,7 @@ export function useAudioRecorder(): AudioRecorderState {
       );
     } catch {
       stream.getTracks().forEach((t) => t.stop());
+      startingRef.current = false;
       setError("This browser can't record audio.");
     }
   }, [supported, stopTicking]);
