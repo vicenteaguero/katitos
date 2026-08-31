@@ -15,7 +15,7 @@ export function Spinner({ className }: { className?: string }) {
 
 export function LoadingScreen({ label }: { label?: string }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-5 p-16 text-muted">
+    <div className="flex flex-col items-center justify-center gap-3 p-8 text-muted">
       <Spinner />
       {label && (
         <p className="font-display text-lg italic tracking-tight">{label}</p>
