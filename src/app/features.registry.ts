@@ -3,24 +3,12 @@ import { createFeatureRegistry, type FeatureModule } from '@kernel/registry';
 // ── Feature modules ────────────────────────────────────────────────────────
 // Adding a feature = import its barrel and add it to this array. Nothing else
 // in the shell changes — routes and nav are derived from the registry.
-import { countdownsFeature } from '@features/countdowns';
 import { polaroidFeature } from '@features/polaroid';
 import { quizzesFeature } from '@features/quizzes';
 import { chalkboardFeature } from '@features/chalkboard';
 import { presenceFeature } from '@features/presence';
-import { gamesFeature } from '@features/games';
-import { daysTogetherFeature } from '@features/days-together';
-import { distanceFeature } from '@features/distance';
-import { timezoneFeature } from '@features/timezone';
 import { currencyFeature } from '@features/currency';
-import { punitoFeature } from '@features/punito';
-import { decisionsFeature } from '@features/decisions';
-import { babyNamesFeature } from '@features/baby-names';
-import { cuteWordsFeature } from '@features/cute-words';
-import { ideaBankFeature } from '@features/idea-bank';
-import { fightTimerFeature } from '@features/fight-timer';
 import { flowersFeature } from '@features/flowers';
-import { financeFeature } from '@features/finance';
 import { datesFeature } from '@features/dates';
 import { summerFeature } from '@features/summer';
 import { scavengerFeature } from '@features/scavenger';
@@ -34,7 +22,6 @@ import { albumFeature } from '@features/album';
 // Section each feature appears under in the "More" drawer (id → category).
 const categories: Record<string, string> = {
   // Play
-  games: 'Play',
   quizzes: 'Play',
   'know-me': 'Play',
   scavenger: 'Play',
@@ -45,21 +32,10 @@ const categories: Record<string, string> = {
   summer: 'Memories',
   flowers: 'Memories',
   // Pololos
-  decisions: 'Pololos',
   tree: 'Pololos',
-  'days-together': 'Pololos',
-  distance: 'Pololos',
-  timezone: 'Pololos',
   presence: 'Pololos',
-  'fight-timer': 'Pololos',
-  punito: 'Pololos',
-  'baby-names': 'Pololos',
-  'cute-words': 'Pololos',
   // Utilities
-  countdowns: 'Utilities',
   wishlists: 'Utilities',
-  'idea-bank': 'Utilities',
-  finance: 'Utilities',
   currency: 'Utilities',
   language: 'Utilities',
   chalkboard: 'Utilities',
@@ -70,28 +46,16 @@ const modules: FeatureModule[] = [
   knowMeFeature,
   albumFeature,
   polaroidFeature,
-  countdownsFeature,
   quizzesFeature,
   datesFeature,
   summerFeature,
   chalkboardFeature,
   presenceFeature,
-  gamesFeature,
   scavengerFeature,
   wishlistsFeature,
   languageFeature,
-  daysTogetherFeature,
-  distanceFeature,
-  timezoneFeature,
   currencyFeature,
   flowersFeature,
-  fightTimerFeature,
-  punitoFeature,
-  decisionsFeature,
-  babyNamesFeature,
-  cuteWordsFeature,
-  ideaBankFeature,
-  financeFeature,
 ];
 
 // ── Demo gate ──────────────────────────────────────────────────────────────
