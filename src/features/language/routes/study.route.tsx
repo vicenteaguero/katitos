@@ -16,6 +16,7 @@ import {
 import { useAllVocab, useGradeVocab, useMyReviews } from '../api/vocab';
 import { buildSession, type Grade } from '../lib/srs';
 import { LetterKeys } from '../components/letter-keys';
+import { VoiceThread } from '../components/kit/voice-thread';
 import { answerMatches } from '../lib/answer-match';
 import { useLanguages } from '../lib/languages';
 import { headword, meaningOf, noteOf, termOf, termLangOf } from '../lib/pick';
@@ -270,6 +271,10 @@ export function StudyRoute() {
                 : `You wrote "${typed}"`}
             </p>
           )}
+
+          {/* Her voice on this word if she has left it, and his own try —
+              the reveal is where a wrong word gets said aloud. */}
+          {revealed && <VoiceThread word={card} compact />}
 
           {revealed && (
             <div className="flex gap-2">
