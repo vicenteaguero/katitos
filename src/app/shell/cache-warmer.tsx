@@ -108,6 +108,9 @@ function useImagePreload(
           // throw — skip it and let the full image load on demand.
           if (!row?.signedUrl) continue;
           const img = new Image();
+          // CORS, or the worker sees an opaque response and keeps nothing —
+          // this warmer had never stored a single byte.
+          img.crossOrigin = 'anonymous';
           img.src = row.signedUrl;
         }
       })();
