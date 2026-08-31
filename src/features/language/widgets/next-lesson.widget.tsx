@@ -5,14 +5,9 @@ import { useDueLessons, useMyProgress } from '../api/courses.queries';
 import { useLanguages } from '../lib/languages';
 import { useAllVocab, useMyReviews } from '../api/vocab';
 import { buildSession } from '../lib/srs';
-import { dueLabel } from '../lib/due';
+import { dueSentence } from '../lib/due';
+import { useToday } from '../lib/use-today';
 import { LANG_LABELS } from '../types';
-
-/** "due today" · "due tomorrow" · "due in 3 days" · "2 days late". */
-function when(due: string): string {
-  const label = dueLabel(due);
-  return label.endsWith('late') ? label : `due ${label}`;
-}
 
 /** Handed in, or marked — either way, no longer waiting for him. */
 const DONE = new Set(['submitted', 'graded']);
@@ -30,6 +25,7 @@ export function NextLessonWidget() {
   const { data: words } = useAllVocab(learning);
   const { data: reviews } = useMyReviews();
   const { data: progress } = useMyProgress();
+  const today = useToday();
 
   // Only once BOTH halves are here. The reviews arrive after the words, and
   // in that gap every word looked due — "20 words waiting" flashed up and
@@ -59,7 +55,7 @@ export function NextLessonWidget() {
             </p>
             <p className="font-sans text-xs text-muted">
               {next.kind === 'exam' ? 'Exam' : 'Homework'}
-              {next.due_on ? ` · ${when(next.due_on)}` : ''}
+              {next.due_on ? ` · ${dueSentence(next.due_on, today)}` : ''}
               {session > 0 ? ` · ${session} words to practise` : ''}
             </p>
           </>
