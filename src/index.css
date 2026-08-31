@@ -154,6 +154,10 @@ textarea,
 .desk__rail {
   display: none;
 }
+/* The drawer button exists only on a tablet-sized desk. */
+.desk__inspector-toggle {
+  display: none;
+}
 @media (min-width: 768px) and (min-height: 600px) {
   :root[data-desk] {
     --shell-max-width: none;
@@ -165,8 +169,39 @@ textarea,
     grid-auto-flow: column;
     grid-template-columns: minmax(0, 1fr);
   }
+  /* Two panes, not three: the inspector is a drawer over the canvas here,
+     opened from the small button at the bottom right. */
   [data-desk] .desk[data-panes~='inspector'] {
-    grid-template-columns: minmax(0, 1fr) 18rem;
+    grid-template-columns: minmax(0, 1fr);
+    position: relative;
+  }
+  [data-desk] .desk__inspector {
+    display: none;
+  }
+  [data-desk] .desk[data-inspector='open'] .desk__inspector {
+    display: block;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 20rem;
+    z-index: 20;
+    box-shadow: var(--shadow-loge);
+  }
+  [data-desk] .desk__inspector-toggle {
+    display: flex;
+    position: absolute;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 21;
+    height: 2.75rem;
+    width: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background: var(--color-accent);
+    color: var(--color-accent-fg);
+    box-shadow: var(--shadow-loge);
   }
   [data-desk] .desk__canvas,
   [data-desk] .desk__inspector,
@@ -193,6 +228,20 @@ textarea,
   }
   [data-desk] .desk[data-panes~='rail'][data-panes~='inspector'] {
     grid-template-columns: 16rem minmax(0, 1fr) 20rem;
+  }
+  /* The third column, and no drawer. */
+  [data-desk] .desk[data-panes~='inspector']:not([data-panes~='rail']) {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+  }
+  [data-desk] .desk__inspector,
+  [data-desk] .desk[data-inspector='open'] .desk__inspector {
+    display: block;
+    position: static;
+    width: auto;
+    box-shadow: none;
+  }
+  [data-desk] .desk__inspector-toggle {
+    display: none;
   }
   [data-desk] .desk__rail {
     display: block;
