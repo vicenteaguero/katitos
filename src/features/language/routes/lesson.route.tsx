@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { Check, Pencil, RotateCcw, Send } from 'lucide-react';
+import { Check, GraduationCap, Pencil, RotateCcw, Send } from 'lucide-react';
 import { useTableSync } from '@kernel/realtime';
 import { BUCKETS } from '@kernel/storage';
 import { qk } from '@kernel/query';
@@ -362,6 +362,16 @@ export function LessonRoute() {
           </h1>
           {lesson.subtitle && (
             <p className="font-sans text-sm text-muted">{lesson.subtitle}</p>
+          )}
+          {/* The words of THIS lesson, drilled on their own — not the whole
+              schedule, which is what tonight's practice should be about. */}
+          {!teacher && Object.keys(lesson.vocabByBlock).length > 0 && (
+            <Link
+              to={`/language/study?lesson=${lesson.id}`}
+              className="mt-1 inline-flex items-center gap-1 font-sans text-xs text-gold hover:underline"
+            >
+              <GraduationCap className="h-3.5 w-3.5" /> Practise these words
+            </Link>
           )}
         </header>
 
