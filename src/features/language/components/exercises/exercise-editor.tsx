@@ -5,6 +5,7 @@ import {
   AudioRecorder,
   Button,
   Field,
+  Fieldset,
   Input,
   PlayButton,
   Segmented,
@@ -14,6 +15,7 @@ import {
   type AudioClip,
 } from '@kernel/ui';
 import { BUCKETS, storagePaths, useUpload } from '@kernel/storage';
+import { supabase } from '@kernel/supabase';
 import { useSaveExercise } from '../../api/lessons.mutations';
 import { useLanguages } from '../../lib/languages';
 import {
@@ -218,7 +220,12 @@ export function ExerciseEditor({
       path = storagePaths.languageAudio(`exercise/${nanoid(10)}`, audio.ext);
       await upload(BUCKETS.languageAudio, path, audio.blob, {
         contentType: audio.mime,
+        cacheControl: '31536000',
       });
+      // The clip this one replaces is nobody's now.
+      if (audioPath && audioPath !== path) {
+        void supabase.storage.from(BUCKETS.languageAudio).remove([audioPath]);
+      }
       setAudioPath(path);
     }
     const { payload, answer } = buildWith(path);
@@ -382,7 +389,9 @@ export function ExerciseEditor({
         )}
 
         {needsAudio && (
-          <Field
+          // A Fieldset, not a Field: tapping a label's caption presses the
+          // first button inside it — Play, or Record.
+          <Fieldset
             label={
               kind === 'listen' ? 'What he will hear' : 'How it should sound'
             }
@@ -399,7 +408,7 @@ export function ExerciseEditor({
               )}
               <AudioRecorder onRecorded={setAudio} />
             </div>
-          </Field>
+          </Fieldset>
         )}
 
         {(kind === 'type' || kind === 'listen') && (
