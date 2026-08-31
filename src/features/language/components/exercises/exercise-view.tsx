@@ -105,10 +105,21 @@ function ChoiceView({
   grade,
   disabled,
 }: ExerciseViewProps) {
-  const options =
-    (exercise.payload as { options?: ExerciseOption[] })?.options ?? [];
+  const payload = exercise.payload as {
+    options?: ExerciseOption[];
+    audioPath?: string | null;
+  };
+  const options = payload?.options ?? [];
   return (
     <div className="space-y-1.5">
+      {/* "Which did you hear?" — her voice IS the question. */}
+      {payload?.audioPath && (
+        <PlayButton
+          bucket={BUCKETS.languageAudio}
+          path={payload.audioPath}
+          label="Hear it again"
+        />
+      )}
       {options.map((o) => {
         const picked = value === o.id;
         const marked = !!grade;
