@@ -143,7 +143,7 @@ export function AppShell() {
                   'min-h-0 flex-1 overflow-x-hidden [-webkit-overflow-scrolling:touch]',
                   desk
                     ? 'overflow-hidden'
-                    : 'overflow-y-auto px-[0.875rem] pb-8 pt-[0.44rem]'
+                    : 'overflow-y-auto px-[0.875rem] pb-4 pt-[0.44rem]'
                 )}
               >
                 <Outlet />
