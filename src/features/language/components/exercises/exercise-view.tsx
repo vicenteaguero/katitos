@@ -302,7 +302,8 @@ function OrderView({
 
   return (
     <div className="space-y-2">
-      <div className="flex min-h-[2.5rem] flex-wrap items-center gap-1.5 rounded-lg bg-surface px-2 py-2">
+      {/* One tone up from the card it sits in — the same tone was invisible. */}
+      <div className="flex min-h-[2.5rem] flex-wrap items-center gap-1.5 rounded-lg bg-surface-2 px-2 py-2">
         {chosen.length === 0 && (
           <span className="font-sans text-xs text-muted">
             Tap the words in order
