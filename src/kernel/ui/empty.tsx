@@ -12,7 +12,7 @@ export function Empty({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-5 px-7 py-12 text-center">
+    <div className="flex flex-col items-center justify-center gap-3 px-4 py-8 text-center">
       {icon && <div className="text-5xl text-gold/70">{icon}</div>}
       <p className="font-display text-2xl font-medium tracking-tight text-fg">
         {title}
@@ -22,7 +22,7 @@ export function Empty({
           {hint}
         </p>
       )}
-      {action && <div className="mt-3">{action}</div>}
+      {action && <div className="mt-1">{action}</div>}
     </div>
   );
 }
