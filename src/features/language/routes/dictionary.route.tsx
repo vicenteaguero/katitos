@@ -4,6 +4,7 @@ import { BUCKETS, useSignedUrls } from '@kernel/storage';
 import {
   AudioRecorder,
   Button,
+  Desk,
   Dialog,
   Empty,
   Field,
@@ -15,8 +16,8 @@ import {
   Segmented,
   Textarea,
   toast,
+  useDesk,
   useTopBarAction,
-  useWideLayout,
   type AudioClip,
 } from '@kernel/ui';
 import {
@@ -44,7 +45,7 @@ import {
  * were explained in, and it left every Spanish word we own unreachable.
  */
 export function DictionaryRoute() {
-  useWideLayout();
+  useDesk();
   const { native, learning } = useLanguages();
   const [lang, setLang] = useState<Lang>(learning);
   useEffect(() => setLang(learning), [learning]);
@@ -98,84 +99,86 @@ export function DictionaryRoute() {
   );
 
   return (
-    <div className="curtain-reveal space-y-2">
-      <SearchInput
-        value={search}
-        onChange={setSearch}
-        placeholder="Look for a word"
-      />
-
-      {list.length === 0 ? (
-        <Empty
-          icon="📖"
-          title={term ? 'Nothing like that' : 'Nothing here yet'}
-          hint={
-            term ? undefined : `Add the first word in ${LANG_LABELS[lang]}.`
-          }
+    <Desk>
+      <div className="curtain-reveal space-y-2">
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Look for a word"
         />
-      ) : (
-        <ul className="divide-y divide-fg/5 rounded-lg bg-surface px-3 md:columns-2 md:gap-4 md:[&>li]:break-inside-avoid">
-          {list.map((w) => (
-            <li key={w.id} className="flex items-center gap-2 py-2">
-              <span className="min-w-0 flex-1">
-                <span className="block font-display text-base text-fg">
-                  {headword(w)}
-                  {w.transliteration && (
-                    <span className="ml-2 font-sans text-[0.68rem] text-muted">
-                      {w.transliteration}
-                    </span>
-                  )}
-                </span>
-                <span className="block truncate font-sans text-xs text-muted">
-                  {meaningOf(w, native)}
-                </span>
-              </span>
-              {w.audio_path && (
-                <PlayButton url={clips?.get(w.audio_path)} size="sm" />
-              )}
-              <button
-                type="button"
-                aria-label="Edit"
-                onClick={() => setEditing(w)}
-                className="shrink-0 text-muted"
-              >
-                <Pencil className="h-3.5 w-3.5" />
-              </button>
-              <button
-                type="button"
-                aria-label="Delete"
-                onClick={() =>
-                  // Put away, not destroyed — and back in one tap. A real
-                  // delete took the recording and both people's review
-                  // history with it, from one tap with no way back.
-                  del.mutate(w, {
-                    onSuccess: () =>
-                      toast.success('Word put away', {
-                        key: 'vocab-put-away',
-                        action: {
-                          label: 'Undo',
-                          onClick: () => restore.mutate(w.id),
-                        },
-                      }),
-                  })
-                }
-                className="shrink-0 text-muted"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
 
-      {editing && (
-        <WordSheet
-          word={editing === 'new' ? null : editing}
-          lang={editing === 'new' ? lang : termLangOf(editing)}
-          onClose={() => setEditing(null)}
-        />
-      )}
-    </div>
+        {list.length === 0 ? (
+          <Empty
+            icon="📖"
+            title={term ? 'Nothing like that' : 'Nothing here yet'}
+            hint={
+              term ? undefined : `Add the first word in ${LANG_LABELS[lang]}.`
+            }
+          />
+        ) : (
+          <ul className="divide-y divide-fg/5 rounded-lg bg-surface px-3 md:columns-2 md:gap-4 md:[&>li]:break-inside-avoid">
+            {list.map((w) => (
+              <li key={w.id} className="flex items-center gap-2 py-2">
+                <span className="min-w-0 flex-1">
+                  <span className="block font-display text-base text-fg">
+                    {headword(w)}
+                    {w.transliteration && (
+                      <span className="ml-2 font-sans text-[0.68rem] text-muted">
+                        {w.transliteration}
+                      </span>
+                    )}
+                  </span>
+                  <span className="block truncate font-sans text-xs text-muted">
+                    {meaningOf(w, native)}
+                  </span>
+                </span>
+                {w.audio_path && (
+                  <PlayButton url={clips?.get(w.audio_path)} size="sm" />
+                )}
+                <button
+                  type="button"
+                  aria-label="Edit"
+                  onClick={() => setEditing(w)}
+                  className="shrink-0 text-muted"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Delete"
+                  onClick={() =>
+                    // Put away, not destroyed — and back in one tap. A real
+                    // delete took the recording and both people's review
+                    // history with it, from one tap with no way back.
+                    del.mutate(w, {
+                      onSuccess: () =>
+                        toast.success('Word put away', {
+                          key: 'vocab-put-away',
+                          action: {
+                            label: 'Undo',
+                            onClick: () => restore.mutate(w.id),
+                          },
+                        }),
+                    })
+                  }
+                  className="shrink-0 text-muted"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {editing && (
+          <WordSheet
+            word={editing === 'new' ? null : editing}
+            lang={editing === 'new' ? lang : termLangOf(editing)}
+            onClose={() => setEditing(null)}
+          />
+        )}
+      </div>
+    </Desk>
   );
 }
 
