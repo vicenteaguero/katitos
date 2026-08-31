@@ -11,6 +11,7 @@ import {
 import { cn } from '@kernel/lib';
 import {
   Button,
+  Desk,
   Dialog,
   Empty,
   Field,
@@ -21,8 +22,8 @@ import {
   Segmented,
   Textarea,
   toast,
+  useDesk,
   useTopBarAction,
-  useWideLayout,
 } from '@kernel/ui';
 import { useLesson } from '../api/lessons.queries';
 import {
@@ -40,6 +41,7 @@ import { isMissing, pick } from '../lib/pick';
 import { formatTable, parseTable } from '../lib/table-block';
 import { ExerciseEditor } from '../components/exercises/exercise-editor';
 import { MediaBlockEditor } from '../components/media-block-editor';
+import { LessonTree } from '../components/lesson-tree';
 import { VocabPickerSheet } from '../components/vocab-picker-sheet';
 import type { Json } from '@kernel/supabase';
 import type {
@@ -54,6 +56,12 @@ import type {
   Vocab,
 } from '../types';
 import { LANG_NATIVE_LABELS } from '../types';
+
+const KIND_LABEL: Record<LessonKind, string> = {
+  lesson: 'Lesson',
+  homework: 'Homework',
+  exam: 'Exam',
+};
 
 /** "Write it here" — in the language of the box. */
 const PROSE_PLACEHOLDER: Record<Lang, string> = {
@@ -79,7 +87,7 @@ function bodyPatch(lang: Lang, text: string) {
  */
 export function BuildRoute() {
   const { lessonId } = useParams<{ lessonId: string }>();
-  useWideLayout();
+  useDesk();
   const { data: lesson, isLoading } = useLesson(lessonId);
   const createBlock = useCreateBlock();
   const updateBlock = useUpdateBlock();
@@ -146,29 +154,91 @@ export function BuildRoute() {
     reorder.mutate({ lessonId: lesson.id, ids: next.map((b) => b.id) });
   };
 
-  return (
-    <div className="curtain-reveal space-y-3">
-      <header className="flex items-baseline justify-between gap-2">
-        <h1 className="min-w-0 truncate font-display text-xl font-semibold text-fg">
-          {lesson.title}
-        </h1>
-        {/* The state is also the way to change it: handing a lesson over is the
-            thing she does most, and it was two taps deep behind an icon. */}
-        <button
-          type="button"
-          onClick={() => setSettingsOpen(true)}
-          className={cn(
-            'lift-press shrink-0 rounded-full px-2.5 py-1 font-sans text-[0.68rem] uppercase tracking-[0.12em]',
-            lesson.status === 'published'
-              ? 'bg-accent text-accent-fg'
-              : 'bg-surface-2 text-muted'
+  /** The desk's right pane: what to add, and what this lesson is. */
+  const inspector = (
+    <div className="space-y-4">
+      <div className="space-y-1.5">
+        <p className="eyebrow">Add</p>
+        <div className="flex flex-wrap gap-1.5">
+          {(['text', 'vocab', 'table', 'media', 'divider'] as BlockKind[]).map(
+            (kind) => (
+              <Button
+                key={kind}
+                size="sm"
+                variant="secondary"
+                onClick={() =>
+                  createBlock.mutate({
+                    lessonId: lesson.id,
+                    kind,
+                    position: blocks.length,
+                  })
+                }
+              >
+                <Plus size={13} /> {kind}
+              </Button>
+            )
           )}
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => setEditing('new')}
+          >
+            <Type size={13} /> question
+          </Button>
+        </div>
+      </div>
+      <div className="space-y-1.5 rounded-lg bg-surface px-3 py-2.5">
+        <p className="eyebrow">This lesson</p>
+        <p className="font-sans text-sm text-fg">
+          {KIND_LABEL[lesson.kind as LessonKind] ?? lesson.kind}
+          {lesson.due_on ? ` · due ${lesson.due_on}` : ''}
+        </p>
+        <p className="font-sans text-xs text-muted">
+          {lesson.status === 'published' ? 'He has it.' : 'Not sent yet.'}
+        </p>
+        <Button
+          size="xs"
+          variant="secondary"
+          onClick={() => setSettingsOpen(true)}
         >
-          {lesson.status === 'published' ? 'he has it' : 'not sent yet'}
-        </button>
-      </header>
+          <SlidersHorizontal size={13} /> Settings
+        </Button>
+      </div>
+    </div>
+  );
 
-      <div className="lg:flex lg:items-start lg:gap-4">
+  return (
+    <Desk
+      rail={
+        <LessonTree
+          courseId={lesson.courseId}
+          currentId={lesson.id}
+          mode="build"
+        />
+      }
+      inspector={inspector}
+    >
+      <div className="curtain-reveal space-y-3">
+        <header className="flex items-baseline justify-between gap-2">
+          <h1 className="min-w-0 truncate font-display text-xl font-semibold text-fg">
+            {lesson.title}
+          </h1>
+          {/* The state is also the way to change it: handing a lesson over is the
+            thing she does most, and it was two taps deep behind an icon. */}
+          <button
+            type="button"
+            onClick={() => setSettingsOpen(true)}
+            className={cn(
+              'lift-press shrink-0 rounded-full px-2.5 py-1 font-sans text-[0.68rem] uppercase tracking-[0.12em]',
+              lesson.status === 'published'
+                ? 'bg-accent text-accent-fg'
+                : 'bg-surface-2 text-muted'
+            )}
+          >
+            {lesson.status === 'published' ? 'he has it' : 'not sent yet'}
+          </button>
+        </header>
+
         <div className="min-w-0 flex-1 space-y-2">
           {blocks.length === 0 && lesson.exercises.length === 0 && (
             <Empty
@@ -282,103 +352,73 @@ export function BuildRoute() {
           ))}
         </div>
 
-        <div className="mt-2 shrink-0 lg:mt-0 lg:w-64">
-          <div className="flex flex-wrap gap-1.5">
-            {(
-              ['text', 'vocab', 'table', 'media', 'divider'] as BlockKind[]
-            ).map((kind) => (
-              <Button
-                key={kind}
-                size="sm"
-                variant="secondary"
-                onClick={() =>
-                  createBlock.mutate({
-                    lessonId: lesson.id,
-                    kind,
-                    position: blocks.length,
-                  })
-                }
-              >
-                <Plus size={13} /> {kind}
-              </Button>
-            ))}
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => setEditing('new')}
-            >
-              <Type size={13} /> question
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Mounted only while open, so it always starts from the lesson as it
+        {/* Mounted only while open, so it always starts from the lesson as it
           is now — an edit abandoned with the X used to sit in the sheet and go
           out with the next publish. */}
-      {settingsOpen && (
-        <LessonSettingsSheet
-          open
-          onClose={() => setSettingsOpen(false)}
-          lesson={lesson}
-          onSave={(patch) =>
-            updateLesson.mutate({
-              id: lesson.id,
-              // So the course list learns the new title and status too.
-              courseId: lesson.courseId,
-              wasPublished: lesson.status === 'published',
-              ...patch,
-            })
-          }
-        />
-      )}
+        {settingsOpen && (
+          <LessonSettingsSheet
+            open
+            onClose={() => setSettingsOpen(false)}
+            lesson={lesson}
+            onSave={(patch) =>
+              updateLesson.mutate({
+                id: lesson.id,
+                // So the course list learns the new title and status too.
+                courseId: lesson.courseId,
+                wasPublished: lesson.status === 'published',
+                ...patch,
+              })
+            }
+          />
+        )}
 
-      {wordsFor && (
-        <VocabPickerSheet
-          open
-          blockId={wordsFor.id}
-          lessonId={lesson.id}
-          selected={lesson.vocabByBlock[wordsFor.id] ?? []}
-          target={lesson.targetLang}
-          onClose={() => setWordsFor(null)}
-        />
-      )}
+        {wordsFor && (
+          <VocabPickerSheet
+            open
+            blockId={wordsFor.id}
+            lessonId={lesson.id}
+            selected={lesson.vocabByBlock[wordsFor.id] ?? []}
+            target={lesson.targetLang}
+            onClose={() => setWordsFor(null)}
+          />
+        )}
 
-      {attachFor && (
-        <MediaBlockEditor
-          open
-          courseId={lesson.courseId}
-          lessonId={lesson.id}
-          current={mediaFor(attachFor)}
-          onClose={() => setAttachFor(null)}
-          onAttached={(mediaId) =>
-            updateBlock.mutate({
-              id: attachFor.id,
-              lessonId: lesson.id,
-              patch: { data: { mediaId } },
-            })
-          }
-          onDetach={() =>
-            updateBlock.mutate({
-              id: attachFor.id,
-              lessonId: lesson.id,
-              patch: { data: {} },
-            })
-          }
-        />
-      )}
+        {attachFor && (
+          <MediaBlockEditor
+            open
+            courseId={lesson.courseId}
+            lessonId={lesson.id}
+            current={mediaFor(attachFor)}
+            onClose={() => setAttachFor(null)}
+            onAttached={(mediaId) =>
+              updateBlock.mutate({
+                id: attachFor.id,
+                lessonId: lesson.id,
+                patch: { data: { mediaId } },
+              })
+            }
+            onDetach={() =>
+              updateBlock.mutate({
+                id: attachFor.id,
+                lessonId: lesson.id,
+                patch: { data: {} },
+              })
+            }
+          />
+        )}
 
-      {editing && (
-        <ExerciseEditor
-          open
-          lessonId={lesson.id}
-          position={lesson.exercises.length}
-          exercise={editing === 'new' ? null : editing}
-          target={lesson.targetLang}
-          onClose={() => setEditing(null)}
-        />
-      )}
-    </div>
+        {editing && (
+          <ExerciseEditor
+            open
+            lessonId={lesson.id}
+            position={lesson.exercises.length}
+            exercise={editing === 'new' ? null : editing}
+            target={lesson.targetLang}
+            onClose={() => setEditing(null)}
+          />
+        )}
+      </div>
+    </Desk>
   );
 }
 
