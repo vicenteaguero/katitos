@@ -69,6 +69,15 @@ describe('formatTable', () => {
     expect(twice).toEqual(once);
   });
 
+  it('keeps the rows when the headings are not in this language yet', () => {
+    // One column, headings only in English, edited in Russian: the box opens
+    // with a blank first line, and a blur used to promote «стол» to a heading.
+    const data = { headings: [{ en: 'word' }], rows: [['стол'], ['стул']] };
+    const back = parseTable(formatTable(data, 'ru'), 'ru', data);
+    expect(back.rows).toEqual([['стол'], ['стул']]);
+    expect(back.headings).toEqual([{ en: 'word' }]);
+  });
+
   it('shows only the headings in the language being edited', () => {
     // Pre-filling from English meant the next blur saved English AS Spanish.
     const data = { headings: [{ en: 'singular' }], rows: [['стол']] };
