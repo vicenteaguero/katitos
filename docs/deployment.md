@@ -1,45 +1,72 @@
-# Katitos — Deployment (later)
+# Katitos — Deployment
 
-The app is **cloud-ready but not cloud-configured**. Everything runs locally
-today. When you're ready to go live, follow these steps. Nothing here has been
-executed.
+The app is **live**. Supabase cloud and Vercel are both configured, and the repo
+is linked to each. This is how a change reaches the two phones, and what to do
+when something needs more than a `git push`.
 
-## Going live = swap env + push migrations/functions. Zero code change.
+## The everyday path
 
-### 1. Supabase cloud project
+Push to `main`. Vercel builds `npm run build` → static `dist/` and deploys it.
+`vercel.json` carries the SPA rewrite and the cache headers for `version.json`
+and `sw.js`.
 
-1. Create a project at supabase.com.
-2. Link the local repo: `supabase link --project-ref <ref>`.
-3. Push the schema (migrations are the source of truth):
-   `supabase db push` ← creates all tables, RLS, buckets.
-4. Deploy Edge Functions:
-   `supabase functions deploy push-notify`
-   `supabase functions deploy currency-rates`
-5. Set function secrets (web-push):
-   `supabase secrets set VAPID_PUBLIC_KEY=… VAPID_PRIVATE_KEY=… VAPID_SUBJECT=mailto:you@example.com`
-   (generate a fresh pair with `node scripts/gen-vapid.mjs`).
-6. Auth → keep email/password enabled. Create the two accounts (dashboard → Authentication → Users, or run an adapted `supabase/seed.sql` once). Insert the two `couple_members` rows + the `couple` row.
-7. (Optional) Schedule `currency-rates` daily via Supabase cron.
+Nothing else is needed for a code-only change.
 
-### 2. Vercel
+## When the schema changes
 
-1. Import the repo (framework preset **Vite** is auto-detected; `vercel.json` sets the SPA rewrite).
-2. Set environment variables (Project → Settings → Environment Variables):
-   - `VITE_SUPABASE_URL` = your project URL
-   - `VITE_SUPABASE_ANON_KEY` = project anon/publishable key
-   - `VITE_AUTH_MODE` = `prod` ← shows the real login screen
-   - `VITE_VAPID_PUBLIC_KEY` = the public half of the VAPID pair
-3. Deploy. The build is `npm run build` → static `dist/`.
+Migrations are the source of truth. `make db-push` applies everything in
+`supabase/migrations/` to the cloud over the IPv4 session pooler — the direct
+`db.<ref>.supabase.co` host is IPv6-only and fails behind a VPN TUN.
 
-### 3. iOS push (per device)
+```
+make db-push     # apply migrations to cloud
+make db-diff     # drift check — want: empty
+make db-types    # regenerate database.types.ts from the CLOUD schema
+```
 
-Web Push on iOS requires the PWA to be **installed** to the Home Screen
-(iOS 16.4+) and served over HTTPS (Vercel is). After install, open the app →
-Settings → "Enable notifications" to register the subscription. Then "partner
-opened the app" and chalkboard pings deliver to the lock screen.
+Credentials live in `.env.supabase.local` (gitignored). `make help` lists every
+target.
+
+**A migration the previous JS bundle cannot survive goes in `supabase/pending/`
+first**, not in `migrations/` — see that folder's README for the gate. The
+service worker does not `skipWaiting`, so a deploy installs a new bundle and
+the _next_ launch runs it; `AutoUpdate` takes the new build at launch, but a
+phone that has not opened the app since the deploy is still on the old one.
+`make db-gate` answers "is everyone running the new code yet?".
+
+## When an Edge Function changes
+
+```
+make functions-deploy    # push-notify + currency-rates, --use-api (no Docker)
+make deploy              # db-push + functions-deploy together
+```
+
+Function secrets are set with `supabase secrets set` and are **not** the same
+store as Vercel's env vars. Web push needs the VAPID keypair in both places:
+the private half in Supabase, `VITE_VAPID_PUBLIC_KEY` in Vercel. A mismatch
+means subscriptions save and every send silently fails. Mint a pair with
+`node scripts/gen-vapid.mjs`.
+
+## Vercel from the CLI
+
+```
+make vercel-status    # recent deployments
+make vercel-env       # production env vars
+make vercel-prod      # deploy to production (git push to main also does this)
+```
+
+## iOS push, per device
+
+Web Push on iOS needs the PWA **installed** to the Home Screen (iOS 16.4+) over
+HTTPS. After installing, open the app → Settings → "Enable notifications" to
+register the subscription.
 
 ## Notes
 
-- No secrets are committed. `.env.example` is the template; `.env.local` and `supabase/functions/.env` are gitignored.
-- `supabase db diff` should be empty (migrations capture the full schema).
-- The same `docker compose up web` + local Supabase flow is the dev environment; production never uses `Dockerfile.web`.
+- No secrets are committed. `.env.example` is the template; `.env.local` and
+  `supabase/functions/.env` are gitignored.
+- `supabase db diff` should be empty — migrations capture the full schema.
+- `seed.sql` runs only on a local `db:reset`. Production has never been seeded,
+  so anything that depends on seeded rows has to self-heal in the app.
+- Docker (`docker compose up web`, `Dockerfile.web`) is a local dev convenience
+  only. Production never uses it — Vercel builds the static SPA itself.
