@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@kernel/supabase';
 import type { BucketName } from './buckets';
 import { proxyPath } from './image';
+import { cachedOffline, isOffline } from './offline';
 
 /**
  * Sign MANY paths in ONE request.
@@ -98,8 +99,19 @@ export function useSignedUrls(
     // batch came back — a whole page flashing because one sticker was placed.
     // Hold the last answer while the next one is on its way.
     placeholderData: (prev: Array<[string, string]> | undefined) => prev,
+    networkMode: 'offlineFirst',
     queryFn: async (): Promise<Array<[string, string]>> => {
       const targets = proxy ? wanted.map(proxyPath) : wanted;
+      // No network: whatever the worker's cache holds, under an address it
+      // will answer. The rest are simply absent, as a missing proxy is.
+      if (isOffline()) {
+        const held: Array<[string, string]> = [];
+        for (let i = 0; i < targets.length; i++) {
+          const url = await cachedOffline(bucket, targets[i]);
+          if (url) held.push([wanted[i], url]);
+        }
+        return held;
+      }
       const { data, error } = await supabase.storage
         .from(bucket)
         .createSignedUrls(targets, expiresIn);
