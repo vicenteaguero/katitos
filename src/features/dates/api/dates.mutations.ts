@@ -57,18 +57,6 @@ export function useUpdateDate() {
   });
 }
 
-/** Delete a date (cascades to ratings/photos server-side). */
-export function useDeleteDate() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from('dates').delete().eq('id', id);
-      if (error) throw error;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: qk.dates.all() }),
-  });
-}
-
 /** Upsert the current user's star rating + review for a date. */
 export function useSetRating() {
   const qc = useQueryClient();
