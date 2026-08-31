@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useMembers, useUserId } from '@kernel/auth';
+import { Kicker } from '@kernel/ui';
 import { useAllReviews, useAllVocab } from '../api/vocab';
 import { headword, meaningOf } from '../lib/pick';
 import { useLanguages } from '../lib/languages';
@@ -41,7 +42,7 @@ export function WrongList() {
         What {partner?.display_name ?? 'your love'} keeps forgetting
       </p>
       <p className="font-sans text-xs text-muted">Worth going over together.</p>
-      <ul className="space-y-1.5 pt-1">
+      <ul className="space-y-1.5">
         {rows.map(({ review, word }) => (
           <li key={review.vocab_id} className="flex items-baseline gap-2">
             <span className="min-w-0 flex-1">
@@ -54,9 +55,9 @@ export function WrongList() {
                 </span>
               )}
             </span>
-            <span className="shrink-0 font-sans text-[0.6rem] uppercase tracking-[0.12em] text-copper">
+            <Kicker tone="copper" className="shrink-0">
               {review.lapses}×
-            </span>
+            </Kicker>
           </li>
         ))}
       </ul>
