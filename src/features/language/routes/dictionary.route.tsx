@@ -271,14 +271,6 @@ export function DictionaryRoute() {
             placeholder="Look for a word"
             className="min-w-0 flex-1"
           />
-          <Button
-            size="xs"
-            variant="secondary"
-            onClick={() => setImportOpen(true)}
-            className="md:hidden"
-          >
-            <ClipboardPaste size={13} /> Paste
-          </Button>
         </div>
 
         {tags.length > 0 && (
