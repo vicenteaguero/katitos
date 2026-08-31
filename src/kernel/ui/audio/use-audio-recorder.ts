@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { acquireMic, releaseMic } from './audio-stream';
 
 /**
  * A finished recording: the bytes, plus what they ACTUALLY are.
@@ -112,13 +113,15 @@ export function useAudioRecorder(): AudioRecorderState {
   }, []);
 
   // A recorder still holding the microphone after the screen is gone keeps the
-  // little red pill lit on iOS, which is alarming and entirely our fault.
+  // little red pill lit on iOS, which is alarming and entirely our fault. The
+  // stream is HANDED BACK rather than killed: the shared holder decides when
+  // the hardware is actually released, so the next word doesn't re-prompt.
   useEffect(
     () => () => {
       stopTicking();
       const rec = recorderRef.current;
       if (rec && rec.state !== 'inactive') rec.stop();
-      rec?.stream.getTracks().forEach((t) => t.stop());
+      if (rec) releaseMic();
     },
     [stopTicking]
   );
@@ -133,7 +136,8 @@ export function useAudioRecorder(): AudioRecorderState {
     setError(null);
     let stream: MediaStream;
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // One prompt per launch, not one per word. See audio-stream.ts.
+      stream = await acquireMic();
     } catch {
       // Used to reject into a bare `void start()` — unhandled, and the user saw
       // nothing at all happen.
@@ -163,11 +167,13 @@ export function useAudioRecorder(): AudioRecorderState {
           ext: extForMime(type),
           durationMs: Math.round(performance.now() - startedAtRef.current),
         });
-        stream.getTracks().forEach((t) => t.stop());
+        recorderRef.current = null;
+        releaseMic();
       };
       recorder.onerror = () => {
         setError('Recording stopped unexpectedly.');
-        stream.getTracks().forEach((t) => t.stop());
+        recorderRef.current = null;
+        releaseMic();
         setRecording(false);
         stopTicking();
       };
@@ -185,7 +191,7 @@ export function useAudioRecorder(): AudioRecorderState {
         200
       );
     } catch {
-      stream.getTracks().forEach((t) => t.stop());
+      releaseMic();
       startingRef.current = false;
       setError("This browser can't record audio.");
     }
