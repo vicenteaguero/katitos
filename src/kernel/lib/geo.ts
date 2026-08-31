@@ -21,10 +21,6 @@ export function haversineKm(a: Coords, b: Coords): number {
   return 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(h));
 }
 
-export function kmToMiles(km: number): number {
-  return km * 0.621371;
-}
-
 export function formatDistance(km: number): string {
   const rounded = Math.round(km);
   return `${rounded.toLocaleString()} km`;
