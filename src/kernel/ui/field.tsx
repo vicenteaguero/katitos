@@ -72,7 +72,7 @@ export function Field({
   className?: string;
 }) {
   return (
-    <label className={cn('block space-y-2.5', className)}>
+    <label className={cn('block space-y-1.5', className)}>
       {label && (
         <span className="block font-sans text-xs font-semibold uppercase tracking-[0.18em] text-muted">
           {label}
@@ -113,7 +113,7 @@ export function Fieldset({
     <div
       role="group"
       aria-label={label}
-      className={cn('block space-y-2.5', className)}
+      className={cn('block space-y-1.5', className)}
     >
       {label && (
         <span className="block font-sans text-xs font-semibold uppercase tracking-[0.18em] text-muted">
