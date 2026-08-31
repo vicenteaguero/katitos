@@ -45,6 +45,15 @@ password `katitos123`).
 | `npm run db:types`         | Regenerate `database.types.ts` from the local DB                 |
 | `npm run db:reset`         | Reset local DB (re-run migrations + seed)                        |
 
+Run by hand, not wired to a script — each documents its own invocation at the
+top of the file:
+
+| Tool                         | What                                                     |
+| ---------------------------- | -------------------------------------------------------- |
+| `scripts/seed-demo.mjs`      | Fill a local stack with demo rows                        |
+| `scripts/gen-icons.mjs`      | Regenerate the PWA icon set in `public/icons/`           |
+| `scripts/gen-vapid.mjs`      | Mint a VAPID keypair for web push (see `.env.example`)   |
+
 ## Docs
 
 - [docs/architecture.md](docs/architecture.md) — structure, the registries, how to add a feature/widget/game.
