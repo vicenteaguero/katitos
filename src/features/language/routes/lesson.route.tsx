@@ -8,8 +8,10 @@ import {
   Button,
   Desk,
   Empty,
-  LoadingScreen,
+  Kicker,
+  ListSkeleton,
   toast,
+  TopBarButton,
   useDesk,
   useTopBarAction,
 } from '@kernel/ui';
@@ -70,14 +72,13 @@ export function LessonRoute() {
 
   useTopBarAction(
     lessonId ? (
-      <Link
+      <TopBarButton
+        label="Edit this lesson"
         to={`/language/build/${lessonId}`}
-        aria-label="Edit this lesson"
-        className="lift-press flex h-8 w-8 items-center justify-center rounded-full bg-surface-2 text-gold shadow-loge"
-        style={{ border: '1px solid rgba(228,195,106,.4)' }}
+        variant="quiet"
       >
         <Pencil className="h-4 w-4" />
-      </Link>
+      </TopBarButton>
     ) : null,
     [lessonId]
   );
@@ -122,7 +123,7 @@ export function LessonRoute() {
     });
   }, [attempts, lesson]);
 
-  if (isLoading) return <LoadingScreen />;
+  if (isLoading) return <ListSkeleton rows={5} />;
   if (!lesson) return <Empty icon="📄" title="No such lesson" />;
 
   const isExam = lesson.kind === 'exam';
@@ -216,7 +217,7 @@ export function LessonRoute() {
       }
       narrow
     >
-      <div className="curtain-reveal space-y-4">
+      <div className="curtain-reveal space-y-3">
         <header className="min-w-0">
           <p className="eyebrow">
             {lesson.kind === 'homework'
@@ -250,7 +251,7 @@ export function LessonRoute() {
         )}
 
         {/* Hers to select and copy — a lesson on a computer is a document. */}
-        <div data-readable className="space-y-4">
+        <div data-readable className="space-y-3">
           {lesson.blocks.map((block) => (
             <BlockView
               key={block.id}
@@ -273,15 +274,15 @@ export function LessonRoute() {
                 <div
                   key={ex.id}
                   className={cn(
-                    'space-y-2 rounded-lg bg-surface px-3 py-3',
+                    'space-y-2 rounded-lg bg-surface px-3 py-2.5',
                     // No alpha on a ring: `ring-success/40` renders Tailwind's
                     // default blue, not green.
                     shown?.correct && 'ring-1 ring-success'
                   )}
                 >
-                  <p className="eyebrow">
+                  <Kicker as="p" tone="muted">
                     {i + 1} of {exercises.length}
-                  </p>
+                  </Kicker>
                   <ExerciseView
                     target={lesson.targetLang}
                     exercise={ex}
