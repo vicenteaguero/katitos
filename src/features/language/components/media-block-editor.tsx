@@ -8,8 +8,9 @@ import {
   Segmented,
   Sheet,
   Spinner,
+  toast,
 } from '@kernel/ui';
-import { useAddLink, useDeleteMedia, useUploadMedia } from '../api/media';
+import { useAddLink, useUploadMedia } from '../api/media';
 import type { Media } from '../types';
 
 /**
@@ -39,7 +40,6 @@ export function MediaBlockEditor({
 }) {
   const upload = useUploadMedia();
   const addLink = useAddLink();
-  const removeMedia = useDeleteMedia();
   const [mode, setMode] = useState<'file' | 'link'>('file');
   const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
@@ -83,12 +83,19 @@ export function MediaBlockEditor({
               type="button"
               aria-label="Take it off"
               onClick={() => {
-                // Delete the attachment itself, not just the block's pointer to
-                // it — otherwise every swap leaves an unreachable file sitting
-                // in storage forever.
-                removeMedia.mutate({ media: current, courseId });
+                // The block lets go of it; the file stays with the course.
+                // Deleting it from here threw the upload away with one tap and
+                // no way back — now one tap puts it back on the block.
+                const previous = current;
                 onDetach();
                 onClose();
+                toast.success('Taken off the block', {
+                  key: 'media-detached',
+                  action: {
+                    label: 'Undo',
+                    onClick: () => onAttached(previous.id),
+                  },
+                });
               }}
               className="shrink-0 text-muted"
             >
