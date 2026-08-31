@@ -21,6 +21,7 @@ import {
 import { useCourses } from '../api/courses.queries';
 import { useCreateCourse } from '../api/lessons.mutations';
 import { useLanguages } from '../lib/languages';
+import { Inbox } from '../components/inbox';
 import { StudyBanner } from '../components/study-banner';
 import { WrongList } from '../components/wrong-list';
 import {
@@ -45,6 +46,8 @@ export function CoursesRoute() {
   const navigate = useNavigate();
   const { native, learning } = useLanguages();
   useTableSync('lang_courses', qk.lang.courses());
+  // His hand-ins land in the inbox while she is looking at it.
+  useTableSync('lang_lesson_progress', qk.lang.progress());
   useDesk();
 
   const [open, setOpen] = useState(false);
@@ -96,6 +99,7 @@ export function CoursesRoute() {
     <Desk narrow>
       <div className="curtain-reveal space-y-3">
         <StudyBanner />
+        <Inbox />
 
         <div className="flex gap-2">
           {/* The alphabet is Cyrillic: for the one learning it — and for the one
