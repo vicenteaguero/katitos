@@ -355,28 +355,3 @@ export function useHealPhotoSize(bookId: string | undefined) {
     [qc, bookId]
   );
 }
-
-/**
- * Give a photo the little placeholder it was uploaded without.
- *
- * Same idea as the size heal and the same one-shot bookkeeping: the first
- * screen that has the real bytes in hand makes the postage-stamp and stores it,
- * so every later open of that page paints instantly. Nothing waits on it.
- */
-const blurred = new Set<string>();
-
-export function useHealPhotoBlur() {
-  return useCallback((photoId: string, blur: string) => {
-    if (blurred.has(photoId)) return;
-    blurred.add(photoId);
-    void supabase
-      .from('album_photos')
-      .update({ blur })
-      .eq('id', photoId)
-      .is('blur', null)
-      .then(
-        () => {},
-        () => blurred.delete(photoId)
-      );
-  }, []);
-}
