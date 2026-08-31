@@ -13,12 +13,14 @@ import { qk } from '@kernel/query';
 import { cn } from '@kernel/lib';
 import {
   Button,
+  Desk,
   Dialog,
   Empty,
   Field,
   Input,
   LoadingScreen,
   Segmented,
+  useDesk,
   useTopBarAction,
 } from '@kernel/ui';
 import {
@@ -28,6 +30,7 @@ import {
   useUnits,
 } from '../api/courses.queries';
 import { useCreateLesson, useCreateUnit } from '../api/lessons.mutations';
+import { CoursesRail } from '../components/courses-rail';
 import { dueLabel } from '../lib/due';
 import type { Lesson, LessonKind } from '../types';
 
@@ -73,6 +76,7 @@ export function CourseRoute() {
   const createUnit = useCreateUnit();
   const createLesson = useCreateLesson();
   useTableSync('lang_lessons', qk.lang.units(courseId ?? 'none'));
+  useDesk();
 
   const [unitOpen, setUnitOpen] = useState(false);
   const [unitTitle, setUnitTitle] = useState('');
@@ -99,147 +103,151 @@ export function CourseRoute() {
   const list = units ?? [];
 
   return (
-    <div className="curtain-reveal space-y-4">
-      <header className="min-w-0">
-        <p className="eyebrow">{course.description ?? 'A course of ours'}</p>
-        <h1 className="mt-0.5 truncate font-display text-2xl font-semibold text-fg">
-          <span className="mr-2">{course.emoji ?? '📘'}</span>
-          {course.title}
-        </h1>
-      </header>
+    <Desk rail={<CoursesRail currentId={courseId} />} narrow>
+      <div className="curtain-reveal space-y-4">
+        <header className="min-w-0">
+          <p className="eyebrow">{course.description ?? 'A course of ours'}</p>
+          <h1 className="mt-0.5 truncate font-display text-2xl font-semibold text-fg">
+            <span className="mr-2">{course.emoji ?? '📘'}</span>
+            {course.title}
+          </h1>
+        </header>
 
-      {list.length === 0 ? (
-        <Empty
-          icon="🗂️"
-          title="Nothing in here yet"
-          hint="A unit holds the lessons that belong together."
-          action={<Button onClick={() => setUnitOpen(true)}>Add a unit</Button>}
-        />
-      ) : (
-        list.map((unit) => (
-          <section key={unit.id} className="space-y-1.5">
-            <div className="flex items-baseline justify-between gap-2">
-              <h2 className="min-w-0 truncate font-display text-lg text-fg">
-                {unit.title}
-              </h2>
-              <button
-                type="button"
-                onClick={() => {
-                  setLessonFor(unit.id);
-                  setLessonTitle('');
-                  setLessonKind('lesson');
-                }}
-                className="shrink-0 font-sans text-xs text-gold"
-              >
-                add
-              </button>
-            </div>
-
-            {unit.lessons.length === 0 ? (
-              <p className="font-sans text-xs text-muted">Empty for now.</p>
-            ) : (
-              <ul className="space-y-1">
-                {unit.lessons.map((lesson) => (
-                  <LessonRow
-                    key={lesson.id}
-                    lesson={lesson}
-                    done={progress?.get(lesson.id)?.status === 'graded'}
-                    score={progress?.get(lesson.id)?.score ?? null}
-                    waiting={toMark.has(lesson.id)}
-                  />
-                ))}
-              </ul>
-            )}
-          </section>
-        ))
-      )}
-
-      <Dialog
-        placement="auto"
-        open={unitOpen}
-        onClose={() => setUnitOpen(false)}
-        title="New unit"
-        size="sm"
-      >
-        <div className="space-y-3">
-          <Field label="Called">
-            <Input
-              value={unitTitle}
-              onChange={(e) => setUnitTitle(e.target.value)}
-              placeholder="Getting around"
-              autoFocus
-            />
-          </Field>
-          <Button
-            full
-            disabled={!unitTitle.trim() || createUnit.isPending}
-            onClick={() =>
-              courseId &&
-              createUnit.mutate(
-                { courseId, title: unitTitle, position: list.length },
-                {
-                  onSuccess: () => {
-                    setUnitOpen(false);
-                    setUnitTitle('');
-                  },
-                }
-              )
+        {list.length === 0 ? (
+          <Empty
+            icon="🗂️"
+            title="Nothing in here yet"
+            hint="A unit holds the lessons that belong together."
+            action={
+              <Button onClick={() => setUnitOpen(true)}>Add a unit</Button>
             }
-          >
-            Add unit
-          </Button>
-        </div>
-      </Dialog>
-
-      <Dialog
-        placement="auto"
-        open={!!lessonFor}
-        onClose={() => setLessonFor(null)}
-        title="New lesson"
-        size="sm"
-      >
-        <div className="space-y-3">
-          <Segmented
-            full
-            value={lessonKind}
-            onChange={(v) => setLessonKind(v as LessonKind)}
-            options={[
-              { value: 'lesson', label: 'Lesson' },
-              { value: 'homework', label: 'Homework' },
-              { value: 'exam', label: 'Exam' },
-            ]}
           />
-          <Field label="Called">
-            <Input
-              value={lessonTitle}
-              onChange={(e) => setLessonTitle(e.target.value)}
-              placeholder="Asking for the bill"
-              autoFocus
+        ) : (
+          list.map((unit) => (
+            <section key={unit.id} className="space-y-1.5">
+              <div className="flex items-baseline justify-between gap-2">
+                <h2 className="min-w-0 truncate font-display text-lg text-fg">
+                  {unit.title}
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLessonFor(unit.id);
+                    setLessonTitle('');
+                    setLessonKind('lesson');
+                  }}
+                  className="shrink-0 font-sans text-xs text-gold"
+                >
+                  add
+                </button>
+              </div>
+
+              {unit.lessons.length === 0 ? (
+                <p className="font-sans text-xs text-muted">Empty for now.</p>
+              ) : (
+                <ul className="space-y-1">
+                  {unit.lessons.map((lesson) => (
+                    <LessonRow
+                      key={lesson.id}
+                      lesson={lesson}
+                      done={progress?.get(lesson.id)?.status === 'graded'}
+                      score={progress?.get(lesson.id)?.score ?? null}
+                      waiting={toMark.has(lesson.id)}
+                    />
+                  ))}
+                </ul>
+              )}
+            </section>
+          ))
+        )}
+
+        <Dialog
+          placement="auto"
+          open={unitOpen}
+          onClose={() => setUnitOpen(false)}
+          title="New unit"
+          size="sm"
+        >
+          <div className="space-y-3">
+            <Field label="Called">
+              <Input
+                value={unitTitle}
+                onChange={(e) => setUnitTitle(e.target.value)}
+                placeholder="Getting around"
+                autoFocus
+              />
+            </Field>
+            <Button
+              full
+              disabled={!unitTitle.trim() || createUnit.isPending}
+              onClick={() =>
+                courseId &&
+                createUnit.mutate(
+                  { courseId, title: unitTitle, position: list.length },
+                  {
+                    onSuccess: () => {
+                      setUnitOpen(false);
+                      setUnitTitle('');
+                    },
+                  }
+                )
+              }
+            >
+              Add unit
+            </Button>
+          </div>
+        </Dialog>
+
+        <Dialog
+          placement="auto"
+          open={!!lessonFor}
+          onClose={() => setLessonFor(null)}
+          title="New lesson"
+          size="sm"
+        >
+          <div className="space-y-3">
+            <Segmented
+              full
+              value={lessonKind}
+              onChange={(v) => setLessonKind(v as LessonKind)}
+              options={[
+                { value: 'lesson', label: 'Lesson' },
+                { value: 'homework', label: 'Homework' },
+                { value: 'exam', label: 'Exam' },
+              ]}
             />
-          </Field>
-          <Button
-            full
-            disabled={!lessonTitle.trim() || createLesson.isPending}
-            onClick={() => {
-              const unit = list.find((u) => u.id === lessonFor);
-              if (!unit || !courseId) return;
-              createLesson.mutate(
-                {
-                  courseId,
-                  unitId: unit.id,
-                  title: lessonTitle,
-                  kind: lessonKind,
-                  position: unit.lessons.length,
-                },
-                { onSuccess: () => setLessonFor(null) }
-              );
-            }}
-          >
-            Add {KIND_LABEL[lessonKind].toLowerCase()}
-          </Button>
-        </div>
-      </Dialog>
-    </div>
+            <Field label="Called">
+              <Input
+                value={lessonTitle}
+                onChange={(e) => setLessonTitle(e.target.value)}
+                placeholder="Asking for the bill"
+                autoFocus
+              />
+            </Field>
+            <Button
+              full
+              disabled={!lessonTitle.trim() || createLesson.isPending}
+              onClick={() => {
+                const unit = list.find((u) => u.id === lessonFor);
+                if (!unit || !courseId) return;
+                createLesson.mutate(
+                  {
+                    courseId,
+                    unitId: unit.id,
+                    title: lessonTitle,
+                    kind: lessonKind,
+                    position: unit.lessons.length,
+                  },
+                  { onSuccess: () => setLessonFor(null) }
+                );
+              }}
+            >
+              Add {KIND_LABEL[lessonKind].toLowerCase()}
+            </Button>
+          </div>
+        </Dialog>
+      </div>
+    </Desk>
   );
 }
 
