@@ -9,4 +9,3 @@ export { albumFeature } from './feature';
  * screen parses, for a screen most launches never open. The two places that
  * need it import the module directly.
  */
-export type { PhotoBook3DProps } from './components/photo-book/photo-book-3d';
