@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
+import { SlidersHorizontal } from 'lucide-react';
 import { cn } from '../../lib/cn';
 
 /**
@@ -9,9 +10,11 @@ import { cn } from '../../lib/cn';
  * as screens of their own — `.desk__rail` is hidden until a laptop, in the
  * stylesheet, so no width ever shows it by accident), the canvas is the
  * page, and the inspector stacks
- * underneath it, exactly as these screens were before there was a desk. From
- * a tablet up the canvas and the inspector sit side by side, each scrolling
- * on its own; from a laptop up the rail joins on the left. The panes are told
+ * underneath it, exactly as these screens were before there was a desk. A
+ * tablet has room for two panes, not three: the canvas takes the width and
+ * the inspector is a drawer over it, behind one small button. From a laptop
+ * up the inspector is the third column, the rail joins on the left, and the
+ * button is gone. The panes are told
  * apart by tone, never by a line — rail on the house ground, canvas on the
  * surface, inspector one tone up.
  *
@@ -37,24 +40,38 @@ export function Desk({
   const panes = [rail && 'rail', 'canvas', inspector && 'inspector']
     .filter(Boolean)
     .join(' ');
+  // The drawer, on a tablet. Nothing reads this on a phone or a laptop.
+  const [open, setOpen] = useState(false);
   return (
     <div
       className={cn('desk', narrow && 'desk--narrow', className)}
       data-panes={panes}
+      data-inspector={open ? 'open' : undefined}
     >
       {rail && <aside className="desk__rail">{rail}</aside>}
       <section className="desk__canvas" data-desk-canvas>
         {narrow ? <div className="desk__page">{children}</div> : children}
       </section>
       {inspector && (
-        <aside
-          className={cn(
-            'desk__inspector',
-            inspectorOnPhone === 'hidden' && 'max-md:hidden'
-          )}
-        >
-          {inspector}
-        </aside>
+        <>
+          <aside
+            className={cn(
+              'desk__inspector',
+              inspectorOnPhone === 'hidden' && 'max-md:hidden'
+            )}
+          >
+            {inspector}
+          </aside>
+          <button
+            type="button"
+            aria-expanded={open}
+            aria-label={open ? 'Hide the details' : 'Show the details'}
+            onClick={() => setOpen((o) => !o)}
+            className="desk__inspector-toggle lift-press"
+          >
+            <SlidersHorizontal size={18} />
+          </button>
+        </>
       )}
     </div>
   );
