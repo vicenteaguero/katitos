@@ -19,7 +19,7 @@ Supabase backend, runs locally in Docker, cloud-ready for Vercel + Supabase.
 src/
   app/      composition root (shell, router, registries) — knows nothing about specific features
   kernel/   the shared "OS": supabase, query, auth, couple, realtime, storage, push,
-            ui, hooks, lib, registry, engines/{deck,scoring}
+            ui, hooks, lib, registry, engines/deck
   features/ one self-contained vertical slice per feature
 ```
 
@@ -35,16 +35,25 @@ Dependency DAG: `features → kernel`, `app → features + kernel`, `kernel → 
 1. `src/features/<name>/` with `feature.ts` calling `defineFeature({ id, title, basePath, routes, nav })` and an `index.ts` barrel.
 2. One line in `src/app/features.registry.ts`. Routes + nav are derived automatically.
 
-A feature folder mirrors `src/features/countdowns/` (the reference):
-`types.ts · api/*.queries.ts · api/*.mutations.ts · components/ · routes/ · widgets/ · feature.ts · index.ts`.
+A feature folder mirrors `src/features/wishlists/` (the reference):
+`types.ts · api/*.queries.ts · api/*.mutations.ts · components/ · routes/ · feature.ts · index.ts`.
 
-### Add a dashboard widget
+Keep the barrel thin. `features.registry.ts` imports every barrel at boot, so
+anything re-exported there lands in the boot chunk — see the note in
+`src/features/album/index.ts` for what that cost once.
 
-Export a self-fetching component from a feature, then add a `defineWidget({ id, featureId, Component, order })` to `src/app/widgets.registry.ts`. The home grid renders them.
+### Add a home widget
 
-### Add a game
+Export a self-fetching component from the feature and render it directly in
+`src/app/routes/home.route.tsx`. There is no widget registry — one existed, was
+never adopted, and was removed. Home is a written layout, not a grid of tiles.
 
-Build a `PlayComponent` (calls `onFinish({ score })`), `defineGame({ id, title, PlayComponent, scoreOrder, formatScore })`, and add it to `src/features/games/registry.ts`. Leaderboard (the shared `game_scores` table) is free.
+### Add an idea to the "Soon" shelf
+
+A row in the More drawer does not need a feature behind it. Add an entry to
+`src/app/soon.ts` (`{ label, icon, to, order, category }`) and it renders greyed
+beside the shipped-but-locked ones. When the idea gets built for real, delete
+its line there and let the feature registry take over.
 
 ### Add a quiz/deck kind
 
