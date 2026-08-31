@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { useParams } from 'react-router';
 import {
-  ChevronDown,
-  ChevronUp,
   Minus,
   Plus,
   Send,
@@ -13,13 +11,14 @@ import {
 import { cn } from '@kernel/lib';
 import {
   Button,
+  Dialog,
   Empty,
   Field,
   FieldRow,
   Input,
   LoadingScreen,
+  RowToolbar,
   Segmented,
-  Sheet,
   Textarea,
   toast,
   useTopBarAction,
@@ -456,32 +455,12 @@ function BlockEditor({
           <span className="flex-1 font-sans text-[0.68rem] uppercase tracking-[0.12em] text-gold">
             table
           </span>
-          <button
-            type="button"
-            aria-label="Move up"
-            disabled={first}
-            onClick={() => onMove(-1)}
-            className={cn('text-muted', first && 'opacity-30')}
-          >
-            <ChevronUp className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            aria-label="Move down"
-            disabled={last}
-            onClick={() => onMove(1)}
-            className={cn('text-muted', last && 'opacity-30')}
-          >
-            <ChevronDown className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            aria-label="Delete"
-            onClick={onDelete}
-            className="text-muted"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
+          <RowToolbar
+            first={first}
+            last={last}
+            onMove={onMove}
+            onDelete={onDelete}
+          />
         </div>
         <Textarea
           value={grid}
@@ -532,32 +511,12 @@ function BlockEditor({
             {summary}
           </span>
         </button>
-        <button
-          type="button"
-          aria-label="Move up"
-          disabled={first}
-          onClick={() => onMove(-1)}
-          className={cn('text-muted', first && 'opacity-30')}
-        >
-          <ChevronUp className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          aria-label="Move down"
-          disabled={last}
-          onClick={() => onMove(1)}
-          className={cn('text-muted', last && 'opacity-30')}
-        >
-          <ChevronDown className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          aria-label="Delete"
-          onClick={onDelete}
-          className="text-muted"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
+        <RowToolbar
+          first={first}
+          last={last}
+          onMove={onMove}
+          onDelete={onDelete}
+        />
       </div>
     );
   }
@@ -574,32 +533,12 @@ function BlockEditor({
             title="No translation yet"
           />
         )}
-        <button
-          type="button"
-          aria-label="Move up"
-          disabled={first}
-          onClick={() => onMove(-1)}
-          className={cn('text-muted', first && 'opacity-30')}
-        >
-          <ChevronUp className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          aria-label="Move down"
-          disabled={last}
-          onClick={() => onMove(1)}
-          className={cn('text-muted', last && 'opacity-30')}
-        >
-          <ChevronDown className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          aria-label="Delete"
-          onClick={onDelete}
-          className="text-muted"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
+        <RowToolbar
+          first={first}
+          last={last}
+          onMove={onMove}
+          onDelete={onDelete}
+        />
       </div>
 
       <Textarea
@@ -668,7 +607,13 @@ function LessonSettingsSheet({
   };
 
   return (
-    <Sheet open={open} onClose={onClose} title="This lesson" size="half">
+    <Dialog
+      placement="auto"
+      open={open}
+      onClose={onClose}
+      title="This lesson"
+      size="md"
+    >
       <div className="space-y-3">
         <Segmented
           full
@@ -727,6 +672,6 @@ function LessonSettingsSheet({
             : 'Give it to him'}
         </Button>
       </div>
-    </Sheet>
+    </Dialog>
   );
 }
