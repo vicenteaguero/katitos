@@ -11,11 +11,14 @@ import { youtubeId } from '../api/media';
 export function BlockView({
   block,
   support,
+  target,
   vocab,
   media,
 }: {
   block: Block;
   support: Lang;
+  /** The language the lesson teaches — the line that goes on top. */
+  target: Lang;
   /** Words this block points at, already looked up. */
   vocab?: Vocab[];
   media?: Media;
@@ -41,27 +44,41 @@ export function BlockView({
 
     case 'text':
     default: {
-      const body = pick(block, 'body', support);
-      if (!body) return null;
+      // The language being taught above, the explanation below — the shape
+      // of a page in any textbook. The headline was hardwired to Russian, so
+      // a Spanish lesson read in Russian showed the explanation as the
+      // headline and never showed the Spanish at all.
+      const head = block[`body_${target}`]?.trim() ?? '';
+      const gloss = glossOf(block, support, target);
+      if (!head && !gloss) return null;
       return (
         <div className="space-y-1">
-          {/* The Russian above, the explanation below — the shape of a page in
-              any textbook, and it survives the language switch untouched.
-              It is shown in EVERY support language: hiding it for English
-              readers hid it from the person learning Russian, since English is
-              the default. */}
-          {block.body_ru && block.body_ru !== body && (
-            <p className="font-display text-lg leading-snug text-fg">
-              {block.body_ru}
+          {head && (
+            <p className="font-display text-lg leading-snug text-fg">{head}</p>
+          )}
+          {gloss && (
+            <p className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-fg/90">
+              {gloss}
             </p>
           )}
-          <p className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-fg/90">
-            {body}
-          </p>
         </div>
       );
     }
   }
+}
+
+/**
+ * The explanation of a block, in the reader's language or the next best —
+ * never in the language being taught, which is the headline's job.
+ */
+function glossOf(block: Block, support: Lang, target: Lang): string {
+  const order: Lang[] = [support, 'en', 'es', 'ru'];
+  for (const lang of order) {
+    if (lang === target) continue;
+    const value = block[`body_${lang}`];
+    if (value && value.trim()) return value;
+  }
+  return '';
 }
 
 /**
@@ -84,8 +101,10 @@ function TableBlock({
   const rows = data.rows ?? [];
   if (!rows.length) return null;
 
+  // The reader's language first, then the next best — a display may fall
+  // back where an editor must not.
   const label = (h: { ru?: string; en?: string; es?: string }) =>
-    (support === 'es' ? h.es : h.en) || h.en || h.es || h.ru || '';
+    h[support] || h.en || h.es || h.ru || '';
 
   return (
     <figure className="m-0 space-y-1">
