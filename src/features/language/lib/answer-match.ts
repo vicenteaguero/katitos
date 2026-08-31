@@ -29,6 +29,11 @@ export function answerMatches(
 ): boolean {
   const norm = (s: string) => {
     const base = s
+      // One spelling for one word. An accent typed as a separate mark and
+      // one baked into the letter are the same letter — "está" pasted in one
+      // form and typed in the other must match — and й must stay й rather
+      // than fall apart into и and a breve that the strip below removes.
+      .normalize('NFC')
       .toLowerCase()
       // A hyphen is a word boundary here: по-русски and "по русски" are the
       // same answer typed two ways.
