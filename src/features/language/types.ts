@@ -12,6 +12,8 @@ export type Attempt = Tables<'lang_attempts'>;
 export type LessonProgress = Tables<'lang_lesson_progress'>;
 export type Media = Tables<'lang_media'>;
 export type Letter = Tables<'lang_alphabet'>;
+/** One of us saying a word for the other. */
+export type Voice = Tables<'lang_voice'>;
 
 /** A lesson to read, homework to hand in, or an exam to sit. */
 export type LessonKind = 'lesson' | 'homework' | 'exam';
