@@ -702,18 +702,6 @@ button {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
- * Polaroid capture frame — dress the kernel CameraCapture (which is `fixed
- * inset-0`) so it lives inside the square instant-photo window WITHOUT touching
- * the shared component. The kernel root is re-flowed to fill the window (the
- * preview/captured shot object-covers it — no letterbox), while the header
- * (cancel + switch) and the control bar (shutter / retake-use) are pinned to
- * the REAL viewport edges: the overlay is portaled to <body>, so `fixed` here
- * means the screen, not the column. No borders — the cream stock against the
- * black house is the frame.
- * ────────────────────────────────────────────────────────────────────────── */
-/* Control bar (shutter, or retake/use): pinned to the bottom of the viewport,
-   clear of the cream frame — the immersive capture controls. */
-/* ──────────────────────────────────────────────────────────────────────────
  * Chalkboard — a chalk note settles onto the slate. The note's own inline
  * `transform: rotate()` carries its tilt, so the entrance touches OPACITY only
  * (a gentle chalk-dust bloom) — never the transform — to avoid fighting drag.
@@ -910,7 +898,11 @@ button {
   }
   /* Entrances collapse to a brief opacity fade — no transform. */
   .curtain-reveal,
-  .curtain-stagger > *,
+  .curtain-stagger > * {
+    animation: curtain-rise 200ms ease both !important;
+    animation-delay: 0ms !important;
+    transform: none !important;
+  }
   .lift-press {
     transition: background-color 200ms ease !important;
   }
