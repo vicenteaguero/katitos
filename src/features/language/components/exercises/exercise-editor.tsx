@@ -58,6 +58,7 @@ export function ExerciseEditor({
   position,
   exercise,
   target,
+  blockId = null,
   onClose,
 }: {
   open: boolean;
@@ -66,6 +67,8 @@ export function ExerciseEditor({
   exercise: Exercise | null;
   /** The language the lesson teaches — the one the answer options are in. */
   target: Lang;
+  /** The block this question follows — or none, for one at the end. */
+  blockId?: string | null;
   onClose: () => void;
 }) {
   const save = useSaveExercise();
@@ -83,6 +86,10 @@ export function ExerciseEditor({
   const [answerText, setAnswerText] = useState('');
   const [audio, setAudio] = useState<AudioClip | null>(null);
   const [audioPath, setAudioPath] = useState<string | null>(null);
+  const [points, setPoints] = useState('1');
+  // Fill-the-gap only: what to print under each blank, and why the form.
+  const [hints, setHints] = useState('');
+  const [why, setWhy] = useState('');
 
   useEffect(() => {
     if (!exercise) return;
@@ -94,7 +101,10 @@ export function ExerciseEditor({
     const payload = exercise.payload as Record<string, unknown>;
     if (payload?.options) setOptions(payload.options as ExerciseOption[]);
     setAudioPath((payload?.audioPath as string) ?? null);
+    setPoints(String(exercise.points ?? 1));
     if (payload?.template) setText(String(payload.template));
+    setHints(((payload?.hints as string[] | undefined) ?? []).join(' | '));
+    setWhy(((payload?.why as string[] | undefined) ?? []).join(' | '));
     if (exercise.kind === 'order') {
       // From the ANSWER, never from the pool: the pool is stored jumbled on
       // purpose, and seeding from it made every reopen-and-save promote the
@@ -151,7 +161,13 @@ export function ExerciseEditor({
         // One entry per gap, and each gap may itself offer alternatives —
         // "живу / проживаю | Москве".
         return {
-          payload: { template: text },
+          payload: {
+            template: text,
+            ...(hints.trim()
+              ? { hints: hints.split('|').map((h) => h.trim()) }
+              : {}),
+            ...(why.trim() ? { why: why.split('|').map((h) => h.trim()) } : {}),
+          },
           answer: answerText.split('|').map((gap) => splitAnswers(gap, '/')),
         };
       case 'order': {
@@ -197,6 +213,8 @@ export function ExerciseEditor({
     setCorrect([]);
     setText('');
     setAnswerText('');
+    setHints('');
+    setWhy('');
   };
 
   const submit = async () => {
@@ -226,6 +244,8 @@ export function ExerciseEditor({
         lessonId,
         kind,
         position: exercise?.position ?? position,
+        blockId: exercise ? exercise.block_id : blockId,
+        points: Math.max(0, Number(points) || 1),
         ...promptPatch(support, prompt),
         payload,
         answer,
@@ -337,6 +357,26 @@ export function ExerciseEditor({
                 placeholder="живу / проживаю | Москве"
               />
             </Field>
+            <Field
+              label="Under each gap"
+              hint="The word in brackets, the case wanted — one per gap with |"
+            >
+              <Input
+                value={hints}
+                onChange={(e) => setHints(e.target.value)}
+                placeholder="(жить) | (Москва, prep.)"
+              />
+            </Field>
+            <Field
+              label="Why"
+              hint="Shown after he answers — one per gap with |"
+            >
+              <Input
+                value={why}
+                onChange={(e) => setWhy(e.target.value)}
+                placeholder="я → -у | в + prepositional → -е"
+              />
+            </Field>
           </>
         )}
 
@@ -385,6 +425,19 @@ export function ExerciseEditor({
             />
           </Field>
         )}
+
+        <Field
+          label="Worth"
+          hint="Points out of the lesson — 1 unless it matters more"
+        >
+          <Input
+            value={points}
+            onChange={(e) => setPoints(e.target.value.replace(/[^\d]/g, ''))}
+            inputMode="numeric"
+            placeholder="1"
+            className="w-24"
+          />
+        </Field>
 
         <Button
           full
