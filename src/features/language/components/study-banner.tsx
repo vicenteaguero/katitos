@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
 import { GraduationCap } from 'lucide-react';
+import { StatPill } from '@kernel/ui';
 import { useLanguages } from '../lib/languages';
 import { useAllVocab, useMyReviews } from '../api/vocab';
 import { buildSession, isDue, mastery } from '../lib/srs';
@@ -30,7 +31,7 @@ export function StudyBanner() {
   return (
     <Link
       to="/language/study"
-      className="lift-press flex items-center gap-4 rounded-lg rounded-tl-[1.75rem] bg-surface-2 px-5 py-4 shadow-loge"
+      className="lift-press flex items-center gap-3 rounded-lg rounded-tl-xl bg-surface-2 px-4 py-3 shadow-loge"
     >
       <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent text-accent-fg">
         <GraduationCap className="h-5 w-5" />
@@ -47,14 +48,7 @@ export function StudyBanner() {
             : 'nothing due — come back tomorrow'}
         </span>
       </span>
-      <span className="shrink-0 text-right">
-        <span className="block font-display text-xl font-semibold tabular-nums text-gold">
-          {known}
-        </span>
-        <span className="block font-sans text-[0.55rem] uppercase tracking-[0.14em] text-muted">
-          known
-        </span>
-      </span>
+      <StatPill value={known} label="known" />
     </Link>
   );
 }
