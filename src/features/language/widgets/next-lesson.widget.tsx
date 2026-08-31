@@ -1,21 +1,21 @@
 import { Link } from 'react-router';
 import { GraduationCap } from 'lucide-react';
 import { Card, CardTitle } from '@kernel/ui';
-import { useDueLessons } from '../api/courses.queries';
+import { useDueLessons, useMyProgress } from '../api/courses.queries';
 import { useLanguages } from '../lib/languages';
 import { useAllVocab, useMyReviews } from '../api/vocab';
 import { buildSession } from '../lib/srs';
+import { dueLabel } from '../lib/due';
+import { LANG_LABELS } from '../types';
 
-/** "today" · "tomorrow" · "in 3 days" · "2 days late". */
+/** "due today" · "due tomorrow" · "due in 3 days" · "2 days late". */
 function when(due: string): string {
-  const days = Math.round(
-    (new Date(`${due}T00:00:00`).getTime() - Date.now()) / 86_400_000
-  );
-  if (days === 0) return 'due today';
-  if (days === 1) return 'due tomorrow';
-  if (days > 1) return `due in ${days} days`;
-  return `${Math.abs(days)} day${days === -1 ? '' : 's'} late`;
+  const label = dueLabel(due);
+  return label.endsWith('late') ? label : `due ${label}`;
 }
+
+/** Handed in, or marked — either way, no longer waiting for him. */
+const DONE = new Set(['submitted', 'graded']);
 
 /**
  * What Russian is waiting for you, on the home screen.
@@ -29,9 +29,17 @@ export function NextLessonWidget() {
   const { data: due } = useDueLessons(learning);
   const { data: words } = useAllVocab(learning);
   const { data: reviews } = useMyReviews();
+  const { data: progress } = useMyProgress();
 
-  const session = buildSession(words ?? [], reviews ?? new Map()).length;
-  const next = due?.[0];
+  // Only once BOTH halves are here. The reviews arrive after the words, and
+  // in that gap every word looked due — "20 words waiting" flashed up and
+  // then snapped to the real number, or the card appeared and vanished.
+  if (!words || !reviews || !due) return null;
+
+  const session = buildSession(words, reviews).length;
+  // The first piece of homework he has NOT handed in. The oldest due one was
+  // shown forever, marked or not — "it sits on the home screen getting later".
+  const next = due.find((l) => !DONE.has(progress?.get(l.id)?.status ?? ''));
 
   // Nothing to nag about — a widget with nothing in it is just clutter.
   if (!next && session === 0) return null;
@@ -41,7 +49,7 @@ export function NextLessonWidget() {
       <Card className="lift-press">
         <CardTitle>
           <span className="inline-flex items-center gap-1">
-            <GraduationCap className="h-4 w-4" /> Russian
+            <GraduationCap className="h-4 w-4" /> {LANG_LABELS[learning]}
           </span>
         </CardTitle>
         {next ? (
