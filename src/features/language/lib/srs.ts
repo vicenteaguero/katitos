@@ -154,7 +154,10 @@ export function buildSession<T extends { id: string }>(
   const rank = (c: T) => {
     const r = reviews.get(c.id);
     if (isNew(c)) return 2; // unseen — last
-    if (r!.lapses > 0) return 0; // forgotten before — first
+    // Forgotten RECENTLY — the last answer was a blank, or it lapsed and has
+    // not yet been got right three times since. A word forgotten once in
+    // March used to be pinned to the front of every session for good.
+    if (r!.last_grade === 0 || (r!.lapses > 0 && r!.reps < 3)) return 0;
     return 1;
   };
   const byUrgency = (a: T, b: T) => {
