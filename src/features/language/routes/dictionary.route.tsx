@@ -1,18 +1,26 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { Link } from 'react-router';
+import { ClipboardPaste, Mic, Pencil, Plus, Tag, Trash2 } from 'lucide-react';
 import { BUCKETS, useSignedUrls } from '@kernel/storage';
 import {
   Button,
+  Checkbox,
+  Chip,
+  ChipRow,
   Desk,
   Dialog,
+  Dropzone,
   Empty,
   Field,
   FieldRow,
   Fieldset,
   Input,
+  Kicker,
+  ROW_TOOL,
   SearchInput,
   Segmented,
   Select,
+  StatPill,
   Textarea,
   toast,
   TopBarButton,
@@ -23,13 +31,20 @@ import {
 import {
   useAddVocab,
   useDeleteVocab,
+  useDeleteVocabMany,
   useRestoreVocab,
+  useRestoreVocabMany,
+  useTagVocabMany,
   useUpdateVocab,
   useVocab,
+  useWordUses,
 } from '../api/vocab';
 import { useLanguages, supportLangs } from '../lib/languages';
 import { AudioField, VocabRow } from '../components/kit';
-import { termLangOf } from '../lib/pick';
+import { headword as headwordOf, termLangOf } from '../lib/pick';
+import { matchClips } from '../lib/match-clips';
+import { ImportWordsDialog } from '../components/import-words-dialog';
+import { RecordQueueDialog } from '../components/record-queue-dialog';
 import {
   LANG_LABELS,
   LANG_NATIVE_LABELS,
@@ -61,8 +76,6 @@ export function DictionaryRoute() {
   }, [search]);
 
   const { data: words } = useVocab(lang, term);
-  const del = useDeleteVocab();
-  const restore = useRestoreVocab();
 
   const [editing, setEditing] = useState<Vocab | 'new' | null>(null);
 
@@ -83,7 +96,38 @@ export function DictionaryRoute() {
     [lang, learning, native]
   );
 
-  const list = words ?? [];
+  const list = useMemo(() => words ?? [], [words]);
+  const del = useDeleteVocab();
+  const restore = useRestoreVocab();
+  const delMany = useDeleteVocabMany();
+  const restoreMany = useRestoreVocabMany();
+  const tagMany = useTagVocabMany();
+  const update = useUpdateVocab();
+
+  // Every tag on screen, as chips; tap one to narrow the list to it.
+  const [tag, setTag] = useState<string | null>(null);
+  const tags = useMemo(() => {
+    const count = new Map<string, number>();
+    for (const w of list)
+      for (const t of w.tags ?? []) count.set(t, (count.get(t) ?? 0) + 1);
+    return [...count.entries()].sort((a, b) => b[1] - a[1]).map(([t]) => t);
+  }, [list]);
+  const shown = tag ? list.filter((w) => (w.tags ?? []).includes(tag)) : list;
+
+  // Many at once: a box on every row, and one bar that acts on the lot.
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const toggleOne = (id: string) =>
+    setSelected((s) => {
+      const next = new Set(s);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const chosen = shown.filter((w) => selected.has(w.id));
+  const [bulkTag, setBulkTag] = useState('');
+  const [importOpen, setImportOpen] = useState(false);
+  const [queueOpen, setQueueOpen] = useState(false);
+  const silent = list.filter((w) => !w.audio_path).length;
 
   // ONE signing request for every recording on the screen, rather than one per
   // word — this list can be five hundred long.
@@ -93,68 +137,240 @@ export function DictionaryRoute() {
     { proxy: false }
   );
 
-  return (
-    <Desk>
-      <div className="curtain-reveal space-y-2">
-        <SearchInput
-          value={search}
-          onChange={setSearch}
-          placeholder="Look for a word"
-        />
+  /** A folder of clips dropped on the list: each to the word it is named after. */
+  const dropClips = async (files: File[]) => {
+    const matches = matchClips(files, list);
+    const hits = matches.filter((m) => m.word);
+    if (!hits.length) {
+      toast.error('No file was named after a word here');
+      return;
+    }
+    for (const { file, word } of hits) {
+      const ext = file.name.includes('.')
+        ? file.name.split('.').pop()!.toLowerCase()
+        : 'webm';
+      await update.mutateAsync({
+        id: word!.id,
+        patch: {},
+        audio: {
+          blob: file,
+          mime: file.type || 'audio/webm',
+          ext,
+          durationMs: 0,
+        },
+        previousAudioPath: word!.audio_path,
+      });
+    }
+    const missed = matches.length - hits.length;
+    toast.success(
+      `${hits.length} ${hits.length === 1 ? 'recording' : 'recordings'} attached${
+        missed ? ` · ${missed} not named after a word` : ''
+      }`
+    );
+  };
 
-        {list.length === 0 ? (
+  // Put away, not destroyed — and back in one tap. A real delete took the
+  // recording and both people's review history with it, with no way back.
+  const putAway = (w: Vocab) =>
+    del.mutate(w, {
+      onSuccess: () =>
+        toast.success('Word put away', {
+          key: 'vocab-put-away',
+          action: { label: 'Undo', onClick: () => restore.mutate(w.id) },
+        }),
+    });
+
+  const putAwayChosen = () => {
+    const ids = chosen.map((w) => w.id);
+    delMany.mutate(ids, {
+      onSuccess: () => {
+        setSelected(new Set());
+        toast.success(`${ids.length} words put away`, {
+          key: 'vocab-put-away-many',
+          action: { label: 'Undo', onClick: () => restoreMany.mutate(ids) },
+        });
+      },
+    });
+  };
+
+  const tagChosen = () => {
+    const add = bulkTag
+      .split(',')
+      .map((t) => t.trim().toLowerCase())
+      .filter(Boolean);
+    if (!add.length) return;
+    tagMany.mutate(
+      { words: chosen, tags: add },
+      { onSuccess: () => setBulkTag('') }
+    );
+  };
+
+  /** The desk's right pane: the ways in that are not one word at a time. */
+  const inspector = (
+    <div className="space-y-3">
+      <div className="space-y-1.5">
+        <Kicker as="p">Many at once</Kicker>
+        <Button
+          size="xs"
+          variant="secondary"
+          onClick={() => setImportOpen(true)}
+        >
+          <ClipboardPaste size={13} /> Paste a list
+        </Button>
+        <p className="font-sans text-xs text-muted">
+          One word a line, its meaning after a tab, dash or equals sign.
+        </p>
+      </div>
+      <div className="space-y-1.5">
+        <Kicker as="p">Your voice</Kicker>
+        <Button
+          size="xs"
+          variant="secondary"
+          disabled={!silent}
+          onClick={() => setQueueOpen(true)}
+        >
+          <Mic size={13} />{' '}
+          {silent ? `Record the ${silent} silent` : 'Every word has it'}
+        </Button>
+        <p className="font-sans text-xs text-muted">
+          Or drop sound files on the list — each goes to the word it is named
+          after.
+        </p>
+      </div>
+      <StatPill
+        value={list.length}
+        label={`in ${LANG_LABELS[lang]}`}
+        align="left"
+      />
+    </div>
+  );
+
+  return (
+    <Desk inspector={inspector}>
+      <div className="curtain-reveal space-y-2">
+        <div className="flex items-center gap-2">
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Look for a word"
+            className="min-w-0 flex-1"
+          />
+          <Button
+            size="xs"
+            variant="secondary"
+            onClick={() => setImportOpen(true)}
+            className="md:hidden"
+          >
+            <ClipboardPaste size={13} /> Paste
+          </Button>
+        </div>
+
+        {tags.length > 0 && (
+          <ChipRow>
+            {tags.map((t) => (
+              <Chip
+                key={t}
+                selected={tag === t}
+                onClick={() => setTag(tag === t ? null : t)}
+              >
+                #{t}
+              </Chip>
+            ))}
+          </ChipRow>
+        )}
+
+        {chosen.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 rounded-lg bg-surface-2 px-3 py-2">
+            <Kicker as="span">{chosen.length} chosen</Kicker>
+            <Input
+              value={bulkTag}
+              onChange={(e) => setBulkTag(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') tagChosen();
+              }}
+              placeholder="food, lesson 8"
+              aria-label="Tags to add"
+              className="h-8 w-40 text-sm"
+            />
+            <Button
+              size="xs"
+              variant="secondary"
+              disabled={!bulkTag.trim() || tagMany.isPending}
+              onClick={tagChosen}
+            >
+              <Tag size={13} /> Tag them
+            </Button>
+            <Button
+              size="xs"
+              variant="secondary"
+              disabled={delMany.isPending}
+              onClick={putAwayChosen}
+            >
+              <Trash2 size={13} /> Put them away
+            </Button>
+            <button
+              type="button"
+              onClick={() => setSelected(new Set())}
+              className="ml-auto font-sans text-xs text-muted hover:text-fg"
+            >
+              clear
+            </button>
+          </div>
+        )}
+
+        {shown.length === 0 ? (
           <Empty
             icon="📖"
-            title={term ? 'Nothing like that' : 'Nothing here yet'}
+            title={term || tag ? 'Nothing like that' : 'Nothing here yet'}
             hint={
-              term ? undefined : `Add the first word in ${LANG_LABELS[lang]}.`
+              term || tag
+                ? undefined
+                : `Add the first word in ${LANG_LABELS[lang]}.`
             }
           />
         ) : (
-          <ul className="divide-y divide-fg/5 rounded-lg bg-surface px-3 md:columns-2 md:gap-4 md:[&>li]:break-inside-avoid">
-            {list.map((w) => (
-              <VocabRow
-                key={w.id}
-                word={w}
-                support={native}
-                url={w.audio_path ? clips?.get(w.audio_path) : undefined}
-                trailing={
-                  <>
-                    <button
-                      type="button"
-                      aria-label="Edit"
-                      onClick={() => setEditing(w)}
-                      className="shrink-0 text-muted"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      aria-label="Delete"
-                      onClick={() =>
-                        // Put away, not destroyed — and back in one tap. A real
-                        // delete took the recording and both people's review
-                        // history with it, from one tap with no way back.
-                        del.mutate(w, {
-                          onSuccess: () =>
-                            toast.success('Word put away', {
-                              key: 'vocab-put-away',
-                              action: {
-                                label: 'Undo',
-                                onClick: () => restore.mutate(w.id),
-                              },
-                            }),
-                        })
-                      }
-                      className="shrink-0 text-muted"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </>
-                }
-              />
-            ))}
-          </ul>
+          <Dropzone
+            accept="audio/*,.m4a,.mp3,.ogg,.webm,.wav"
+            multiple
+            disabled={update.isPending}
+            onFiles={(files) => void dropClips(files)}
+          >
+            <ul className="divide-y divide-fg/5 rounded-lg bg-surface px-3 md:columns-2 md:gap-4 md:[&>li]:break-inside-avoid">
+              {shown.map((w) => (
+                <VocabRow
+                  key={w.id}
+                  word={w}
+                  support={native}
+                  url={w.audio_path ? clips?.get(w.audio_path) : undefined}
+                  trailing={
+                    <>
+                      <Checkbox
+                        checked={selected.has(w.id)}
+                        onChange={() => toggleOne(w.id)}
+                        label={`Choose ${headwordOf(w)}`}
+                      />
+                      <button
+                        type="button"
+                        aria-label="Edit"
+                        onClick={() => setEditing(w)}
+                        className={ROW_TOOL}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Put away"
+                        onClick={() => putAway(w)}
+                        className={ROW_TOOL}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </>
+                  }
+                />
+              ))}
+            </ul>
+          </Dropzone>
         )}
 
         {editing && (
@@ -164,6 +380,20 @@ export function DictionaryRoute() {
             onClose={() => setEditing(null)}
           />
         )}
+
+        <ImportWordsDialog
+          open={importOpen}
+          onClose={() => setImportOpen(false)}
+          termLang={lang}
+          meaningLang={lang === native ? learning : native}
+          existing={list}
+        />
+        <RecordQueueDialog
+          open={queueOpen}
+          onClose={() => setQueueOpen(false)}
+          words={list}
+          support={native}
+        />
       </div>
     </Desk>
   );
@@ -182,6 +412,7 @@ function WordSheet({
   const { native } = useLanguages();
   const add = useAddVocab();
   const update = useUpdateVocab();
+  const { data: uses } = useWordUses(word?.id);
 
   // The three columns, always all three — which one is the word and which two
   // are its translations is decided by `lang`, not by the column's name.
@@ -305,6 +536,22 @@ function WordSheet({
           </FieldRow>
         )}
 
+        {uses && uses.length > 0 && (
+          <p className="font-sans text-xs text-muted">
+            Taught in{' '}
+            {uses.map((u, i) => (
+              <span key={u.id}>
+                {i > 0 && ', '}
+                <Link
+                  to={`/language/lesson/${u.id}`}
+                  className="text-gold hover:underline"
+                >
+                  {u.title}
+                </Link>
+              </span>
+            ))}
+          </p>
+        )}
         {/* The escape hatch for a word with no clean one-word translation —
             успеть, тоска, давай, or "bacán". Written in whichever language the
             person reading it actually thinks in. */}
