@@ -13,6 +13,13 @@ export interface Languages {
   native: Lang;
   /** My partner's. What I am learning. */
   learning: Lang;
+  /**
+   * Whether the pair above is known yet. Until the members row has loaded
+   * the fallbacks stand in — and for the half-second that lasts she is
+   * "learning Russian", so anything that decides who is the teacher must
+   * wait for this rather than flash the wrong screen.
+   */
+  ready: boolean;
 }
 
 /**
@@ -33,7 +40,7 @@ export function languagesOf(
     | null
     | undefined,
   partner: { native_language?: string | null } | null | undefined
-): Languages {
+): Omit<Languages, 'ready'> {
   const native = known(self?.native_language, 'es');
   const learning = known(
     self?.learning_language ?? partner?.native_language,
@@ -48,8 +55,23 @@ export function languagesOf(
 
 /** The same thing, for a component. */
 export function useLanguages(): Languages {
-  const { self, partner } = usePartner();
-  return languagesOf(self, partner);
+  const { self, partner, isLoading } = usePartner();
+  return { ...languagesOf(self, partner), ready: !isLoading && !!self };
+}
+
+/**
+ * Do I teach this course? The one whose language is my own.
+ *
+ * Nothing in the database says "teacher": the courses are shared and the
+ * policies let either of us write anything. But a course teaches one of our
+ * two languages, and whoever speaks it is the one giving it — so the
+ * builder, the marking and the edit pencil follow that.
+ */
+export function isTeacherOf(
+  course: { target_lang?: string | null } | null | undefined,
+  native: Lang
+): boolean {
+  return !!course && course.target_lang === native;
 }
 
 /**
