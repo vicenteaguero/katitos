@@ -13,6 +13,12 @@ export function useSignedUrl(
     queryKey: ['signed-url', bucket, path],
     enabled: !!path,
     staleTime: Math.max(0, (expiresIn - 60) * 1000),
+    // …and actually go and refresh it. The app turns off refetch-on-focus,
+    // so a stale signature was never asked for again while the screen stayed
+    // open — after an evening lesson the play button quietly did nothing.
+    // The batch hook had this fix already; this one never got it.
+    refetchInterval: Math.max(60_000, (expiresIn - 60) * 1000),
+    refetchIntervalInBackground: false,
     queryFn: async () => {
       const { data, error } = await supabase.storage
         .from(bucket)
