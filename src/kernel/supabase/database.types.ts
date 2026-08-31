@@ -992,6 +992,8 @@ export type Database = {
           exercise_id: string
           id: string
           score: number | null
+          teacher_note: string | null
+          teacher_score: number | null
           user_id: string
         }
         Insert: {
@@ -1002,6 +1004,8 @@ export type Database = {
           exercise_id: string
           id?: string
           score?: number | null
+          teacher_note?: string | null
+          teacher_score?: number | null
           user_id?: string
         }
         Update: {
@@ -1012,6 +1016,8 @@ export type Database = {
           exercise_id?: string
           id?: string
           score?: number | null
+          teacher_note?: string | null
+          teacher_score?: number | null
           user_id?: string
         }
         Relationships: [
@@ -1223,6 +1229,7 @@ export type Database = {
         Row: {
           graded_at: string | null
           lesson_id: string
+          opened_at: string | null
           score: number | null
           status: string
           submitted_at: string | null
@@ -1233,6 +1240,7 @@ export type Database = {
         Insert: {
           graded_at?: string | null
           lesson_id: string
+          opened_at?: string | null
           score?: number | null
           status?: string
           submitted_at?: string | null
@@ -1243,6 +1251,7 @@ export type Database = {
         Update: {
           graded_at?: string | null
           lesson_id?: string
+          opened_at?: string | null
           score?: number | null
           status?: string
           submitted_at?: string | null
