@@ -359,7 +359,7 @@ export function Dialog({
             )}
           />
           <div className="mb-3 flex items-center justify-between gap-3">
-            {title ? (
+            {shownTitle ? (
               <h2
                 id={titleId}
                 className="min-w-0 truncate font-display text-xl font-semibold tracking-tight text-fg"
