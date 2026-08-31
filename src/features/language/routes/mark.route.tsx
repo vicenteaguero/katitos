@@ -9,7 +9,8 @@ import {
   Empty,
   Field,
   Input,
-  LoadingScreen,
+  Kicker,
+  ListSkeleton,
   Textarea,
   toast,
   useDesk,
@@ -82,7 +83,7 @@ export function MarkRoute() {
     setScore(auto != null ? String(Math.round(auto * 100)) : '');
   }, [hisProgress?.teacher_note, hisProgress?.score]);
 
-  if (isLoading) return <LoadingScreen />;
+  if (isLoading) return <ListSkeleton rows={4} />;
   if (!lesson) return <Empty icon="📄" title="No such lesson" />;
 
   const answered = lesson.exercises.filter((ex) => his.has(ex.id));
@@ -181,7 +182,11 @@ export function MarkRoute() {
                   ok ? 'bg-surface' : 'bg-danger/10'
                 )}
               >
-                <p className="flex items-center gap-1.5 font-sans text-[0.68rem] uppercase tracking-[0.12em] text-muted">
+                <Kicker
+                  as="p"
+                  tone="muted"
+                  className="flex items-center gap-1.5"
+                >
                   {ok ? (
                     <Check className="h-3.5 w-3.5 text-success" />
                   ) : (
@@ -193,7 +198,7 @@ export function MarkRoute() {
                       {attempt.attempt_no} tries
                     </span>
                   )}
-                </p>
+                </Kicker>
                 <p className="font-sans text-sm text-fg">
                   {pick(ex, 'prompt', support) || 'Untitled question'}
                 </p>
