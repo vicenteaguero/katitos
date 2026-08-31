@@ -1,8 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@kernel/supabase';
 import { qk } from '@kernel/query';
-import { useUserId } from '@kernel/auth';
+import { usePartner, useUserId } from '@kernel/auth';
 import { notifyPartner } from '@kernel/push';
+import { isAsleep } from '../lib/quiet';
+import type { ProgressStatus } from '../types';
 import { toast } from '@kernel/ui';
 import type { Json } from '@kernel/supabase';
 import type {
@@ -130,6 +132,7 @@ export function useCreateLesson() {
  */
 export function useUpdateLesson() {
   const qc = useQueryClient();
+  const { partner } = usePartner();
   return useMutation({
     mutationFn: async (v: {
       id: string;
@@ -142,6 +145,8 @@ export function useUpdateLesson() {
       estMinutes?: number | null;
       /** Was it already published before this edit? */
       wasPublished?: boolean;
+      /** Buzz him even if it is night where he is. */
+      wake?: boolean;
     }) => {
       const patch: {
         title?: string;
@@ -165,9 +170,16 @@ export function useUpdateLesson() {
         .single();
       if (error) throw error;
 
-      if (v.status === 'published' && !v.wasPublished) {
+      // Not at three in the morning his time, unless she says so — a held
+      // push is not lost, the lesson is on his home screen when he wakes.
+      if (
+        v.status === 'published' &&
+        !v.wasPublished &&
+        (v.wake || !isAsleep(partner?.timezone))
+      ) {
         void notifyPartner({
           kind: 'lesson',
+          tag: `lesson:${v.id}`,
           title:
             data.kind === 'exam'
               ? 'An exam is waiting'
@@ -822,17 +834,29 @@ export function useAnswerExercises() {
   });
 }
 
-/** Where he is in a lesson, and what it ended up being worth. */
+/**
+ * Where a lesson stands for one of us — and the push that closes the loop.
+ *
+ * Every state change funnels through here, so this is the one place that
+ * tells the other phone: his hand-in reaches her, her mark or "have another
+ * go" reaches him. Not at night, their time, unless `wake` says so; a held
+ * push is not lost — the thing it was about is on the home screen.
+ */
 export function useSaveProgress() {
   const qc = useQueryClient();
   const userId = useUserId();
+  const { partner } = usePartner();
   return useMutation({
     mutationFn: async (v: {
       lessonId: string;
-      status: 'in_progress' | 'submitted' | 'graded';
+      status: Exclude<ProgressStatus, 'not_started'>;
       score?: number | null;
       teacherNote?: string | null;
       forUserId?: string;
+      /** The lesson's title — with it, the other phone is told. */
+      title?: string;
+      /** Buzz them even if it is night where they are. */
+      wake?: boolean;
     }) => {
       const row: {
         lesson_id: string;
@@ -855,9 +879,92 @@ export function useSaveProgress() {
         .from('lang_lesson_progress')
         .upsert(row as never, { onConflict: 'lesson_id,user_id' });
       if (error) throw error;
+
+      if (!v.title || v.status === 'in_progress') return;
+      if (isAsleep(partner?.timezone) && !v.wake) return;
+      const pct = v.score != null ? ` · ${Math.round(v.score * 100)}%` : '';
+      const [title, body, url] =
+        v.status === 'submitted'
+          ? ['Handed in', v.title, `/language/mark/${v.lessonId}`]
+          : v.status === 'graded'
+            ? [
+                `Marked${pct}`,
+                v.teacherNote || v.title,
+                `/language/lesson/${v.lessonId}`,
+              ]
+            : [
+                'Sent back for another go',
+                v.teacherNote || v.title,
+                `/language/lesson/${v.lessonId}`,
+              ];
+      void notifyPartner({
+        kind: 'lesson',
+        title,
+        body,
+        url,
+        tag: `lesson:${v.lessonId}`,
+      });
     },
     onError: (e: Error) => toast.error(e.message),
     onSuccess: () =>
       void qc.invalidateQueries({ queryKey: qk.lang.progress() }),
+  });
+}
+
+/**
+ * He opened it.
+ *
+ * A quiet row so she knows he has seen the lesson before the call — only
+ * `opened_at` is sent, so a row that already says "handed in" keeps saying
+ * it; a lesson he has never touched gets a `not_started` row with a time on it.
+ */
+export function useMarkOpened() {
+  const qc = useQueryClient();
+  const userId = useUserId();
+  return useMutation({
+    mutationFn: async (lessonId: string) => {
+      if (!userId) return;
+      const { error } = await supabase.from('lang_lesson_progress').upsert(
+        {
+          lesson_id: lessonId,
+          user_id: userId,
+          opened_at: new Date().toISOString(),
+        },
+        { onConflict: 'lesson_id,user_id' }
+      );
+      if (error) throw error;
+    },
+    // Bookkeeping, not something he did: no toast on failure.
+    onSuccess: () =>
+      void qc.invalidateQueries({ queryKey: qk.lang.progress() }),
+  });
+}
+
+/** Her tick, her cross, or a word in the margin — on one of his answers. */
+export function useMarkAttempt() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: {
+      id: string;
+      lessonId: string;
+      /** 1 right, 0 wrong, null back to the app's verdict. */
+      teacherScore?: number | null;
+      teacherNote?: string | null;
+    }) => {
+      const patch: {
+        teacher_score?: number | null;
+        teacher_note?: string | null;
+      } = {};
+      if (v.teacherScore !== undefined) patch.teacher_score = v.teacherScore;
+      if (v.teacherNote !== undefined) patch.teacher_note = v.teacherNote;
+      const { error } = await supabase
+        .from('lang_attempts')
+        .update(patch)
+        .eq('id', v.id);
+      if (error) throw error;
+    },
+    onError: (e: Error) => toast.error(e.message),
+    onSuccess: (_d, v) =>
+      void qc.invalidateQueries({ queryKey: qk.lang.attempts(v.lessonId) }),
   });
 }
