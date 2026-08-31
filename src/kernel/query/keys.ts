@@ -9,10 +9,6 @@ export const qk = {
     self: () => ['couple'] as const,
     members: () => ['couple', 'members'] as const,
   },
-  countdowns: {
-    all: () => ['countdowns'] as const,
-    list: () => ['countdowns', 'list'] as const,
-  },
   polaroids: {
     all: () => ['polaroids'] as const,
     byDay: (day: string) => ['polaroids', 'day', day] as const,
@@ -27,9 +23,6 @@ export const qk = {
     responses: (deckId: string) => ['deck', deckId, 'responses'] as const,
     list: (kind?: string) => ['deck', 'list', kind ?? 'all'] as const,
   },
-  games: {
-    leaderboard: (gameId: string) => ['games', gameId, 'leaderboard'] as const,
-  },
   presence: {
     appOpens: () => ['presence', 'app-opens'] as const,
   },
@@ -38,35 +31,6 @@ export const qk = {
   },
   flowers: {
     list: () => ['flowers', 'list'] as const,
-  },
-  fights: {
-    all: () => ['fights'] as const,
-    active: () => ['fights', 'active'] as const,
-    list: () => ['fights', 'list'] as const,
-  },
-  punitos: {
-    list: () => ['punitos', 'list'] as const,
-  },
-  decisions: {
-    all: () => ['decisions'] as const,
-    list: () => ['decisions', 'list'] as const,
-    positions: (decisionId: string) =>
-      ['decisions', decisionId, 'positions'] as const,
-  },
-  babyNames: {
-    all: () => ['baby-names'] as const,
-    list: () => ['baby-names', 'list'] as const,
-  },
-  cuteWords: {
-    list: () => ['cute-words', 'list'] as const,
-  },
-  ideas: {
-    list: () => ['ideas', 'list'] as const,
-  },
-  finance: {
-    goals: () => ['finance', 'goals'] as const,
-    contributions: (goalId: string) =>
-      ['finance', goalId, 'contributions'] as const,
   },
   trips: {
     all: () => ['trips'] as const,
