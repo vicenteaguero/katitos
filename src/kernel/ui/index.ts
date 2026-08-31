@@ -19,7 +19,7 @@ export { ConfirmHost } from './confirm-host';
 export { SearchInput } from './search-input';
 export { OptionButton } from './option-button';
 export type { OptionState } from './option-button';
-export { RowToolbar } from './row-toolbar';
+export { RowToolbar, ROW_TOOL } from './row-toolbar';
 export { Kicker } from './kicker';
 export { Chip, ChipRow } from './chip';
 export { StatPill } from './stat-pill';
