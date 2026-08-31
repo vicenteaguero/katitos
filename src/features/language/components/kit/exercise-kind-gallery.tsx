@@ -7,14 +7,18 @@ import {
   Link2,
   Mic,
   PenLine,
+  Sparkles,
   TextCursorInput,
 } from 'lucide-react';
 import { cn } from '@kernel/lib';
 import { useRovingFocus } from '@kernel/hooks';
 import type { ExerciseKind } from '../../types';
 
+/** The eight kinds, plus a shape of Choose that is its own question. */
+export type GalleryValue = ExerciseKind | 'stress';
+
 const KINDS: {
-  value: ExerciseKind;
+  value: GalleryValue;
   label: string;
   hint: string;
   icon: LucideIcon;
@@ -52,6 +56,12 @@ const KINDS: {
     icon: Headphones,
   },
   { value: 'speak', label: 'Say it', hint: 'Out loud', icon: Mic },
+  {
+    value: 'stress',
+    label: "Where's the stress?",
+    hint: 'One word, every vowel',
+    icon: Sparkles,
+  },
 ];
 
 /**
@@ -66,8 +76,8 @@ export function ExerciseKindGallery({
   onChange,
   className,
 }: {
-  value: ExerciseKind;
-  onChange: (kind: ExerciseKind) => void;
+  value: GalleryValue;
+  onChange: (kind: GalleryValue) => void;
   className?: string;
 }) {
   const roving = useRovingFocus<HTMLButtonElement>(KINDS.length);
