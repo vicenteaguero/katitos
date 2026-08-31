@@ -152,36 +152,3 @@ export function useDeleteItem(listId: string) {
   });
 }
 
-/** Replace an item's picture. */
-export function useSetItemImage(listId: string) {
-  const userId = useUserId();
-  const { uploadPhoto } = usePhotoUpload();
-  const o = useOptimisticItems(listId);
-  return useMutation({
-    mutationFn: async (v: {
-      id: string;
-      blob: Blob;
-      oldPath: string | null;
-    }) => {
-      if (!userId) throw new Error('Not signed in');
-      const path = `${userId}/${nanoid(12)}.jpg`;
-      await uploadPhoto(BUCKETS.wishlist, path, v.blob);
-      const { error } = await supabase
-        .from('wishlist_items')
-        .update({ image_path: path })
-        .eq('id', v.id);
-      if (error) throw error;
-      if (v.oldPath) {
-        await supabase.storage
-          .from(BUCKETS.wishlist)
-          .remove([v.oldPath, proxyPath(v.oldPath)])
-          .catch(() => {});
-      }
-      return path;
-    },
-    onSettled: () => {
-      o.settle();
-      void o.qc.invalidateQueries({ queryKey: ['signed-urls'] });
-    },
-  });
-}
