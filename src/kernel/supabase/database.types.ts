@@ -992,6 +992,7 @@ export type Database = {
           exercise_id: string
           id: string
           score: number | null
+          teacher_audio_path: string | null
           teacher_note: string | null
           teacher_score: number | null
           user_id: string
@@ -1004,6 +1005,7 @@ export type Database = {
           exercise_id: string
           id?: string
           score?: number | null
+          teacher_audio_path?: string | null
           teacher_note?: string | null
           teacher_score?: number | null
           user_id?: string
@@ -1016,6 +1018,7 @@ export type Database = {
           exercise_id?: string
           id?: string
           score?: number | null
+          teacher_audio_path?: string | null
           teacher_note?: string | null
           teacher_score?: number | null
           user_id?: string
@@ -1233,6 +1236,7 @@ export type Database = {
           score: number | null
           status: string
           submitted_at: string | null
+          teacher_audio_path: string | null
           teacher_note: string | null
           updated_at: string
           user_id: string
@@ -1244,6 +1248,7 @@ export type Database = {
           score?: number | null
           status?: string
           submitted_at?: string | null
+          teacher_audio_path?: string | null
           teacher_note?: string | null
           updated_at?: string
           user_id?: string
@@ -1255,6 +1260,7 @@ export type Database = {
           score?: number | null
           status?: string
           submitted_at?: string | null
+          teacher_audio_path?: string | null
           teacher_note?: string | null
           updated_at?: string
           user_id?: string
@@ -1531,6 +1537,48 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "lang_vocab_reviews_vocab_id_fkey"
+            columns: ["vocab_id"]
+            isOneToOne: false
+            referencedRelation: "lang_vocab"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lang_voice: {
+        Row: {
+          audio_path: string
+          created_at: string
+          id: string
+          reply_to: string | null
+          user_id: string
+          vocab_id: string
+        }
+        Insert: {
+          audio_path: string
+          created_at?: string
+          id?: string
+          reply_to?: string | null
+          user_id?: string
+          vocab_id: string
+        }
+        Update: {
+          audio_path?: string
+          created_at?: string
+          id?: string
+          reply_to?: string | null
+          user_id?: string
+          vocab_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lang_voice_reply_to_fkey"
+            columns: ["reply_to"]
+            isOneToOne: false
+            referencedRelation: "lang_voice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lang_voice_vocab_id_fkey"
             columns: ["vocab_id"]
             isOneToOne: false
             referencedRelation: "lang_vocab"
