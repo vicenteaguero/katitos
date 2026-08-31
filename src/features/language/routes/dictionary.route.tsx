@@ -13,6 +13,7 @@ import {
   Segmented,
   Sheet,
   Textarea,
+  toast,
   useTopBarAction,
   useWideLayout,
   type AudioClip,
@@ -20,6 +21,7 @@ import {
 import {
   useAddVocab,
   useDeleteVocab,
+  useRestoreVocab,
   useUpdateVocab,
   useVocab,
 } from '../api/vocab';
@@ -57,6 +59,7 @@ export function DictionaryRoute() {
 
   const { data: words } = useVocab(lang, term);
   const del = useDeleteVocab();
+  const restore = useRestoreVocab();
 
   const [editing, setEditing] = useState<Vocab | 'new' | null>(null);
 
@@ -144,7 +147,21 @@ export function DictionaryRoute() {
               <button
                 type="button"
                 aria-label="Delete"
-                onClick={() => del.mutate(w)}
+                onClick={() =>
+                  // Put away, not destroyed — and back in one tap. A real
+                  // delete took the recording and both people's review
+                  // history with it, from one tap with no way back.
+                  del.mutate(w, {
+                    onSuccess: () =>
+                      toast.success('Word put away', {
+                        key: 'vocab-put-away',
+                        action: {
+                          label: 'Undo',
+                          onClick: () => restore.mutate(w.id),
+                        },
+                      }),
+                  })
+                }
                 className="shrink-0 text-muted"
               >
                 <Trash2 className="h-3.5 w-3.5" />
