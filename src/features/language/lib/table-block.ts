@@ -19,10 +19,14 @@ export function parseTable(
   support: Lang,
   previous?: TableBlockData
 ): TableBlockData {
-  const lines = text
-    .split('\n')
-    .map((l) => l.trim())
-    .filter(Boolean);
+  const before = previous?.headings ?? [];
+  const raw = text.split('\n').map((l) => l.trim());
+  while (raw.length && !raw[raw.length - 1]) raw.pop();
+  // A table that already has headings may open with a BLANK first line —
+  // "not translated into this language yet" (see `formatTable`). That line
+  // is still the heading line; dropping it promoted the first row to the
+  // headings and lost it.
+  const lines = before.length ? raw : raw.filter(Boolean);
   if (!lines.length) return { headings: [], rows: [] };
 
   const cells = (line: string) => line.split(',').map((c) => c.trim());
@@ -30,17 +34,20 @@ export function parseTable(
 
   // A single line is data, not headings — otherwise typing one row shows an
   // empty table.
-  if (!rest.length) return { headings: [], rows: [cells(first)] };
+  if (!rest.length && !before.length)
+    return { headings: [], rows: [cells(first)] };
 
   // Each heading is filed under the language she is writing in, ON TOP of
   // whatever the other languages already said. Rebuilding the row from
   // scratch meant translating the headings into Spanish deleted the English.
-  const before = previous?.headings ?? [];
-  const headings = cells(first).map((label, i) => ({
-    ...(before[i] ?? {}),
-    [support]: label,
-  }));
-  return { headings, rows: rest.map(cells) };
+  // A wholly blank heading line is the untranslated case: nothing is filed.
+  const headings = first
+    ? cells(first).map((label, i) => ({
+        ...(before[i] ?? {}),
+        [support]: label,
+      }))
+    : before.map((h) => ({ ...h }));
+  return { headings, rows: rest.filter(Boolean).map(cells) };
 }
 
 /**
