@@ -1,30 +1,51 @@
-import { useState } from 'react';
-import { useParams } from 'react-router';
-import { Send, SlidersHorizontal, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router';
+import {
+  Copy,
+  Eye,
+  HelpCircle,
+  Pencil,
+  Send,
+  SlidersHorizontal,
+  Trash2,
+  Wand2,
+} from 'lucide-react';
 import { cn } from '@kernel/lib';
+import { qk } from '@kernel/query';
+import { useTableSync } from '@kernel/realtime';
 import {
   Button,
   Desk,
   Dialog,
+  DragHandle,
   Empty,
   Field,
   FieldRow,
   Input,
   Kicker,
   ListSkeleton,
+  ROW_TOOL,
   RowToolbar,
   Segmented,
+  SortableList,
   Textarea,
   toast,
   TopBarButton,
   useDesk,
+  useIsDesk,
   useTopBarAction,
+  type DragHandleProps,
 } from '@kernel/ui';
 import { useLesson } from '../api/lessons.queries';
+import { useUnits } from '../api/courses.queries';
 import {
   useCreateBlock,
+  useCreateHomework,
   useDeleteBlock,
   useDeleteExercise,
+  useDuplicateBlock,
+  useDuplicateExercise,
+  useDuplicateLesson,
   useReorderBlocks,
   useRestoreBlock,
   useRestoreExercise,
@@ -32,6 +53,7 @@ import {
   useUpdateLesson,
 } from '../api/lessons.mutations';
 import { supportLangs, useLanguages } from '../lib/languages';
+import { homeworkFrom } from '../lib/homework';
 import { isMissing, pick } from '../lib/pick';
 import { formatTable, parseTable } from '../lib/table-block';
 import { ExerciseEditor } from '../components/exercises/exercise-editor';
@@ -73,50 +95,103 @@ function bodyPatch(lang: Lang, text: string) {
   return { body_en: value };
 }
 
+/** How long after the last keystroke a box saves itself. */
+const AUTOSAVE_MS = 700;
+
+/** Which question the editor is open on, and where a new one goes. */
+type Editing = { exercise: Exercise | null; blockId: string | null };
+
 /**
  * Where she builds the lesson.
  *
- * This is the screen that has to work on a tablet — she plans on a big screen
- * and teaches from her phone — so it asks for the wide canvas. On a phone
- * nothing changes; from `md:` up it simply stops being a 32rem column.
+ * On a desk: the course down the left, the page in the middle, what to add
+ * and what this lesson is on the right — and every language of a block side
+ * by side. On a phone the same page, one language of explanation at a time.
+ * Questions sit inside the page, after the block they belong to; the ones
+ * with no block come at the end.
  */
 export function BuildRoute() {
   const { lessonId } = useParams<{ lessonId: string }>();
   useDesk();
+  const desk = useIsDesk();
+  const navigate = useNavigate();
   const { data: lesson, isLoading } = useLesson(lessonId);
+  // Edits from the other device arrive as they happen.
+  useTableSync('lang_blocks', qk.lang.lesson(lessonId ?? 'none'), {
+    filter: lessonId ? `lesson_id=eq.${lessonId}` : undefined,
+    enabled: !!lessonId,
+  });
+  useTableSync('lang_exercises', qk.lang.lesson(lessonId ?? 'none'), {
+    filter: lessonId ? `lesson_id=eq.${lessonId}` : undefined,
+    enabled: !!lessonId,
+  });
+  const { data: units } = useUnits(lesson?.courseId);
+
   const createBlock = useCreateBlock();
   const updateBlock = useUpdateBlock();
   const deleteBlock = useDeleteBlock();
+  const duplicateBlock = useDuplicateBlock();
   const reorder = useReorderBlocks();
   const updateLesson = useUpdateLesson();
   const deleteExercise = useDeleteExercise();
+  const duplicateExercise = useDuplicateExercise();
   const restoreBlock = useRestoreBlock();
   const restoreExercise = useRestoreExercise();
+  const duplicateLesson = useDuplicateLesson();
+  const createHomework = useCreateHomework();
   const { native } = useLanguages();
+
   // The two languages this lesson can be EXPLAINED in — everything except the
   // one it teaches. A Russian lesson offers Español and English; a Spanish one
-  // offers Русский and English. It used to offer EN / ES to both, which meant
-  // she could never write a word of Russian explanation for the Spanish she
-  // teaches him — the one language she actually thinks in.
+  // offers Русский and English. On a desk both boxes are on screen at once;
+  // on a phone the top bar picks which one.
   const langs = supportLangs(lesson?.targetLang ?? 'ru', native);
   const [chosen, setSupport] = useState<Lang>(native);
   const support = langs.includes(chosen) ? chosen : langs[0];
 
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [editing, setEditing] = useState<Exercise | 'new' | null>(null);
+  const [editing, setEditing] = useState<Editing | null>(null);
   const [wordsFor, setWordsFor] = useState<Block | null>(null);
   const [attachFor, setAttachFor] = useState<Block | null>(null);
 
+  // The order on screen the moment a drag ends — until the server confirms.
+  const [localOrder, setLocalOrder] = useState<string[] | null>(null);
+  useEffect(() => setLocalOrder(null), [lesson?.blocks]);
+  const blocks = useMemo(() => {
+    const list = lesson?.blocks ?? [];
+    if (!localOrder) return list;
+    const at = new Map(localOrder.map((id, i) => [id, i]));
+    return [...list].sort(
+      (a, b) => (at.get(a.id) ?? list.length) - (at.get(b.id) ?? list.length)
+    );
+  }, [lesson?.blocks, localOrder]);
+
+  // "Saved · just now" — what the inspector says about the page.
+  const saving =
+    updateBlock.isPending ||
+    createBlock.isPending ||
+    deleteBlock.isPending ||
+    reorder.isPending;
+  const [savedAt, setSavedAt] = useState<number | null>(null);
+  const wasSaving = useRef(false);
+  useEffect(() => {
+    if (wasSaving.current && !saving) setSavedAt(Date.now());
+    wasSaving.current = saving;
+  }, [saving]);
+
   useTopBarAction(
     <div className="flex items-center gap-1.5">
-      <Segmented
-        value={support}
-        onChange={(v) => setSupport(v as Lang)}
-        options={langs.map((l) => ({
-          value: l,
-          label: LANG_NATIVE_LABELS[l],
-        }))}
-      />
+      {!desk && (
+        <Segmented
+          value={support}
+          onChange={(v) => setSupport(v as Lang)}
+          label="Explained in"
+          options={langs.map((l) => ({
+            value: l,
+            label: LANG_NATIVE_LABELS[l],
+          }))}
+        />
+      )}
       <TopBarButton
         label="Lesson settings"
         onClick={() => setSettingsOpen(true)}
@@ -125,13 +200,11 @@ export function BuildRoute() {
         <SlidersHorizontal className="h-4 w-4" />
       </TopBarButton>
     </div>,
-    [support]
+    [support, desk]
   );
 
   if (isLoading) return <ListSkeleton rows={6} />;
   if (!lesson) return <Empty icon="📄" title="No such lesson" />;
-
-  const blocks = lesson.blocks;
 
   /** The attachment a media block points at, if it has one. */
   const mediaFor = (block: Block) => {
@@ -139,15 +212,79 @@ export function BuildRoute() {
     return lesson.media.find((m) => m.id === mediaId);
   };
 
-  const move = (index: number, by: -1 | 1) => {
-    const next = [...blocks];
-    const target = index + by;
-    if (target < 0 || target >= next.length) return;
-    [next[index], next[target]] = [next[target], next[index]];
-    reorder.mutate({ lessonId: lesson.id, ids: next.map((b) => b.id) });
-  };
+  const allWords = Object.values(lesson.vocabByBlock).flat();
+  const unit = units?.find((u) => u.id === lesson.unit_id);
+  const lessonCount = unit?.lessons.length ?? 0;
 
-  /** The desk's right pane: what to add, and what this lesson is. */
+  const removeExercise = (ex: Exercise) =>
+    deleteExercise.mutate(
+      { id: ex.id, lessonId: lesson.id },
+      {
+        onSuccess: () =>
+          toast.success('Question removed', {
+            key: 'question-removed',
+            action: {
+              label: 'Undo',
+              onClick: () =>
+                restoreExercise.mutate({ exercise: ex, lessonId: lesson.id }),
+            },
+          }),
+      }
+    );
+
+  /** One question, where it sits in the page. */
+  const exerciseRow = (ex: Exercise) => (
+    <div
+      key={ex.id}
+      className="flex items-center gap-2 rounded-lg bg-surface-2 px-3 py-2"
+    >
+      <HelpCircle className="h-4 w-4 shrink-0 text-gold" />
+      <button
+        type="button"
+        onClick={() => setEditing({ exercise: ex, blockId: ex.block_id })}
+        className="min-w-0 flex-1 rounded text-left hover:bg-fg/5"
+      >
+        <Kicker as="span" className="block">
+          {ex.kind}
+          {ex.points !== 1 && (
+            <span className="ml-1.5 text-muted">· {ex.points} pts</span>
+          )}
+        </Kicker>
+        <span className="block truncate font-sans text-sm text-fg">
+          {pick(ex, 'prompt', support) || 'Untitled question'}
+        </span>
+      </button>
+      <RowToolbar
+        onDelete={() => removeExercise(ex)}
+        deleteLabel="Delete question"
+      >
+        <button
+          type="button"
+          aria-label="Edit question"
+          onClick={() => setEditing({ exercise: ex, blockId: ex.block_id })}
+          className={ROW_TOOL}
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          aria-label="Duplicate question"
+          onClick={() =>
+            duplicateExercise.mutate({
+              exercise: ex,
+              lessonId: lesson.id,
+              position: lesson.exercises.length,
+            })
+          }
+          className={ROW_TOOL}
+        >
+          <Copy className="h-3.5 w-3.5" />
+        </button>
+      </RowToolbar>
+    </div>
+  );
+
+  /** The desk's right pane: what to add, what this lesson is, what to do with it. */
   const inspector = (
     <div className="space-y-3">
       <div className="space-y-1.5">
@@ -161,7 +298,7 @@ export function BuildRoute() {
               position: blocks.length,
             })
           }
-          onQuestion={() => setEditing('new')}
+          onQuestion={() => setEditing({ exercise: null, blockId: null })}
         />
       </div>
       <div className="space-y-1.5 rounded-lg bg-surface px-3 py-2.5">
@@ -169,17 +306,88 @@ export function BuildRoute() {
         <p className="font-sans text-sm text-fg">
           {KIND_LABEL[lesson.kind as LessonKind] ?? lesson.kind}
           {lesson.due_on ? ` · due ${lesson.due_on}` : ''}
+          {lesson.est_minutes ? ` · ${lesson.est_minutes} min` : ''}
         </p>
         <p className="font-sans text-xs text-muted">
           {lesson.status === 'published' ? 'He has it.' : 'Not sent yet.'}
+          {' · '}
+          {saving ? 'Saving…' : savedAt ? 'Saved' : 'Every box saves itself'}
         </p>
-        <Button
-          size="xs"
-          variant="secondary"
-          onClick={() => setSettingsOpen(true)}
-        >
-          <SlidersHorizontal size={13} /> Settings
-        </Button>
+        <div className="flex flex-wrap gap-1.5">
+          <Button
+            size="xs"
+            variant="secondary"
+            onClick={() => setSettingsOpen(true)}
+          >
+            <SlidersHorizontal size={13} /> Settings
+          </Button>
+          <Link to={`/language/lesson/${lesson.id}`}>
+            <Button size="xs" variant="secondary">
+              <Eye size={13} /> Preview
+            </Button>
+          </Link>
+        </div>
+      </div>
+      <div className="space-y-1.5">
+        <Kicker as="p">Make</Kicker>
+        <div className="flex flex-wrap gap-1.5">
+          <Button
+            size="xs"
+            variant="secondary"
+            disabled={duplicateLesson.isPending}
+            onClick={() =>
+              duplicateLesson.mutate(
+                { lesson, position: lessonCount },
+                {
+                  onSuccess: (id) => {
+                    toast.success('A copy, as a draft');
+                    navigate(`/language/build/${id}`);
+                  },
+                }
+              )
+            }
+          >
+            <Copy size={13} /> A copy of this lesson
+          </Button>
+          <Button
+            size="xs"
+            variant="secondary"
+            disabled={!allWords.length || createHomework.isPending}
+            title={
+              allWords.length
+                ? `From the ${allWords.length} words in this lesson`
+                : 'Put some words in the lesson first'
+            }
+            onClick={() => {
+              const specs = homeworkFrom(allWords, {
+                support,
+                target: lesson.targetLang,
+              });
+              if (!specs.length) {
+                toast.info('These words need a meaning first');
+                return;
+              }
+              createHomework.mutate(
+                {
+                  courseId: lesson.courseId,
+                  unitId: lesson.unit_id,
+                  title: `${lesson.title} — homework`,
+                  position: lessonCount,
+                  support,
+                  specs,
+                },
+                {
+                  onSuccess: (id) => {
+                    toast.success(`${specs.length} questions, as a draft`);
+                    navigate(`/language/build/${id}`);
+                  },
+                }
+              );
+            }}
+          >
+            <Wand2 size={13} /> Homework from its words
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -216,118 +424,110 @@ export function BuildRoute() {
           </button>
         </header>
 
-        <div className="min-w-0 flex-1 space-y-2">
-          {blocks.length === 0 && lesson.exercises.length === 0 && (
-            <Empty
-              icon="✍️"
-              title="An empty page"
-              hint="Add a paragraph, then something to try."
-            />
-          )}
+        {blocks.length === 0 && lesson.exercises.length === 0 && (
+          <Empty
+            icon="✍️"
+            title="An empty page"
+            hint="Add a paragraph, then something to try."
+          />
+        )}
 
-          {blocks.map((block, i) => (
-            <BlockEditor
-              // The support language is part of the identity: the editor seeds
-              // its gloss from it, so without this a switch left English in the
-              // box and wrote it into `body_es` on the next blur.
-              key={`${block.id}:${support}`}
-              block={block}
-              support={support}
-              target={lesson.targetLang}
-              first={i === 0}
-              last={i === blocks.length - 1}
-              onMove={(by) => move(i, by)}
-              onSave={(patch) =>
-                updateBlock.mutate({ id: block.id, lessonId: lesson.id, patch })
-              }
-              words={lesson.vocabByBlock[block.id]}
-              media={mediaFor(block)}
-              onDelete={() => {
-                // Gone from the page at once — and back in one tap for the
-                // next nine seconds, words and all.
-                const words = (lesson.vocabByBlock[block.id] ?? []).map(
-                  (w) => w.id
-                );
-                deleteBlock.mutate(
-                  { id: block.id, lessonId: lesson.id },
-                  {
-                    onSuccess: () =>
-                      toast.success('Block removed', {
-                        key: 'block-removed',
-                        action: {
-                          label: 'Undo',
-                          onClick: () =>
-                            restoreBlock.mutate({
-                              block,
-                              vocabIds: words,
-                              lessonId: lesson.id,
-                            }),
-                        },
-                      }),
-                  }
-                );
-              }}
-              onPickWords={() => setWordsFor(block)}
-              onAttach={() => setAttachFor(block)}
-              onSaveData={(data) =>
-                updateBlock.mutate({
-                  id: block.id,
-                  lessonId: lesson.id,
-                  patch: { data: data as unknown as Json },
-                })
-              }
-            />
-          ))}
-
-          {lesson.exercises.map((ex) => (
-            <div
-              key={ex.id}
-              className="flex items-center gap-2 rounded-lg bg-surface px-3 py-2"
-            >
-              <span className="min-w-0 flex-1">
-                <Kicker as="span" className="block">
-                  {ex.kind}
-                </Kicker>
-                <span className="block truncate font-sans text-sm text-fg">
-                  {pick(ex, 'prompt', support) || 'Untitled question'}
-                </span>
-              </span>
-              <button
-                type="button"
-                onClick={() => setEditing(ex)}
-                className="shrink-0 font-sans text-xs text-gold"
-              >
-                edit
-              </button>
-              <button
-                type="button"
-                aria-label="Delete question"
-                onClick={() =>
-                  deleteExercise.mutate(
-                    { id: ex.id, lessonId: lesson.id },
+        <SortableList
+          items={blocks}
+          keyOf={(b) => b.id}
+          disabled={reorder.isPending}
+          onReorder={(next) => {
+            const ids = next.map((b) => b.id);
+            setLocalOrder(ids);
+            reorder.mutate({ lessonId: lesson.id, ids });
+          }}
+        >
+          {(block, _i, handle) => (
+            <div className="space-y-1.5">
+              <BlockEditor
+                block={block}
+                supports={langs}
+                visible={support}
+                desk={desk}
+                target={lesson.targetLang}
+                handle={handle}
+                onSave={(patch) =>
+                  updateBlock.mutate({
+                    id: block.id,
+                    lessonId: lesson.id,
+                    patch,
+                  })
+                }
+                words={lesson.vocabByBlock[block.id]}
+                media={mediaFor(block)}
+                onDuplicate={() =>
+                  duplicateBlock.mutate({
+                    block,
+                    vocabIds: (lesson.vocabByBlock[block.id] ?? []).map(
+                      (w) => w.id
+                    ),
+                    lessonId: lesson.id,
+                    order: blocks.map((b) => b.id),
+                  })
+                }
+                onDelete={() => {
+                  // Gone from the page at once — and back in one tap for the
+                  // next nine seconds, words and all.
+                  const words = (lesson.vocabByBlock[block.id] ?? []).map(
+                    (w) => w.id
+                  );
+                  deleteBlock.mutate(
+                    { id: block.id, lessonId: lesson.id },
                     {
                       onSuccess: () =>
-                        toast.success('Question removed', {
-                          key: 'question-removed',
+                        toast.success('Block removed', {
+                          key: 'block-removed',
                           action: {
                             label: 'Undo',
                             onClick: () =>
-                              restoreExercise.mutate({
-                                exercise: ex,
+                              restoreBlock.mutate({
+                                block,
+                                vocabIds: words,
                                 lessonId: lesson.id,
                               }),
                           },
                         }),
                     }
-                  )
+                  );
+                }}
+                onPickWords={() => setWordsFor(block)}
+                onAttach={() => setAttachFor(block)}
+                onSaveData={(data) =>
+                  updateBlock.mutate({
+                    id: block.id,
+                    lessonId: lesson.id,
+                    patch: { data: data as unknown as Json },
+                  })
                 }
-                className="shrink-0 text-muted"
+              />
+              {/* Try it here: the questions that belong to this block. */}
+              {(lesson.exercisesByBlock[block.id] ?? []).map(exerciseRow)}
+              <button
+                type="button"
+                onClick={() =>
+                  setEditing({ exercise: null, blockId: block.id })
+                }
+                className="flex items-center gap-1.5 rounded px-2 py-0.5 font-sans text-xs text-muted hover:bg-fg/5 hover:text-fg"
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                <HelpCircle className="h-3.5 w-3.5" /> a question here
               </button>
             </div>
-          ))}
-        </div>
+          )}
+        </SortableList>
+
+        {lesson.looseExercises.length > 0 && (
+          <div className="space-y-1.5">
+            <Kicker as="p" tone="muted">
+              At the end
+            </Kicker>
+            {lesson.looseExercises.map(exerciseRow)}
+          </div>
+        )}
 
         {/* Mounted only while open, so it always starts from the lesson as it
           is now — an edit abandoned with the X used to sit in the sheet and go
@@ -389,7 +589,8 @@ export function BuildRoute() {
             open
             lessonId={lesson.id}
             position={lesson.exercises.length}
-            exercise={editing === 'new' ? null : editing}
+            exercise={editing.exercise}
+            blockId={editing.blockId}
             target={lesson.targetLang}
             onClose={() => setEditing(null)}
           />
@@ -400,105 +601,158 @@ export function BuildRoute() {
 }
 
 /**
+ * One box that saves itself.
+ *
+ * Every keystroke is kept locally; a short pause after the last one — or
+ * leaving the box — writes it. A change that arrives from the other device
+ * replaces the text only while nothing here is unsaved, so last-blur-wins
+ * across two devices is no longer how it works.
+ */
+function useAutosave(
+  fromServer: string,
+  save: (text: string) => void,
+  serverVersion: string
+) {
+  const [text, setText] = useState(fromServer);
+  const dirty = useRef(false);
+  const timer = useRef<number | undefined>(undefined);
+  const latest = useRef(save);
+  latest.current = save;
+
+  useEffect(() => {
+    if (!dirty.current) setText(fromServer);
+    // Only when the row itself changes — not on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverVersion]);
+
+  const flush = () => {
+    window.clearTimeout(timer.current);
+    if (!dirty.current) return;
+    dirty.current = false;
+    latest.current(text);
+  };
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+
+  const onChange = (next: string) => {
+    setText(next);
+    dirty.current = true;
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => {
+      if (!dirty.current) return;
+      dirty.current = false;
+      latest.current(next);
+    }, AUTOSAVE_MS);
+  };
+  return { text, onChange, flush };
+}
+
+/**
  * A block, in every language at once.
  *
- * The Russian and the explanation sit in the same card, with the support
- * language switchable in the top bar — so turning a Russian/English lesson into
- * a Russian/Spanish one is filling in a blank, never rewriting a lesson.
+ * The language being taught on top, and under it an explanation box per
+ * language it can be explained in — both on a desk, the chosen one on a
+ * phone. Each box reads and writes ITS OWN column: "Russian on top, English
+ * or Spanish under" was hardwired, so a Spanish course filed its Spanish as
+ * Russian and her Russian explanations as English.
  */
 function BlockEditor({
   block,
-  support,
+  supports,
+  visible,
+  desk,
   target,
-  first,
-  last,
   words,
   media,
-  onMove,
+  handle,
   onSave,
   onDelete,
+  onDuplicate,
   onPickWords,
   onAttach,
   onSaveData,
 }: {
   block: Block;
-  support: Lang;
+  /** The languages it can be explained in. */
+  supports: Lang[];
+  /** The one a phone shows. */
+  visible: Lang;
+  desk: boolean;
   /** The language the lesson teaches — the top box. */
   target: Lang;
-  first: boolean;
-  last: boolean;
   /** What this block currently holds, so the row can say so. */
   words?: Vocab[];
   media?: Media;
-  onMove: (by: -1 | 1) => void;
+  handle: DragHandleProps;
   onSave: (patch: {
     body_ru?: string | null;
     body_en?: string | null;
     body_es?: string | null;
   }) => void;
   onDelete: () => void;
+  onDuplicate: () => void;
   onPickWords: () => void;
   onAttach: () => void;
   onSaveData: (data: TableBlockData) => void;
 }) {
-  // The language being taught on top, the explanation under it — each box
-  // reads and writes ITS OWN column. "Russian on top, English or Spanish
-  // under" was hardwired, so a Spanish course filed its Spanish as Russian
-  // and her Russian explanations as English.
-  const [head, setHead] = useState(block[`body_${target}`] ?? '');
-  const [gloss, setGloss] = useState(block[`body_${support}`] ?? '');
-  const [grid, setGrid] = useState(() =>
-    formatTable((block.data ?? {}) as TableBlockData, support)
+  const version = block.updated_at;
+  const head = useAutosave(
+    block[`body_${target}`] ?? '',
+    (t) => onSave(bodyPatch(target, t)),
+    `${version}:${target}`
+  );
+  const gloss0 = useAutosave(
+    block[`body_${supports[0]}`] ?? '',
+    (t) => onSave(bodyPatch(supports[0], t)),
+    `${version}:${supports[0]}`
+  );
+  const gloss1 = useAutosave(
+    block[`body_${supports[1]}`] ?? '',
+    (t) => onSave(bodyPatch(supports[1], t)),
+    `${version}:${supports[1]}`
+  );
+  const grid = useAutosave(
+    formatTable((block.data ?? {}) as TableBlockData, visible),
+    (t) =>
+      onSaveData(parseTable(t, visible, (block.data ?? {}) as TableBlockData)),
+    `${version}:${visible}`
+  );
+  const glosses = [gloss0, gloss1];
+  const shown = desk ? supports : [visible];
+
+  const toolbar = (
+    <RowToolbar onDelete={onDelete}>
+      <button
+        type="button"
+        aria-label="Duplicate block"
+        onClick={onDuplicate}
+        className={ROW_TOOL}
+      >
+        <Copy className="h-3.5 w-3.5" />
+      </button>
+      <DragHandle {...handle} />
+    </RowToolbar>
   );
 
   if (block.kind === 'divider') {
-    return (
-      <BlockCard
-        kind="a break"
-        toolbar={
-          <RowToolbar
-            first={first}
-            last={last}
-            onMove={onMove}
-            onDelete={onDelete}
-          />
-        }
-      />
-    );
+    return <BlockCard kind="a break" toolbar={toolbar} />;
   }
-
-  const missing = isMissing(block, 'body', support);
 
   if (block.kind === 'table') {
     return (
-      <BlockCard
-        kind="table"
-        toolbar={
-          <RowToolbar
-            first={first}
-            last={last}
-            onMove={onMove}
-            onDelete={onDelete}
-          />
-        }
-      >
+      <BlockCard kind="table" toolbar={toolbar}>
         <Textarea
-          value={grid}
-          onChange={(e) => setGrid(e.target.value)}
-          onBlur={() =>
-            onSaveData(
-              parseTable(grid, support, (block.data ?? {}) as TableBlockData)
-            )
-          }
+          value={grid.text}
+          onChange={(e) => grid.onChange(e.target.value)}
+          onBlur={grid.flush}
           rows={4}
           spellCheck={false}
           placeholder={', singular, plural\nnominative, стол, столы'}
           className="font-display"
         />
         <Input
-          value={head}
-          onChange={(e) => setHead(e.target.value)}
-          onBlur={() => onSave(bodyPatch(target, head))}
+          value={head.text}
+          onChange={(e) => head.onChange(e.target.value)}
+          onBlur={head.flush}
           placeholder="What the table is (optional)"
         />
       </BlockCard>
@@ -509,21 +763,11 @@ function BlockEditor({
     const isVocab = block.kind === 'vocab';
     const summary = isVocab
       ? words?.length
-        ? words.map((w) => w.ru).join(' · ')
+        ? words.map((w) => w[target] ?? w.ru).join(' · ')
         : 'No words yet — tap to choose them'
       : (media?.title ?? 'Nothing attached yet — tap to add a file or a link');
     return (
-      <BlockCard
-        kind={isVocab ? 'words' : 'material'}
-        toolbar={
-          <RowToolbar
-            first={first}
-            last={last}
-            onMove={onMove}
-            onDelete={onDelete}
-          />
-        }
-      >
+      <BlockCard kind={isVocab ? 'words' : 'material'} toolbar={toolbar}>
         <button
           type="button"
           onClick={isVocab ? onPickWords : onAttach}
@@ -541,31 +785,42 @@ function BlockEditor({
   return (
     <BlockCard
       kind={block.kind}
-      missing={missing}
-      toolbar={
-        <RowToolbar
-          first={first}
-          last={last}
-          onMove={onMove}
-          onDelete={onDelete}
-        />
-      }
+      missing={isMissing(block, 'body', visible)}
+      toolbar={toolbar}
     >
       <Textarea
-        value={head}
-        onChange={(e) => setHead(e.target.value)}
-        onBlur={() => onSave(bodyPatch(target, head))}
+        value={head.text}
+        onChange={(e) => head.onChange(e.target.value)}
+        onBlur={head.flush}
         rows={2}
         placeholder={PROSE_PLACEHOLDER[target]}
         className="font-display"
       />
-      <Textarea
-        value={gloss}
-        onChange={(e) => setGloss(e.target.value)}
-        onBlur={() => onSave(bodyPatch(support, gloss))}
-        rows={2}
-        placeholder={PROSE_PLACEHOLDER[support]}
-      />
+      <div
+        className={cn(
+          'grid gap-1.5',
+          desk && supports.length > 1 && 'md:grid-cols-2'
+        )}
+      >
+        {supports.map((lang, k) =>
+          shown.includes(lang) ? (
+            <div key={lang} className="space-y-0.5">
+              {desk && (
+                <Kicker as="p" tone="muted">
+                  {LANG_NATIVE_LABELS[lang]}
+                </Kicker>
+              )}
+              <Textarea
+                value={glosses[k].text}
+                onChange={(e) => glosses[k].onChange(e.target.value)}
+                onBlur={glosses[k].flush}
+                rows={2}
+                placeholder={PROSE_PLACEHOLDER[lang]}
+              />
+            </div>
+          ) : null
+        )}
+      </div>
     </BlockCard>
   );
 }
@@ -584,6 +839,7 @@ function LessonSettingsSheet({
     kind: string;
     status: string;
     due_on: string | null;
+    est_minutes: number | null;
   };
   onSave: (patch: {
     title?: string;
@@ -591,12 +847,16 @@ function LessonSettingsSheet({
     kind?: LessonKind;
     status?: 'draft' | 'published';
     dueOn?: string | null;
+    estMinutes?: number | null;
   }) => void;
 }) {
   const [title, setTitle] = useState(lesson.title);
   const [subtitle, setSubtitle] = useState(lesson.subtitle ?? '');
   const [kind, setKind] = useState(lesson.kind as LessonKind);
   const [dueOn, setDueOn] = useState(lesson.due_on ?? '');
+  const [minutes, setMinutes] = useState(
+    lesson.est_minutes ? String(lesson.est_minutes) : ''
+  );
 
   /**
    * Only what she actually changed.
@@ -613,6 +873,8 @@ function LessonSettingsSheet({
     if (kind !== lesson.kind) patch.kind = kind;
     if ((dueOn || null) !== (lesson.due_on ?? null))
       patch.dueOn = dueOn || null;
+    const est = minutes ? Number(minutes) : null;
+    if (est !== (lesson.est_minutes ?? null)) patch.estMinutes = est;
     return patch;
   };
 
@@ -629,6 +891,7 @@ function LessonSettingsSheet({
           full
           value={kind}
           onChange={(v) => setKind(v as LessonKind)}
+          label="Kind"
           options={[
             { value: 'lesson', label: 'Lesson' },
             { value: 'homework', label: 'Homework' },
@@ -638,18 +901,29 @@ function LessonSettingsSheet({
         <Field label="Called">
           <Input value={title} onChange={(e) => setTitle(e.target.value)} />
         </Field>
+        <Field label="A line under it">
+          <Input
+            value={subtitle}
+            onChange={(e) => setSubtitle(e.target.value)}
+          />
+        </Field>
         <FieldRow>
-          <Field label="A line under it">
-            <Input
-              value={subtitle}
-              onChange={(e) => setSubtitle(e.target.value)}
-            />
-          </Field>
           <Field label="Due">
             <Input
               type="date"
               value={dueOn}
               onChange={(e) => setDueOn(e.target.value)}
+            />
+          </Field>
+          <Field
+            label="About how long"
+            hint="Minutes — so he knows what he is starting"
+          >
+            <Input
+              value={minutes}
+              onChange={(e) => setMinutes(e.target.value.replace(/[^\d]/g, ''))}
+              inputMode="numeric"
+              placeholder="20"
             />
           </Field>
         </FieldRow>
@@ -681,6 +955,10 @@ function LessonSettingsSheet({
             ? 'Put back to draft'
             : 'Give it to him'}
         </Button>
+        <p className="font-sans text-xs text-muted">
+          <Trash2 className="mr-1 inline h-3 w-3" />
+          To put the whole lesson away, use the course screen.
+        </p>
       </div>
     </Dialog>
   );
