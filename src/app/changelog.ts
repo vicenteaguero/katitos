@@ -55,7 +55,7 @@ export const ALL_ENTRIES: ChangelogEntry[] = [
     held: true,
     lines: [
       'Open Katitos on your computer or tablet and the classroom spreads out: the course on the left, the lesson in the middle, the details on the right. Your phone looks exactly as before.',
-      'Write a lesson the way you write a document: every box saves itself, you drag blocks into order, and a question can sit right after the paragraph it belongs to.',
+      'Write a lesson the way you write a document: every box saves itself, you drag blocks and questions into order, and a question can sit right after the paragraph it belongs to.',
       'Russian, English and Spanish side by side while you write — no switching, and nothing typed in one ever ends up filed under another.',
       'Marking from the keyboard: J and K move between his answers, Y and N tick or cross them, C leaves a note on one, and ⌘↵ gives it back. The mark writes itself from your ticks; change it if that is unfair.',
       'You can hear him now. "Say it" records his voice, and you listen when you mark — and you can answer in yours, on one answer or on the whole lesson.',
