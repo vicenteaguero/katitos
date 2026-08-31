@@ -75,6 +75,7 @@ db-gate: ## Who is running the newest bundle (used before a breaking migration)
 functions-deploy: ## Deploy edge functions (--use-api = server-side bundle, no Docker)
 	@supabase functions deploy push-notify --use-api
 	@supabase functions deploy currency-rates --use-api
+	@supabase functions deploy polaroid-reminder --use-api
 
 deploy: db-push functions-deploy ## Push schema + deploy functions
 
