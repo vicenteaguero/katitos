@@ -1,6 +1,6 @@
 import { useRef, type ReactNode } from 'react';
 import { Plus } from 'lucide-react';
-import { IconButton } from './icon-button';
+import { TopBarButton } from './top-bar-button';
 import { useTopBarAction } from './top-bar-slot';
 
 /**
@@ -31,9 +31,9 @@ export function TopBarAdd({
   cb.current = onClick;
 
   useTopBarAction(
-    <IconButton label={label} className="h-9 w-9" onClick={() => cb.current()}>
-      {children ?? <Plus className="h-5 w-5" />}
-    </IconButton>,
+    <TopBarButton label={label} onClick={() => cb.current()}>
+      {children ?? <Plus className="h-4 w-4" />}
+    </TopBarButton>,
     [label]
   );
 
