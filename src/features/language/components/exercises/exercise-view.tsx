@@ -23,6 +23,7 @@ import {
   type Grade,
 } from '../../lib/exercise-schema';
 import { pick } from '../../lib/pick';
+import { hash } from '../../lib/study';
 import { LetterKeys } from '../letter-keys';
 
 /** An option reads in the language you learn in, falling back like everything else. */
@@ -422,9 +423,16 @@ function MatchView({
   >;
   const [active, setActive] = useState<string | null>(null);
 
-  const rights = [...pairs.map((p) => p.right)].sort((a, b) =>
-    a.localeCompare(b)
-  );
+  // Mixed, and stable for this question: alphabetical order gave the pairs
+  // away whenever she had typed them in alphabetical order. Two identical
+  // right-hand cards stay distinct by index.
+  const rights = pairs
+    .map((p, i) => ({
+      text: p.right,
+      key: hash(`${exercise.id}:${i}:${p.right}`),
+    }))
+    .sort((a, b) => a.key - b.key)
+    .map((r) => r.text);
 
   return (
     <div className="flex gap-2">
@@ -456,11 +464,11 @@ function MatchView({
         ))}
       </div>
       <div className="flex-1 space-y-1.5">
-        {rights.map((right) => {
+        {rights.map((right, i) => {
           const takenBy = Object.entries(joined).find(([, v]) => v === right);
           return (
             <button
-              key={right}
+              key={`${right}-${i}`}
               type="button"
               disabled={disabled || !active}
               onClick={() => {
