@@ -34,6 +34,21 @@ export interface ChangelogEntry {
 /** Every release ever written, newest first — held ones included. */
 export const ALL_ENTRIES: ChangelogEntry[] = [
   {
+    // Written 31 August 2026. Held until he lifts it.
+    title: 'The day, before it goes',
+    date: '2026-08-31',
+    held: true,
+    lines: [
+      'Three hours before your day ends, your phone tells you if your polaroid still isn’t in — three hours in YOUR evening, not in his. Tap it and the camera opens.',
+      'And when the day you can still fill only because it is earlier where he is has one hour left, you get one last call, straight to that day.',
+      'The camera no longer asks permission every single time. Taking the daily polaroid uses your phone’s own camera now, so it just opens.',
+      'Recording words for a lesson asks once, not once per word.',
+      'The button in the middle of the bar tells you where you stand at a glance: a camera when your photo isn’t in, a green heart the moment it is, and grey when there is nothing left to do until tomorrow.',
+      'If today is done but yesterday is still open to you, that button turns into a heart with a gold dot and takes you straight to the day that is running out.',
+      'A day now closes when it is really over. It used to stay open for two hours after midnight, so you could fill in a date that had already ended in Chile AND in Russia — which was never what it was meant to be.',
+    ],
+  },
+  {
     // Written 30 August 2026. Held until he lifts it.
     title: 'The classroom, on your computer',
     date: '2026-08-30',
@@ -55,21 +70,6 @@ export const ALL_ENTRIES: ChangelogEntry[] = [
       'He can tap any word in a lesson for its meaning — and ask you when the dictionary does not know it.',
       'Practice knows how well he knows each word, plays your voice on every reveal, explains why an answer was almost right, and picks up where he left off after a phone call.',
       'Her voice keeps playing without a connection: anything played once stays on the phone.',
-    ],
-  },
-  {
-    // Written 30 August 2026. Held until he lifts it.
-    title: 'The day, before it goes',
-    date: '2026-08-30',
-    held: true,
-    lines: [
-      'Three hours before your day ends, your phone tells you if your polaroid still isn’t in — three hours in YOUR evening, not in his. Tap it and the camera opens.',
-      'And when the day you can still fill only because it is earlier where he is has one hour left, you get one last call, straight to that day.',
-      'The camera no longer asks permission every single time. Taking the daily polaroid uses your phone’s own camera now, so it just opens.',
-      'Recording words for a lesson asks once, not once per word.',
-      'The button in the middle of the bar tells you where you stand at a glance: a camera when your photo isn’t in, a green heart the moment it is, and grey when there is nothing left to do until tomorrow.',
-      'If today is done but yesterday is still open to you, that button turns into a heart with a gold dot and takes you straight to the day that is running out.',
-      'A day now closes when it is really over. It used to stay open for two hours after midnight, so you could fill in a date that had already ended in Chile AND in Russia — which was never what it was meant to be.',
     ],
   },
   {
