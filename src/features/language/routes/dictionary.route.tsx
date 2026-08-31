@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { BUCKETS, useSignedUrls } from '@kernel/storage';
 import {
-  AudioRecorder,
   Button,
   Desk,
   Dialog,
@@ -11,11 +10,11 @@ import {
   FieldRow,
   Fieldset,
   Input,
-  PlayButton,
   SearchInput,
   Segmented,
   Textarea,
   toast,
+  TopBarButton,
   useDesk,
   useTopBarAction,
   type AudioClip,
@@ -28,7 +27,8 @@ import {
   useVocab,
 } from '../api/vocab';
 import { useLanguages, supportLangs } from '../lib/languages';
-import { headword, meaningOf, termLangOf } from '../lib/pick';
+import { AudioField, VocabRow } from '../components/kit';
+import { termLangOf } from '../lib/pick';
 import {
   LANG_LABELS,
   LANG_NATIVE_LABELS,
@@ -75,15 +75,9 @@ export function DictionaryRoute() {
           { value: native, label: LANG_NATIVE_LABELS[native] },
         ]}
       />
-      <button
-        type="button"
-        onClick={() => setEditing('new')}
-        aria-label="New word"
-        className="lift-press flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-fg shadow-loge"
-        style={{ border: '1px solid rgba(228,195,106,.4)' }}
-      >
+      <TopBarButton label="New word" onClick={() => setEditing('new')}>
         <Plus className="h-4 w-4" />
-      </button>
+      </TopBarButton>
     </div>,
     [lang, learning, native]
   );
@@ -118,54 +112,46 @@ export function DictionaryRoute() {
         ) : (
           <ul className="divide-y divide-fg/5 rounded-lg bg-surface px-3 md:columns-2 md:gap-4 md:[&>li]:break-inside-avoid">
             {list.map((w) => (
-              <li key={w.id} className="flex items-center gap-2 py-2">
-                <span className="min-w-0 flex-1">
-                  <span className="block font-display text-base text-fg">
-                    {headword(w)}
-                    {w.transliteration && (
-                      <span className="ml-2 font-sans text-[0.68rem] text-muted">
-                        {w.transliteration}
-                      </span>
-                    )}
-                  </span>
-                  <span className="block truncate font-sans text-xs text-muted">
-                    {meaningOf(w, native)}
-                  </span>
-                </span>
-                {w.audio_path && (
-                  <PlayButton url={clips?.get(w.audio_path)} size="sm" />
-                )}
-                <button
-                  type="button"
-                  aria-label="Edit"
-                  onClick={() => setEditing(w)}
-                  className="shrink-0 text-muted"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Delete"
-                  onClick={() =>
-                    // Put away, not destroyed — and back in one tap. A real
-                    // delete took the recording and both people's review
-                    // history with it, from one tap with no way back.
-                    del.mutate(w, {
-                      onSuccess: () =>
-                        toast.success('Word put away', {
-                          key: 'vocab-put-away',
-                          action: {
-                            label: 'Undo',
-                            onClick: () => restore.mutate(w.id),
-                          },
-                        }),
-                    })
-                  }
-                  className="shrink-0 text-muted"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </li>
+              <VocabRow
+                key={w.id}
+                word={w}
+                support={native}
+                url={w.audio_path ? clips?.get(w.audio_path) : undefined}
+                trailing={
+                  <>
+                    <button
+                      type="button"
+                      aria-label="Edit"
+                      onClick={() => setEditing(w)}
+                      className="shrink-0 text-muted"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Delete"
+                      onClick={() =>
+                        // Put away, not destroyed — and back in one tap. A real
+                        // delete took the recording and both people's review
+                        // history with it, from one tap with no way back.
+                        del.mutate(w, {
+                          onSuccess: () =>
+                            toast.success('Word put away', {
+                              key: 'vocab-put-away',
+                              action: {
+                                label: 'Undo',
+                                onClick: () => restore.mutate(w.id),
+                              },
+                            }),
+                        })
+                      }
+                      className="shrink-0 text-muted"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </>
+                }
+              />
             ))}
           </ul>
         )}
@@ -344,12 +330,11 @@ function WordSheet({
         {/* Recording can be added or replaced at ANY time now — it used to be
             only at creation, so fixing a bad clip meant deleting the word and
             every review of it. */}
-        {/* A Fieldset, not a Field: a Field is a <label>, and tapping the
-            caption of a label presses the first button inside it — which was
-            Record. */}
-        <Fieldset label="Say it">
-          <AudioRecorder onRecorded={setAudio} />
-        </Fieldset>
+        <AudioField
+          label="Say it"
+          currentPath={word?.audio_path}
+          onClip={setAudio}
+        />
         <Button
           full
           onClick={submit}
