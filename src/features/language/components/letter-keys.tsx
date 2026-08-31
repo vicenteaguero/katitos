@@ -9,13 +9,19 @@ import type { Lang } from '../types';
  * Cyrillic one. Making either of them install a second layout to answer one
  * card is exactly the kind of friction that ends a habit. So the alphabet comes
  * to whoever needs it, and which one appears follows the language of the answer.
+ *
+ * All thirty-three letters — ё included, it was missing — and a space bar,
+ * because "не хочу" is two words and the marker is right to insist on that.
  */
 const ROWS: Partial<Record<Lang, readonly string[]>> = {
-  ru: ['йцукенгшщзхъ', 'фывапролджэ', 'ячсмитьбю'],
+  ru: ['йцукенгшщзхъё', 'фывапролджэ', 'ячсмитьбю'],
   // Only what a Latin keyboard makes hard. A full Spanish layout would just be
   // the keyboard she already has, with worse spacing.
   es: ['áéíóú', 'üñ¿¡'],
 };
+
+const KEY =
+  'lift-press h-9 min-w-0 flex-1 rounded-md bg-surface-2 font-sans text-sm text-fg active:bg-accent active:text-accent-fg';
 
 export function LetterKeys({
   lang,
@@ -38,23 +44,31 @@ export function LetterKeys({
               key={ch}
               type="button"
               onClick={() => onKey(ch)}
-              className="lift-press h-9 min-w-0 flex-1 rounded-md bg-surface-2 font-sans text-sm text-fg active:bg-accent active:text-accent-fg"
+              className={KEY}
             >
               {ch}
             </button>
           ))}
-          {i === rows.length - 1 && (
-            <button
-              type="button"
-              onClick={onBackspace}
-              aria-label="Backspace"
-              className="lift-press flex h-9 min-w-[2.5rem] flex-1 items-center justify-center rounded-md bg-surface-2 text-muted active:bg-accent active:text-accent-fg"
-            >
-              <Delete className="h-4 w-4" />
-            </button>
-          )}
         </div>
       ))}
+      <div className="flex justify-center gap-[3px]">
+        <button
+          type="button"
+          onClick={() => onKey(' ')}
+          aria-label="Space"
+          className={`${KEY} flex-[4] text-muted`}
+        >
+          ␣
+        </button>
+        <button
+          type="button"
+          onClick={onBackspace}
+          aria-label="Backspace"
+          className={`${KEY} flex items-center justify-center text-muted`}
+        >
+          <Delete className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   );
 }
