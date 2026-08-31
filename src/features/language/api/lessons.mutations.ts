@@ -10,10 +10,20 @@ import type {
   BlockKind,
   Exercise,
   ExerciseKind,
+  Lang,
+  LessonFull,
   LessonKind,
   LessonStatus,
 } from '../types';
 import { gradeAnswer, type ExerciseLike } from '../lib/exercise-schema';
+import type { HomeworkSpec } from '../lib/homework';
+
+/** The column a prompt in `lang` goes into. */
+function promptColumn(lang: Lang, text: string | null) {
+  if (lang === 'ru') return { prompt_ru: text };
+  if (lang === 'es') return { prompt_es: text };
+  return { prompt_en: text };
+}
 
 /* ── Building a course ───────────────────────────────────────────────────── */
 
@@ -79,6 +89,8 @@ export function useCreateLesson() {
       title: string;
       kind: LessonKind;
       position: number;
+      /** A template's first shape: the blocks to start with, empty, in order. */
+      blocks?: BlockKind[];
     }) => {
       const { data, error } = await supabase
         .from('lang_lessons')
@@ -91,6 +103,16 @@ export function useCreateLesson() {
         .select('id')
         .single();
       if (error) throw error;
+      if (v.blocks?.length) {
+        const { error: blockErr } = await supabase.from('lang_blocks').insert(
+          v.blocks.map((kind, position) => ({
+            lesson_id: data.id as string,
+            kind,
+            position,
+          }))
+        );
+        if (blockErr) throw blockErr;
+      }
       return data.id as string;
     },
     onError: (e: Error) => toast.error(e.message),
@@ -167,15 +189,255 @@ export function useUpdateLesson() {
   });
 }
 
+/**
+ * Put a lesson away.
+ *
+ * Not a delete: deleting the row took every block, every question, every
+ * answer he ever gave and every mark she ever wrote with it. The row is
+ * marked and leaves the course; Undo unmarks it.
+ */
 export function useDeleteLesson() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (v: { id: string; courseId: string }) => {
       const { error } = await supabase
         .from('lang_lessons')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', v.id);
+      if (error) throw error;
+    },
+    onError: (e: Error) => toast.error(e.message),
+    onSuccess: (_d, v) =>
+      void qc.invalidateQueries({ queryKey: qk.lang.units(v.courseId) }),
+  });
+}
+
+/** Bring a lesson back, exactly as it was. */
+export function useRestoreLesson() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { id: string; courseId: string }) => {
+      const { error } = await supabase
+        .from('lang_lessons')
+        .update({ deleted_at: null })
+        .eq('id', v.id);
+      if (error) throw error;
+    },
+    onError: (e: Error) => toast.error(e.message),
+    onSuccess: (_d, v) =>
+      void qc.invalidateQueries({ queryKey: qk.lang.units(v.courseId) }),
+  });
+}
+
+/** Rename a unit. */
+export function useUpdateUnit() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { id: string; courseId: string; title: string }) => {
+      const { error } = await supabase
+        .from('lang_units')
+        .update({ title: v.title.trim() })
+        .eq('id', v.id);
+      if (error) throw error;
+    },
+    onError: (e: Error) => toast.error(e.message),
+    onSuccess: (_d, v) =>
+      void qc.invalidateQueries({ queryKey: qk.lang.units(v.courseId) }),
+  });
+}
+
+/**
+ * Delete an EMPTY unit. A unit with lessons in it cascades to every one of
+ * them, answers and marks included, so the caller moves them out first.
+ */
+export function useDeleteUnit() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { id: string; courseId: string }) => {
+      const { count, error: countErr } = await supabase
+        .from('lang_lessons')
+        .select('id', { count: 'exact', head: true })
+        .eq('unit_id', v.id)
+        .is('deleted_at', null);
+      if (countErr) throw countErr;
+      if (count) throw new Error('Move its lessons somewhere first');
+      const { error } = await supabase
+        .from('lang_units')
         .delete()
         .eq('id', v.id);
       if (error) throw error;
+    },
+    onError: (e: Error) => toast.error(e.message),
+    onSuccess: (_d, v) =>
+      void qc.invalidateQueries({ queryKey: qk.lang.units(v.courseId) }),
+  });
+}
+
+/** Positions written for a list of ids, in order. */
+async function writePositions(
+  table: 'lang_units' | 'lang_lessons' | 'lang_blocks' | 'lang_exercises',
+  ids: string[]
+) {
+  // Supabase builders RESOLVE with `{error}` rather than rejecting, so
+  // without this a refused reorder reported success and the list silently
+  // snapped back.
+  const results = await Promise.all(
+    ids.map((id, position) =>
+      supabase.from(table).update({ position }).eq('id', id)
+    )
+  );
+  const failed = results.find((r) => r.error);
+  if (failed?.error) throw failed.error;
+}
+
+/** Re-order the units of a course. */
+export function useReorderUnits() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { courseId: string; ids: string[] }) =>
+      writePositions('lang_units', v.ids),
+    onError: (e: Error) => toast.error(e.message),
+    onSuccess: (_d, v) =>
+      void qc.invalidateQueries({ queryKey: qk.lang.units(v.courseId) }),
+  });
+}
+
+/** Re-order the lessons inside a unit. */
+export function useReorderLessons() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { courseId: string; ids: string[] }) =>
+      writePositions('lang_lessons', v.ids),
+    onError: (e: Error) => toast.error(e.message),
+    onSuccess: (_d, v) =>
+      void qc.invalidateQueries({ queryKey: qk.lang.units(v.courseId) }),
+  });
+}
+
+/**
+ * A whole lesson again, as a draft, at the end of its unit.
+ *
+ * Blocks, the words each block teaches, the questions with their blocks
+ * re-pointed at the copies. Attachments are shared, not copied: a media
+ * block keeps pointing at the same worksheet, which the course's library
+ * owns.
+ */
+export function useDuplicateLesson() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { lesson: LessonFull; position: number }) => {
+      const src = v.lesson;
+      const { data: made, error } = await supabase
+        .from('lang_lessons')
+        .insert({
+          unit_id: src.unit_id,
+          title: `${src.title} (copy)`,
+          subtitle: src.subtitle,
+          kind: src.kind,
+          position: v.position,
+          status: 'draft',
+          est_minutes: src.est_minutes,
+        })
+        .select('id')
+        .single();
+      if (error) throw error;
+      const lessonId = made.id as string;
+
+      const blockIds = new Map<string, string>();
+      for (const b of src.blocks) blockIds.set(b.id, crypto.randomUUID());
+      if (src.blocks.length) {
+        const { error: bErr } = await supabase.from('lang_blocks').insert(
+          src.blocks.map((b) => ({
+            id: blockIds.get(b.id)!,
+            lesson_id: lessonId,
+            position: b.position,
+            kind: b.kind,
+            body_ru: b.body_ru,
+            body_en: b.body_en,
+            body_es: b.body_es,
+            data: b.data as never,
+          }))
+        );
+        if (bErr) throw bErr;
+      }
+      for (const b of src.blocks) {
+        const words = src.vocabByBlock[b.id];
+        if (!words?.length) continue;
+        const { error: wErr } = await supabase.rpc('set_block_vocab', {
+          p_block: blockIds.get(b.id)!,
+          p_vocab: words.map((w) => w.id),
+        });
+        if (wErr) throw wErr;
+      }
+      if (src.exercises.length) {
+        const { error: eErr } = await supabase.from('lang_exercises').insert(
+          src.exercises.map((ex) => ({
+            lesson_id: lessonId,
+            block_id: ex.block_id ? (blockIds.get(ex.block_id) ?? null) : null,
+            kind: ex.kind,
+            position: ex.position,
+            prompt_ru: ex.prompt_ru,
+            prompt_en: ex.prompt_en,
+            prompt_es: ex.prompt_es,
+            payload: ex.payload as never,
+            answer: ex.answer as never,
+            points: ex.points,
+          }))
+        );
+        if (eErr) throw eErr;
+      }
+      return lessonId;
+    },
+    onError: (e: Error) => toast.error(e.message),
+    onSuccess: (_d, v) =>
+      void qc.invalidateQueries({ queryKey: qk.lang.units(v.lesson.courseId) }),
+  });
+}
+
+/**
+ * Homework written for her, from a lesson's words.
+ *
+ * The questions come from `homeworkFrom`; this only files them: a draft
+ * homework at the end of the unit, every question in the language she
+ * explains in.
+ */
+export function useCreateHomework() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: {
+      courseId: string;
+      unitId: string;
+      title: string;
+      position: number;
+      support: Lang;
+      specs: HomeworkSpec[];
+    }) => {
+      const { data, error } = await supabase
+        .from('lang_lessons')
+        .insert({
+          unit_id: v.unitId,
+          title: v.title,
+          kind: 'homework',
+          position: v.position,
+          status: 'draft',
+        })
+        .select('id')
+        .single();
+      if (error) throw error;
+      if (v.specs.length) {
+        const { error: eErr } = await supabase.from('lang_exercises').insert(
+          v.specs.map((q, position) => ({
+            lesson_id: data.id as string,
+            kind: q.kind,
+            position,
+            payload: q.payload as never,
+            answer: q.answer as never,
+            ...promptColumn(v.support, q.prompt),
+          }))
+        );
+        if (eErr) throw eErr;
+      }
+      return data.id as string;
     },
     onError: (e: Error) => toast.error(e.message),
     onSuccess: (_d, v) =>
@@ -290,22 +552,54 @@ export function useRestoreBlock() {
   });
 }
 
+/** A block again, right under itself — words and all. */
+export function useDuplicateBlock() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: {
+      block: Block;
+      vocabIds: string[];
+      lessonId: string;
+      /** Every block id in order, so the copy can be slotted in after its source. */
+      order: string[];
+    }) => {
+      const id = crypto.randomUUID();
+      const { error } = await supabase.from('lang_blocks').insert({
+        id,
+        lesson_id: v.lessonId,
+        position: v.block.position + 1,
+        kind: v.block.kind,
+        body_ru: v.block.body_ru,
+        body_en: v.block.body_en,
+        body_es: v.block.body_es,
+        data: v.block.data as never,
+      });
+      if (error) throw error;
+      if (v.vocabIds.length) {
+        const { error: wErr } = await supabase.rpc('set_block_vocab', {
+          p_block: id,
+          p_vocab: v.vocabIds,
+        });
+        if (wErr) throw wErr;
+      }
+      const at = v.order.indexOf(v.block.id);
+      const next = [...v.order];
+      next.splice(at + 1, 0, id);
+      await writePositions('lang_blocks', next);
+      return id;
+    },
+    onError: (e: Error) => toast.error(e.message),
+    onSuccess: (_d, v) =>
+      void qc.invalidateQueries({ queryKey: qk.lang.lesson(v.lessonId) }),
+  });
+}
+
 /** Re-order the blocks of a lesson after a drag. */
 export function useReorderBlocks() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (v: { lessonId: string; ids: string[] }) => {
-      // Supabase builders RESOLVE with `{error}` rather than rejecting, so
-      // without this a refused reorder reported success and the list silently
-      // snapped back.
-      const results = await Promise.all(
-        v.ids.map((id, position) =>
-          supabase.from('lang_blocks').update({ position }).eq('id', id)
-        )
-      );
-      const failed = results.find((r) => r.error);
-      if (failed?.error) throw failed.error;
-    },
+    mutationFn: async (v: { lessonId: string; ids: string[] }) =>
+      writePositions('lang_blocks', v.ids),
     onError: (e: Error) => toast.error(e.message),
     onSuccess: (_d, v) =>
       void qc.invalidateQueries({ queryKey: qk.lang.lesson(v.lessonId) }),
@@ -328,6 +622,8 @@ export function useSaveExercise() {
       prompt_es?: string | null;
       payload: unknown;
       answer: unknown;
+      /** How much it is worth, out of the lesson. 1 unless she says otherwise. */
+      points?: number;
     }) => {
       // Only the languages the editor actually sent. Writing all three on an
       // update wiped whichever prompt she wasn't looking at: write the Spanish
@@ -346,6 +642,8 @@ export function useSaveExercise() {
               position: v.position,
               payload: v.payload as never,
               answer: v.answer as never,
+              ...(v.points !== undefined ? { points: v.points } : {}),
+              ...(v.blockId !== undefined ? { block_id: v.blockId } : {}),
               ...prompts,
             })
             .eq('id', v.id)
@@ -354,6 +652,7 @@ export function useSaveExercise() {
             block_id: v.blockId ?? null,
             kind: v.kind,
             position: v.position,
+            points: v.points ?? 1,
             payload: v.payload as never,
             answer: v.answer as never,
             prompt_ru: null,
@@ -361,6 +660,36 @@ export function useSaveExercise() {
             prompt_es: null,
             ...prompts,
           });
+      if (error) throw error;
+    },
+    onError: (e: Error) => toast.error(e.message),
+    onSuccess: (_d, v) =>
+      void qc.invalidateQueries({ queryKey: qk.lang.lesson(v.lessonId) }),
+  });
+}
+
+/** A question again, at the end of its block's list. */
+export function useDuplicateExercise() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: {
+      exercise: Exercise;
+      lessonId: string;
+      position: number;
+    }) => {
+      const ex = v.exercise;
+      const { error } = await supabase.from('lang_exercises').insert({
+        lesson_id: ex.lesson_id,
+        block_id: ex.block_id,
+        kind: ex.kind,
+        position: v.position,
+        prompt_ru: ex.prompt_ru,
+        prompt_en: ex.prompt_en,
+        prompt_es: ex.prompt_es,
+        payload: ex.payload as never,
+        answer: ex.answer as never,
+        points: ex.points,
+      });
       if (error) throw error;
     },
     onError: (e: Error) => toast.error(e.message),
