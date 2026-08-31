@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@kernel/supabase';
 import type { BucketName } from './buckets';
 import { proxyPath } from './image';
+import { cachedOffline, isOffline } from './offline';
 
 /** Resolve a signed URL for a private-bucket object path. */
 export function useSignedUrl(
@@ -19,7 +20,17 @@ export function useSignedUrl(
     // The batch hook had this fix already; this one never got it.
     refetchInterval: Math.max(60_000, (expiresIn - 60) * 1000),
     refetchIntervalInBackground: false,
+    // Runs offline too — that is the whole point of the branch below. The
+    // default mode would leave the query pending until the network is back.
+    networkMode: 'offlineFirst',
     queryFn: async () => {
+      // No network: an address the worker's cache will answer, if it holds
+      // the bytes — a recording played once keeps playing on a train.
+      if (isOffline()) {
+        const held = await cachedOffline(bucket, path as string);
+        if (held) return held;
+        throw new Error('Not on this device');
+      }
       const { data, error } = await supabase.storage
         .from(bucket)
         .createSignedUrl(path as string, expiresIn);
