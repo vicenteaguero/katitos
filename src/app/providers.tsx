@@ -6,7 +6,7 @@ import {
   startPersisting,
 } from '@kernel/query';
 import { AuthProvider } from '@kernel/auth';
-import { Toaster } from '@kernel/ui';
+import { ConfirmHost, Toaster } from '@kernel/ui';
 
 export function Providers({ children }: { children: ReactNode }) {
   // Build the client once and immediately paint from the last cache snapshot,
@@ -25,6 +25,7 @@ export function Providers({ children }: { children: ReactNode }) {
       <AuthProvider>
         {children}
         <Toaster />
+        <ConfirmHost />
       </AuthProvider>
     </QueryClientProvider>
   );
