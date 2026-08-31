@@ -34,7 +34,7 @@ export function Segmented<T extends string>({
           type="button"
           onClick={() => onChange(o.value)}
           className={cn(
-            'rounded-full py-2 font-sans text-sm font-semibold tracking-[0.02em] outline-none transition lift-press focus-visible:ring-2 focus-visible:ring-gold/30',
+            'rounded-full py-2 font-sans text-sm font-semibold tracking-[0.02em] outline-none transition lift-press focus-visible:ring-2 focus-visible:ring-gold',
             full ? 'flex-1 px-2 text-center' : 'px-5',
             value === o.value
               ? 'bg-accent text-accent-fg'
