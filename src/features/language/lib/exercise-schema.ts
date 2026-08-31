@@ -22,8 +22,11 @@ export const optionSchema = z.object({
 export type ExerciseOption = z.infer<typeof optionSchema>;
 
 export const payloadSchemas = {
-  /** Pick exactly one. */
-  choice: z.object({ options: z.array(optionSchema).min(2) }),
+  /** Pick exactly one — or, as `variant: 'stress'`, pick where the stress falls. */
+  choice: z.object({
+    options: z.array(optionSchema).min(2),
+    variant: z.enum(['stress']).optional(),
+  }),
   /** Pick every one that applies. */
   multi: z.object({ options: z.array(optionSchema).min(2) }),
   /** Write it out. */
