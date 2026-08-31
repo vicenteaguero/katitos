@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DateTime } from '@kernel/lib';
 import type { Polaroid } from '../types';
 import {
+  borrowedDay,
   dayKind,
   frontOf,
   groupByDay,
@@ -59,7 +60,6 @@ describe('openDays', () => {
   });
 
   it('collapses to one day when both of us are on the same date', () => {
-    // 19:00 in Novosibirsk +2h grace still lands on the 11th.
     expect(openDays(CURICO, NOVOSIBIRSK, ALIGNED)).toEqual(['2026-08-11']);
   });
 
@@ -70,16 +70,31 @@ describe('openDays', () => {
     ]);
   });
 
-  it('grants the ±2h grace that saves a photo taken at 23:59', () => {
-    // 03:30 UTC = 23:30 on the 11th in Curicó. One hour later it is the 12th
-    // there, but the 11th must stay writable while an upload lands.
+  it('shuts a day the moment it is over in both places — no grace', () => {
+    // 04:30 UTC = 00:30 on the 12th in Curicó, 11:30 on the 12th in
+    // Novosibirsk. The 11th is nobody's date any more, so it is NOT on offer:
+    // this exact half hour used to hand back a day both of us had finished.
     const justAfterMidnight = DateTime.fromISO('2026-08-12T04:30:00Z', {
       zone: 'utc',
     });
     expect(localDay(CURICO, justAfterMidnight)).toBe('2026-08-12');
+    expect(localDay(NOVOSIBIRSK, justAfterMidnight)).toBe('2026-08-12');
+    expect(
+      isDayOpen('2026-08-11', CURICO, NOVOSIBIRSK, justAfterMidnight)
+    ).toBe(false);
+    // …and with both of us in Curicó, where there is no second clock to
+    // borrow from at all.
     expect(isDayOpen('2026-08-11', CURICO, CURICO, justAfterMidnight)).toBe(
-      true
+      false
     );
+  });
+
+  it('offers a day right up to its last second somewhere', () => {
+    // 03:59:59 UTC = 23:59:59 on the 11th in Curicó. Still hers to fill.
+    const lastSecond = DateTime.fromISO('2026-08-12T03:59:59Z', {
+      zone: 'utc',
+    });
+    expect(isDayOpen('2026-08-11', CURICO, NOVOSIBIRSK, lastSecond)).toBe(true);
   });
 
   it('is symmetric — both of us compute the same set', () => {
@@ -91,9 +106,29 @@ describe('openDays', () => {
 
 describe('dayKind', () => {
   it('names whose day each open date is', () => {
-    expect(dayKind('2026-08-11', CURICO, NOVOSIBIRSK, SPLIT)).toBe('mine');
-    expect(dayKind('2026-08-12', CURICO, NOVOSIBIRSK, SPLIT)).toBe('theirs');
-    expect(dayKind('2026-08-09', CURICO, NOVOSIBIRSK, SPLIT)).toBe('grace');
+    expect(dayKind('2026-08-11', CURICO, SPLIT)).toBe('mine');
+    expect(dayKind('2026-08-12', CURICO, SPLIT)).toBe('theirs');
+    // …and read from her side the same two dates swap owners.
+    expect(dayKind('2026-08-12', NOVOSIBIRSK, SPLIT)).toBe('mine');
+    expect(dayKind('2026-08-11', NOVOSIBIRSK, SPLIT)).toBe('theirs');
+  });
+});
+
+describe('borrowedDay', () => {
+  it('is the day she is about to lose, seen from her side', () => {
+    // 20:00 UTC: the 12th in Novosibirsk, still the 11th in Curicó. Her 11th
+    // survives only as long as his clock says so.
+    expect(borrowedDay(NOVOSIBIRSK, CURICO, SPLIT)).toBe('2026-08-11');
+  });
+
+  it('is nothing from his side — his extra day is one he has yet to live', () => {
+    // The 12th is open to him too, but it is coming, not going.
+    expect(borrowedDay(CURICO, NOVOSIBIRSK, SPLIT)).toBeNull();
+  });
+
+  it('is nothing while we share a date', () => {
+    expect(borrowedDay(CURICO, NOVOSIBIRSK, ALIGNED)).toBeNull();
+    expect(borrowedDay(NOVOSIBIRSK, CURICO, ALIGNED)).toBeNull();
   });
 });
 
