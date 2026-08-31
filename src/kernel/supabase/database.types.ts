@@ -1796,6 +1796,27 @@ export type Database = {
           },
         ]
       }
+      polaroid_reminders: {
+        Row: {
+          day: string
+          kind: string
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          day: string
+          kind: string
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          day?: string
+          kind?: string
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       polaroids: {
         Row: {
           caption: string | null
