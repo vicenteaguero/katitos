@@ -27,6 +27,8 @@ export function usePrefetchImages(urls: Iterable<string> | undefined): void {
       for (const url of key.split('|')) {
         const img = new Image();
         img.decoding = 'async';
+        // CORS, so the service worker can read — and keep — the response.
+        img.crossOrigin = 'anonymous';
         img.src = url;
         images.push(img);
       }
