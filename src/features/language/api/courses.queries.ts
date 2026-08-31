@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { DateTime } from 'luxon';
 import { supabase } from '@kernel/supabase';
 import { qk } from '@kernel/query';
 import { usePartner, useUserId } from '@kernel/auth';
@@ -145,9 +146,12 @@ export function useDueLessons(target: TargetLang) {
         .eq('status', 'published')
         .in('kind', ['homework', 'exam'])
         .not('due_on', 'is', null)
+        // A month back and no further: the cap used to fill with homework
+        // from last season, all long handed in, and the next one never came.
+        .gte('due_on', DateTime.now().minus({ days: 30 }).toISODate()!)
         .is('deleted_at', null)
         .order('due_on', { ascending: true })
-        .limit(20);
+        .limit(50);
       if (error) throw error;
       const rows = (data ?? []) as (Lesson & {
         unit: { course: { target_lang: string } | null } | null;
