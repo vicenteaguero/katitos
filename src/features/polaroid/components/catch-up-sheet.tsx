@@ -1,6 +1,7 @@
 import { DateTime } from 'luxon';
-import { Check, ImagePlus } from 'lucide-react';
+import { Check, Clock, ImagePlus } from 'lucide-react';
 import { FilePickerButton, Sheet } from '@kernel/ui';
+import { cn } from '@kernel/lib';
 import { dayKind, type DayKind } from '../lib/polaroid-days';
 
 /**
@@ -21,8 +22,8 @@ export function CatchUpSheet({
   days,
   filled,
   selfZone,
-  partnerZone,
   partnerName,
+  urgentDay,
   onPick,
 }: {
   open: boolean;
@@ -32,8 +33,13 @@ export function CatchUpSheet({
   /** Days you already have a photo for — offered as "replace". */
   filled: Set<string>;
   selfZone: string | null | undefined;
-  partnerZone: string | null | undefined;
   partnerName: string;
+  /**
+   * The day a last-call notification sent us here for. Its row arrives lit and
+   * breathing, so the thing you were told about is the thing under your thumb —
+   * arriving at a list and hunting for the date would waste the warning.
+   */
+  urgentDay?: string | null;
   onPick: (day: string, file: File) => void;
 }) {
   return (
@@ -49,21 +55,33 @@ export function CatchUpSheet({
           it&apos;s tomorrow for both, a day closes for good.
         </p>
         {days.map((day) => {
-          const kind = dayKind(day, selfZone, partnerZone);
+          const kind = dayKind(day, selfZone);
           const already = filled.has(day);
+          const urgent = day === urgentDay && !already;
           return (
             <FilePickerButton
               key={day}
               accept="image/*"
               onPick={(file) => onPick(day, file)}
-              className="w-full justify-start gap-3 border-0 bg-surface px-4 py-3 text-left"
+              className={cn(
+                'w-full justify-start gap-3 border-0 px-4 py-3 text-left',
+                urgent ? 'catchup-urgent bg-surface-2' : 'bg-surface'
+              )}
             >
               <span className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
                 <span className="font-sans text-sm font-semibold text-fg">
                   {DateTime.fromISO(day).toFormat('cccc, LLL d')}
                 </span>
-                <span className="font-sans text-[0.7rem] text-muted">
-                  {describe(kind, partnerName)}
+                <span
+                  className={cn(
+                    'flex items-center gap-1 font-sans text-[0.7rem]',
+                    urgent ? 'text-gold' : 'text-muted'
+                  )}
+                >
+                  {urgent && <Clock className="h-3 w-3 shrink-0" />}
+                  {urgent
+                    ? `closing soon — ${describe(kind, partnerName)}`
+                    : describe(kind, partnerName)}
                 </span>
               </span>
               {already ? (
@@ -82,12 +100,7 @@ export function CatchUpSheet({
 }
 
 function describe(kind: DayKind, partnerName: string): string {
-  switch (kind) {
-    case 'mine':
-      return 'today, where you are';
-    case 'theirs':
-      return `already today for ${partnerName}`;
-    case 'grace':
-      return 'still open, just';
-  }
+  return kind === 'mine'
+    ? 'today, where you are'
+    : `already today for ${partnerName}`;
 }
