@@ -7,7 +7,7 @@ import {
   Button,
   Desk,
   Dialog,
-  LoadingScreen,
+  ListSkeleton,
   PlayButton,
   useDesk,
   type AudioClip,
@@ -33,7 +33,7 @@ export function AlphabetRoute() {
   const record = useRecordLetter();
   useDesk();
 
-  if (isLoading) return <LoadingScreen />;
+  if (isLoading) return <ListSkeleton rows={3} />;
 
   const list = letters ?? [];
   const open = list.find((l) => l.id === openId) ?? null;
@@ -115,7 +115,7 @@ export function AlphabetRoute() {
 
               {/* A recording of a stranger saying Ы is worth much less than a
                 recording of his teacher saying it. */}
-              <div className="space-y-2 pt-1">
+              <div className="space-y-2">
                 <p className="flex items-center gap-1.5 font-sans text-xs text-muted">
                   <Mic className="h-3.5 w-3.5" /> Say it for him
                 </p>
