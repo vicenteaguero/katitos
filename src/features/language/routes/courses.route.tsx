@@ -5,6 +5,7 @@ import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import {
   Button,
+  Desk,
   Dialog,
   Empty,
   Field,
@@ -13,6 +14,7 @@ import {
   Input,
   Segmented,
   Textarea,
+  useDesk,
   useTopBarAction,
 } from '@kernel/ui';
 import { useCourses } from '../api/courses.queries';
@@ -42,6 +44,7 @@ export function CoursesRoute() {
   const navigate = useNavigate();
   const { native, learning } = useLanguages();
   useTableSync('lang_courses', qk.lang.courses());
+  useDesk();
 
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ title: '', emoji: '', description: '' });
@@ -92,110 +95,114 @@ export function CoursesRoute() {
   );
 
   return (
-    <div className="curtain-reveal space-y-3">
-      <StudyBanner />
+    <Desk narrow>
+      <div className="curtain-reveal space-y-3">
+        <StudyBanner />
 
-      <div className="flex gap-2">
-        {/* The alphabet is Cyrillic: for the one learning it — and for the one
+        <div className="flex gap-2">
+          {/* The alphabet is Cyrillic: for the one learning it — and for the one
             who records the letters in her own voice, which is the point of the
             screen. Gating it on "learning Russian" hid it from her entirely. */}
-        {(learning === 'ru' || native === 'ru') && (
-          <Link to="/language/alphabet" className="flex-1">
+          {(learning === 'ru' || native === 'ru') && (
+            <Link to="/language/alphabet" className="flex-1">
+              <Button full variant="secondary">
+                <Type size={15} /> Alphabet
+              </Button>
+            </Link>
+          )}
+          <Link to="/language/dictionary" className="flex-1">
             <Button full variant="secondary">
-              <Type size={15} /> Alphabet
+              <BookMarked size={15} /> Dictionary
             </Button>
           </Link>
-        )}
-        <Link to="/language/dictionary" className="flex-1">
-          <Button full variant="secondary">
-            <BookMarked size={15} /> Dictionary
-          </Button>
-        </Link>
-      </div>
-
-      {list.length === 0 ? (
-        <Empty
-          icon="📚"
-          title="No courses yet"
-          hint="Build the first one — a unit, a lesson, and something to try."
-          action={<Button onClick={() => setOpen(true)}>Start a course</Button>}
-        />
-      ) : (
-        <>
-          <Section
-            title={LANG_NATIVE_LABELS[learning]}
-            note="you're learning"
-            courses={mine}
-          />
-          <Section
-            title={LANG_NATIVE_LABELS[native]}
-            note="you teach"
-            courses={theirs}
-          />
-          <Section title="Also" courses={other} />
-        </>
-      )}
-
-      <WrongList />
-
-      <Dialog
-        placement="auto"
-        open={open}
-        onClose={() => setOpen(false)}
-        title="New course"
-        size="md"
-      >
-        <div className="space-y-3">
-          <Fieldset label="This course teaches">
-            <Segmented
-              full
-              value={lang}
-              onChange={(v) => setLang(v as Lang)}
-              options={[
-                { value: 'ru', label: LANG_NATIVE_LABELS.ru },
-                { value: 'es', label: LANG_NATIVE_LABELS.es },
-              ]}
-            />
-          </Fieldset>
-          <FieldRow className="[&>*:first-child]:max-w-[4.5rem]">
-            <Field label="Emoji">
-              <Input
-                value={form.emoji}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, emoji: e.target.value }))
-                }
-                placeholder={LANG_FLAGS[lang]}
-              />
-            </Field>
-            <Field label="Called">
-              <Input
-                value={form.title}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, title: e.target.value }))
-                }
-                placeholder={
-                  lang === 'ru'
-                    ? 'Russian, from the beginning'
-                    : 'Español, desde cero'
-                }
-              />
-            </Field>
-          </FieldRow>
-          <Field label="About">
-            <Textarea
-              value={form.description}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, description: e.target.value }))
-              }
-              rows={2}
-            />
-          </Field>
-          <Button full onClick={submit} disabled={create.isPending}>
-            Create
-          </Button>
         </div>
-      </Dialog>
-    </div>
+
+        {list.length === 0 ? (
+          <Empty
+            icon="📚"
+            title="No courses yet"
+            hint="Build the first one — a unit, a lesson, and something to try."
+            action={
+              <Button onClick={() => setOpen(true)}>Start a course</Button>
+            }
+          />
+        ) : (
+          <>
+            <Section
+              title={LANG_NATIVE_LABELS[learning]}
+              note="you're learning"
+              courses={mine}
+            />
+            <Section
+              title={LANG_NATIVE_LABELS[native]}
+              note="you teach"
+              courses={theirs}
+            />
+            <Section title="Also" courses={other} />
+          </>
+        )}
+
+        <WrongList />
+
+        <Dialog
+          placement="auto"
+          open={open}
+          onClose={() => setOpen(false)}
+          title="New course"
+          size="md"
+        >
+          <div className="space-y-3">
+            <Fieldset label="This course teaches">
+              <Segmented
+                full
+                value={lang}
+                onChange={(v) => setLang(v as Lang)}
+                options={[
+                  { value: 'ru', label: LANG_NATIVE_LABELS.ru },
+                  { value: 'es', label: LANG_NATIVE_LABELS.es },
+                ]}
+              />
+            </Fieldset>
+            <FieldRow className="[&>*:first-child]:max-w-[4.5rem]">
+              <Field label="Emoji">
+                <Input
+                  value={form.emoji}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, emoji: e.target.value }))
+                  }
+                  placeholder={LANG_FLAGS[lang]}
+                />
+              </Field>
+              <Field label="Called">
+                <Input
+                  value={form.title}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, title: e.target.value }))
+                  }
+                  placeholder={
+                    lang === 'ru'
+                      ? 'Russian, from the beginning'
+                      : 'Español, desde cero'
+                  }
+                />
+              </Field>
+            </FieldRow>
+            <Field label="About">
+              <Textarea
+                value={form.description}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, description: e.target.value }))
+                }
+                rows={2}
+              />
+            </Field>
+            <Button full onClick={submit} disabled={create.isPending}>
+              Create
+            </Button>
+          </div>
+        </Dialog>
+      </div>
+    </Desk>
   );
 }
 
