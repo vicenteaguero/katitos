@@ -54,6 +54,11 @@ export function peekSignedUrl(
   return hit.url;
 }
 
+/** Drop a remembered signature — the object behind it has been replaced. */
+export function forgetSignedUrl(bucket: BucketName, path: string): void {
+  signed.delete(memoKey(bucket, path));
+}
+
 export function useSignedUrls(
   bucket: BucketName,
   paths: Array<string | null | undefined>,
