@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { Check, Pencil, Send } from 'lucide-react';
+import { Check, Pencil, RotateCcw, Send } from 'lucide-react';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import { cn } from '@kernel/lib';
@@ -20,6 +20,7 @@ import { useLesson, useMyAttempts } from '../api/lessons.queries';
 import {
   useAnswerExercise,
   useAnswerExercises,
+  useMarkOpened,
   useSaveProgress,
 } from '../api/lessons.mutations';
 import { isTeacherOf, useLanguages } from '../lib/languages';
@@ -27,7 +28,10 @@ import { gradeAnswer, type Grade } from '../lib/exercise-schema';
 import { ExerciseView } from '../components/exercises/exercise-view';
 import { BlockView } from '../components/block-view';
 import { LessonTree } from '../components/lesson-tree';
-import type { Exercise, MediaBlockData } from '../types';
+import { dueLabel } from '../lib/due';
+import { verdictOf, weightedScore } from '../lib/marking';
+import { useToday } from '../lib/use-today';
+import type { Attempt, Exercise, MediaBlockData } from '../types';
 
 /**
  * A lesson, as he reads it.
@@ -44,6 +48,8 @@ export function LessonRoute() {
   const answer = useAnswerExercise();
   const answerMany = useAnswerExercises();
   const saveProgress = useSaveProgress();
+  const markOpened = useMarkOpened();
+  const today = useToday();
   const { native: support, ready } = useLanguages();
   // Filtered to THIS lesson: unfiltered, editing any lesson anywhere re-ran
   // this one's whole read.
@@ -58,6 +64,8 @@ export function LessonRoute() {
   const [grades, setGrades] = useState<Record<string, Grade>>({});
   const [handedIn, setHandedIn] = useState(false);
   const [handingIn, setHandingIn] = useState(false);
+  // "Try again": the screen starts over and the old answers stop seeding it.
+  const [retrying, setRetrying] = useState(false);
 
   /**
    * An exam stays handed in across a reload.
@@ -68,7 +76,8 @@ export function LessonRoute() {
    */
   const mine = progress?.get(lessonId ?? '');
   const submitted =
-    handedIn || ['submitted', 'graded'].includes(mine?.status ?? '');
+    handedIn ||
+    (!retrying && ['submitted', 'graded'].includes(mine?.status ?? ''));
 
   // Her pencil, not his: the builder is for whoever teaches this language —
   // and only once the pair is known, because for the first half-second the
@@ -88,12 +97,19 @@ export function LessonRoute() {
     [lessonId, teacher]
   );
 
-  /** How many times he has already had a go at each question. */
-  const priorAttempts = useMemo(() => {
-    const out = new Map<string, number>();
-    for (const a of attempts ?? []) out.set(a.exercise_id, a.attempt_no);
+  // So she can see he has been here: a quiet row, once per visit.
+  const { mutate: noteOpened } = markOpened;
+  useEffect(() => {
+    if (lessonId && ready && !teacher) noteOpened(lessonId);
+  }, [lessonId, ready, teacher, noteOpened]);
+
+  /** His newest go at each question — how many so far, and her margin on it. */
+  const latest = useMemo(() => {
+    const out = new Map<string, Attempt>();
+    for (const a of attempts ?? []) out.set(a.exercise_id, a);
     return out;
   }, [attempts]);
+  const priorAttempts = (ex: Exercise) => latest.get(ex.id)?.attempt_no ?? 0;
 
   /**
    * What he already answered, back on the screen.
@@ -106,7 +122,7 @@ export function LessonRoute() {
    * what he typed last time.
    */
   useEffect(() => {
-    if (!attempts || !lesson) return;
+    if (!attempts || !lesson || retrying) return;
     const byId = new Map(lesson.exercises.map((ex) => [ex.id, ex]));
     setAnswers((current) => {
       const next = { ...current };
@@ -126,7 +142,7 @@ export function LessonRoute() {
       }
       return next;
     });
-  }, [attempts, lesson]);
+  }, [attempts, lesson, retrying]);
 
   if (isLoading) return <ListSkeleton rows={5} />;
   if (!lesson) return <Empty icon="📄" title="No such lesson" />;
@@ -150,23 +166,28 @@ export function LessonRoute() {
       exercise: ex,
       lessonId: lesson.id,
       answer: given ?? null,
-      attemptNo: (priorAttempts.get(ex.id) ?? 0) + 1,
+      attemptNo: priorAttempts(ex) + 1,
     });
 
     // Homework has to record that it was done, or it sits on the home screen
     // forever getting later — only exams were writing a progress row.
     const done = exercises.every((x) => next[x.id]);
-    const total = exercises.reduce(
-      (sum, x) => sum + (next[x.id]?.score ?? 0),
-      0
-    );
+    if (done) setRetrying(false);
     // Once she has marked it, a re-check is practice: the attempt is kept,
     // the mark is hers. (The database refuses the downgrade too.)
     if (mine?.status === 'graded') return;
     saveProgress.mutate({
       lessonId: lesson.id,
       status: done ? 'submitted' : 'in_progress',
-      score: done && exercises.length ? total / exercises.length : null,
+      score: done
+        ? weightedScore(
+            exercises.map((x) => ({
+              points: x.points,
+              score: next[x.id]?.score,
+            }))
+          )
+        : null,
+      title: lesson.title,
     });
   };
 
@@ -188,16 +209,22 @@ export function LessonRoute() {
         answers: exercises.map((ex) => ({
           exercise: ex,
           answer: answers[ex.id] ?? null,
-          attemptNo: (priorAttempts.get(ex.id) ?? 0) + 1,
+          attemptNo: priorAttempts(ex) + 1,
         })),
       });
       setGrades(Object.fromEntries(marks.map((m) => [m.exerciseId, m.grade])));
       setHandedIn(true);
-      const total = marks.reduce((sum, m) => sum + m.grade.score, 0);
+      setRetrying(false);
       await saveProgress.mutateAsync({
         lessonId: lesson.id,
         status: 'submitted',
-        score: marks.length ? total / marks.length : null,
+        score: weightedScore(
+          marks.map((m) => ({
+            points: exercises.find((x) => x.id === m.exerciseId)?.points,
+            score: m.grade.score,
+          }))
+        ),
+        title: lesson.title,
       });
       toast.success('Handed in');
     } catch {
@@ -205,6 +232,14 @@ export function LessonRoute() {
     } finally {
       setHandingIn(false);
     }
+  };
+
+  /** Another go: the old answers come off the screen, the record stays. */
+  const tryAgain = () => {
+    setAnswers({});
+    setGrades({});
+    setHandedIn(false);
+    setRetrying(true);
   };
 
   const answeredCount = Object.keys(grades).length;
@@ -217,6 +252,10 @@ export function LessonRoute() {
     const grade = grades[ex.id] ?? null;
     // In an exam nothing is revealed until it is handed in.
     const shown = isExam ? (submitted ? grade : null) : grade;
+    // Her tick, once she has given one, beats the app's.
+    const a = retrying ? undefined : latest.get(ex.id);
+    const hers = a ? verdictOf(a) : null;
+    const right = hers?.hers ? hers.correct : shown?.correct;
     return (
       <div
         key={ex.id}
@@ -224,7 +263,7 @@ export function LessonRoute() {
           'space-y-2 rounded-lg bg-surface px-3 py-2.5',
           // No alpha on a ring: `ring-success/40` renders Tailwind's
           // default blue, not green.
-          shown?.correct && 'ring-1 ring-success'
+          right && 'ring-1 ring-success'
         )}
       >
         <Kicker as="p" tone="muted">
@@ -239,6 +278,11 @@ export function LessonRoute() {
           grade={shown}
           disabled={isExam ? submitted : !!grade}
         />
+        {a?.teacher_note && (
+          <p className="font-display text-sm italic text-fg">
+            — {a.teacher_note}
+          </p>
+        )}
         {!isExam && !grade && (
           <Button
             full
@@ -274,7 +318,7 @@ export function LessonRoute() {
               : lesson.kind === 'exam'
                 ? 'Exam'
                 : 'Lesson'}
-            {lesson.due_on ? ` · due ${lesson.due_on}` : ''}
+            {lesson.due_on ? ` · due ${dueLabel(lesson.due_on, today)}` : ''}
           </p>
           <h1 className="mt-0.5 font-display text-2xl font-semibold text-fg">
             {lesson.title}
@@ -284,20 +328,37 @@ export function LessonRoute() {
           )}
         </header>
 
-        {/* What she wrote back. The whole point of handing work in. */}
-        {mine?.status === 'graded' && (
-          <section className="space-y-1 rounded-lg bg-surface-2 px-4 py-3">
-            <p className="eyebrow">
-              Marked
-              {mine.score != null ? ` · ${Math.round(mine.score * 100)}%` : ''}
-            </p>
-            {mine.teacher_note && (
-              <p className="font-display text-base italic leading-snug text-fg">
-                {mine.teacher_note}
+        {/* What came back. The whole point of handing work in. */}
+        {mine &&
+          ['graded', 'returned', 'submitted'].includes(mine.status) &&
+          !retrying && (
+            <section className="space-y-1 rounded-lg bg-surface-2 px-4 py-3">
+              <p className="eyebrow">
+                {mine.status === 'graded'
+                  ? `Marked${mine.score != null ? ` · ${Math.round(mine.score * 100)}%` : ''}`
+                  : mine.status === 'returned'
+                    ? 'Sent back — have another go'
+                    : "Handed in — she'll see it"}
               </p>
-            )}
-          </section>
-        )}
+              {mine.status !== 'submitted' && mine.teacher_note && (
+                <p className="font-display text-base italic leading-snug text-fg">
+                  {mine.teacher_note}
+                </p>
+              )}
+              {mine.status !== 'submitted' && (
+                <Button
+                  size="xs"
+                  variant={mine.status === 'returned' ? 'primary' : 'secondary'}
+                  onClick={tryAgain}
+                >
+                  <RotateCcw size={13} />{' '}
+                  {mine.status === 'returned'
+                    ? 'Try again'
+                    : 'Practise it again'}
+                </Button>
+              )}
+            </section>
+          )}
 
         {/* Hers to select and copy — a lesson on a computer is a document. The
             questions sit where she put them: after the block they belong to. */}
