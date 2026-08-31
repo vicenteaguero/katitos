@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { nanoid } from 'nanoid';
 import { supabase } from '@kernel/supabase';
 import { qk } from '@kernel/query';
 import { useUserId } from '@kernel/auth';
@@ -96,14 +97,51 @@ export function useAddVocab() {
 
       // One entry per word is the promise this table makes, and the quickest
       // way to break it is the add-without-leaving-the-lesson shortcut.
-      const { data: existing } = await supabase
+      // Escaped: % and _ are wildcards to ilike, and a word is not a pattern.
+      const pattern = term.replace(/[\\%_]/g, '\\$&');
+      const { data: existing, error: lookErr } = await supabase
         .from('lang_vocab')
-        .select('id')
+        .select('id, ru, en, es, audio_path')
         .eq('term_lang', v.termLang)
         .is('deleted_at', null)
-        .ilike(v.termLang, term)
+        .ilike(v.termLang, pattern)
         .limit(1);
-      if (existing?.length) return existing[0].id as string;
+      if (lookErr) throw lookErr;
+      if (existing?.length) {
+        // The word is already here — so what she just gave it goes ONTO it:
+        // the recording always, a translation only where the row had none.
+        // Returning early threw the recording away and called it a success,
+        // which is why a word had to be recorded twice.
+        const row = existing[0];
+        const patch: Partial<Vocab> = {};
+        if (!row.ru && v.ru?.trim()) patch.ru = v.ru.trim();
+        if (!row.en && v.en?.trim()) patch.en = v.en.trim();
+        if (!row.es && v.es?.trim()) patch.es = v.es.trim();
+        if (v.audio) {
+          const path = storagePaths.languageAudio(
+            `${row.id}-${nanoid(6)}`,
+            v.audio.ext
+          );
+          await upload(BUCKETS.languageAudio, path, v.audio.blob, {
+            contentType: v.audio.mime,
+            cacheControl: '31536000',
+          });
+          patch.audio_path = path;
+        }
+        if (Object.keys(patch).length) {
+          const { error } = await supabase
+            .from('lang_vocab')
+            .update(patch)
+            .eq('id', row.id);
+          if (error) throw error;
+          if (patch.audio_path && row.audio_path) {
+            void supabase.storage
+              .from(BUCKETS.languageAudio)
+              .remove([row.audio_path]);
+          }
+        }
+        return row.id as string;
+      }
 
       const { data, error } = await supabase
         .from('lang_vocab')
@@ -126,10 +164,16 @@ export function useAddVocab() {
 
       if (v.audio) {
         // The extension follows the recording, not a guess — that mismatch is
-        // exactly what made clips unplayable across devices.
-        const path = storagePaths.languageAudio(data.id, v.audio.ext);
+        // exactly what made clips unplayable across devices. And a path of
+        // its own per recording, so a replacement is never served from the
+        // cache as the clip it replaced.
+        const path = storagePaths.languageAudio(
+          `${data.id}-${nanoid(6)}`,
+          v.audio.ext
+        );
         await upload(BUCKETS.languageAudio, path, v.audio.blob, {
           contentType: v.audio.mime,
+          cacheControl: '31536000',
         });
         const { error: upErr } = await supabase
           .from('lang_vocab')
@@ -173,12 +217,18 @@ export function useUpdateVocab() {
         >
       >;
       audio?: AudioClip | null;
+      /** The clip this one replaces, so it can be taken out of storage. */
+      previousAudioPath?: string | null;
     }) => {
       const patch: Partial<Vocab> = { ...v.patch };
       if (v.audio) {
-        const path = storagePaths.languageAudio(v.id, v.audio.ext);
+        const path = storagePaths.languageAudio(
+          `${v.id}-${nanoid(6)}`,
+          v.audio.ext
+        );
         await upload(BUCKETS.languageAudio, path, v.audio.blob, {
           contentType: v.audio.mime,
+          cacheControl: '31536000',
         });
         patch.audio_path = path;
       }
@@ -187,6 +237,11 @@ export function useUpdateVocab() {
         .update(patch)
         .eq('id', v.id);
       if (error) throw error;
+      if (patch.audio_path && v.previousAudioPath) {
+        void supabase.storage
+          .from(BUCKETS.languageAudio)
+          .remove([v.previousAudioPath]);
+      }
     },
     onError: (e: Error) => toast.error(e.message),
     onSuccess: () => void qc.invalidateQueries({ queryKey: qk.lang.vocab() }),
