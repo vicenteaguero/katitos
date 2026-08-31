@@ -7,6 +7,7 @@ import {
   Button,
   CameraCapture,
   Card,
+  confirmDialog,
   Empty,
   Input,
   LoadingScreen,
@@ -265,7 +266,13 @@ export function ScavengerRoute() {
                 })
               }
               onDelete={(card) => {
-                if (confirm(`Delete "${card.title}"?`)) del.mutate(card.id);
+                void confirmDialog({
+                  title: `Delete "${card.title}"?`,
+                  confirmLabel: 'Delete it',
+                  danger: true,
+                }).then((ok) => {
+                  if (ok) del.mutate(card.id);
+                });
               }}
             />
           ))}
