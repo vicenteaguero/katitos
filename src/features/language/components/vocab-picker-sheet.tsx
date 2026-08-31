@@ -4,11 +4,11 @@ import { cn } from '@kernel/lib';
 import {
   AudioRecorder,
   Button,
+  Dialog,
   Field,
-  Fieldset,
   FieldRow,
+  Fieldset,
   Input,
-  Sheet,
   Spinner,
   type AudioClip,
 } from '@kernel/ui';
@@ -103,7 +103,13 @@ export function VocabPickerSheet({
   };
 
   return (
-    <Sheet open={open} onClose={onClose} title="The words" size="full">
+    <Dialog
+      placement="auto"
+      open={open}
+      onClose={onClose}
+      title="The words"
+      size="lg"
+    >
       <div className="space-y-3">
         {chosen.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
@@ -213,6 +219,6 @@ export function VocabPickerSheet({
           lesson
         </Button>
       </div>
-    </Sheet>
+    </Dialog>
   );
 }
