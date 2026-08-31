@@ -34,6 +34,9 @@ pnpm-debug.log*
 src/kernel/build/stamp.generated.ts
 public/version.json
 
+# reference material kept on disk, out of git
+/_archive
+
 # vercel
 .vercel
 
