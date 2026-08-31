@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { Check, GraduationCap, Pencil, RotateCcw, Send } from 'lucide-react';
+import {
+  Check,
+  GraduationCap,
+  Pencil,
+  Presentation,
+  RotateCcw,
+  Send,
+} from 'lucide-react';
 import { useTableSync } from '@kernel/realtime';
 import { BUCKETS } from '@kernel/storage';
 import { qk } from '@kernel/query';
@@ -29,6 +36,7 @@ import { isTeacherOf, useLanguages } from '../lib/languages';
 import { gradeAnswer, type Grade } from '../lib/exercise-schema';
 import { ExerciseView } from '../components/exercises/exercise-view';
 import { BlockView } from '../components/block-view';
+import { GlossaryPopover } from '../components/glossary-popover';
 import { LessonTree } from '../components/lesson-tree';
 import { dueLabel } from '../lib/due';
 import { verdictOf, weightedScore } from '../lib/marking';
@@ -65,6 +73,8 @@ export function LessonRoute() {
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
   const [grades, setGrades] = useState<Record<string, Grade>>({});
   const [handedIn, setHandedIn] = useState(false);
+  /** The word he tapped, waiting for its meaning. */
+  const [lookup, setLookup] = useState<string | null>(null);
   const [handingIn, setHandingIn] = useState(false);
   // "Try again": the screen starts over and the old answers stop seeding it.
   const [retrying, setRetrying] = useState(false);
@@ -91,13 +101,22 @@ export function LessonRoute() {
     ready && isTeacherOf({ target_lang: lesson?.targetLang }, support);
   useTopBarAction(
     lessonId && teacher ? (
-      <TopBarButton
-        label="Edit this lesson"
-        to={`/language/build/${lessonId}`}
-        variant="quiet"
-      >
-        <Pencil className="h-4 w-4" />
-      </TopBarButton>
+      <div className="flex items-center gap-1">
+        <TopBarButton
+          label="Teach it"
+          to={`/language/teach/${lessonId}`}
+          variant="quiet"
+        >
+          <Presentation className="h-4 w-4" />
+        </TopBarButton>
+        <TopBarButton
+          label="Edit this lesson"
+          to={`/language/build/${lessonId}`}
+          variant="quiet"
+        >
+          <Pencil className="h-4 w-4" />
+        </TopBarButton>
+      </div>
     ) : null,
     [lessonId, teacher]
   );
@@ -424,6 +443,7 @@ export function LessonRoute() {
                 target={lesson.targetLang}
                 vocab={lesson.vocabByBlock[block.id]}
                 media={mediaFor(block)}
+                onWord={setLookup}
               />
             </div>
             {(lesson.exercisesByBlock[block.id] ?? []).map(exerciseCard)}
@@ -431,6 +451,13 @@ export function LessonRoute() {
         ))}
 
         {lesson.looseExercises.map(exerciseCard)}
+
+        <GlossaryPopover
+          word={lookup}
+          target={lesson.targetLang}
+          support={support}
+          onClose={() => setLookup(null)}
+        />
 
         {exercises.length > 0 && (
           <section className="space-y-3">
