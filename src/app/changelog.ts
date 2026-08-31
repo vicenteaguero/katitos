@@ -67,6 +67,7 @@ export const ALL_ENTRIES: ChangelogEntry[] = [
       'The words he keeps forgetting now have a microphone on them: say the word for him and it is on his phone in a minute.',
       'Teach mode for the call: one block at a time, big, with the answers held back until you show them, and a way to catch a word that comes up mid-class and put it straight into the lesson.',
       'A question that asks where the stress falls, built from nothing but the word as you write it.',
+      'And one that plays your voice and asks which of two lookalikes you said — дом or том.',
       'He can tap any word in a lesson for its meaning — and ask you when the dictionary does not know it.',
       'Practice knows how well he knows each word, plays your voice on every reveal, explains why an answer was almost right, and picks up where he left off after a phone call.',
       'Her voice keeps playing without a connection: anything played once stays on the phone.',
