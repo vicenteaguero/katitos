@@ -12,6 +12,7 @@ import {
   Input,
   SearchInput,
   Segmented,
+  Select,
   Textarea,
   toast,
   TopBarButton,
@@ -192,6 +193,7 @@ function WordSheet({
   const [translit, setTranslit] = useState(word?.transliteration ?? '');
   const [stress, setStress] = useState(word?.stress ?? '');
   const [tags, setTags] = useState((word?.tags ?? []).join(', '));
+  const [pos, setPos] = useState(word?.part_of_speech ?? '');
   const [audio, setAudio] = useState<AudioClip | null>(null);
 
   // A note is written FOR the person learning, so it is offered in the two
@@ -229,6 +231,7 @@ function WordSheet({
           id: word.id,
           patch: {
             ...shared,
+            part_of_speech: pos || null,
             notes_ru: notes.ru || null,
             notes_en: notes.en || null,
             notes_es: notes.es || null,
@@ -243,6 +246,7 @@ function WordSheet({
         {
           termLang: lang,
           ...shared,
+          partOfSpeech: pos || null,
           notesRu: notes.ru,
           notesEn: notes.en,
           notesEs: notes.es,
@@ -304,6 +308,22 @@ function WordSheet({
         {/* The escape hatch for a word with no clean one-word translation —
             успеть, тоска, давай, or "bacán". Written in whichever language the
             person reading it actually thinks in. */}
+        <Field
+          label="What kind of word"
+          hint="Optional — it makes the drills smarter later"
+        >
+          <Select value={pos} onChange={(e) => setPos(e.target.value)}>
+            <option value="">—</option>
+            <option value="noun">noun</option>
+            <option value="verb">verb</option>
+            <option value="adjective">adjective</option>
+            <option value="adverb">adverb</option>
+            <option value="pronoun">pronoun</option>
+            <option value="preposition">preposition</option>
+            <option value="phrase">phrase</option>
+            <option value="other">other</option>
+          </Select>
+        </Field>
         <Fieldset label="A note">
           <div className="space-y-1.5">
             <Segmented
