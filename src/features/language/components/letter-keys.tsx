@@ -1,4 +1,5 @@
 import { Delete } from 'lucide-react';
+import { useRovingFocus } from '@kernel/hooks';
 import type { Lang } from '../types';
 
 /**
@@ -12,6 +13,7 @@ import type { Lang } from '../types';
  *
  * All thirty-three letters — ё included, it was missing — and a space bar,
  * because "не хочу" is two words and the marker is right to insist on that.
+ * One tab stop for the whole board; the arrow keys walk the keys.
  */
 const ROWS: Partial<Record<Lang, readonly string[]>> = {
   ru: ['йцукенгшщзхъё', 'фывапролджэ', 'ячсмитьбю'],
@@ -33,10 +35,20 @@ export function LetterKeys({
   onKey: (ch: string) => void;
   onBackspace: () => void;
 }) {
-  const rows = ROWS[lang];
-  if (!rows) return null;
+  const rows = ROWS[lang] ?? [];
+  // Every key in reading order, then space and backspace — one index each.
+  const letters = rows.flatMap((row) => [...row]);
+  const roving = useRovingFocus<HTMLButtonElement>(letters.length + 2);
+  if (!rows.length) return null;
+
+  let index = 0;
   return (
-    <div className="space-y-1">
+    <div
+      role="group"
+      aria-label="Letters"
+      className="space-y-1"
+      {...roving.containerProps}
+    >
       {rows.map((row, i) => (
         <div key={i} className="flex justify-center gap-[3px]">
           {[...row].map((ch) => (
@@ -45,6 +57,7 @@ export function LetterKeys({
               type="button"
               onClick={() => onKey(ch)}
               className={KEY}
+              {...roving.itemProps(index++)}
             >
               {ch}
             </button>
@@ -57,6 +70,7 @@ export function LetterKeys({
           onClick={() => onKey(' ')}
           aria-label="Space"
           className={`${KEY} flex-[4] text-muted`}
+          {...roving.itemProps(index++)}
         >
           ␣
         </button>
@@ -65,6 +79,7 @@ export function LetterKeys({
           onClick={onBackspace}
           aria-label="Backspace"
           className={`${KEY} flex items-center justify-center text-muted`}
+          {...roving.itemProps(index++)}
         >
           <Delete className="h-4 w-4" />
         </button>
