@@ -23,6 +23,11 @@ export const storagePaths = {
    * A pronunciation clip. The extension is whatever the recorder actually
    * produced — iOS makes MP4/AAC, Chrome makes WebM — because a clip stored
    * under the wrong name is a clip the other phone silently refuses to play.
+   *
+   * `id` must be UNIQUE PER RECORDING (`<rowId>-<nanoid>`), never just the
+   * row id: a re-recording that overwrote the same path was served from the
+   * browser's cache as the old clip for an hour, and every caller had to
+   * record twice. The old object is removed by whoever replaces it.
    */
   languageAudio: (id: string, ext = 'webm') => `${id}.${ext}`,
   /** A lesson attachment: a PDF, a doc, an image, a video she uploaded. */
