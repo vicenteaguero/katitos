@@ -1,16 +1,20 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { Mic } from 'lucide-react';
 import { useMembers, useUserId } from '@kernel/auth';
-import { Kicker } from '@kernel/ui';
+import { Kicker, ROW_TOOL } from '@kernel/ui';
 import { useAllReviews, useAllVocab } from '../api/vocab';
 import { headword, meaningOf } from '../lib/pick';
 import { useLanguages } from '../lib/languages';
+import { VoiceThread } from './kit/voice-thread';
 
 /**
- * What your love keeps forgetting.
+ * What your love keeps forgetting — and a microphone on each one.
  *
  * The teacher's view, and the reason the review rows are readable by both of
- * us: without it she is guessing at what to go over next lesson. Only shows the
- * OTHER person's misses — your own are just today's practice.
+ * us: without it she is guessing at what to go over next lesson. Only the
+ * OTHER person's misses — your own are just today's practice. The mic is the
+ * part nothing else can do: her voice, aimed at the word he keeps missing,
+ * on his phone in a minute.
  */
 export function WrongList() {
   const userId = useUserId();
@@ -20,6 +24,7 @@ export function WrongList() {
   // HIS lapses are in the language I TEACH — my own language. Looking them
   // up in the dictionary I am learning found nothing, ever, for either of us.
   const { data: words } = useAllVocab(support);
+  const [openId, setOpenId] = useState<string | null>(null);
 
   const partner = members?.find((m) => m.user_id !== userId);
 
@@ -41,23 +46,39 @@ export function WrongList() {
       <p className="font-sans text-sm font-semibold text-fg">
         What {partner?.display_name ?? 'your love'} keeps forgetting
       </p>
-      <p className="font-sans text-xs text-muted">Worth going over together.</p>
+      <p className="font-sans text-xs text-muted">
+        Worth going over together — or say it for them now.
+      </p>
       <ul className="space-y-1.5">
         {rows.map(({ review, word }) => (
-          <li key={review.vocab_id} className="flex items-baseline gap-2">
-            <span className="min-w-0 flex-1">
-              <span className="font-display text-base text-fg">
-                {headword(word!)}
-              </span>
-              {meaningOf(word!, support) && (
-                <span className="ml-2 font-sans text-xs text-muted">
-                  {meaningOf(word!, support)}
+          <li key={review.vocab_id} className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className="min-w-0 flex-1">
+                <span className="font-display text-base text-fg">
+                  {headword(word!)}
                 </span>
-              )}
-            </span>
-            <Kicker tone="copper" className="shrink-0">
-              {review.lapses}×
-            </Kicker>
+                {meaningOf(word!, support) && (
+                  <span className="ml-2 font-sans text-xs text-muted">
+                    {meaningOf(word!, support)}
+                  </span>
+                )}
+              </span>
+              <Kicker tone="copper" className="shrink-0">
+                {review.lapses}×
+              </Kicker>
+              <button
+                type="button"
+                aria-label={`Say ${headword(word!)} for them`}
+                aria-pressed={openId === word!.id}
+                onClick={() => setOpenId(openId === word!.id ? null : word!.id)}
+                className={ROW_TOOL}
+              >
+                <Mic className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            {openId === word!.id && (
+              <VoiceThread word={word!} compact startOpen />
+            )}
           </li>
         ))}
       </ul>
