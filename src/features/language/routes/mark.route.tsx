@@ -5,17 +5,20 @@ import { usePartner } from '@kernel/auth';
 import { cn } from '@kernel/lib';
 import {
   Button,
+  Desk,
   Empty,
   Field,
   Input,
   LoadingScreen,
   Textarea,
   toast,
+  useDesk,
 } from '@kernel/ui';
 import { useProgress } from '../api/courses.queries';
 import { useAttemptsForMarking, useLesson } from '../api/lessons.queries';
 import { useSaveProgress } from '../api/lessons.mutations';
 import { useLanguages } from '../lib/languages';
+import { LessonTree } from '../components/lesson-tree';
 import { acceptedForms } from '../lib/exercise-schema';
 import { pick } from '../lib/pick';
 import type { Attempt } from '../types';
@@ -54,6 +57,7 @@ export function MarkRoute() {
 
   const [score, setScore] = useState('');
   const [note, setNote] = useState('');
+  useDesk();
 
   /** His newest answer per question — attempts are append-only. */
   const his = useMemo(() => {
@@ -95,59 +99,9 @@ export function MarkRoute() {
 
   const right = answered.filter((ex) => his.get(ex.id)?.correct).length;
 
-  return (
-    <div className="curtain-reveal space-y-3">
-      <header className="min-w-0">
-        <p className="eyebrow">
-          {partner?.display_name ?? 'His'} answers · {right} of{' '}
-          {answered.length} right
-        </p>
-        <h1 className="mt-0.5 truncate font-display text-2xl font-semibold text-fg">
-          {lesson.title}
-        </h1>
-      </header>
-
-      <ul className="space-y-2">
-        {answered.map((ex, i) => {
-          const attempt = his.get(ex.id);
-          const ok = attempt?.correct;
-          return (
-            <li
-              key={ex.id}
-              className={cn(
-                'space-y-1 rounded-lg px-3 py-2.5',
-                ok ? 'bg-surface' : 'bg-danger/10'
-              )}
-            >
-              <p className="flex items-center gap-1.5 font-sans text-[0.68rem] uppercase tracking-[0.12em] text-muted">
-                {ok ? (
-                  <Check className="h-3.5 w-3.5 text-success" />
-                ) : (
-                  <X className="h-3.5 w-3.5 text-danger" />
-                )}
-                {i + 1} · {ex.kind}
-                {attempt && attempt.attempt_no > 1 && (
-                  <span className="text-copper">
-                    {attempt.attempt_no} tries
-                  </span>
-                )}
-              </p>
-              <p className="font-sans text-sm text-fg">
-                {pick(ex, 'prompt', support) || 'Untitled question'}
-              </p>
-              <p className="font-display text-base text-fg">
-                {shown(attempt?.answer)}
-              </p>
-              {!ok && (
-                <p className="font-sans text-xs text-muted">
-                  wanted: {acceptedForms(ex.answer).join(' · ') || '—'}
-                </p>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-
+  /** Her verdict — the desk's right pane, under the answers on a phone. */
+  const verdict = (
+    <div className="space-y-3">
       <Field label="Out of a hundred" hint="Change it if the app was unfair">
         <Input
           value={score}
@@ -191,5 +145,71 @@ export function MarkRoute() {
         Give it back to him
       </Button>
     </div>
+  );
+
+  return (
+    <Desk
+      rail={
+        <LessonTree
+          courseId={lesson.courseId}
+          currentId={lesson.id}
+          mode="read"
+        />
+      }
+      inspector={verdict}
+    >
+      <div className="curtain-reveal space-y-3">
+        <header className="min-w-0">
+          <p className="eyebrow">
+            {partner?.display_name ?? 'His'} answers · {right} of{' '}
+            {answered.length} right
+          </p>
+          <h1 className="mt-0.5 truncate font-display text-2xl font-semibold text-fg">
+            {lesson.title}
+          </h1>
+        </header>
+
+        <ul className="space-y-2">
+          {answered.map((ex, i) => {
+            const attempt = his.get(ex.id);
+            const ok = attempt?.correct;
+            return (
+              <li
+                key={ex.id}
+                className={cn(
+                  'space-y-1 rounded-lg px-3 py-2.5',
+                  ok ? 'bg-surface' : 'bg-danger/10'
+                )}
+              >
+                <p className="flex items-center gap-1.5 font-sans text-[0.68rem] uppercase tracking-[0.12em] text-muted">
+                  {ok ? (
+                    <Check className="h-3.5 w-3.5 text-success" />
+                  ) : (
+                    <X className="h-3.5 w-3.5 text-danger" />
+                  )}
+                  {i + 1} · {ex.kind}
+                  {attempt && attempt.attempt_no > 1 && (
+                    <span className="text-copper">
+                      {attempt.attempt_no} tries
+                    </span>
+                  )}
+                </p>
+                <p className="font-sans text-sm text-fg">
+                  {pick(ex, 'prompt', support) || 'Untitled question'}
+                </p>
+                <p className="font-display text-base text-fg">
+                  {shown(attempt?.answer)}
+                </p>
+                {!ok && (
+                  <p className="font-sans text-xs text-muted">
+                    wanted: {acceptedForms(ex.answer).join(' · ') || '—'}
+                  </p>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </Desk>
   );
 }
