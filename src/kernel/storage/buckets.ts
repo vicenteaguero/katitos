@@ -16,8 +16,6 @@ export const BUCKETS = {
 export type BucketName = (typeof BUCKETS)[keyof typeof BUCKETS];
 
 export const storagePaths = {
-  /** One bouquet per monthsversary. */
-  flower: (occasionDate: string) => `${occasionDate}.jpg`,
   quizImage: (deckId: string, cardId: string) => `${deckId}/${cardId}.jpg`,
   quizAudio: (deckId: string, cardId: string, ext = 'webm') =>
     `${deckId}/${cardId}.${ext}`,
@@ -34,7 +32,6 @@ export const storagePaths = {
   /** Photo of the physical date-card (same bucket, distinct prefix). */
   scavengerCardImage: (cardId: string) => `card/${cardId}.jpg`,
   datePhoto: (dateId: string, fileId: string) => `${dateId}/${fileId}.jpg`,
-  tripPhoto: (tripId: string, fileId: string) => `${tripId}/${fileId}.jpg`,
   /** A place review's single photo (same georgia-album bucket, reviews/ prefix). */
   tripReview: (reviewId: string) => `reviews/${reviewId}.jpg`,
   /** An itinerary item's single photo. */
@@ -42,13 +39,6 @@ export const storagePaths = {
   /** A photo placed in a 3D album book page slot. */
   albumPhoto: (bookId: string, photoId: string) =>
     `book/${bookId}/${photoId}.jpg`,
-  avatar: (userId: string) => `${userId}.jpg`,
-  /**
-   * A wishlist item's photo. Owner-prefixed on purpose: storage RLS reads the
-   * first path segment to keep a hidden gift's picture unreadable by the very
-   * person it is hidden from.
-   */
-  wishlistItem: (userId: string, fileId: string) => `${userId}/${fileId}.jpg`,
   /** Know-Me reveal reaction selfie, one per day per user. */
   knowMeReaction: (dayId: string, userId: string) =>
     `know-me/${dayId}/${userId}.jpg`,
