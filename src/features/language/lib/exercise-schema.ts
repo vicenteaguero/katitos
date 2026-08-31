@@ -32,7 +32,13 @@ export const payloadSchemas = {
    * Fill the gaps. The sentence carries `{{1}}`, `{{2}}` markers, and there
    * must be one answer per marker or the exercise cannot be marked.
    */
-  complete: z.object({ template: z.string().min(1) }),
+  complete: z.object({
+    template: z.string().min(1),
+    /** One per gap: the lemma in brackets, the case wanted — what a textbook prints under the blank. */
+    hints: z.array(z.string()).optional(),
+    /** One per gap: why that form, shown after marking. */
+    why: z.array(z.string()).optional(),
+  }),
   /** Put the words in the right order. */
   order: z.object({ tokens: z.array(z.string().min(1)).min(2) }),
   /** Join each left to its right. */
