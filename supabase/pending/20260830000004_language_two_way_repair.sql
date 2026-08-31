@@ -63,12 +63,14 @@ update public.lang_blocks b
          (
            select coalesce(jsonb_agg(
              case
-               when (h ->> 'en') ~ '[А-Яа-яЁё]' and h ->> 'ru' is null
-                 then (h - 'en') || jsonb_build_object('ru', h ->> 'en')
-               else h
+               when (t.h ->> 'en') ~ '[А-Яа-яЁё]' and t.h ->> 'ru' is null
+                 then (t.h - 'en') || jsonb_build_object('ru', t.h ->> 'en')
+               else t.h
              end
+             order by t.ord
            ), '[]'::jsonb)
-           from jsonb_array_elements(b.data -> 'headings') as h
+           from jsonb_array_elements(b.data -> 'headings')
+                with ordinality as t(h, ord)
          )
        )
   from public.lang_lessons l
@@ -77,4 +79,10 @@ update public.lang_blocks b
  where b.lesson_id = l.id
    and b.kind = 'table'
    and c.target_lang = 'es'
-   and jsonb_typeof(b.data -> 'headings') = 'array';
+   and jsonb_typeof(b.data -> 'headings') = 'array'
+   -- Only a table that actually has a Cyrillic heading filed as English —
+   -- so running this twice really does change nothing.
+   and exists (
+     select 1 from jsonb_array_elements(b.data -> 'headings') as h
+      where (h ->> 'en') ~ '[А-Яа-яЁё]' and h ->> 'ru' is null
+   );
