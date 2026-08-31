@@ -74,7 +74,17 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,webp,woff2}'],
         // iOS reads launch images directly at startup — no need to precache the
         // large splash PNGs into the runtime cache.
-        globIgnores: ['**/icons/splash/**'],
+        globIgnores: [
+          '**/icons/splash/**',
+          // The aggregate font files reference every subset; only latin and
+          // cyrillic are ever shown here. The rest stay on the server for the
+          // day a Greek word turns up, instead of costing every install a
+          // megabyte of Vietnamese.
+          '**/*-cyrillic-ext-*',
+          '**/*-latin-ext-*',
+          '**/*-vietnamese-*',
+          '**/*-greek*',
+        ],
       },
       devOptions: {
         enabled: true,
