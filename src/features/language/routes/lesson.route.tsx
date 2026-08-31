@@ -22,7 +22,7 @@ import {
   useAnswerExercises,
   useSaveProgress,
 } from '../api/lessons.mutations';
-import { useLanguages } from '../lib/languages';
+import { isTeacherOf, useLanguages } from '../lib/languages';
 import { gradeAnswer, type Grade } from '../lib/exercise-schema';
 import { ExerciseView } from '../components/exercises/exercise-view';
 import { BlockView } from '../components/block-view';
@@ -44,7 +44,7 @@ export function LessonRoute() {
   const answer = useAnswerExercise();
   const answerMany = useAnswerExercises();
   const saveProgress = useSaveProgress();
-  const { native: support } = useLanguages();
+  const { native: support, ready } = useLanguages();
   // Filtered to THIS lesson: unfiltered, editing any lesson anywhere re-ran
   // this one's whole read.
   useTableSync('lang_blocks', qk.lang.lesson(lessonId ?? 'none'), {
@@ -70,8 +70,13 @@ export function LessonRoute() {
   const submitted =
     handedIn || ['submitted', 'graded'].includes(mine?.status ?? '');
 
+  // Her pencil, not his: the builder is for whoever teaches this language —
+  // and only once the pair is known, because for the first half-second the
+  // app is guessing, and it guessed him.
+  const teacher =
+    ready && isTeacherOf({ target_lang: lesson?.targetLang }, support);
   useTopBarAction(
-    lessonId ? (
+    lessonId && teacher ? (
       <TopBarButton
         label="Edit this lesson"
         to={`/language/build/${lessonId}`}
@@ -80,7 +85,7 @@ export function LessonRoute() {
         <Pencil className="h-4 w-4" />
       </TopBarButton>
     ) : null,
-    [lessonId]
+    [lessonId, teacher]
   );
 
   /** How many times he has already had a go at each question. */
@@ -206,6 +211,50 @@ export function LessonRoute() {
   const allDone = exercises.length > 0 && answeredCount === exercises.length;
   const scored = Object.values(grades).filter((g) => g.correct).length;
 
+  /** One question, wherever it sits in the page. */
+  const exerciseCard = (ex: Exercise) => {
+    const i = exercises.indexOf(ex);
+    const grade = grades[ex.id] ?? null;
+    // In an exam nothing is revealed until it is handed in.
+    const shown = isExam ? (submitted ? grade : null) : grade;
+    return (
+      <div
+        key={ex.id}
+        className={cn(
+          'space-y-2 rounded-lg bg-surface px-3 py-2.5',
+          // No alpha on a ring: `ring-success/40` renders Tailwind's
+          // default blue, not green.
+          shown?.correct && 'ring-1 ring-success'
+        )}
+      >
+        <Kicker as="p" tone="muted">
+          {i + 1} of {exercises.length}
+        </Kicker>
+        <ExerciseView
+          target={lesson.targetLang}
+          exercise={ex}
+          support={support}
+          value={answers[ex.id]}
+          onChange={(v) => setAnswers((a) => ({ ...a, [ex.id]: v }))}
+          grade={shown}
+          disabled={isExam ? submitted : !!grade}
+        />
+        {!isExam && !grade && (
+          <Button
+            full
+            variant="secondary"
+            onClick={() => markOne(ex)}
+            // Not until his earlier attempts are known — the attempt
+            // number would collide with one already written.
+            disabled={answers[ex.id] === undefined || attemptsLoading}
+          >
+            Check
+          </Button>
+        )}
+      </div>
+    );
+  };
+
   return (
     <Desk
       rail={
@@ -250,64 +299,27 @@ export function LessonRoute() {
           </section>
         )}
 
-        {/* Hers to select and copy — a lesson on a computer is a document. */}
-        <div data-readable className="space-y-3">
-          {lesson.blocks.map((block) => (
-            <BlockView
-              key={block.id}
-              block={block}
-              support={support}
-              target={lesson.targetLang}
-              vocab={lesson.vocabByBlock[block.id]}
-              media={mediaFor(block)}
-            />
-          ))}
-        </div>
+        {/* Hers to select and copy — a lesson on a computer is a document. The
+            questions sit where she put them: after the block they belong to. */}
+        {lesson.blocks.map((block) => (
+          <div key={block.id} className="space-y-3">
+            <div data-readable>
+              <BlockView
+                block={block}
+                support={support}
+                target={lesson.targetLang}
+                vocab={lesson.vocabByBlock[block.id]}
+                media={mediaFor(block)}
+              />
+            </div>
+            {(lesson.exercisesByBlock[block.id] ?? []).map(exerciseCard)}
+          </div>
+        ))}
+
+        {lesson.looseExercises.map(exerciseCard)}
 
         {exercises.length > 0 && (
           <section className="space-y-3">
-            {exercises.map((ex, i) => {
-              const grade = grades[ex.id] ?? null;
-              // In an exam nothing is revealed until it is handed in.
-              const shown = isExam ? (submitted ? grade : null) : grade;
-              return (
-                <div
-                  key={ex.id}
-                  className={cn(
-                    'space-y-2 rounded-lg bg-surface px-3 py-2.5',
-                    // No alpha on a ring: `ring-success/40` renders Tailwind's
-                    // default blue, not green.
-                    shown?.correct && 'ring-1 ring-success'
-                  )}
-                >
-                  <Kicker as="p" tone="muted">
-                    {i + 1} of {exercises.length}
-                  </Kicker>
-                  <ExerciseView
-                    target={lesson.targetLang}
-                    exercise={ex}
-                    support={support}
-                    value={answers[ex.id]}
-                    onChange={(v) => setAnswers((a) => ({ ...a, [ex.id]: v }))}
-                    grade={shown}
-                    disabled={isExam ? submitted : !!grade}
-                  />
-                  {!isExam && !grade && (
-                    <Button
-                      full
-                      variant="secondary"
-                      onClick={() => markOne(ex)}
-                      // Not until his earlier attempts are known — the attempt
-                      // number would collide with one already written.
-                      disabled={answers[ex.id] === undefined || attemptsLoading}
-                    >
-                      Check
-                    </Button>
-                  )}
-                </div>
-              );
-            })}
-
             {isExam && !submitted && (
               <Button
                 full
