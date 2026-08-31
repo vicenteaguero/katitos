@@ -35,6 +35,11 @@
 
     "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom"]
   },
-  "include": ["src", "vitest.setup.ts"],
+  "include": [
+    "src",
+    "vitest.setup.ts",
+    "supabase/functions/polaroid-reminder/zone.ts",
+    "supabase/functions/polaroid-reminder/zone.test.ts"
+  ],
   "exclude": ["src/sw.ts"]
 }
