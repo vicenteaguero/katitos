@@ -6,7 +6,9 @@ import { cn } from '../../lib/cn';
  * still one column on a phone.
  *
  * On a phone the rail is not shown at all (the things it lists are reachable
- * as screens of their own), the canvas is the page, and the inspector stacks
+ * as screens of their own — `.desk__rail` is hidden until a laptop, in the
+ * stylesheet, so no width ever shows it by accident), the canvas is the
+ * page, and the inspector stacks
  * underneath it, exactly as these screens were before there was a desk. From
  * a tablet up the canvas and the inspector sit side by side, each scrolling
  * on its own; from a laptop up the rail joins on the left. The panes are told
