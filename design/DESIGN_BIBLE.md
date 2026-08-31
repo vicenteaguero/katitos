@@ -28,6 +28,14 @@
 > 6. **On wine red (`bg-accent`) content is WHITE** (`text-accent-fg`) — never
 >    black or dark.
 >
+> **Exception, 2026-08-30 — the desk.** By the owner's instruction, a route
+> that calls `useDesk()` (the language course: builder, marking, dictionary,
+> course, lesson, practice, alphabet) is allowed to exceed the 32rem column
+> from a tablet up: the shell lifts its cap (`--shell-max-width`), the tab bar
+> becomes a side rail, and the route lays itself out in three panes told apart
+> by tone. Every other route, and every phone, stays exactly as this file says.
+> Sheets, toasts and the login keep the phone width even on a desk.
+>
 > Plus: fast and flawless — light DOM, short snappy GPU animations
 > (`.curtain-reveal` / `.lift-press`), no jank. Cormorant for titles, Manrope
 > for UI, 32rem mobile column. Presentation changes only unless told otherwise.
