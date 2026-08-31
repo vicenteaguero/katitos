@@ -8,7 +8,7 @@ import {
   Desk,
   Empty,
   Input,
-  LoadingScreen,
+  ListSkeleton,
   OptionButton,
   PlayButton,
   useDesk,
@@ -63,7 +63,7 @@ export function StudyRoute() {
     [ready, sessionKey]
   );
 
-  if (isLoading || !ready) return <LoadingScreen />;
+  if (isLoading || !ready) return <ListSkeleton rows={2} header={false} />;
   if (session.length === 0) {
     return (
       <Empty
@@ -112,7 +112,7 @@ export function StudyRoute() {
 
   if (done) {
     return (
-      <div className="curtain-reveal flex h-full flex-col items-center justify-center gap-6 text-center">
+      <div className="curtain-reveal flex h-full flex-col items-center justify-center gap-4 text-center">
         <p className="text-6xl">{score.right === score.total ? '🌟' : '💪'}</p>
         <div>
           <p className="font-display text-3xl text-fg">
@@ -146,9 +146,9 @@ export function StudyRoute() {
           </p>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col justify-center gap-5">
+        <div className="flex min-h-0 flex-1 flex-col justify-center gap-3">
           {/* ── the prompt ─────────────────────────────────────────────── */}
-          <div className="marble gilt-hairline shadow-loge rounded-lg px-5 py-8 text-center">
+          <div className="marble gilt-hairline shadow-loge rounded-lg px-4 py-6 text-center">
             {mode === 'listen' ? (
               <div className="space-y-3">
                 <Volume2 className="mx-auto h-6 w-6 text-brown/60" />
@@ -181,7 +181,7 @@ export function StudyRoute() {
             )}
 
             {revealed && (
-              <div className="km-reveal mt-5 space-y-1 border-t border-brown/15 pt-4">
+              <div className="km-reveal mt-3 space-y-1 border-t border-brown/15 pt-3">
                 <p className="font-display text-2xl text-brown">
                   {mode === 'recall'
                     ? meaningOf(card, support)
