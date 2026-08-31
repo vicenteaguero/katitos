@@ -46,9 +46,16 @@ export function VocabPickerSheet({
 }) {
   const { native: support } = useLanguages();
   const [search, setSearch] = useState('');
+  // What the QUERY sees, a beat behind the box — each keystroke used to fire
+  // its own 500-row search and keep it in the cache.
+  const [term, setTerm] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => setTerm(search), 250);
+    return () => clearTimeout(t);
+  }, [search]);
   // The dictionary of the language being TAUGHT here. Using "what I'm learning"
   // would show her a list of Spanish words while she writes a Russian lesson.
-  const { data: words, isLoading } = useVocab(target, search);
+  const { data: words, isLoading } = useVocab(target, term);
   const setBlockVocab = useSetBlockVocab();
   const addVocab = useAddVocab();
 
