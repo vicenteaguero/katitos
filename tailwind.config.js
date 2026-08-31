@@ -1,3 +1,20 @@
+/**
+ * A colour token that can take a Tailwind alpha modifier.
+ *
+ * A bare `var(--x)` cannot: Tailwind 3 emits NOTHING for `bg-danger/10` and
+ * the class silently disappears — a wrong answer had no tint, a divider no
+ * line, a ring fell back to blue. Ninety-odd usages across the app were dead.
+ * `color-mix` keeps ONE source of truth — the hex stays in index.css, where
+ * the raw-CSS rules already read it — and only the `/NN` forms go through it,
+ * so every plain class compiles exactly as before.
+ */
+const token =
+  (v) =>
+  ({ opacityValue } = {}) =>
+    opacityValue === undefined || String(opacityValue).startsWith('var(')
+      ? `var(${v})`
+      : `color-mix(in srgb, var(${v}) calc(${opacityValue} * 100%), transparent)`;
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
@@ -6,23 +23,23 @@ export default {
       // All colors reference CSS variables (see src/index.css) so a future
       // visual redesign means editing the token file only — never components.
       colors: {
-        bg: 'var(--color-bg)',
-        surface: 'var(--color-surface)',
-        'surface-2': 'var(--color-surface-2)',
-        border: 'var(--color-border)',
-        fg: 'var(--color-fg)',
-        muted: 'var(--color-muted)',
-        accent: 'var(--color-accent)',
-        'accent-fg': 'var(--color-accent-fg)',
-        danger: 'var(--color-danger)',
-        success: 'var(--color-success)',
-        warning: 'var(--color-warning)',
+        bg: token('--color-bg'),
+        surface: token('--color-surface'),
+        'surface-2': token('--color-surface-2'),
+        border: token('--color-border'),
+        fg: token('--color-fg'),
+        muted: token('--color-muted'),
+        accent: token('--color-accent'),
+        'accent-fg': token('--color-accent-fg'),
+        danger: token('--color-danger'),
+        success: token('--color-success'),
+        warning: token('--color-warning'),
         // Romantic accent layer — her purple/brown + theater gilt + Chile copper.
-        purple: 'var(--color-purple)',
-        brown: 'var(--color-brown)',
-        lapis: 'var(--color-lapis)',
-        copper: 'var(--color-copper)',
-        gold: 'var(--gold)',
+        purple: token('--color-purple'),
+        brown: token('--color-brown'),
+        lapis: token('--color-lapis'),
+        copper: token('--color-copper'),
+        gold: token('--gold'),
       },
       borderRadius: {
         // Mixed-corner system: none = photos/heroes, DEFAULT (12px) = buttons/
