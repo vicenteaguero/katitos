@@ -127,7 +127,14 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
     css: false,
-    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    // The reminder scheduler's timezone maths lives in supabase/functions
+    // because Deno runs it, but it is plain TypeScript with no Deno in it and
+    // it is the most breakable code in the app — so it is tested here with
+    // everything else rather than trusted because it is hard to reach.
+    include: [
+      'src/**/*.{test,spec}.{ts,tsx}',
+      'supabase/functions/**/*.{test,spec}.ts',
+    ],
     exclude: ['node_modules', 'dist', 'tests/e2e/**'],
     coverage: {
       provider: 'v8',
