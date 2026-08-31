@@ -12,6 +12,7 @@ export const qk = {
   polaroids: {
     all: () => ['polaroids'] as const,
     byDay: (day: string) => ['polaroids', 'day', day] as const,
+    openDays: (key: string) => ['polaroids', 'open-days', key] as const,
     list: () => ['polaroids', 'list'] as const,
     /** The paginated album. Separate from `list` so warming can't evict it. */
     pages: () => ['polaroids', 'pages'] as const,
@@ -102,6 +103,8 @@ export const qk = {
     vocab: () => ['lang', 'vocab'] as const,
     /** Not under `vocab()` — adding a word must not refetch every review row. */
     vocabReviews: () => ['lang', 'reviews'] as const,
+    /** The recordings of one word, by either of us. */
+    voice: (vocabId: string) => ['lang', 'voice', vocabId] as const,
     media: (courseId: string) => ['lang', 'course', courseId, 'media'] as const,
     alphabet: () => ['lang', 'alphabet'] as const,
   },
