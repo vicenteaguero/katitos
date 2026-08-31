@@ -62,8 +62,8 @@ export function SideRail() {
         {/* The same button as the bar's, states and all: the beacon that
             says today's photo is still owed, the rescue for the day that is
             closing, and the system camera rather than getUserMedia. */}
-        <div className="my-1 flex h-12 items-center">
-          <PhotoButton />
+        <div className="my-1 flex h-14 items-center">
+          <PhotoButton raised={false} />
         </div>
         <RailItem to="/wall" icon={StickyNote} label="Wall" />
         <button
