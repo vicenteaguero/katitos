@@ -15,6 +15,7 @@ import { supabase } from '@kernel/supabase';
 import { useSaveExercise } from '../../api/lessons.mutations';
 import { AudioField, ExerciseKindGallery } from '../kit';
 import { useLanguages } from '../../lib/languages';
+import { stressVariants } from '../../lib/stress';
 import {
   acceptedForms,
   gapCount,
@@ -76,6 +77,8 @@ export function ExerciseEditor({
   const { native: support } = useLanguages();
 
   const [kind, setKind] = useState<ExerciseKind>('choice');
+  // Choose, asked as "where is the stress?" — the options are made for her.
+  const [variant, setVariant] = useState<'stress' | null>(null);
   const [prompt, setPrompt] = useState('');
   const [options, setOptions] = useState<ExerciseOption[]>([
     { id: nanoid(4), ru: '' },
@@ -137,6 +140,14 @@ export function ExerciseEditor({
     } else {
       setAnswerText(acceptedForms(exercise.answer).join(' / '));
     }
+    if (payload?.variant === 'stress') {
+      setVariant('stress');
+      const opts = (payload.options as ExerciseOption[] | undefined) ?? [];
+      const right = opts.find((o) => o.id === exercise.answer);
+      setAnswerText(right?.[target] ?? right?.ru ?? '');
+    } else {
+      setVariant(null);
+    }
     // Seeded from the exercise ONLY. `support` used to be a dependency, so
     // changing the language in the top bar mid-edit threw away everything she
     // had typed.
@@ -148,8 +159,17 @@ export function ExerciseEditor({
     audioPath: string | null
   ): { payload: unknown; answer: unknown } => {
     switch (kind) {
-      case 'choice':
+      case 'choice': {
+        if (variant === 'stress') {
+          const { variants, answer } = stressVariants(answerText);
+          const opts = variants.map((v, k) => ({ id: `s${k}`, [target]: v }));
+          return {
+            payload: { options: opts, variant: 'stress' },
+            answer: answer >= 0 ? opts[answer].id : '',
+          };
+        }
         return { payload: { options }, answer: correct[0] ?? '' };
+      }
       case 'multi':
         return { payload: { options }, answer: correct };
       case 'type':
@@ -245,6 +265,10 @@ export function ExerciseEditor({
     // pointing at a recording that no longer existed.
     const stored =
       (exercise?.payload as { audioPath?: string } | null)?.audioPath ?? null;
+    if (variant === 'stress' && stressVariants(answerText).answer < 0) {
+      toast.error('Put the accent on a vowel — спаси́бо');
+      return;
+    }
     const { payload, answer } = buildWith(path);
     const problem = validateExercise({ kind, payload, answer });
     if (problem) {
@@ -259,7 +283,10 @@ export function ExerciseEditor({
         position: exercise?.position ?? position,
         blockId: exercise ? exercise.block_id : blockId,
         points: Math.max(0, Number(points) || 1),
-        ...promptPatch(support, prompt),
+        ...promptPatch(
+          support,
+          prompt || (variant === 'stress' ? 'Where is the stress?' : '')
+        ),
         payload,
         answer,
       },
@@ -284,7 +311,18 @@ export function ExerciseEditor({
       size="md"
     >
       <div className="space-y-3">
-        <ExerciseKindGallery value={kind} onChange={changeKind} />
+        <ExerciseKindGallery
+          value={variant ?? kind}
+          onChange={(v) => {
+            if (v === 'stress') {
+              changeKind('choice');
+              setVariant('stress');
+            } else {
+              setVariant(null);
+              changeKind(v);
+            }
+          }}
+        />
 
         <Field label="Ask him">
           <Input
@@ -294,7 +332,21 @@ export function ExerciseEditor({
           />
         </Field>
 
-        {optionsKind && (
+        {variant === 'stress' && (
+          <Field
+            label="The word, with its stress"
+            hint="Type the accent on the stressed vowel — спаси́бо. He is offered every vowel."
+          >
+            <Input
+              value={answerText}
+              onChange={(e) => setAnswerText(e.target.value)}
+              placeholder="спаси́бо"
+              className="font-display text-lg"
+            />
+          </Field>
+        )}
+
+        {optionsKind && variant !== 'stress' && (
           <div className="space-y-1.5">
             {options.map((o, i) => (
               <div key={o.id} className="flex items-center gap-2">
