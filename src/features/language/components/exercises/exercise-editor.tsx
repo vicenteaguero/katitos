@@ -4,12 +4,12 @@ import { nanoid } from 'nanoid';
 import {
   AudioRecorder,
   Button,
+  Dialog,
   Field,
   Fieldset,
   Input,
   PlayButton,
   Segmented,
-  Sheet,
   Textarea,
   toast,
   type AudioClip,
@@ -251,11 +251,12 @@ export function ExerciseEditor({
   const optionsKind = kind === 'choice' || kind === 'multi';
 
   return (
-    <Sheet
+    <Dialog
+      placement="auto"
       open={open}
       onClose={onClose}
       title={exercise ? 'This question' : 'New question'}
-      size="full"
+      size="md"
     >
       <div className="space-y-3">
         <Segmented
@@ -432,6 +433,6 @@ export function ExerciseEditor({
           {exercise ? 'Save' : 'Add the question'}
         </Button>
       </div>
-    </Sheet>
+    </Dialog>
   );
 }
