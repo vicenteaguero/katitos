@@ -20,6 +20,22 @@ describe('Dialog', () => {
     ).toBeInTheDocument();
   });
 
+  it('takes focus when it opens later, not only when it mounts open', async () => {
+    const { rerender } = render(
+      <Dialog open={false} onClose={() => {}} title="Later">
+        <button>a</button>
+      </Dialog>
+    );
+    rerender(
+      <Dialog open onClose={() => {}} title="Later">
+        <button>a</button>
+      </Dialog>
+    );
+    await waitFor(() =>
+      expect(screen.getByRole('dialog', { name: 'Later' })).toHaveFocus()
+    );
+  });
+
   it('keeps Tab inside the panel, and wraps at both ends', async () => {
     const user = userEvent.setup();
     render(
