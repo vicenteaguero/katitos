@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { ChevronLeft, ChevronRight, Eye, Plus, X } from 'lucide-react';
-import { useHotkeys } from '@kernel/hooks';
+import { useHotkeys, useMediaQuery } from '@kernel/hooks';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import {
@@ -14,7 +14,7 @@ import {
   Kbd,
   ListSkeleton,
   toast,
-  useIsDesk,
+  DESK_QUERY,
   type AudioClip,
 } from '@kernel/ui';
 import { useLesson } from '../api/lessons.queries';
@@ -116,7 +116,8 @@ export function TeachRoute() {
   const { data: lesson, isLoading } = useLesson(lessonId);
   const { native: support } = useLanguages();
   const navigate = useNavigate();
-  const desk = useIsDesk();
+  // By the screen, not the desk registry: this overlay never asks for a desk.
+  const desk = useMediaQuery(DESK_QUERY);
   useWakeLock();
   useTableSync('lang_blocks', qk.lang.lesson(lessonId ?? 'none'), {
     filter: lessonId ? `lesson_id=eq.${lessonId}` : undefined,
