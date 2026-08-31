@@ -2,7 +2,7 @@ import { forwardRef, type ButtonHTMLAttributes } from 'react';
 import { cn } from '../lib/cn';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
-type Size = 'sm' | 'md' | 'lg';
+type Size = 'xs' | 'sm' | 'md' | 'lg';
 
 const variants: Record<Variant, string> = {
   // Wine red, WHITE text, no border — the one true action.
@@ -17,6 +17,8 @@ const variants: Record<Variant, string> = {
 };
 
 const sizes: Record<Size, string> = {
+  // Dense forms on a desk: a 48px button per option row was a wall.
+  xs: 'h-9 px-3.5 text-sm',
   sm: 'h-11 px-5 text-sm',
   md: 'h-12 px-6',
   lg: 'h-14 px-8 text-lg',
