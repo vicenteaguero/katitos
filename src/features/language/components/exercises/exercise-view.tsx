@@ -235,9 +235,13 @@ function ListenView(props: ExerciseViewProps) {
   );
 }
 
-/** Fill the gaps. Each gap is its own little field, in the sentence. */
+/**
+ * Fill the gaps. Each gap is its own little field, in the sentence — and the
+ * letters his keyboard lacks appear for whichever gap he is in.
+ */
 function CompleteView({
   exercise,
+  target,
   value,
   onChange,
   grade,
@@ -253,10 +257,19 @@ function CompleteView({
   const answers = Array.isArray(value) ? (value as string[]) : [];
   const hints = payload?.hints ?? [];
   const why = payload?.why ?? [];
+  const [gap, setGap] = useState<number | null>(null);
+  // A DENSE array. Writing to index 2 of an empty array left holes, the
+  // answer failed to parse, and filling the second gap correctly while
+  // leaving the first blank scored zero with both boxes painted red.
+  const set = (i: number, v: string) =>
+    onChange(
+      Array.from({ length: parts.length - 1 }, (_, k) =>
+        k === i ? v : (answers[k] ?? '')
+      )
+    );
   // Wide enough for what is typed, never a 6rem box a long form scrolls in.
   const width = (i: number) =>
     `${Math.max(6, (answers[i] ?? hints[i] ?? '').length + 2)}ch`;
-
   return (
     <div className="space-y-1">
       <p className="flex flex-wrap items-center gap-1 font-sans text-sm leading-8 text-fg">
@@ -267,24 +280,15 @@ function CompleteView({
               <input
                 value={answers[i] ?? ''}
                 disabled={disabled}
-                onChange={(e) => {
-                  // A DENSE array. Writing to index 2 of an empty array left
-                  // holes, the answer failed to parse, and filling the second
-                  // gap correctly while leaving the first blank scored zero with
-                  // both boxes painted red.
-                  onChange(
-                    Array.from({ length: parts.length - 1 }, (_, k) =>
-                      k === i ? e.target.value : (answers[k] ?? '')
-                    )
-                  );
-                }}
+                onChange={(e) => set(i, e.target.value)}
+                onFocus={() => setGap(i)}
                 autoComplete="off"
                 autoCapitalize="off"
                 spellCheck={false}
                 placeholder={hints[i]}
                 style={{ width: width(i) }}
                 className={cn(
-                  'rounded-md bg-surface-2 px-2 py-1 text-center font-sans text-sm text-fg outline-none placeholder:text-muted/60',
+                  'rounded-md bg-surface-2 px-2 py-1 text-center font-sans text-sm text-fg outline-none placeholder:text-muted/60 focus:ring-1 focus:ring-gold',
                   grade?.detail?.[i] === true && 'bg-success/20',
                   grade?.detail?.[i] === false && 'bg-danger/20'
                 )}
@@ -293,6 +297,13 @@ function CompleteView({
           </span>
         ))}
       </p>
+      {!disabled && gap !== null && gap < parts.length - 1 && (
+        <LetterKeys
+          lang={target}
+          onKey={(k: string) => set(gap, (answers[gap] ?? '') + k)}
+          onBackspace={() => set(gap, (answers[gap] ?? '').slice(0, -1))}
+        />
+      )}
       {grade && why.some(Boolean) && (
         <ul className="space-y-0.5 font-sans text-xs text-muted">
           {why.map((w, i) =>
