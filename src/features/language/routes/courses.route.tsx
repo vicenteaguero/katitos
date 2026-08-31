@@ -14,6 +14,7 @@ import {
   Input,
   Segmented,
   Textarea,
+  TopBarButton,
   useDesk,
   useTopBarAction,
 } from '@kernel/ui';
@@ -52,18 +53,15 @@ export function CoursesRoute() {
   const [lang, setLang] = useState<Lang>(native);
 
   useTopBarAction(
-    <button
-      type="button"
+    <TopBarButton
+      label="New course"
       onClick={() => {
         setLang(native);
         setOpen(true);
       }}
-      aria-label="New course"
-      className="lift-press flex h-8 w-8 items-center justify-center rounded-full bg-accent text-accent-fg shadow-loge"
-      style={{ border: '1px solid rgba(228,195,106,.4)' }}
     >
       <Plus className="h-4 w-4" />
-    </button>,
+    </TopBarButton>,
     [native]
   );
 
