@@ -5,13 +5,13 @@ import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import {
   Button,
+  Dialog,
   Empty,
   Field,
   FieldRow,
   Fieldset,
   Input,
   Segmented,
-  Sheet,
   Textarea,
   useTopBarAction,
 } from '@kernel/ui';
@@ -138,11 +138,12 @@ export function CoursesRoute() {
 
       <WrongList />
 
-      <Sheet
+      <Dialog
+        placement="auto"
         open={open}
         onClose={() => setOpen(false)}
         title="New course"
-        size="half"
+        size="md"
       >
         <div className="space-y-3">
           <Fieldset label="This course teaches">
@@ -193,7 +194,7 @@ export function CoursesRoute() {
             Create
           </Button>
         </div>
-      </Sheet>
+      </Dialog>
     </div>
   );
 }
