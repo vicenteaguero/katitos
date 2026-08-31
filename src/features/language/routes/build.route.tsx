@@ -50,6 +50,7 @@ import {
   useDuplicateExercise,
   useDuplicateLesson,
   useReorderBlocks,
+  useReorderExercises,
   useRestoreBlock,
   useRestoreExercise,
   useUpdateBlock,
@@ -136,6 +137,7 @@ export function BuildRoute() {
   const deleteBlock = useDeleteBlock();
   const duplicateBlock = useDuplicateBlock();
   const reorder = useReorderBlocks();
+  const reorderExercises = useReorderExercises();
   const updateLesson = useUpdateLesson();
   const deleteExercise = useDeleteExercise();
   const duplicateExercise = useDuplicateExercise();
@@ -237,12 +239,16 @@ export function BuildRoute() {
     );
 
   /** One question, where it sits in the page. */
-  const exerciseRow = (ex: Exercise) => (
+  const exerciseRow = (ex: Exercise, handle?: DragHandleProps) => (
     <div
       key={ex.id}
       className="flex items-center gap-2 rounded-lg bg-surface-2 px-3 py-2"
     >
-      <HelpCircle className="h-4 w-4 shrink-0 text-gold" />
+      {handle ? (
+        <DragHandle {...handle} />
+      ) : (
+        <HelpCircle className="h-4 w-4 shrink-0 text-gold" />
+      )}
       <button
         type="button"
         onClick={() => setEditing({ exercise: ex, blockId: ex.block_id })}
@@ -287,6 +293,25 @@ export function BuildRoute() {
       </RowToolbar>
     </div>
   );
+
+  /** The questions of one place — a block's, or the end's — in an order she can change. */
+  const questionList = (exs: Exercise[]) =>
+    exs.length ? (
+      <SortableList
+        items={exs}
+        keyOf={(e) => e.id}
+        disabled={reorderExercises.isPending}
+        className="space-y-1.5"
+        onReorder={(next) =>
+          reorderExercises.mutate({
+            lessonId: lesson.id,
+            ids: next.map((e) => e.id),
+          })
+        }
+      >
+        {(ex, _i, handle) => exerciseRow(ex, handle)}
+      </SortableList>
+    ) : null;
 
   /** The desk's right pane: what to add, what this lesson is, what to do with it. */
   const inspector = (
@@ -515,7 +540,7 @@ export function BuildRoute() {
                 }
               />
               {/* Try it here: the questions that belong to this block. */}
-              {(lesson.exercisesByBlock[block.id] ?? []).map(exerciseRow)}
+              {questionList(lesson.exercisesByBlock[block.id] ?? [])}
               <button
                 type="button"
                 onClick={() =>
@@ -534,7 +559,7 @@ export function BuildRoute() {
             <Kicker as="p" tone="muted">
               At the end
             </Kicker>
-            {lesson.looseExercises.map(exerciseRow)}
+            {questionList(lesson.looseExercises)}
           </div>
         )}
 
@@ -758,6 +783,11 @@ function BlockEditor({
           placeholder={', singular, plural\nnominative, стол, столы'}
           className="font-display"
         />
+        <p className="font-sans text-xs text-muted">
+          A grid of endings — cases, persons, plurals. Type it like a list: the
+          first line is the headings, then one row per line, commas between the
+          columns.
+        </p>
         <Input
           value={head.text}
           onChange={(e) => head.onChange(e.target.value)}
