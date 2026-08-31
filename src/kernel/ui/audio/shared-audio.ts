@@ -15,6 +15,8 @@ export function sharedAudio(): HTMLAudioElement {
   if (!el) {
     el = new Audio();
     el.preload = 'none';
+    // CORS, so the service worker can keep her recordings for offline.
+    el.crossOrigin = 'anonymous';
   }
   return el;
 }
