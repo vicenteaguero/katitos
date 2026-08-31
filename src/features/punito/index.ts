@@ -1,1 +1,0 @@
-export { punitoFeature } from './feature';
