@@ -26,4 +26,17 @@ begin
   select p_block, v, ord - 1
     from unnest(p_vocab) with ordinality as t(v, ord)
   on conflict (block_id, vocab_id) do update set position = excluded.position;
+  -- One clean run of positions over hidden and visible alike, so a word
+  -- brought back by Undo does not share a slot with the one after it.
+  with ranked as (
+    select vocab_id,
+           row_number() over (order by position, vocab_id) - 1 as pos
+      from public.lang_block_vocab
+     where block_id = p_block
+  )
+  update public.lang_block_vocab bv
+     set position = ranked.pos
+    from ranked
+   where bv.block_id = p_block
+     and bv.vocab_id = ranked.vocab_id;
 end $$;
