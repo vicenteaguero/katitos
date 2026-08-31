@@ -14,16 +14,39 @@ declare const self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: Array<{ url: string; revision: string | null }>;
 };
 
-const CACHE = 'katitos-shell-v5';
+/**
+ * A tiny stable hash of the precache manifest — the shell cache is named by
+ * it, so every deploy gets a cache of its own and `activate` throws the last
+ * one away. A single fixed name kept every deploy's hashed assets forever.
+ */
+function fingerprint(entries: Array<{ url: string; revision: string | null }>) {
+  let h = 2166136261;
+  for (const e of entries) {
+    for (const ch of `${e.url}@${e.revision ?? ''}`) {
+      h ^= ch.charCodeAt(0);
+      h = Math.imul(h, 16777619);
+    }
+  }
+  return (h >>> 0).toString(36);
+}
+// Read ONCE: the build tool looks for exactly one mention of this token.
+const MANIFEST = self.__WB_MANIFEST;
+const CACHE = `katitos-shell-${fingerprint(MANIFEST)}`;
 // Photos from Supabase storage (signed URLs). Cached token-agnostically so a
 // warmed photo keeps loading offline even after its signed URL rotates.
 const IMG_CACHE = 'katitos-img-v2';
 /** How many photographs are worth keeping on the phone. */
 const IMG_CACHE_MAX = 400;
+// Her recordings, apart from the photographs: a lesson's worth of clips must
+// not be pushed out by an afternoon of browsing the album.
+const AUDIO_CACHE = 'katitos-audio-v1';
+const AUDIO_CACHE_MAX = 600;
+const AUDIO_BUCKETS =
+  /\/storage\/v1\/object\/(sign|public)\/(language-audio|quiz-media)\//;
 const PRECACHE_URLS = [
   '/',
   '/index.html',
-  ...self.__WB_MANIFEST.map((entry) => entry.url),
+  ...MANIFEST.map((entry) => entry.url),
 ];
 
 // Last-resort offline page when the cached shell itself is gone (iOS purges
@@ -55,7 +78,12 @@ self.addEventListener('install', (event) => {
  * trimmed. An album browsed over a few weeks was paying for the same photos
  * dozens of times over on a phone.
  */
-async function storePhoto(cache: Cache, req: Request, resp: Response) {
+async function storeObject(
+  cache: Cache,
+  req: Request,
+  resp: Response,
+  max: number
+) {
   // Drop the token before storing: the object path IS the identity, and this
   // is what makes `ignoreSearch` reads and writes agree with each other.
   const key = new Request(new URL(req.url).origin + new URL(req.url).pathname, {
@@ -63,10 +91,10 @@ async function storePhoto(cache: Cache, req: Request, resp: Response) {
   });
   await cache.put(key, resp);
   const keys = await cache.keys();
-  if (keys.length <= IMG_CACHE_MAX) return;
+  if (keys.length <= max) return;
   // Oldest first — `cache.keys()` is insertion-ordered.
   await Promise.all(
-    keys.slice(0, keys.length - IMG_CACHE_MAX).map((k) => cache.delete(k))
+    keys.slice(0, keys.length - max).map((k) => cache.delete(k))
   );
 }
 
@@ -77,7 +105,7 @@ self.addEventListener('activate', (event) => {
       .then((keys) =>
         Promise.all(
           keys
-            .filter((k) => k !== CACHE && k !== IMG_CACHE)
+            .filter((k) => k !== CACHE && k !== IMG_CACHE && k !== AUDIO_CACHE)
             .map((k) => caches.delete(k))
         )
       )
@@ -127,14 +155,25 @@ self.addEventListener('fetch', (event) => {
   // Supabase storage photos: cache-first, token-agnostic (the signed-URL token
   // lives in the query string, so match ignoring search → a warmed photo keeps
   // loading offline and across token rotations). Revalidate in the background.
+  // Only a response the worker can READ gets stored: an <img> or <audio>
+  // fetched without `crossOrigin` comes back opaque (`ok` false) and is
+  // passed through untouched — which is why every loader in the app now
+  // asks for CORS. Storage answers with `Access-Control-Allow-Origin: *`.
   if (/\/storage\/v1\/(object|render\/image)\//.test(url.pathname)) {
+    const audio = AUDIO_BUCKETS.test(url.pathname);
     event.respondWith(
       (async () => {
-        const cache = await caches.open(IMG_CACHE);
+        const cache = await caches.open(audio ? AUDIO_CACHE : IMG_CACHE);
         const cached = await cache.match(req, { ignoreSearch: true });
         const network = fetch(req)
           .then((resp) => {
-            if (resp.ok) void storePhoto(cache, req, resp.clone());
+            if (resp.ok)
+              void storeObject(
+                cache,
+                req,
+                resp.clone(),
+                audio ? AUDIO_CACHE_MAX : IMG_CACHE_MAX
+              );
             return resp;
           })
           .catch(() => undefined);
