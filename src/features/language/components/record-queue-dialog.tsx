@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Check, SkipForward } from 'lucide-react';
 import { useHotkeys } from '@kernel/hooks';
 import { Button, Dialog, Kicker, type AudioClip } from '@kernel/ui';
@@ -25,7 +25,11 @@ export function RecordQueueDialog({
   words: Vocab[];
   support: Lang;
 }) {
-  const queue = useMemo(() => words.filter((w) => !w.audio_path), [words]);
+  // Frozen for the sitting: each save refetches the dictionary, the word
+  // just recorded dropped out of a live filter, and every save skipped one.
+  const [queue, setQueue] = useState<Vocab[]>([]);
+  const wordsRef = useRef(words);
+  wordsRef.current = words;
   const [at, setAt] = useState(0);
   const [clip, setClip] = useState<AudioClip | null>(null);
   const [kept, setKept] = useState(0);
@@ -34,6 +38,7 @@ export function RecordQueueDialog({
 
   useEffect(() => {
     if (open) {
+      setQueue(wordsRef.current.filter((w) => !w.audio_path));
       setAt(0);
       setKept(0);
       setClip(null);
