@@ -10,6 +10,7 @@ import {
   Input,
   OptionButton,
   PlayButton,
+  toast,
   type AudioClip,
   type OptionState,
 } from '@kernel/ui';
@@ -502,6 +503,8 @@ function SpeakView({ exercise, value, onChange, disabled }: ExerciseViewProps) {
         cacheControl: '31536000',
       });
       onChange({ ok: given.ok, audio });
+    } catch (e) {
+      toast.error((e as Error).message);
     } finally {
       setBusy(false);
     }
