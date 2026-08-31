@@ -124,6 +124,10 @@ textarea,
 
   /* ── Layout: uncramped phone column ────────────────────────────────────── */
   --app-max-width: 32rem;
+  /* The SHELL's cap. Same as the phone column — until a desk route lifts it.
+     Kept apart from --app-max-width on purpose: sheets, toasts and the login
+     read that one, and they keep their phone width even on a desk. */
+  --shell-max-width: var(--app-max-width);
   --space-stage: 1.75rem;
   --space-act: 3rem;
 
@@ -138,12 +142,62 @@ textarea,
   color-scheme: dark;
 }
 
-/* A route that calls `useWideLayout()` — the lesson builder, the dictionary —
-   gets a real desk to work on once the screen deserves one. Phones are
-   untouched: the query never matches there. */
+/* ── The desk ──────────────────────────────────────────────────────────────
+   A route that calls `useDesk()` gets the whole window once the screen has
+   room for one, and lays itself out with `Desk`: a rail, a canvas and an
+   inspector, each scrolling on its own, told apart by tone. Phones are
+   untouched: the queries never match there, and `.desk` is a plain block. */
 @media (min-width: 768px) {
-  :root[data-wide] {
-    --app-max-width: 72rem;
+  :root[data-desk] {
+    --shell-max-width: none;
+  }
+  [data-desk] .desk {
+    display: grid;
+    height: 100%;
+    min-height: 0;
+    grid-auto-flow: column;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  [data-desk] .desk[data-panes~='inspector'] {
+    grid-template-columns: minmax(0, 1fr) 18rem;
+  }
+  /* The rail waits for a laptop; a tablet has room for two panes, not three. */
+  [data-desk] .desk__rail {
+    display: none;
+  }
+  [data-desk] .desk__canvas,
+  [data-desk] .desk__inspector,
+  [data-desk] .desk__rail {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  [data-desk] .desk__canvas {
+    padding: 0.75rem 1.5rem 3rem;
+  }
+  [data-desk] .desk--narrow .desk__page {
+    max-width: 44rem;
+    margin-inline: auto;
+  }
+  [data-desk] .desk__inspector {
+    padding: 0.75rem 1rem 3rem;
+    background: var(--color-surface-2);
+  }
+}
+@media (min-width: 1024px) {
+  [data-desk] .desk[data-panes~='rail'] {
+    grid-template-columns: 16rem minmax(0, 1fr);
+  }
+  [data-desk] .desk[data-panes~='rail'][data-panes~='inspector'] {
+    grid-template-columns: 16rem minmax(0, 1fr) 20rem;
+  }
+  [data-desk] .desk__rail {
+    display: block;
+    padding: 0.75rem 0.75rem 3rem;
+    background: var(--color-bg);
+  }
+  [data-desk] .desk__canvas {
+    padding: 0.75rem 2rem 3rem;
   }
 }
 
