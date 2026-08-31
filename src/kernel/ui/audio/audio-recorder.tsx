@@ -18,14 +18,25 @@ function clock(ms: number): string {
  */
 export function AudioRecorder({
   onRecorded,
+  resetKey,
   className,
 }: {
   onRecorded: (clip: AudioClip | null) => void;
+  /**
+   * Change it and the recorder starts clean. The parent's copy of the clip is
+   * cleared after a save, but the clip lived in here and kept showing — so
+   * the next word looked recorded and was saved silent.
+   */
+  resetKey?: string | number;
   className?: string;
 }) {
   const { recording, clip, elapsedMs, supported, error, start, stop, reset } =
     useAudioRecorder();
   const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    reset();
+  }, [resetKey, reset]);
 
   // The callback is held in a ref so an inline lambda from a caller can't
   // re-fire this effect on every render — the old version leaked exactly that
