@@ -6,9 +6,11 @@ import { qk } from '@kernel/query';
 import { cn } from '@kernel/lib';
 import {
   Button,
+  Desk,
   Empty,
   LoadingScreen,
   toast,
+  useDesk,
   useTopBarAction,
 } from '@kernel/ui';
 import { useMyProgress } from '../api/courses.queries';
@@ -22,6 +24,7 @@ import { useLanguages } from '../lib/languages';
 import { gradeAnswer, type Grade } from '../lib/exercise-schema';
 import { ExerciseView } from '../components/exercises/exercise-view';
 import { BlockView } from '../components/block-view';
+import { LessonTree } from '../components/lesson-tree';
 import type { Exercise, MediaBlockData } from '../types';
 
 /**
@@ -48,6 +51,7 @@ export function LessonRoute() {
   });
 
   const { data: progress } = useMyProgress();
+  useDesk();
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
   const [grades, setGrades] = useState<Record<string, Grade>>({});
   const [handedIn, setHandedIn] = useState(false);
@@ -202,130 +206,141 @@ export function LessonRoute() {
   const scored = Object.values(grades).filter((g) => g.correct).length;
 
   return (
-    <div className="curtain-reveal space-y-4">
-      <header className="min-w-0">
-        <p className="eyebrow">
-          {lesson.kind === 'homework'
-            ? 'Homework'
-            : lesson.kind === 'exam'
-              ? 'Exam'
-              : 'Lesson'}
-          {lesson.due_on ? ` · due ${lesson.due_on}` : ''}
-        </p>
-        <h1 className="mt-0.5 font-display text-2xl font-semibold text-fg">
-          {lesson.title}
-        </h1>
-        {lesson.subtitle && (
-          <p className="font-sans text-sm text-muted">{lesson.subtitle}</p>
-        )}
-      </header>
-
-      {/* What she wrote back. The whole point of handing work in. */}
-      {mine?.status === 'graded' && (
-        <section className="space-y-1 rounded-lg bg-surface-2 px-4 py-3">
-          <p className="eyebrow">
-            Marked
-            {mine.score != null ? ` · ${Math.round(mine.score * 100)}%` : ''}
-          </p>
-          {mine.teacher_note && (
-            <p className="font-display text-base italic leading-snug text-fg">
-              {mine.teacher_note}
-            </p>
-          )}
-        </section>
-      )}
-
-      {/* Hers to select and copy — a lesson on a computer is a document. */}
-      <div data-readable className="space-y-4">
-        {lesson.blocks.map((block) => (
-          <BlockView
-            key={block.id}
-            block={block}
-            support={support}
-            target={lesson.targetLang}
-            vocab={lesson.vocabByBlock[block.id]}
-            media={mediaFor(block)}
-          />
-        ))}
-      </div>
-
-      {exercises.length > 0 && (
-        <section className="space-y-3">
-          {exercises.map((ex, i) => {
-            const grade = grades[ex.id] ?? null;
-            // In an exam nothing is revealed until it is handed in.
-            const shown = isExam ? (submitted ? grade : null) : grade;
-            return (
-              <div
-                key={ex.id}
-                className={cn(
-                  'space-y-2 rounded-lg bg-surface px-3 py-3',
-                  // No alpha on a ring: `ring-success/40` renders Tailwind's
-                  // default blue, not green.
-                  shown?.correct && 'ring-1 ring-success'
-                )}
-              >
-                <p className="eyebrow">
-                  {i + 1} of {exercises.length}
-                </p>
-                <ExerciseView
-                  target={lesson.targetLang}
-                  exercise={ex}
-                  support={support}
-                  value={answers[ex.id]}
-                  onChange={(v) => setAnswers((a) => ({ ...a, [ex.id]: v }))}
-                  grade={shown}
-                  disabled={isExam ? submitted : !!grade}
-                />
-                {!isExam && !grade && (
-                  <Button
-                    full
-                    variant="secondary"
-                    onClick={() => markOne(ex)}
-                    // Not until his earlier attempts are known — the attempt
-                    // number would collide with one already written.
-                    disabled={answers[ex.id] === undefined || attemptsLoading}
-                  >
-                    Check
-                  </Button>
-                )}
-              </div>
-            );
-          })}
-
-          {isExam && !submitted && (
-            <Button
-              full
-              onClick={() => void handIn()}
-              disabled={handingIn || attemptsLoading}
-            >
-              <Send size={15} /> Hand it in
-            </Button>
-          )}
-
-          {(submitted || (!isExam && allDone)) && (
-            <div className="flex items-center gap-2 rounded-lg bg-surface-2 px-4 py-3">
-              <Check className="h-5 w-5 shrink-0 text-gold" />
-              <p className="font-sans text-sm text-fg">
-                {scored} of {exercises.length} right
-              </p>
-            </div>
-          )}
-        </section>
-      )}
-
-      {lesson.blocks.length === 0 && exercises.length === 0 && (
-        <Empty
-          icon="✍️"
-          title="Nothing here yet"
-          hint="This lesson is still being written."
-          action={
-            <Link to={`/language/build/${lesson.id}`}>
-              <Button variant="secondary">Write it</Button>
-            </Link>
-          }
+    <Desk
+      rail={
+        <LessonTree
+          courseId={lesson.courseId}
+          currentId={lesson.id}
+          mode="read"
         />
-      )}
-    </div>
+      }
+      narrow
+    >
+      <div className="curtain-reveal space-y-4">
+        <header className="min-w-0">
+          <p className="eyebrow">
+            {lesson.kind === 'homework'
+              ? 'Homework'
+              : lesson.kind === 'exam'
+                ? 'Exam'
+                : 'Lesson'}
+            {lesson.due_on ? ` · due ${lesson.due_on}` : ''}
+          </p>
+          <h1 className="mt-0.5 font-display text-2xl font-semibold text-fg">
+            {lesson.title}
+          </h1>
+          {lesson.subtitle && (
+            <p className="font-sans text-sm text-muted">{lesson.subtitle}</p>
+          )}
+        </header>
+
+        {/* What she wrote back. The whole point of handing work in. */}
+        {mine?.status === 'graded' && (
+          <section className="space-y-1 rounded-lg bg-surface-2 px-4 py-3">
+            <p className="eyebrow">
+              Marked
+              {mine.score != null ? ` · ${Math.round(mine.score * 100)}%` : ''}
+            </p>
+            {mine.teacher_note && (
+              <p className="font-display text-base italic leading-snug text-fg">
+                {mine.teacher_note}
+              </p>
+            )}
+          </section>
+        )}
+
+        {/* Hers to select and copy — a lesson on a computer is a document. */}
+        <div data-readable className="space-y-4">
+          {lesson.blocks.map((block) => (
+            <BlockView
+              key={block.id}
+              block={block}
+              support={support}
+              target={lesson.targetLang}
+              vocab={lesson.vocabByBlock[block.id]}
+              media={mediaFor(block)}
+            />
+          ))}
+        </div>
+
+        {exercises.length > 0 && (
+          <section className="space-y-3">
+            {exercises.map((ex, i) => {
+              const grade = grades[ex.id] ?? null;
+              // In an exam nothing is revealed until it is handed in.
+              const shown = isExam ? (submitted ? grade : null) : grade;
+              return (
+                <div
+                  key={ex.id}
+                  className={cn(
+                    'space-y-2 rounded-lg bg-surface px-3 py-3',
+                    // No alpha on a ring: `ring-success/40` renders Tailwind's
+                    // default blue, not green.
+                    shown?.correct && 'ring-1 ring-success'
+                  )}
+                >
+                  <p className="eyebrow">
+                    {i + 1} of {exercises.length}
+                  </p>
+                  <ExerciseView
+                    target={lesson.targetLang}
+                    exercise={ex}
+                    support={support}
+                    value={answers[ex.id]}
+                    onChange={(v) => setAnswers((a) => ({ ...a, [ex.id]: v }))}
+                    grade={shown}
+                    disabled={isExam ? submitted : !!grade}
+                  />
+                  {!isExam && !grade && (
+                    <Button
+                      full
+                      variant="secondary"
+                      onClick={() => markOne(ex)}
+                      // Not until his earlier attempts are known — the attempt
+                      // number would collide with one already written.
+                      disabled={answers[ex.id] === undefined || attemptsLoading}
+                    >
+                      Check
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
+
+            {isExam && !submitted && (
+              <Button
+                full
+                onClick={() => void handIn()}
+                disabled={handingIn || attemptsLoading}
+              >
+                <Send size={15} /> Hand it in
+              </Button>
+            )}
+
+            {(submitted || (!isExam && allDone)) && (
+              <div className="flex items-center gap-2 rounded-lg bg-surface-2 px-4 py-3">
+                <Check className="h-5 w-5 shrink-0 text-gold" />
+                <p className="font-sans text-sm text-fg">
+                  {scored} of {exercises.length} right
+                </p>
+              </div>
+            )}
+          </section>
+        )}
+
+        {lesson.blocks.length === 0 && exercises.length === 0 && (
+          <Empty
+            icon="✍️"
+            title="Nothing here yet"
+            hint="This lesson is still being written."
+            action={
+              <Link to={`/language/build/${lesson.id}`}>
+                <Button variant="secondary">Write it</Button>
+              </Link>
+            }
+          />
+        )}
+      </div>
+    </Desk>
   );
 }
