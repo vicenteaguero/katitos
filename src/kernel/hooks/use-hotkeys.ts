@@ -28,6 +28,10 @@ export function useHotkeys(
           target.tagName === 'SELECT' ||
           target.isContentEditable);
       const pressed = e.key === ' ' ? 'space' : e.key.toLowerCase();
+      // Space and Enter on a focused control ARE that control's activation.
+      const activating =
+        (pressed === 'space' || pressed === 'enter') &&
+        !!target?.closest('button,[role="button"],a[href],summary');
 
       for (const [combo, handler] of Object.entries(ref.current)) {
         const parts = combo.toLowerCase().split('+');
@@ -38,7 +42,8 @@ export function useHotkeys(
         if (mod !== (e.metaKey || e.ctrlKey)) continue;
         if (shift !== e.shiftKey || alt !== e.altKey) continue;
         if (pressed !== key) continue;
-        if (typing && !mod && !alt && key !== 'escape') continue;
+        if ((typing || activating) && !mod && !alt && key !== 'escape')
+          continue;
         e.preventDefault();
         handler(e);
         return;
