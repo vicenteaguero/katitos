@@ -87,11 +87,20 @@ export function useLesson(lessonId: string | undefined) {
               .is('vocab.deleted_at', null)
               .order('position', { ascending: true })
           : Promise.resolve({ data: [], error: null }),
-        supabase
-          .from('lang_media')
-          .select('*')
-          .eq('lesson_id', lessonId as string)
-          .order('created_at', { ascending: false }),
+        // The attachments this lesson owns — AND the ones its blocks point
+        // at, wherever they were uploaded: a lesson copied from another, or
+        // a worksheet picked from the course's library.
+        (() => {
+          const referenced = blocks
+            .filter((b) => b.kind === 'media')
+            .map((b) => (b.data as { mediaId?: string } | null)?.mediaId)
+            .filter((id): id is string => !!id);
+          let q = supabase.from('lang_media').select('*');
+          q = referenced.length
+            ? q.or(`lesson_id.eq.${lessonId},id.in.(${referenced.join(',')})`)
+            : q.eq('lesson_id', lessonId as string);
+          return q.order('created_at', { ascending: false });
+        })(),
       ]);
 
       // These used to swallow their errors, so a refused read rendered a
@@ -109,6 +118,18 @@ export function useLesson(lessonId: string | undefined) {
         (vocabByBlock[link.block_id] ??= []).push(link.vocab);
       }
 
+      const exercises = [...(row.exercises ?? [])].sort(
+        (a, b) => a.position - b.position
+      );
+      // A question can sit INSIDE the lesson, after the block it belongs to
+      // — explain, then try it — or at the end with no block, as before.
+      const exercisesByBlock: Record<string, Exercise[]> = {};
+      const looseExercises: Exercise[] = [];
+      for (const ex of exercises) {
+        if (ex.block_id) (exercisesByBlock[ex.block_id] ??= []).push(ex);
+        else looseExercises.push(ex);
+      }
+
       return {
         ...row,
         courseId: row.unit?.course_id ?? '',
@@ -117,9 +138,9 @@ export function useLesson(lessonId: string | undefined) {
         // builder offers as translations, which column a new word goes in.
         targetLang: langOf(row.unit?.course?.target_lang),
         blocks,
-        exercises: [...(row.exercises ?? [])].sort(
-          (a, b) => a.position - b.position
-        ),
+        exercises,
+        exercisesByBlock,
+        looseExercises,
         media: (media.data ?? []) as Media[],
         vocabByBlock,
       };
