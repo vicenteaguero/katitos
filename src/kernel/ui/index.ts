@@ -16,7 +16,6 @@ export { Checkbox } from './check-box';
 export { Segmented } from './segmented';
 export type { SegmentOption } from './segmented';
 export { PageHeader } from './page-header';
-export { SectionHeader } from './section-header';
 export {
   TopBarSlotProvider,
   useTopBarSlot,
