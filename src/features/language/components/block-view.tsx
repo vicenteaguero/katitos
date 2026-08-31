@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { ExternalLink, FileText, Play } from 'lucide-react';
 import { cn } from '@kernel/lib';
 import { BUCKETS, useSignedUrl } from '@kernel/storage';
@@ -9,14 +9,20 @@ import { parseInline } from '../lib/markdown';
 import { VocabRow } from './kit';
 import { youtubeId } from '../api/media';
 
-/** One piece of a lesson, whatever kind it is. */
-export function BlockView({
+/**
+ * One piece of a lesson, whatever kind it is.
+ *
+ * Memoised: every keystroke in an answer box re-rendered every block on the
+ * page, tables and all.
+ */
+export const BlockView = memo(function BlockView({
   block,
   support,
   target,
   vocab,
   media,
   onWord,
+  clips,
 }: {
   block: Block;
   support: Lang;
@@ -27,13 +33,18 @@ export function BlockView({
   media?: Media;
   /** Given, every word of the headline can be tapped for its meaning. */
   onWord?: (word: string) => void;
+  /**
+   * Signed once for the whole lesson: a vocab block of thirty words used to
+   * sign thirty URLs on its own. An empty string means "no clip to play".
+   */
+  clips?: Map<string, string>;
 }) {
   switch (block.kind) {
     case 'divider':
       return <hr className="border-0 border-t border-fg/10" />;
 
     case 'vocab':
-      return <VocabBlock words={vocab ?? []} support={support} />;
+      return <VocabBlock words={vocab ?? []} support={support} clips={clips} />;
 
     case 'table':
       return (
@@ -72,7 +83,7 @@ export function BlockView({
       );
     }
   }
-}
+});
 
 /** A paragraph's **bold**, *italic* and ==highlight==, and nothing else. */
 function Rich({
@@ -219,12 +230,27 @@ function TableBlock({
   );
 }
 
-function VocabBlock({ words, support }: { words: Vocab[]; support: Lang }) {
+function VocabBlock({
+  words,
+  support,
+  clips,
+}: {
+  words: Vocab[];
+  support: Lang;
+  clips?: Map<string, string>;
+}) {
   if (!words.length) return null;
   return (
     <ul className="divide-y divide-fg/5 rounded-lg bg-surface px-3">
       {words.map((w) => (
-        <VocabRow key={w.id} word={w} support={support} />
+        <VocabRow
+          key={w.id}
+          word={w}
+          support={support}
+          url={
+            clips && w.audio_path ? (clips.get(w.audio_path) ?? '') : undefined
+          }
+        />
       ))}
     </ul>
   );
@@ -285,6 +311,7 @@ function YouTube({ media }: { media: Media }) {
       className="lift-press relative block aspect-video w-full overflow-hidden rounded-lg bg-black"
     >
       <img
+        crossOrigin="anonymous"
         src={media.poster_path ?? `https://i.ytimg.com/vi/${id}/hqdefault.jpg`}
         alt={media.title ?? ''}
         className="h-full w-full object-cover"
@@ -304,6 +331,7 @@ function StoredImage({ path, title }: { path: string; title: string | null }) {
   if (!url) return null;
   return (
     <img
+      crossOrigin="anonymous"
       src={url}
       alt={title ?? ''}
       className="w-full rounded-lg"
