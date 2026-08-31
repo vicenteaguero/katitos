@@ -23,6 +23,15 @@ let idleTimer: ReturnType<typeof setTimeout> | undefined;
 
 /** Let go of the hardware after this long with nobody watching. */
 const IDLE_MS = 90_000;
+/**
+ * How long the app may sit in the background before the camera is dropped.
+ *
+ * It used to be zero — hide the app, lose the stream, and coming back cost
+ * another permission prompt. Glancing at a notification and returning two
+ * seconds later is the commonest way to leave an app, and it should not cost
+ * anything at all.
+ */
+const HIDDEN_GRACE_MS = 45_000;
 
 function stop() {
   stream?.getTracks().forEach((t) => t.stop());
@@ -37,16 +46,35 @@ function clearIdle() {
   }
 }
 
-/** Release as soon as the app is backgrounded — never hold the camera there. */
+let hiddenTimer: ReturnType<typeof setTimeout> | undefined;
+
+function clearHidden() {
+  if (hiddenTimer) {
+    clearTimeout(hiddenTimer);
+    hiddenTimer = undefined;
+  }
+}
+
+/**
+ * Backgrounded: let go, but not instantly. The camera indicator must never
+ * stay lit behind another app, and after the grace below it never does —
+ * while a glance away and straight back costs nothing.
+ */
 if (typeof document !== 'undefined') {
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden' && holders === 0) {
-      clearIdle();
-      stop();
-    }
+    clearHidden();
+    if (document.visibilityState !== 'hidden') return;
+    hiddenTimer = setTimeout(() => {
+      if (holders === 0) {
+        clearIdle();
+        stop();
+      }
+    }, HIDDEN_GRACE_MS);
   });
+  // Leaving for good is different from glancing away.
   window.addEventListener('pagehide', () => {
     clearIdle();
+    clearHidden();
     stop();
   });
 }
@@ -57,6 +85,7 @@ if (typeof document !== 'undefined') {
  */
 export async function acquireCamera(want: Facing): Promise<MediaStream> {
   clearIdle();
+  clearHidden();
   holders += 1;
 
   const live = stream?.getVideoTracks().some((t) => t.readyState === 'live');
