@@ -2,6 +2,14 @@
 
 ## Waiting
 
+- `20260830000004_language_two_way_repair.sql` — 2026-08-30. In every Spanish
+  course, moves the Spanish sentences out of `body_ru`, the Russian
+  explanations out of `body_en` (blocks, prompts and table headings) into the
+  columns they belong in. **Gate: both phones on the bundle with the fixed
+  writers (`make db-gate`)** — the old builder writes the columns the wrong way
+  round on every blur, so a repair under it is undone by the next edit. Guarded
+  by Cyrillic checks and idempotent, so running it twice changes nothing.
+
 - `20260830000001_drop_retired_features.sql` — 2026-08-30. Drops the 13 tables
   behind the features deleted in the same cleanup (Tier B and C, plus the long
   dead `scavenger_arguments`). **Gate: none technical — every table was verified
