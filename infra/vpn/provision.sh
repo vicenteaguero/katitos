@@ -22,7 +22,14 @@ set -euo pipefail
 # deliberately not 22 / 2053 / "admin": a box that answers on the obvious ports
 # with the obvious names is found by scanners within the hour, and a censor
 # fingerprinting a panel is one more way to lose the address.
-SSH_PORT="${SSH_PORT:-52201}"
+# 22, and that is a deliberate retreat. An earlier version moved SSH to a high
+# port; the 3x-ui installer restarted ssh.service mid-run, the socket override
+# did not survive it, and the box locked itself out with ufw already closed on
+# 22. Port obscurity buys quieter logs, nothing else — key-only auth and
+# fail2ban are what actually hold the door. It is not worth a lockout.
+# Set SSH_PORT to something else and the box listens on BOTH, never only the
+# new one, so a failed move is survivable.
+SSH_PORT="${SSH_PORT:-22}"
 PANEL_PORT="${PANEL_PORT:-41100}"
 PANEL_PATH="${PANEL_PATH:-}"       # random if empty
 PANEL_USER="${PANEL_USER:-}"       # random if empty
@@ -102,7 +109,8 @@ say "Firewall"
 ufw --force reset >/dev/null
 ufw default deny incoming >/dev/null
 ufw default allow outgoing >/dev/null
-ufw allow "$SSH_PORT"/tcp   comment 'ssh'    >/dev/null
+ufw allow 22/tcp            comment 'ssh'    >/dev/null
+[[ "$SSH_PORT" != "22" ]] && ufw allow "$SSH_PORT"/tcp comment 'ssh alt' >/dev/null
 ufw allow "$XRAY_PORT"/tcp  comment 'xray xhttp'  >/dev/null
 ufw allow "$XRAY_PORT2"/tcp comment 'xray reality' >/dev/null
 ufw allow "$AWG_PORT"/udp   comment 'awg'    >/dev/null
@@ -110,34 +118,44 @@ ufw allow "$AWG_PORT"/udp   comment 'awg'    >/dev/null
 # IP certificates last 160 hours, so that is roughly every five days, forever.
 ufw allow 80/tcp            comment 'acme'   >/dev/null
 ufw --force enable >/dev/null
-ok "open: $SSH_PORT/tcp $XRAY_PORT/tcp $XRAY_PORT2/tcp $AWG_PORT/udp (panel port added later)"
+ok "open: 22/tcp $XRAY_PORT/tcp $XRAY_PORT2/tcp $AWG_PORT/udp (panel port added later)"
 
 # ── SSH ─────────────────────────────────────────────────────────────────────
 say "SSH"
-cat >/etc/ssh/sshd_config.d/99-katitos.conf <<EOF
-Port $SSH_PORT
-PermitRootLogin prohibit-password
-PasswordAuthentication no
-KbdInteractiveAuthentication no
-MaxAuthTries 3
-EOF
-# Ubuntu 24.04 boots sshd from a socket unit, which pins the port independently
-# of sshd_config — edit only the file and the new port silently never opens.
-if systemctl is-enabled --quiet ssh.socket 2>/dev/null; then
+{
+  echo "PermitRootLogin prohibit-password"
+  echo "PasswordAuthentication no"
+  echo "KbdInteractiveAuthentication no"
+  echo "MaxAuthTries 3"
+  # Both, always. Closing 22 in the same breath as opening the new port is how
+  # you find out the new port did not work — from the outside, with no way in.
+  [[ "$SSH_PORT" != "22" ]] && { echo "Port 22"; echo "Port $SSH_PORT"; }
+} >/etc/ssh/sshd_config.d/99-katitos.conf
+
+if [[ "$SSH_PORT" != "22" ]] && systemctl is-enabled --quiet ssh.socket 2>/dev/null; then
+  # Ubuntu 24.04 socket-activates sshd, and the socket unit pins the ports
+  # independently of sshd_config. Both here too.
   mkdir -p /etc/systemd/system/ssh.socket.d
-  printf '[Socket]\nListenStream=\nListenStream=%s\n' "$SSH_PORT" \
+  printf '[Socket]\nListenStream=\nListenStream=22\nListenStream=%s\n' "$SSH_PORT" \
     >/etc/systemd/system/ssh.socket.d/override.conf
   systemctl daemon-reload && systemctl restart ssh.socket
 else
-  systemctl restart ssh
+  systemctl restart ssh 2>/dev/null || systemctl restart ssh.socket
 fi
-ok "key-only, port $SSH_PORT"
+
+# Prove it before trusting it. `ss` is the local truth: if nothing is bound to
+# the port we just claimed, say so loudly rather than at the end of the run.
+sleep 1
+if [[ "$SSH_PORT" != "22" ]] && ! ss -Hltn "sport = :$SSH_PORT" | grep -q .; then
+  echo "  ! nothing is listening on $SSH_PORT — staying reachable on 22"
+fi
+ok "key-only$([[ "$SSH_PORT" != "22" ]] && echo ", ports 22 + $SSH_PORT" || echo ", port 22")"
 
 say "fail2ban"
 cat >/etc/fail2ban/jail.d/katitos.conf <<EOF
 [sshd]
 enabled  = true
-port     = $SSH_PORT
+port     = 22,$SSH_PORT
 maxretry = 4
 bantime  = 2h
 findtime = 30m
@@ -331,7 +349,7 @@ cat <<EOF
 
   ─────────────────────────────────────────────
   Panel   port $PANEL_PORT — credentials in $STATE_DIR/panel.env
-  SSH     ssh -p $SSH_PORT root@$IP4
+  SSH     ssh root@$IP4
   AWG     $AWG_PORT/udp   pubkey $(cat "$AWG_DIR/server.pub" 2>/dev/null || echo '?')
   ─────────────────────────────────────────────
 
@@ -343,6 +361,6 @@ cat <<EOF
   Then: the inbounds, by hand, in the panel. docs/vpn-setup.md step 4.
 
   Before closing this terminal, open a SECOND one and confirm
-  'ssh -p $SSH_PORT root@$IP4' works.
+  'ssh root@$IP4' works.
 
 EOF
