@@ -105,10 +105,12 @@ ufw default allow outgoing >/dev/null
 ufw allow "$SSH_PORT"/tcp   comment 'ssh'    >/dev/null
 ufw allow "$XRAY_PORT"/tcp  comment 'xray xhttp'  >/dev/null
 ufw allow "$XRAY_PORT2"/tcp comment 'xray reality' >/dev/null
-ufw allow "$PANEL_PORT"/tcp comment 'panel'  >/dev/null
 ufw allow "$AWG_PORT"/udp   comment 'awg'    >/dev/null
+# Only ever used by the ACME challenge when the panel's certificate renews —
+# IP certificates last 160 hours, so that is roughly every five days, forever.
+ufw allow 80/tcp            comment 'acme'   >/dev/null
 ufw --force enable >/dev/null
-ok "open: $SSH_PORT/tcp $XRAY_PORT/tcp $XRAY_PORT2/tcp $PANEL_PORT/tcp $AWG_PORT/udp"
+ok "open: $SSH_PORT/tcp $XRAY_PORT/tcp $XRAY_PORT2/tcp $AWG_PORT/udp (panel port added later)"
 
 # ── SSH ─────────────────────────────────────────────────────────────────────
 say "SSH"
@@ -146,45 +148,54 @@ ok "sshd jail armed"
 
 # ── 3x-ui ───────────────────────────────────────────────────────────────────
 # The panel ships its own Xray-core, so this is also how Xray gets installed and
-# kept current. Credentials are set from the CLI rather than the installer's
-# prompts so the whole run stays non-interactive and re-runnable.
+# kept current.
+#
+# `x-ui` on the PATH is the MENU SCRIPT, not the Go binary, and it does not
+# accept `setting -username`. Calling it that way returns non-zero and, under
+# `set -e`, kills this script silently right here. Use the binary.
+XUI_BIN=/usr/local/x-ui/x-ui
+
 say "3x-ui"
-if ! command -v x-ui >/dev/null 2>&1; then
+if [[ ! -x "$XUI_BIN" ]]; then
   bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh) </dev/null
   ok "installed"
 else
   ok "already installed"
 fi
+[[ -x "$XUI_BIN" ]] || die "3x-ui installed but $XUI_BIN is missing"
 
+# Since v3.7.0 the installer generates a random port, path, user and password by
+# itself and writes them to install-result.env. That is exactly what we wanted,
+# so adopt it rather than rotating credentials he has already saved.
+INSTALL_RESULT=/etc/x-ui/install-result.env
 if [[ ! -f "$STATE_DIR/panel.env" ]]; then
-  PANEL_USER="${PANEL_USER:-$(rnd 12)}"
-  PANEL_PASS="${PANEL_PASS:-$(rnd 28)}"
-  PANEL_PATH="${PANEL_PATH:-$(rnd 20)}"
-  x-ui setting -username "$PANEL_USER" -password "$PANEL_PASS" >/dev/null
-  x-ui setting -port "$PANEL_PORT" -webBasePath "/$PANEL_PATH/" >/dev/null
-  cat >"$STATE_DIR/panel.env" <<EOF
-PANEL_USER=$PANEL_USER
-PANEL_PASS=$PANEL_PASS
-PANEL_PORT=$PANEL_PORT
-PANEL_PATH=$PANEL_PATH
-EOF
-  chmod 600 "$STATE_DIR/panel.env"
-  ok "credentials written to $STATE_DIR/panel.env"
-
-  # Verify, rather than assume. If `x-ui setting` ever changes its flags, the
-  # commands above fail quietly and the panel keeps shipping defaults —
-  # admin/admin on 2053, reachable from the whole internet. That is the worst
-  # outcome this script can produce, so it is the one thing it checks.
-  shown="$(x-ui setting -show 2>/dev/null || true)"
-  grep -q "$PANEL_PORT" <<<"$shown" && grep -q "$PANEL_USER" <<<"$shown" \
-    || die "panel settings did not take — 'x-ui setting -show' does not show port $PANEL_PORT and user $PANEL_USER.
-     Fix by hand NOW, before this box is reachable:  x-ui settings"
-  ok "panel settings verified"
+  if [[ -f "$INSTALL_RESULT" ]]; then
+    install -m 600 "$INSTALL_RESULT" "$STATE_DIR/panel.env"
+    ok "adopted the installer's own random credentials"
+  else
+    PANEL_USER="${PANEL_USER:-$(rnd 12)}"
+    PANEL_PASS="${PANEL_PASS:-$(rnd 28)}"
+    PANEL_PATH="${PANEL_PATH:-$(rnd 20)}"
+    "$XUI_BIN" setting -username "$PANEL_USER" -password "$PANEL_PASS" >/dev/null \
+      || die "could not set panel credentials — do it by hand with 'x-ui' before this box is reachable"
+    "$XUI_BIN" setting -port "$PANEL_PORT" -webBasePath "/$PANEL_PATH/" >/dev/null || true
+    printf 'PANEL_USER=%s\nPANEL_PASS=%s\nPANEL_PORT=%s\nPANEL_PATH=%s\n' \
+      "$PANEL_USER" "$PANEL_PASS" "$PANEL_PORT" "$PANEL_PATH" >"$STATE_DIR/panel.env"
+    chmod 600 "$STATE_DIR/panel.env"
+    ok "credentials written to $STATE_DIR/panel.env"
+  fi
 else
-  # Never regenerate: the panel password is in his password manager by now, and
-  # silently rotating it on a re-run is a lockout with extra steps.
-  ok "credentials already set (see $STATE_DIR/panel.env)"
+  ok "credentials already recorded (see $STATE_DIR/panel.env)"
 fi
+
+# Whatever the panel actually listens on wins over our default — the installer
+# picked a port before we did, and firewalling the port we *assumed* would leave
+# the panel unreachable while looking like it worked.
+PANEL_PORT_REAL="$("$XUI_BIN" setting -show 2>/dev/null | grep -oE 'port: *[0-9]+' | grep -oE '[0-9]+' | head -1)"
+PANEL_PORT="${PANEL_PORT_REAL:-$PANEL_PORT}"
+ufw allow "$PANEL_PORT"/tcp comment 'panel' >/dev/null
+ok "panel on $PANEL_PORT"
+
 systemctl restart x-ui
 systemctl enable x-ui >/dev/null 2>&1 || true
 
@@ -316,23 +327,22 @@ ok "on"
 
 # ── Done ────────────────────────────────────────────────────────────────────
 IP4="$(curl -fsS --max-time 5 https://api.ipify.org 2>/dev/null || echo '?')"
-# shellcheck disable=SC1091
-source "$STATE_DIR/panel.env"
 cat <<EOF
 
   ─────────────────────────────────────────────
-  Panel   https://$IP4:$PANEL_PORT/$PANEL_PATH/
-  User    $PANEL_USER
-  Pass    $PANEL_PASS
+  Panel   port $PANEL_PORT — credentials in $STATE_DIR/panel.env
   SSH     ssh -p $SSH_PORT root@$IP4
   AWG     $AWG_PORT/udp   pubkey $(cat "$AWG_DIR/server.pub" 2>/dev/null || echo '?')
   ─────────────────────────────────────────────
 
-  Next, and only by hand: the inbounds in the panel.
-  See docs/vpn-setup.md, step 4.
+  The panel is HTTP-only as installed. Give it a certificate before you log in
+  over the open internet — Let's Encrypt issues them for bare IPs now:
 
-  Before you close this terminal, open a SECOND one and confirm
-  'ssh -p $SSH_PORT root@$IP4' works. This session is the only way back in
-  if it does not.
+      x-ui        →  SSL Certificate Management  →  Let's Encrypt for IP
+
+  Then: the inbounds, by hand, in the panel. docs/vpn-setup.md step 4.
+
+  Before closing this terminal, open a SECOND one and confirm
+  'ssh -p $SSH_PORT root@$IP4' works.
 
 EOF
