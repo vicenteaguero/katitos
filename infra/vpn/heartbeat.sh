@@ -30,8 +30,11 @@ read -r mem_total mem_avail < <(awk '
   /^MemTotal:/     {t=$2}
   /^MemAvailable:/ {a=$2}
   END {print t, a}' /proc/meminfo)
+# The parentheses are load-bearing: inside a print/printf, awk reads a bare `>`
+# as output redirection, so `printf "%.1f", t > 0 ? …` silently writes to a file
+# named "0" and emits nothing. That is why the first beats reported 0% memory.
 mem_pct=$(awk -v t="$mem_total" -v a="$mem_avail" \
-  'BEGIN {printf "%.1f", t > 0 ? (t - a) * 100 / t : 0}')
+  'BEGIN {printf "%.1f", (t > 0 ? (t - a) * 100 / t : 0)}')
 
 # Established connections on the proxy port ≈ how many of her devices are on.
 # Approximate by nature: one phone browsing is several connections, and mux
