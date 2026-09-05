@@ -170,6 +170,16 @@ PANEL_PATH=$PANEL_PATH
 EOF
   chmod 600 "$STATE_DIR/panel.env"
   ok "credentials written to $STATE_DIR/panel.env"
+
+  # Verify, rather than assume. If `x-ui setting` ever changes its flags, the
+  # commands above fail quietly and the panel keeps shipping defaults —
+  # admin/admin on 2053, reachable from the whole internet. That is the worst
+  # outcome this script can produce, so it is the one thing it checks.
+  shown="$(x-ui setting -show 2>/dev/null || true)"
+  grep -q "$PANEL_PORT" <<<"$shown" && grep -q "$PANEL_USER" <<<"$shown" \
+    || die "panel settings did not take — 'x-ui setting -show' does not show port $PANEL_PORT and user $PANEL_USER.
+     Fix by hand NOW, before this box is reachable:  x-ui settings"
+  ok "panel settings verified"
 else
   # Never regenerate: the panel password is in his password manager by now, and
   # silently rotating it on a re-run is a lockout with extra steps.
