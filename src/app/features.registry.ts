@@ -17,6 +17,7 @@ import { languageFeature } from '@features/language';
 import { treeFeature } from '@features/tree';
 import { knowMeFeature } from '@features/know-me';
 import { albumFeature } from '@features/album';
+import { vpnFeature } from '@features/vpn';
 
 // ── Drawer categories ──────────────────────────────────────────────────────
 // Section each feature appears under in the "More" drawer (id → category).
@@ -39,6 +40,7 @@ const categories: Record<string, string> = {
   currency: 'Utilities',
   language: 'Utilities',
   chalkboard: 'Utilities',
+  vpn: 'Utilities',
 };
 
 const modules: FeatureModule[] = [
@@ -56,6 +58,7 @@ const modules: FeatureModule[] = [
   languageFeature,
   currencyFeature,
   flowersFeature,
+  vpnFeature,
 ];
 
 // ── Demo gate ──────────────────────────────────────────────────────────────
@@ -70,6 +73,8 @@ const OPEN = new Set([
   'currency',
   'wishlists', // gift lists, each item with its own eye
   'flowers', // a bouquet a month, hers to fill
+  // 'vpn'      — "Internet": her exit servers and whether they are awake.
+  //              Stays shut until a server actually exists to report in.
   // 'summer'   — Türkiye/Georgia is over. Locked, NOT deleted: the code, the
   //              tables and the photos all stay, so the next trip is one line.
   // 'know-me'  — the daily questions still need some love before she sees them.
