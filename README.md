@@ -58,4 +58,6 @@ top of the file:
 
 - [docs/architecture.md](docs/architecture.md) — structure, the registries, how to add a feature/widget/game.
 - [docs/deployment.md](docs/deployment.md) — the (later) Vercel + Supabase cloud steps.
+- [docs/vpn.md](docs/vpn.md) — design for her exit server, so she has working
+  internet from Russia. Not built yet.
 - [docs/research/possible-features.md](docs/research/possible-features.md) — backlog of ideas.
