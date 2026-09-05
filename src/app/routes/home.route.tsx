@@ -2,6 +2,7 @@ import { useState, type CSSProperties } from 'react';
 import { Heart } from 'lucide-react';
 import { usePartner } from '@kernel/auth';
 import { isAnnounced } from '../changelog';
+import { featureRegistry } from '../features.registry';
 import { useCouple } from '@kernel/couple';
 import { useNow } from '@kernel/hooks';
 import {
@@ -20,6 +21,7 @@ import { toast, useTopBarAction } from '@kernel/ui';
 import { usePartnerPresence } from '@features/presence';
 import { LastPolaroidWidget } from '@features/polaroid';
 import { NextLessonWidget, TeachingWidget } from '@features/language';
+import { TunnelWidget } from '@features/vpn';
 import { loveNoteFor, useLovePhrases } from '@features/love';
 import { sendLoveBurst } from '../shell/love-channel';
 
@@ -401,6 +403,13 @@ export function HomeRoute() {
       <LastPolaroidWidget />
       {classroom && <NextLessonWidget />}
       {classroom && <TeachingWidget />}
+      {/*
+        Hides itself while there is no fleet, so this line is safe long before
+        the first server exists. The registry check is the second half: until
+        'vpn' is opened its route does not mount, and a card linking to a page
+        that isn't there is worse than no card.
+      */}
+      {!featureRegistry.byId('vpn')?.locked && <TunnelWidget />}
     </div>
   );
 }
