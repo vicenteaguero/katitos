@@ -59,5 +59,7 @@ top of the file:
 - [docs/architecture.md](docs/architecture.md) — structure, the registries, how to add a feature/widget/game.
 - [docs/deployment.md](docs/deployment.md) — the (later) Vercel + Supabase cloud steps.
 - [docs/vpn.md](docs/vpn.md) — design for her exit server, so she has working
-  internet from Russia. Not built yet.
+  internet from Russia. Why it is shaped the way it is.
+- [docs/vpn-setup.md](docs/vpn-setup.md) — the runbook: buy the box, provision it,
+  put it in her phone. Scripts in `infra/vpn/`.
 - [docs/research/possible-features.md](docs/research/possible-features.md) — backlog of ideas.
