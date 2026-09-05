@@ -9,6 +9,12 @@ export const qk = {
     self: () => ['couple'] as const,
     members: () => ['couple', 'members'] as const,
   },
+  vpn: {
+    all: () => ['vpn'] as const,
+    status: () => ['vpn', 'status'] as const,
+    /** My own subscription row. RLS means this is never the other's. */
+    client: () => ['vpn', 'client'] as const,
+  },
   polaroids: {
     all: () => ['polaroids'] as const,
     byDay: (day: string) => ['polaroids', 'day', day] as const,
