@@ -3,7 +3,8 @@
 An exit server so she has working internet from Russia, plus a small Katitos
 feature to see its status.
 
-**Status: design only. Nothing built.** Last updated 2026-09-05.
+**Status: the Katitos half is built and gated shut. No server exists yet.**
+Last updated 2026-09-05.
 
 ---
 
@@ -17,14 +18,14 @@ feature to see its status.
 | Where it lives     | A small VPS in Europe         | The Lenovo at home, `~/dev/workstation`       |
 | Cost               | ~4–5 €/month                  | Zero, already exists                          |
 
-They share tooling and nothing else. **Do not merge them.** The Chilean box is
-useless as her daily path (≈495 ms round trip) and the European box is useless for
-my case (wrong country).
+They share tooling and nothing else. **Do not merge them, and do not let one do
+the other's job.** An earlier draft of this document put the Lenovo in her server
+list as an automatic failover, on the argument that a residential Chilean IP is
+not in any bulk blocklist. That was true and beside the point: this project exists
+so that her internet is **fast**, and 495 ms is not fast, it is a hostage
+negotiation. A path she would never willingly use is not a failover.
 
-The one place they touch: **my home server is a second entry in her server list**,
-so her client fails over to it automatically. Not to save money — because a
-residential Chilean IP is not in any bulk blocklist, which is exactly what survives
-when datacentre ranges get swept.
+Her spare is a **second rented box in an unrelated range**, not my house.
 
 ---
 
@@ -106,10 +107,14 @@ technologies and expect to keep moving.**
 
 ### Servers
 
-| Role          | Where                                             | Notes                                                                                                        |
-| :------------ | :------------------------------------------------ | :----------------------------------------------------------------------------------------------------------- |
-| **Primary**   | Small VPS in **Helsinki, Amsterdam or Frankfurt** | ~4–5 €/month. Pick an uncommon provider in a clean range. **Not Hetzner, not DigitalOcean, not a free tier** |
-| **Secondary** | The Lenovo at home, Curicó                        | Slow (~495 ms) but a residential IP that bulk sweeps do not touch. Automatic failover target                 |
+| Role          | Where                                                                                  | Notes                                                                                                                                           |
+| :------------ | :------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Primary**   | Small VPS in **Helsinki** — see the latency table below                                | ~4–5 €/month. Pick an uncommon provider in a clean range. **Not Hetzner, not DigitalOcean, not Aeza, not a free tier**                          |
+| **Secondary** | A second small VPS, **different provider, different country** — Stockholm or Frankfurt | Another ~4–5 €/month, and the only kind of spare worth having: a different company, a different address range, a different day of being noticed |
+
+Both are hers from day one, in that order, in her config. The point of the second
+box is not capacity, it is that the two are **unrelated to each other**: one
+provider's ranges getting swept must not be the end of both.
 
 There is no usable free option, and this was checked:
 
@@ -121,6 +126,38 @@ There is no usable free option, and this was checked:
 | Cloudflare Workers, Vercel, Railway, Deno | **Terms explicitly prohibit** VPN/proxy use                                                                                           |
 | Koyeb, Render, Zeabur, Replit             | Sleep on inactivity                                                                                                                   |
 
+### Where, measured — 5 September 2026
+
+Her ISPs route **west**, and the question is closed. Measured round trip from
+Novosibirsk:
+
+| To           |      Ping |                                            |
+| :----------- | --------: | :----------------------------------------- |
+| Moscow       |     42 ms | the floor. Everything else pays this first |
+| **Helsinki** | **68 ms** | **the answer**                             |
+| Stockholm    |     78 ms |                                            |
+| Frankfurt    |     81 ms |                                            |
+| Amsterdam    |     85 ms |                                            |
+| Tokyo        |     88 ms | _worse than three European cities_         |
+| Istanbul     |    102 ms |                                            |
+| Seoul        |    251 ms |                                            |
+| Hong Kong    |    309 ms |                                            |
+
+Tokyo losing to Helsinki is the whole proof. Novosibirsk is ~5,000 km from Tokyo
+and ~3,500 km from Helsinki in a straight line; 88 ms east is only possible if the
+traffic goes up to Moscow and comes back. Seoul at 251 ms and Hong Kong at 309 ms
+put it beyond argument — those are neighbours, priced like the far side of the
+planet. Russian forums have complained about Rostelecom hauling Asian traffic
+through Europe for years, and the operator keeps calling it temporary.
+
+**So: Helsinki, and no ping test needed.** These numbers come from a datacentre
+node, so add roughly 20–30 ms for her flat; the ORDER is what decides, and it does
+not move.
+
+_(19 RIPE Atlas probes are live on her actual ISPs — Novotelecom AS31200,
+Sibirskie Seti AS34757, Rostelecom AS12389 — if this ever needs measuring from a
+real Novosibirsk household rather than a rack.)_
+
 ### Protocols
 
 | Priority | Transport                | Why                                                    |
@@ -131,6 +168,28 @@ There is no usable free option, and this was checked:
 
 All three configured from the start. Switching is a profile change in her app, not
 a support call.
+
+**XHTTP runs on top of REALITY, not only on top of TLS** — tested on Xray-core
+v26.3.27 on 24–25 August 2026. That matters more than it sounds: REALITY borrows a
+real third party's certificate and SNI, so the transport that is currently
+surviving best **needs no domain of ours at all**.
+
+### No domain, on purpose
+
+An earlier draft assumed a throwaway domain was required. It is not, and buying
+one would be worse than free:
+
+- **The tunnel doesn't need it.** REALITY presents someone else's certificate.
+- **The subscription URL doesn't need it either.** Let's Encrypt has issued
+  certificates for bare IP addresses since July 2025, generally available since
+  **15 January 2026** — 160-hour certs that renew themselves. HTTPS on an IP, no
+  domain, no DNS.
+- **And a TLS connection to an IP carries no SNI**, which is the one field the
+  measured MTS Novosibirsk freeze keys on. Connections with no SNI were the ones
+  it did not touch.
+
+A domain of ours would add ten dollars a year, a DNS record, and one more thing
+that can be burned and traced — in exchange for nothing.
 
 ### Per-user rules
 
@@ -259,7 +318,8 @@ the app in writing in public.
 
 ## Cost
 
-~4–5 €/month for the European VPS. Everything else is free.
+~4–5 €/month per box, and the recommendation is two of them in unrelated ranges:
+**~8–10 €/month, all in.** No domain (see above), no licences, nothing else.
 
 This is **Katitos hosting**, not an expense of the workstation project — the
 zero-cost rule there was written for a dev box, not for her internet.
@@ -270,17 +330,18 @@ zero-cost rule there was written for a dev box, not for her internet.
 
 1. **She installs Karing** and confirms it is still in the Russian App Store on her
    account.
-2. **She runs a ping** to Frankfurt and to Tokyo. Russian internet is Moscow-centric
-   and most traffic, even from Siberia, exits via Moscow — but some Siberian ISPs
-   route east through China or Mongolia, in which case Tokyo wins by a lot. Five
-   minutes, and it decides where to rent.
-3. **Decide on the 4–5 €/month.** Nothing else is blocking.
+2. ~~She runs a ping to Frankfurt and to Tokyo.~~ **Answered** — see the latency
+   table. Her traffic goes west through Moscow, Tokyo is slower than three
+   European cities, and the destination is Helsinki.
+3. **Decide on the ~8–10 €/month** for two boxes. Nothing else is blocking.
 
 ---
 
 ## Open questions
 
-- Whether her ISPs in Novosibirsk and Krasnoyarsk route west or east.
+- ~~Whether her ISPs in Novosibirsk and Krasnoyarsk route west or east.~~ West,
+  through Moscow. Measured 5 September 2026; Krasnoyarsk is further east and can
+  only be more so.
 - Which VPS provider has clean address space and is not already filtered. Needs
   checking at purchase time, not from here.
 - ⚠️ Whether mobile international-traffic metering (a proposed 15 GB/month cap) ever
