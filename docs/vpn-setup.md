@@ -47,6 +47,30 @@ Pay with the Chilean card. Nothing here needs crypto or a Russian card.
 > **Do not buy a second box yet.** Get one working end to end first. The spare
 > is step 8, and it is fifteen minutes once you have done it once.
 
+### The UpCloud trial will lock you out — deposit first
+
+UpCloud's 7-day trial locks its own network firewall on, above the server, and
+trial accounts cannot edit it:
+
+| Direction | Open during trial      |
+| :-------- | :--------------------- |
+| Inbound   | 22, 80, 443, 3389      |
+| Outbound  | 53, 80, 443, 8080, 123 |
+
+Plus a 100 Mbit/s cap. Against this design that means **SSH on 52201 never
+answers** — `provision.sh` moves the port, sshd reloads, and the box is gone —
+and it also kills the AmneziaWG port, the second Xray inbound and the panel. The
+heartbeat survives, because it dials out on 443.
+
+The unlock is a **one-time $10 deposit**, which is the same money the box costs
+anyway; trial credit is kept, so it becomes roughly four months of the small
+plan. **Deposit before deploying.**
+
+If you really do want to test on the trial first, then: `SSH_PORT=22
+./provision.sh`, XHTTP+REALITY on 443 only, panel over an SSH tunnel
+(`ssh -L 41100:localhost:41100 …`), and no AmneziaWG. That tests the main path
+and nothing else — do not read a good result there as the design working.
+
 ---
 
 ## 2. Provision it
