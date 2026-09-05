@@ -2366,6 +2366,107 @@ export type Database = {
         }
         Relationships: []
       }
+      vpn_beats: {
+        Row: {
+          at: string
+          clients: number | null
+          load1: number | null
+          mem_pct: number | null
+          rx_bytes: number | null
+          server_id: string
+          tx_bytes: number | null
+          uptime_s: number | null
+        }
+        Insert: {
+          at?: string
+          clients?: number | null
+          load1?: number | null
+          mem_pct?: number | null
+          rx_bytes?: number | null
+          server_id: string
+          tx_bytes?: number | null
+          uptime_s?: number | null
+        }
+        Update: {
+          at?: string
+          clients?: number | null
+          load1?: number | null
+          mem_pct?: number | null
+          rx_bytes?: number | null
+          server_id?: string
+          tx_bytes?: number | null
+          uptime_s?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vpn_beats_server_id_fkey"
+            columns: ["server_id"]
+            isOneToOne: false
+            referencedRelation: "vpn_servers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vpn_clients: {
+        Row: {
+          issued_at: string
+          label: string
+          revoked_at: string | null
+          sub_url: string | null
+          user_id: string
+        }
+        Insert: {
+          issued_at?: string
+          label?: string
+          revoked_at?: string | null
+          sub_url?: string | null
+          user_id: string
+        }
+        Update: {
+          issued_at?: string
+          label?: string
+          revoked_at?: string | null
+          sub_url?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vpn_servers: {
+        Row: {
+          city: string | null
+          country: string | null
+          created_at: string
+          id: string
+          label: string
+          protocols: string[]
+          retired_at: string | null
+          role: string
+          sort: number
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          label: string
+          protocols?: string[]
+          retired_at?: string | null
+          role?: string
+          sort?: number
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          label?: string
+          protocols?: string[]
+          retired_at?: string | null
+          role?: string
+          sort?: number
+        }
+        Relationships: []
+      }
       wishlist_items: {
         Row: {
           added_by: string
@@ -2618,6 +2719,26 @@ export type Database = {
       set_block_vocab: {
         Args: { p_block: string; p_vocab: string[] }
         Returns: undefined
+      }
+      tick_polaroid_reminders: { Args: never; Returns: undefined }
+      vpn_status: {
+        Args: never
+        Returns: {
+          alive: boolean
+          city: string
+          clients: number
+          country: string
+          id: string
+          label: string
+          last_beat: string
+          load1: number
+          mem_pct: number
+          protocols: string[]
+          role: string
+          sort: number
+          uptime_24h: number
+          uptime_7d: number
+        }[]
       }
       water_tree: {
         Args: never
