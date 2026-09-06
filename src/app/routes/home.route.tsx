@@ -2,7 +2,6 @@ import { useState, type CSSProperties } from 'react';
 import { Heart } from 'lucide-react';
 import { usePartner } from '@kernel/auth';
 import { isAnnounced } from '../changelog';
-import { featureRegistry } from '../features.registry';
 import { useCouple } from '@kernel/couple';
 import { useNow } from '@kernel/hooks';
 import {
@@ -22,6 +21,7 @@ import { usePartnerPresence } from '@features/presence';
 import { LastPolaroidWidget } from '@features/polaroid';
 import { NextLessonWidget, TeachingWidget } from '@features/language';
 import { TunnelWidget } from '@features/vpn';
+import { useTunnelVisible } from '../shell/use-tunnel-visible';
 import { loveNoteFor, useLovePhrases } from '@features/love';
 import { sendLoveBurst } from '../shell/love-channel';
 
@@ -393,6 +393,7 @@ export function HomeRoute() {
   // on her home screen is the loudest way to tell her. It waits for the same
   // word the changelog waits for; he sees it now, since he is building on it.
   const classroom = !!self?.is_admin || isAnnounced('2026-08-19');
+  const tunnel = useTunnelVisible();
   return (
     <div
       className="curtain-reveal space-y-5"
@@ -403,13 +404,9 @@ export function HomeRoute() {
       <LastPolaroidWidget />
       {classroom && <NextLessonWidget />}
       {classroom && <TeachingWidget />}
-      {/*
-        Hides itself while there is no fleet, so this line is safe long before
-        the first server exists. The registry check is the second half: until
-        'vpn' is opened its route does not mount, and a card linking to a page
-        that isn't there is worse than no card.
-      */}
-      {!featureRegistry.byId('vpn')?.locked && <TunnelWidget />}
+      {/* Hides itself while there is no fleet; `tunnel` is the other half —
+          his until the release entry is unheld, hers from then on. */}
+      {tunnel && <TunnelWidget />}
     </div>
   );
 }
