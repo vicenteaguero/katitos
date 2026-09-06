@@ -316,14 +316,22 @@ export function VpnRoute() {
               <span className="block font-sans text-sm font-semibold text-fg">
                 Switch it on, and leave the app open
               </span>
-              {/* The correction that cost an evening: iOS reports "Connected"
-                  long after the app has been swiped away and the tunnel has
-                  stopped. Telling her the opposite would have her debugging a
-                  dead connection that says it is alive. */}
+              {/* Split by device because the failure mode is not the same.
+                  On iOS the system keeps reporting "Connected" long after the
+                  app has been swiped away and the tunnel is already dead, which
+                  is the confusing one. On Windows it just stops, honestly. */}
               <span className="block font-sans text-xs text-muted">
-                Turn it on inside Karing. You can leave it in the background -
-                but don’t swipe it away, or everything stops while your phone
-                still says you’re connected.
+                Turn it on inside Karing, once, on each device.
+              </span>
+              <span className="mt-1 block font-sans text-xs text-muted">
+                <span className="text-fg">iPhone and iPad:</span> after that you
+                can turn it on and off from Settings, VPN. Leave Karing running
+                in the background, and don’t swipe it away, or everything stops
+                while your phone still says you’re connected.
+              </span>
+              <span className="mt-1 block font-sans text-xs text-muted">
+                <span className="text-fg">Computer:</span> keep Karing open. You
+                can minimise it, it sits next to the clock.
               </span>
             </span>
           </li>
