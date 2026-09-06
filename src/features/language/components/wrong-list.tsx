@@ -8,11 +8,11 @@ import { useLanguages } from '../lib/languages';
 import { VoiceThread } from './kit/voice-thread';
 
 /**
- * What your love keeps forgetting — and a microphone on each one.
+ * What your love keeps forgetting - and a microphone on each one.
  *
  * The teacher's view, and the reason the review rows are readable by both of
  * us: without it she is guessing at what to go over next lesson. Only the
- * OTHER person's misses — your own are just today's practice. The mic is the
+ * OTHER person's misses - your own are just today's practice. The mic is the
  * part nothing else can do: her voice, aimed at the word he keeps missing,
  * on his phone in a minute.
  */
@@ -21,7 +21,7 @@ export function WrongList() {
   const { data: members } = useMembers();
   const { data: reviews } = useAllReviews();
   const { native: support } = useLanguages();
-  // HIS lapses are in the language I TEACH — my own language. Looking them
+  // HIS lapses are in the language I TEACH - my own language. Looking them
   // up in the dictionary I am learning found nothing, ever, for either of us.
   const { data: words } = useAllVocab(support);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -47,7 +47,7 @@ export function WrongList() {
         What {partner?.display_name ?? 'your love'} keeps forgetting
       </p>
       <p className="font-sans text-xs text-muted">
-        Worth going over together — or say it for them now.
+        Worth going over together - or say it for them now.
       </p>
       <ul className="space-y-1.5">
         {rows.map(({ review, word }) => (

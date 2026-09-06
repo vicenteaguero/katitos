@@ -3,7 +3,7 @@ import { Mic, Square, Trash2 } from 'lucide-react';
 import { cn } from '@kernel/lib';
 import { useAudioRecorder, type AudioClip } from './use-audio-recorder';
 
-/** "0:07" — a recording is seconds long, so seconds is all it needs to say. */
+/** "0:07" - a recording is seconds long, so seconds is all it needs to say. */
 function clock(ms: number): string {
   const total = Math.floor(ms / 1000);
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
@@ -24,7 +24,7 @@ export function AudioRecorder({
   onRecorded: (clip: AudioClip | null) => void;
   /**
    * Change it and the recorder starts clean. The parent's copy of the clip is
-   * cleared after a save, but the clip lived in here and kept showing — so
+   * cleared after a save, but the clip lived in here and kept showing - so
    * the next word looked recorded and was saved silent.
    */
   resetKey?: string | number;
@@ -39,7 +39,7 @@ export function AudioRecorder({
   }, [resetKey, reset]);
 
   // The callback is held in a ref so an inline lambda from a caller can't
-  // re-fire this effect on every render — the old version leaked exactly that
+  // re-fire this effect on every render - the old version leaked exactly that
   // way and it was luck that the two call sites passed stable setters.
   const cb = useRef(onRecorded);
   cb.current = onRecorded;

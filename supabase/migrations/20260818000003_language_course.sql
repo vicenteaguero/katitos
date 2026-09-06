@@ -1,9 +1,9 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — Russian, taught properly
+-- Katitos - Russian, taught properly
 --
 --   Anastasia teaches for a living. Until now this app gave her a flashcard
 --   box: a deck, some cards, a spaced-repetition queue. That is a study aid,
---   not a course. She wants what she uses at work — a course made of units,
+--   not a course. She wants what she uses at work - a course made of units,
 --   units made of lessons, and lessons that can be homework or an exam.
 --
 --   Three tables, one idea: a lesson is an ORDERED LIST OF BLOCKS. A block is
@@ -47,7 +47,7 @@ create table if not exists public.lang_units (
 create index if not exists lang_units_course_idx
   on public.lang_units (course_id, position);
 
--- One `kind` column instead of three near-identical tables — and it means she
+-- One `kind` column instead of three near-identical tables - and it means she
 -- can promote a lesson to homework by changing one field.
 create table if not exists public.lang_lessons (
   id uuid primary key default gen_random_uuid(),

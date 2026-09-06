@@ -11,7 +11,7 @@ import { useTopBarAction } from './top-bar-slot';
  * removing everywhere at once.
  *
  * Rendered as a component (not a bare hook) so it can be dropped in exactly
- * where the old button lived — including inside a conditional branch — without
+ * where the old button lived - including inside a conditional branch - without
  * anyone having to think about hook ordering.
  */
 export function TopBarAdd({

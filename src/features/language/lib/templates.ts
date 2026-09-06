@@ -47,7 +47,7 @@ export const LESSON_TEMPLATES: LessonTemplate[] = [
   {
     id: 'homework',
     title: 'Homework',
-    hint: 'A note, the words to practise — then your questions',
+    hint: 'A note, the words to practise - then your questions',
     blocks: ['text', 'vocab'],
     for: ['homework'],
   },
@@ -60,7 +60,7 @@ export const LESSON_TEMPLATES: LessonTemplate[] = [
   },
 ];
 
-/** The first sheet a kind of lesson gets — the one she would pick anyway. */
+/** The first sheet a kind of lesson gets - the one she would pick anyway. */
 export function defaultTemplateFor(kind: LessonKind): string {
   return kind === 'homework' ? 'homework' : kind === 'exam' ? 'exam' : 'words';
 }

@@ -5,13 +5,13 @@ import type { Lang } from '../types';
 /**
  * The letters your phone's keyboard doesn't have, on screen.
  *
- * Typing an answer is far better practice than recognising one — but he is
+ * Typing an answer is far better practice than recognising one - but he is
  * learning Russian on a Latin keyboard, and she is learning Spanish on a
  * Cyrillic one. Making either of them install a second layout to answer one
  * card is exactly the kind of friction that ends a habit. So the alphabet comes
  * to whoever needs it, and which one appears follows the language of the answer.
  *
- * All thirty-three letters — ё included, it was missing — and a space bar,
+ * All thirty-three letters - ё included, it was missing - and a space bar,
  * because "не хочу" is two words and the marker is right to insist on that.
  * One tab stop for the whole board; the arrow keys walk the keys.
  */
@@ -36,7 +36,7 @@ export function LetterKeys({
   onBackspace: () => void;
 }) {
   const rows = ROWS[lang] ?? [];
-  // Every key in reading order, then space and backspace — one index each.
+  // Every key in reading order, then space and backspace - one index each.
   const letters = rows.flatMap((row) => [...row]);
   const roving = useRovingFocus<HTMLButtonElement>(letters.length + 2);
   if (!rows.length) return null;

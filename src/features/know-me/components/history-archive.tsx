@@ -32,7 +32,7 @@ export function HistoryArchive() {
               <b className={e.selfRight ? 'text-success' : 'text-muted'}>
                 {e.selfRight ? '✓' : '✗'}
               </b>{' '}
-              you · {partnerName}{' '}
+              you - {partnerName}{' '}
               <b className={e.partnerRight ? 'text-success' : 'text-muted'}>
                 {e.partnerRight ? '✓' : '✗'}
               </b>
@@ -42,7 +42,7 @@ export function HistoryArchive() {
             {e.prompt}
           </p>
           <div className="font-sans text-xs text-muted">
-            You: <b className="font-semibold text-fg">{e.selfOwnLabel}</b> ·{' '}
+            You: <b className="font-semibold text-fg">{e.selfOwnLabel}</b> , {' '}
             {partnerName}:{' '}
             <b className="font-semibold text-fg">{e.partnerOwnLabel}</b>
           </div>

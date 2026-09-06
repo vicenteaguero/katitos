@@ -2,7 +2,7 @@
  * Pure maths for the stickers on a page: what order they stack in, and what a
  * corner-handle drag means.
  *
- * Kept out of the components for the same reason `book-geometry.ts` is — this
+ * Kept out of the components for the same reason `book-geometry.ts` is - this
  * is the part that silently goes wrong (a sticker that will not come to the
  * front, a rotation that spins the wrong way) and the part worth testing.
  */
@@ -19,7 +19,7 @@ export interface Stackable {
  *
  * `z` alone is not enough: two stickers can share a depth (everything starts at
  * 0, and the backfill seeded from slot), so age breaks the tie and the id
- * breaks that — otherwise the order flickers between renders and React
+ * breaks that - otherwise the order flickers between renders and React
  * re-creates rows that never changed.
  */
 export function orderStickers<T extends Stackable>(list: readonly T[]): T[] {
@@ -42,7 +42,7 @@ export function nextZBack(zs: readonly number[]): number {
 }
 
 /**
- * Depths only ever grow apart — front, back, front, back — so after enough
+ * Depths only ever grow apart - front, back, front, back - so after enough
  * fiddling the range drifts. Nothing breaks until it does, so we only tidy up
  * when it gets genuinely silly.
  */
@@ -61,7 +61,7 @@ export function needsNormalize(zs: readonly number[]): boolean {
  * A step at a time can reach any order at all, and it is undoable by pressing
  * the other button once.
  *
- * Returns ONLY the rows whose depth actually changed — an empty list when the
+ * Returns ONLY the rows whose depth actually changed - an empty list when the
  * sticker is already at that end. Depths come back normalised to 0..n-1, so
  * the sparse comparator gets tidied up for free every time.
  */
@@ -133,7 +133,7 @@ export function snapAngle(deg: number): number {
  * One finger on the corner handle: away from the centre grows it, around the
  * centre turns it.
  *
- * This exists because pinch cannot work here — the page-flip owns two-finger
+ * This exists because pinch cannot work here - the page-flip owns two-finger
  * gestures, and a sticker filling half a phone screen leaves nowhere to pinch
  * anyway. It's the Keynote handle, and it needs one thumb.
  */
@@ -160,7 +160,7 @@ export function handleTransform(
  * Everything was dropped at dead centre, so putting four photos on a page made
  * a perfect stack and looked exactly like three of them had failed to appear.
  * They come down beside each other instead, spiralling gently outwards, and
- * each one is tilted a little — a page you then tidy up, rather than a pile.
+ * each one is tilted a little - a page you then tidy up, rather than a pile.
  *
  * Deterministic in the number already on the page: both phones computing it at
  * once agree, and there is nothing random to make a test flaky.
@@ -244,7 +244,7 @@ const MOUNT_K: Record<MountFrame, number> = {
  * Instant film has its own proportions and ignores the thickness control.
  *
  * Taken from the app's own `PolaroidPlate` (`kernel/ui/polaroid-plate.tsx`),
- * which is the same object the daily photo and the flowers show — at the size
+ * which is the same object the daily photo and the flowers show - at the size
  * a sticker actually is that is its `sm` variant: `p-1.5 pb-2.5` on a ~120px
  * card, so a 5% edge and an 8% chin, with the caption's own margin making up
  * the rest. The album was guessing 6% and 20% and came out as a different
@@ -256,7 +256,7 @@ export const FILM_CHIN = 0.08;
  * The mount's band, as a fraction of the sticker's width.
  *
  * ONE number, computed here and handed to CSS as `--pb-mat` and to the printed
- * page as a fraction — so the card cannot come out one size on the screen and
+ * page as a fraction - so the card cannot come out one size on the screen and
  * another on paper. A fraction, not pixels, because the old fixed 5px band
  * meant a sticker at scale 0.3 was almost entirely card and one at scale 3 had
  * a hairline: the mount has to grow with the photograph.
@@ -285,7 +285,7 @@ export type StickerShape =
  * The shape of the FRAME, which is not always the shape of the photo.
  *
  * `natural` and `rounded` follow the photograph. Everything else imposes its
- * own proportions and the picture is cropped into them — that is the whole
+ * own proportions and the picture is cropped into them - that is the whole
  * point of choosing a circle.
  */
 export function shapeRatio(
@@ -310,7 +310,7 @@ export function shapeRatio(
  * How wide a frame of a given aspect should sit on the page.
  *
  * Every sticker used to be 42% of the page WIDE whatever shape it was, so a
- * portrait photo came out towering over the landscape one beside it — same
+ * portrait photo came out towering over the landscape one beside it - same
  * width, nearly twice the height, and the page looked lopsided. Matching the
  * AREA instead makes the two read as a pair: a wide frame is wider and shorter,
  * a tall one narrower and taller, and both take up the same amount of paper.
@@ -324,7 +324,7 @@ export function frameWidth(ratio: number): number {
 /**
  * How wide a photo should sit on the page, in its own natural shape.
  *
- * Kept as it was — the PDF re-exports this name — and now expressed in terms
+ * Kept as it was - the PDF re-exports this name - and now expressed in terms
  * of the two pieces above, so a shaped sticker and a plain one are sized by
  * one rule rather than two that drift.
  */

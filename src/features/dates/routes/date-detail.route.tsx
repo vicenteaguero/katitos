@@ -64,7 +64,7 @@ function DetailsCard({ date }: { date: DateWithRatings }) {
 
   return (
     <Card className="footlight space-y-3">
-      {/* The featured card — lifted by tone alone */}
+      {/* The featured card - lifted by tone alone */}
       <div className="relative -mx-7 -mt-7 mb-2 rounded-lg bg-surface-2 px-7 py-8">
         <span
           aria-hidden

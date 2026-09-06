@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — marking in the margin
+-- Katitos - marking in the margin
 --
 --   Her verdict used to be one number and one note for the whole lesson.
 --   Now every answer can carry her own tick or cross (`teacher_score`) and
@@ -9,7 +9,7 @@
 --
 --   All additive. The bundle still running until the next launch never
 --   reads the new columns, and it shows a `returned` lesson as open for
---   answering — which is exactly what returned means.
+--   answering - which is exactly what returned means.
 -- ════════════════════════════════════════════════════════════════════════
 
 alter table public.lang_attempts
@@ -19,7 +19,7 @@ alter table public.lang_attempts
 
 -- An attempt is his to write and hers to mark. The row stays his; the two
 -- margin columns may be written by either member. Column privileges do the
--- narrowing — an update that touches anything else is refused before the
+-- narrowing - an update that touches anything else is refused before the
 -- policy is even consulted, so nobody can rewrite an answer after the fact.
 revoke update on public.lang_attempts from authenticated;
 grant update (teacher_score, teacher_note) on public.lang_attempts to authenticated;

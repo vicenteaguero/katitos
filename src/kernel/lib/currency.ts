@@ -3,7 +3,7 @@ export type CurrencyCode = 'USD' | 'CLP' | 'RUB' | 'GEL' | string;
 // ── The bench ──────────────────────────────────────────────────────────────
 // RUB and CLP lead (our everyday pair), then the dollar and the euro, then the
 // two from the trip. Order here is the order every picker shows. Adding a
-// currency is one row — the converter, Settings and the wishlists all read it.
+// currency is one row - the converter, Settings and the wishlists all read it.
 // It lives in the kernel because more than one feature needs it, and features
 // are not allowed to import each other.
 export const CURRENCIES = [
@@ -19,7 +19,7 @@ export type Code = (typeof CURRENCIES)[number]['code'];
 
 /**
  * The two we actually think in. Whatever pair is on screen, an amount is also
- * shown small in whichever of these isn't already involved — because half the
+ * shown small in whichever of these isn't already involved - because half the
  * time the point of converting is to tell the other one the number.
  */
 export const ANCHORS = ['CLP', 'RUB'] as const;
@@ -57,8 +57,8 @@ export function convert(
   rates: Map<string, number>
 ): number | null {
   if (from === to) return amount;
-  // Zero needs no rate. Without this the converter opens reading "—" until the
-  // rates land — which looks like it is broken, not like it is empty.
+  // Zero needs no rate. Without this the converter opens reading "-" until the
+  // rates land - which looks like it is broken, not like it is empty.
   if (amount === 0) return 0;
   const direct = rates.get(`${from}/${to}`);
   if (direct != null) return amount * direct;
@@ -88,7 +88,7 @@ export function formatMoney(amount: number, currency: CurrencyCode): string {
     return new Intl.NumberFormat(undefined, {
       style: 'currency',
       currency,
-      // Always exactly one decimal — even CLP/RUB (the converter defaults).
+      // Always exactly one decimal - even CLP/RUB (the converter defaults).
       minimumFractionDigits: 1,
       maximumFractionDigits: 1,
     }).format(amount);
@@ -100,7 +100,7 @@ export function formatMoney(amount: number, currency: CurrencyCode): string {
 /**
  * How many decimals a currency is actually spoken in.
  *
- * Nobody says "one thousand two hundred point four pesos" — CLP and RUB are
+ * Nobody says "one thousand two hundred point four pesos" - CLP and RUB are
  * counted whole. The others carry cents.
  */
 const DECIMALS: Record<string, number> = {
@@ -113,7 +113,7 @@ const DECIMALS: Record<string, number> = {
 };
 
 /**
- * Just the number, grouped and rounded the way that currency is spoken —
+ * Just the number, grouped and rounded the way that currency is spoken -
  * no symbol, no code.
  *
  * `formatMoney` uses Intl's `style: 'currency'`, which PREFIXES the code

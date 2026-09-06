@@ -159,7 +159,7 @@ export function ReviewsTab({
                     {r.stars != null && <Stars value={r.stars} size={14} />}
                     <span className="font-sans text-[0.7rem] text-muted">
                       {meta.emoji} {meta.label}
-                      {r.country && ` · ${flagOf(r.country)}`}
+                      {r.country && ` - ${flagOf(r.country)}`}
                     </span>
                   </div>
                   {r.notes && (
@@ -208,7 +208,7 @@ export function ReviewsTab({
             autoFocus
           />
 
-          {/* Rating · country flag switch — one tidy row. */}
+          {/* Rating - country flag switch - one tidy row. */}
           <div className="flex items-center justify-between gap-3">
             <Stars
               value={form.stars}
@@ -237,7 +237,7 @@ export function ReviewsTab({
             </div>
           </div>
 
-          {/* Category — 3 per row, centred. */}
+          {/* Category - 3 per row, centred. */}
           <div className="grid grid-cols-3 gap-2">
             {REVIEW_CATEGORIES.map((c) => {
               const active = form.category === c.value;
@@ -259,7 +259,7 @@ export function ReviewsTab({
             })}
           </div>
 
-          {/* Photo — a clear button, not ghost text. */}
+          {/* Photo - a clear button, not ghost text. */}
           <button
             type="button"
             onClick={() => setCam(true)}

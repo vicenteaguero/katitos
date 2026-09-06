@@ -1,18 +1,18 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — the ledger that stops a reminder becoming a nag
+-- Katitos - the ledger that stops a reminder becoming a nag
 --
 --   Two nudges, each fired at most once, ever, for a given person and day:
 --
---     'day_end'   — three hours before midnight where YOU are, and your photo
+--     'day_end'   - three hours before midnight where YOU are, and your photo
 --                   for today isn't in yet.
---     'last_call' — one hour before the day you BORROWED from the other clock
+--     'last_call' - one hour before the day you BORROWED from the other clock
 --                   closes for good. She wakes on the 12th while Curicó is
 --                   still on the 11th; her 11th is fillable until his midnight
 --                   and then it is gone. This is the tap on the shoulder.
 --
 --   The scheduler runs every ten minutes and is deliberately stateless: it asks
 --   "is this due, and have I already said it?" and this table is the second
---   half of that question. The primary key IS the rule — a duplicate insert
+--   half of that question. The primary key IS the rule - a duplicate insert
 --   raises 23505 and the sender treats that as "already said", so two ticks
 --   racing each other can never both send.
 --

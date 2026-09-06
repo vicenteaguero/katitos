@@ -55,7 +55,7 @@ export function PackTab({ trip }: { trip: Trip }) {
   const list = who === 'all' ? all : all.filter((i) => i.assigned_to === who);
   const packed = list.filter((i) => i.packed).length;
 
-  // All | Vicente | Anastasia — members already come in role order (a, b).
+  // All | Vicente | Anastasia - members already come in role order (a, b).
   const whoOptions = [
     { value: 'all', label: 'All' },
     ...(members ?? []).map((m) => ({
@@ -181,7 +181,7 @@ export function PackTab({ trip }: { trip: Trip }) {
             placeholder="Name"
             autoFocus
           />
-          {/* Whose bag — defaults to me. */}
+          {/* Whose bag - defaults to me. */}
           <Segmented
             value={form.person || self?.user_id || ''}
             onChange={(v) => setForm((f) => ({ ...f, person: v }))}
@@ -194,7 +194,7 @@ export function PackTab({ trip }: { trip: Trip }) {
                   : (m.display_name ?? 'Partner'),
             }))}
           />
-          {/* Category — centred, selectable. */}
+          {/* Category - centred, selectable. */}
           <div className="flex flex-wrap justify-center gap-1.5">
             {CATEGORIES.map((c) => {
               const active = form.category === c;

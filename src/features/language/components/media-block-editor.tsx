@@ -24,7 +24,7 @@ import type { Media } from '../types';
 /**
  * Give a media block something to show.
  *
- * A worksheet, a photograph, or a video — the three things she actually hands
+ * A worksheet, a photograph, or a video - the three things she actually hands
  * out. Uploading and linking are the same gesture from her side, so they sit
  * behind one control rather than two separate flows.
  */
@@ -100,7 +100,7 @@ export function MediaBlockEditor({
               onClick={() => {
                 // The block lets go of it; the file stays with the course.
                 // Deleting it from here threw the upload away with one tap and
-                // no way back — now one tap puts it back on the block.
+                // no way back - now one tap puts it back on the block.
                 const previous = current;
                 onDetach();
                 onClose();
@@ -136,7 +136,7 @@ export function MediaBlockEditor({
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Worksheet — the six cases"
+              placeholder="Worksheet - the six cases"
             />
           </Field>
         )}

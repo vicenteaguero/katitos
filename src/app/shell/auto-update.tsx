@@ -9,12 +9,12 @@ const TRIED = 'katitos:update-tried';
  * Take the newest version, without being asked.
  *
  * The service worker installs a new build and then waits for every tab to
- * close — which on an installed phone app is close to never. So the app could
+ * close - which on an installed phone app is close to never. So the app could
  * run a bundle from days ago while the database had moved on, and the only clue
  * was something quietly not working. Now: on launch, if the server is serving a
  * different build, it applies it and reloads. Two seconds under the splash.
  *
- * Only on launch — and that is enforced, not just intended. The status hook
+ * Only on launch - and that is enforced, not just intended. The status hook
  * asks the server again every time the app comes back to the foreground, so
  * without a window the first "stale" could arrive an hour into a session and
  * reload the lesson she was half-way through writing. A version found later is
@@ -31,7 +31,7 @@ export function AutoUpdate() {
     // out from under a test run or a hot reload helps nobody.
     if (!import.meta.env.PROD || fired.current) return;
     // performance.now() counts from this page's own load, so it is exactly
-    // "how long since launch" — a backgrounded-and-resumed app keeps counting.
+    // "how long since launch" - a backgrounded-and-resumed app keeps counting.
     if (
       !shouldAutoUpdate(
         state,
@@ -45,7 +45,7 @@ export function AutoUpdate() {
     try {
       sessionStorage.setItem(TRIED, server!.sha);
     } catch {
-      /* private mode — the worst case is one extra attempt */
+      /* private mode - the worst case is one extra attempt */
     }
     setApplying(true);
     void update();

@@ -18,7 +18,7 @@ export function PlayButton({
   url?: string | null;
   size?: 'sm' | 'md';
   /**
-   * Change this to make the clip play by itself — used when a card flips to
+   * Change this to make the clip play by itself - used when a card flips to
    * its answer. Never fires on first mount, so nothing blares unbidden.
    */
   autoPlayKey?: string | number;
@@ -37,7 +37,7 @@ export function PlayButton({
   playingRef.current = playing;
 
   /**
-   * Stop the sound if this button is taken off screen mid-clip — and ONLY
+   * Stop the sound if this button is taken off screen mid-clip - and ONLY
    * then. Watching `playing` here instead meant that handing playback to
    * another button ran this cleanup a beat AFTER that button had started, and
    * paused it: tapping a second word left nothing playing at all.
@@ -76,7 +76,7 @@ export function PlayButton({
       firstAutoPlay.current = false;
       return;
     }
-    // Always START — never toggle. A toggle here would PAUSE the clip if the
+    // Always START - never toggle. A toggle here would PAUSE the clip if the
     // card happened to be playing when it flipped.
     if (url) start();
     // eslint-disable-next-line react-hooks/exhaustive-deps

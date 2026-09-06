@@ -22,13 +22,13 @@ function isChunkLoadError(error: unknown): boolean {
 
 /**
  * Root-route `errorElement`. React Router routes render/loader throws here, so
- * a single bad render degrades to a recoverable screen — never a white void.
+ * a single bad render degrades to a recoverable screen - never a white void.
  */
 export function RouteErrorBoundary() {
   const error = useRouteError();
 
   if (isChunkLoadError(error)) {
-    // One-shot guarded reload — a stale chunk after deploy heals itself.
+    // One-shot guarded reload - a stale chunk after deploy heals itself.
     if (typeof sessionStorage !== 'undefined') {
       if (!sessionStorage.getItem(CHUNK_RELOAD_KEY)) {
         sessionStorage.setItem(CHUNK_RELOAD_KEY, '1');
@@ -37,7 +37,7 @@ export function RouteErrorBoundary() {
       }
     }
   } else if (typeof sessionStorage !== 'undefined') {
-    // A different (or recovered) error — release the one-shot guard.
+    // A different (or recovered) error - release the one-shot guard.
     sessionStorage.removeItem(CHUNK_RELOAD_KEY);
   }
 
@@ -50,7 +50,7 @@ export function RouteErrorBoundary() {
       <Empty
         icon="🌹"
         title="Something slipped for a moment"
-        hint="It's not you — let's try that again."
+        hint="It's not you - let's try that again."
         action={
           <Button onClick={() => window.location.reload()}>
             Reload our place

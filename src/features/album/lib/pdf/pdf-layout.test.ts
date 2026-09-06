@@ -18,7 +18,7 @@ const at = (x: number, y: number, extra = {}) => ({
 });
 
 describe('layoutSticker', () => {
-  it('flips the vertical axis — PDF counts up, the screen counts down', () => {
+  it('flips the vertical axis - PDF counts up, the screen counts down', () => {
     // Near the TOP of the screen (y = 0.1) is near the TOP of the paper, which
     // in PDF coordinates is a LARGE y.
     expect(layoutSticker(at(0.5, 0.1)).cy).toBeCloseTo(0.9 * PAGE_H);
@@ -79,7 +79,7 @@ describe('stickerMatrix', () => {
     expect((a.y + b.y) / 2).toBeCloseTo(400);
   });
 
-  it('a quarter turn swaps the sides — and turns the RIGHT way', () => {
+  it('a quarter turn swaps the sides - and turns the RIGHT way', () => {
     const m = stickerMatrix({ cx: 0, cy: 0, w: 100, h: 50, rotation: 90 });
     const a = apply(m, 0, 0);
     const b = apply(m, 1, 0);
@@ -115,7 +115,7 @@ describe('offsetInFrame', () => {
   });
 
   it('keeps the photo on its plate at an everyday tilt', () => {
-    // The distance from the plate's centre must not change when it tilts —
+    // The distance from the plate's centre must not change when it tilts -
     // that is precisely what slid the photograph off the frame.
     const level = offsetInFrame({ cx: 0, cy: 0, rotation: 0 }, 12, -30);
     const tilted = offsetInFrame({ cx: 0, cy: 0, rotation: 7 }, 12, -30);

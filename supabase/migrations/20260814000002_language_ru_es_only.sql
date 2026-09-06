@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — Turkish and Georgian leave the building
+-- Katitos - Turkish and Georgian leave the building
 --
 --   Migration 20260630000003 widened TWO check constraints and INSERTED the
 --   trip decks, so those rows are live on production. Re-tightening the checks

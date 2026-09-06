@@ -59,7 +59,7 @@ const COLORS: { value: FrameColor; label: string }[] = [
 
 type Tab = 'cut' | 'mount' | 'colour' | 'card';
 
-/** Mounts with no card at all — the thickness control means nothing to them. */
+/** Mounts with no card at all - the thickness control means nothing to them. */
 const NO_CARD = new Set<StickerFrame>(['none', 'tape']);
 
 /**
@@ -67,7 +67,7 @@ const NO_CARD = new Set<StickerFrame>(['none', 'tape']);
  *
  * This replaces a mode. Cropping used to happen on the page: the sticker is a
  * couple of centimetres across, so the gesture had to be bound to the whole
- * sheet of paper — which also owns the page-turn, the slide, the deselect tap,
+ * sheet of paper - which also owns the page-turn, the slide, the deselect tap,
  * the pinch-to-resize and every other sticker's drag. Six mechanisms fighting
  * over one finger to move a picture four millimetres.
  *
@@ -83,7 +83,7 @@ export function PhotoStudio({
   onCancel,
   onApply,
 }: {
-  /** Mounting IS opening — the parent renders this only when there is one. */
+  /** Mounting IS opening - the parent renders this only when there is one. */
   sticker: PlacedSticker;
   url?: string;
   paper?: PaperStock;
@@ -134,7 +134,7 @@ export function PhotoStudio({
   }, [onCancel]);
 
   const polaroid = frame === 'polaroid';
-  // Film's window is square whatever the cut says — that squareness IS the
+  // Film's window is square whatever the cut says - that squareness IS the
   // format. The stored cut is left alone, so unchecking Film restores it.
   const effShape: StickerShape = polaroid ? 'square' : shape;
   const ratio = shapeRatio(
@@ -244,7 +244,7 @@ export function PhotoStudio({
       aria-label="Frame this photo"
     >
       {/* A plain div with no handler. Tapping outside deliberately does
-          NOTHING — the two buttons at the bottom are the way out. It is also a
+          NOTHING - the two buttons at the bottom are the way out. It is also a
           SIBLING of the stage, never an ancestor: a backdrop-filter on an
           ancestor re-rasterises the subtree, and that is exactly when iOS
           Safari lets a scaled child escape a clip-path parent. */}
@@ -393,7 +393,7 @@ export function PhotoStudio({
                 (NO_CARD.has(frame) ? (
                   <p className="px-1 py-3 font-sans text-xs text-muted">
                     {frame === 'tape'
-                      ? 'Tape goes straight on the picture — there is no card to widen.'
+                      ? 'Tape goes straight on the picture - there is no card to widen.'
                       : 'A bare photo has no card. Choose a mount first.'}
                   </p>
                 ) : (

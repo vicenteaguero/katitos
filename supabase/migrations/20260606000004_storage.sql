@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — storage buckets + policies
+-- Katitos - storage buckets + policies
 -- All private. Members may do everything; outsiders nothing.
 -- ════════════════════════════════════════════════════════════════════════
 

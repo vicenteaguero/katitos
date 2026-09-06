@@ -1,10 +1,10 @@
 /* ──────────────────────────────────────────────────────────────────────────
- * Date cards — the EPIC claim reveal.
+ * Date cards - the EPIC claim reveal.
  *
  * When the creator claims a date, a full-screen legendary-card reveal plays
  * over the WHOLE app (portal → <body>): the house drops to lit wine, gilt rays
  * fan out and slowly turn, the card slams in with a back-ease overshoot, a foil
- * shimmer sweeps across it, sparks burst, and "CLAIMED!" flourishes in — the
+ * shimmer sweeps across it, sparks burst, and "CLAIMED!" flourishes in - the
  * "shove the phone at your partner" moment. Wine + warm gilt, white-on-wine,
  * notch- and home-indicator-safe. GPU-only (transform/opacity). ~2.4s, tap to
  * dismiss.
@@ -50,7 +50,7 @@
 }
 
 /* Gilt light rays fanning from behind the card. The wrapper handles the
-   scale-in (transform), the inner layer the slow spin (transform) — kept on
+   scale-in (transform), the inner layer the slow spin (transform) - kept on
    separate elements so the two transforms never fight. Centred with negative
    margins so neither animation has to own the translate. */
 .sc-rays-wrap {
@@ -100,7 +100,7 @@
   }
 }
 
-/* The legendary card — slams in with an overshoot, then breathes. The float is
+/* The legendary card - slams in with an overshoot, then breathes. The float is
    delayed to start exactly where the entrance lands, so the handoff is clean. */
 .sc-card {
   position: relative;
@@ -199,7 +199,7 @@
     0 2px 12px rgba(0, 0, 0, 0.7);
 }
 
-/* The foil — a candlelit highlight that sweeps across the card twice. Sits
+/* The foil - a candlelit highlight that sweeps across the card twice. Sits
    above the photo/veil but below the text, which stays crisp on top. */
 .sc-foil {
   position: absolute;
@@ -260,7 +260,7 @@
   }
 }
 
-/* The flourish — gilt serif "CLAIMED!" that scales up out of wide tracking. */
+/* The flourish - gilt serif "CLAIMED!" that scales up out of wide tracking. */
 .sc-word {
   position: relative;
   z-index: 3;
@@ -291,7 +291,7 @@
   }
 }
 
-/* A deliberately faint Close button — the reveal is epic, so the way out is
+/* A deliberately faint Close button - the reveal is epic, so the way out is
    quiet and stays out of the moment until you reach for it. */
 .sc-close {
   position: relative;
@@ -321,7 +321,7 @@
   }
 }
 
-/* Reduced motion — no rays, no sparks, no foil, no overshoot. The card and the
+/* Reduced motion - no rays, no sparks, no foil, no overshoot. The card and the
    word simply fade up; the moment still reads, calmly. */
 @media (prefers-reduced-motion: reduce) {
   .sc-rays-wrap,

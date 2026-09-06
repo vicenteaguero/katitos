@@ -7,11 +7,11 @@ import { clampToBounds, noteBounds } from '../lib/note-bounds';
 /** DB constraint: scale lives in [0.4, 3]. */
 const SCALE_MIN = 0.4;
 const SCALE_MAX = 3;
-/** Shrink-to-fit font window (rem) — short phrases ride big & on one line. */
+/** Shrink-to-fit font window (rem) - short phrases ride big & on one line. */
 const FONT_MAX_REM = 1.3;
 const FONT_MIN_REM = 0.85;
 
-/** A light tap on grab / drop — a no-op on iOS Safari, felt on Android. */
+/** A light tap on grab / drop - a no-op on iOS Safari, felt on Android. */
 const buzz = () => navigator.vibrate?.(10);
 
 export function ChalkNoteItem({
@@ -27,7 +27,7 @@ export function ChalkNoteItem({
   boardRef: RefObject<HTMLDivElement | null>;
   /** Only in edit mode can a note be dragged, pinched or picked up. */
   editing: boolean;
-  /** Picked out for deletion — the trash in the top bar acts on this one. */
+  /** Picked out for deletion - the trash in the top bar acts on this one. */
   selected: boolean;
   onSelect: () => void;
   onMove: (x: number, y: number) => void;
@@ -35,7 +35,7 @@ export function ChalkNoteItem({
 }) {
   const selfRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
-  // Live source of truth during a gesture — written straight to the DOM so a
+  // Live source of truth during a gesture - written straight to the DOM so a
   // drag/pinch never waits on a React render.
   const view = useRef({
     x: note.x,
@@ -45,12 +45,12 @@ export function ChalkNoteItem({
   });
   // >0 while any finger is interacting, so realtime/seed syncs don't fight it.
   const active = useRef(0);
-  // The text box width after fitting — persisted so the one-line look sticks.
+  // The text box width after fitting - persisted so the one-line look sticks.
   const fittedWidth = useRef<number>(note.width ?? 0);
 
   // Clamp any position (seeded, synced, or dragged) to the board bounds so a
   // note can never clip outside the blackboard.
-  // The travel a note has, measured against its *transformed* shape — see
+  // The travel a note has, measured against its *transformed* shape - see
   // `note-bounds.ts`. Using the layout box alone stopped a shrunken note well
   // short of the right-hand edge and let a tilted one hang off the slate.
   const bounds = useCallback(() => {
@@ -76,7 +76,7 @@ export function ChalkNoteItem({
     [bounds]
   );
 
-  // Paint position/rotation/scale via one GPU transform — never layout.
+  // Paint position/rotation/scale via one GPU transform - never layout.
   const apply = useCallback(() => {
     const el = selfRef.current;
     if (!el) return;
@@ -112,7 +112,7 @@ export function ChalkNoteItem({
         );
         el.style.fontSize = `${shrunk}rem`;
         if (el.scrollWidth > maxBox + 1) {
-          // Even at the floor font it won't fit — let it wrap.
+          // Even at the floor font it won't fit - let it wrap.
           el.style.whiteSpace = 'normal';
           el.style.width = `${maxBox}px`;
         }
@@ -121,7 +121,7 @@ export function ChalkNoteItem({
     fittedWidth.current = Math.round(el.offsetWidth);
   }, [note.body, note.width, boardRef]);
 
-  // Re-fit text + re-place the note on mount, prop change, or viewport resize —
+  // Re-fit text + re-place the note on mount, prop change, or viewport resize -
   // but never while the user is mid-gesture.
   const layout = useCallback(() => {
     fit();
@@ -229,7 +229,7 @@ export function ChalkNoteItem({
       ref={selfRef}
       {...bind()}
       // While the wall is being edited a note is something you pick up and
-      // rub out, so it has to announce itself as such — it was a bare div,
+      // rub out, so it has to announce itself as such - it was a bare div,
       // which a screen reader walks straight past.
       role={editing ? 'button' : undefined}
       tabIndex={editing ? 0 : undefined}

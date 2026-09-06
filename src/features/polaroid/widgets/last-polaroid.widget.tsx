@@ -14,7 +14,7 @@ import '../polaroid.css';
  * Home: the most recent day of us, on cream stock inside a wine frame.
  *
  * The pair lies overlapped exactly as it does on the Polaroid screen, with your
- * love's photo on top — the same object in both places, so Home reads as a
+ * love's photo on top - the same object in both places, so Home reads as a
  * glimpse of that screen rather than a different arrangement of the same data.
  * The whole card is a link, so nothing here is tappable on its own.
  */
@@ -67,7 +67,7 @@ export function LastPolaroidWidget() {
           <span className="font-sans text-xs">Take your first photo</span>
         </div>
       ) : pair ? (
-        // Overlapped, theirs in front — the same geometry as the Polaroid page.
+        // Overlapped, theirs in front - the same geometry as the Polaroid page.
         <div className="mt-3.5 flex justify-center">
           <MiniPlate
             photo={day!.mine!}

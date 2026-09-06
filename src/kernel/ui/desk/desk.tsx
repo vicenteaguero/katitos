@@ -3,11 +3,11 @@ import { SlidersHorizontal } from 'lucide-react';
 import { cn } from '../../lib/cn';
 
 /**
- * A screen laid out for a desk — a rail, a canvas, an inspector — that is
+ * A screen laid out for a desk - a rail, a canvas, an inspector - that is
  * still one column on a phone.
  *
  * On a phone the rail is not shown at all (the things it lists are reachable
- * as screens of their own — `.desk__rail` is hidden until a laptop, in the
+ * as screens of their own - `.desk__rail` is hidden until a laptop, in the
  * stylesheet, so no width ever shows it by accident), the canvas is the
  * page, and the inspector stacks
  * underneath it, exactly as these screens were before there was a desk. A
@@ -15,7 +15,7 @@ import { cn } from '../../lib/cn';
  * the inspector is a drawer over it, behind one small button. From a laptop
  * up the inspector is the third column, the rail joins on the left, and the
  * button is gone. The panes are told
- * apart by tone, never by a line — rail on the house ground, canvas on the
+ * apart by tone, never by a line - rail on the house ground, canvas on the
  * surface, inspector one tone up.
  *
  * Which panes exist is a matter of which props are given; the grid follows.

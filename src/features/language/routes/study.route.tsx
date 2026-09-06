@@ -50,7 +50,7 @@ const TITLES: Record<Scope, string> = {
 /**
  * Practice.
  *
- * Today's due cards across every course — or one lesson's words, or the
+ * Today's due cards across every course - or one lesson's words, or the
  * handful he keeps missing. Each card is asked in the way its mastery calls
  * for; a blank comes round again before the session ends; a half-finished
  * session survives a phone call; and on a desk the whole thing runs from
@@ -82,7 +82,7 @@ export function StudyRoute() {
   const [picked, setPicked] = useState<string | null>(null);
   const [score, setScore] = useState({ right: 0, total: 0 });
   const [missed, setMissed] = useState<string[]>([]);
-  /** Looking back at a card already answered — read only. */
+  /** Looking back at a card already answered - read only. */
   const [peek, setPeek] = useState<number | null>(null);
   const [done, setDone] = useState(false);
 
@@ -116,7 +116,7 @@ export function StudyRoute() {
     return buildSession(words, reviews).map((w) => w.id);
   };
 
-  // Built — or brought back — once both halves have arrived. The reviews
+  // Built - or brought back - once both halves have arrived. The reviews
   // query waits for the user id while the words query does not, so building
   // on the first render gave a session of twenty arbitrary cards.
   useEffect(() => {
@@ -165,7 +165,7 @@ export function StudyRoute() {
       total: s.total + 1,
     }));
     if (g < 2) setMissed((m) => (m.includes(card.id) ? m : [...m, card.id]));
-    // A blank comes round again before the session ends — once. The queue
+    // A blank comes round again before the session ends - once. The queue
     // itself is the record, so a resumed session does not add it again.
     let next = queue;
     if (g === 0 && !queue.slice(i + 1).includes(card.id)) {
@@ -276,7 +276,7 @@ export function StudyRoute() {
                 ← Back to the card
               </button>
               <p className="font-sans text-xs tabular-nums text-muted">
-                {peek + 1} / {queue.length} · already answered
+                {peek + 1} / {queue.length} - already answered
               </p>
             </div>
             <Card card={back} support={support} revealed mode="recall" />
@@ -401,7 +401,7 @@ export function StudyRoute() {
             </p>
           )}
 
-          {/* Her voice on this word if she has left it, and his own try —
+          {/* Her voice on this word if she has left it, and his own try -
               the reveal is where a wrong word gets said aloud. */}
           {revealed && <VoiceThread word={card} compact />}
 
@@ -421,8 +421,8 @@ export function StudyRoute() {
 
           {desk && (
             <p className="text-center font-sans text-xs leading-6 text-muted">
-              <Kbd>space</Kbd> show · <Kbd>1</Kbd> <Kbd>2</Kbd> <Kbd>3</Kbd>{' '}
-              grade · <Kbd>←</Kbd> the last card
+              <Kbd>space</Kbd> show - <Kbd>1</Kbd> <Kbd>2</Kbd> <Kbd>3</Kbd>{' '}
+              grade - <Kbd>←</Kbd> the last card
             </p>
           )}
         </div>
@@ -494,7 +494,7 @@ function Card({
               {noteOf(card, support)}
             </p>
           )}
-          {/* Every reveal is a chance to hear it in her voice — not only the
+          {/* Every reveal is a chance to hear it in her voice - not only the
               listening cards. Plays by itself; the button is there for again. */}
           {card.audio_path && mode !== 'listen' && (
             <div className="flex justify-center pt-1">

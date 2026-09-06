@@ -3,7 +3,7 @@ import { cn } from '@kernel/lib';
 import { useCourses } from '../api/courses.queries';
 import { LANG_FLAGS, type Lang } from '../types';
 
-/** Every course, down the left of the desk — the one open is lit. */
+/** Every course, down the left of the desk - the one open is lit. */
 export function CoursesRail({ currentId }: { currentId?: string }) {
   const { data: courses } = useCourses();
   return (

@@ -1,9 +1,9 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — count the photos in the database, not on the phone
+-- Katitos - count the photos in the database, not on the phone
 --
 --   The shelf's "12 photos" line fetched EVERY photo row of EVERY album and
 --   counted them in JavaScript. PostgREST caps a response at 1000 rows, so
---   past a thousand photos the counts would quietly start going DOWN — which
+--   past a thousand photos the counts would quietly start going DOWN - which
 --   reads as "photos are missing", the most alarming thing an album can say.
 -- ════════════════════════════════════════════════════════════════════════
 

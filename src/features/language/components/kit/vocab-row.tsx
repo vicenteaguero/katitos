@@ -26,7 +26,7 @@ export function VocabRow({
   support: Lang;
   /** A signed URL from a batch, when the list already has one. */
   url?: string;
-  /** Tapping the text does this — choose it, open it. */
+  /** Tapping the text does this - choose it, open it. */
   onClick?: () => void;
   selected?: boolean;
   /** Controls on the right: edit, delete, a checkmark. */

@@ -5,9 +5,9 @@ type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 type Size = 'xs' | 'sm' | 'md' | 'lg';
 
 const variants: Record<Variant, string> = {
-  // Wine red, WHITE text, no border — the one true action.
+  // Wine red, WHITE text, no border - the one true action.
   primary: 'bg-accent text-accent-fg lift-press hover:brightness-110',
-  // Quiet lifted panel — separated by tone, never by a line.
+  // Quiet lifted panel - separated by tone, never by a line.
   secondary: 'bg-surface-2 text-fg lift-press hover:brightness-110',
   // Bare copy that warms into a panel on touch.
   ghost:

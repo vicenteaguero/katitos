@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — many albums, one per era of ours
+-- Katitos - many albums, one per era of ours
 --
 --   The 3D book engine was already general (books → pages → free-positioned
 --   photo/text stickers). Only two partial unique indexes pinned it to exactly
@@ -9,7 +9,7 @@
 --   trap: the old bundle resolves both books with `.eq('scope', …).maybeSingle()`,
 --   so a second 'life' row makes Pololini throw PGRST116 for the whole
 --   no-skipWaiting overlap session. New albums simply get their own scope
---   ('era'), which the old queries never match — so nothing old can break.
+--   ('era'), which the old queries never match - so nothing old can break.
 -- ════════════════════════════════════════════════════════════════════════
 
 alter table public.album_books
@@ -44,7 +44,7 @@ alter table public.album_books
 
 -- ── stop a stray `delete from trips` vaporising an album ───────────────────
 -- trip_id was ON DELETE CASCADE. Summer is being locked (not deleted) and its
--- trips rows stay — but the day anyone tidies one away, the cascade would take
+-- trips rows stay - but the day anyone tidies one away, the cascade would take
 -- the book, every page and every photo with it, silently.
 do $$
 declare c text;

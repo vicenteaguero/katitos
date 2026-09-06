@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — Pololini Album catalog (immutable shared content)
+-- Katitos - Pololini Album catalog (immutable shared content)
 -- 12 chapters + ~150 starter slots. Chapters have fixed UUIDs; slots use
 -- gen_random_uuid() + on conflict (chapter_id, position) do nothing, so this is
 -- idempotent. created_by defaults to NULL here (catalog is couple-agnostic).

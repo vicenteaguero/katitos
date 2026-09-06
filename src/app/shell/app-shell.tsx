@@ -34,7 +34,7 @@ import { PendingPill } from './pending-pill';
 import { useAnnounceRelease } from './use-announce-release';
 import { featureRegistry } from '../features.registry';
 
-/** The name of the screen we're on — drives the quiet top-bar title. */
+/** The name of the screen we're on - drives the quiet top-bar title. */
 function sectionTitle(pathname: string): string {
   if (pathname === '/') return '';
   if (pathname.startsWith('/settings')) return 'Settings';
@@ -45,7 +45,7 @@ function sectionTitle(pathname: string): string {
 function TopBar() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  // "Back" earns its place only off the home tab — on home it'd go nowhere.
+  // "Back" earns its place only off the home tab - on home it'd go nowhere.
   const atHome = pathname === '/';
   const tunnel = useTunnelVisible();
   const title = sectionTitle(pathname);
@@ -54,7 +54,7 @@ function TopBar() {
 
   return (
     <header className="z-20 shrink-0 bg-surface pt-[max(0.5rem,env(safe-area-inset-top))]">
-      {/* Minimal marquee: (back) · small mark + quiet section name · settings. */}
+      {/* Minimal marquee: (back) - small mark + quiet section name - settings. */}
       <div className="flex items-center justify-between gap-2 px-[1.5rem] py-2">
         <div className="flex min-w-0 items-center gap-2">
           {atHome ? (
@@ -87,7 +87,7 @@ function TopBar() {
           {/* Home corner = the two things worth one tap: is her internet up,
               and what is that in pesos. Settings lives only in the More
               drawer now. The tunnel button is his until the release entry is
-              unheld — she should not meet a shield icon before she is told
+              unheld - she should not meet a shield icon before she is told
               what it is for. */}
           {atHome && tunnel && <TunnelButton />}
           {atHome && (
@@ -151,10 +151,10 @@ export function AppShell() {
   const loading = status === 'loading';
 
   // App-shell: full-height flex column (sized off the html/body/#root height:100%
-  // chain — the one measurement iOS standalone resolves reliably) where ONLY
+  // chain - the one measurement iOS standalone resolves reliably) where ONLY
   // <main> scrolls, so the top bar + bottom nav stay put. (Ionic/Framework7 use
   // this same pattern; viewport units and JS height-pinning were both unreliable
-  // here — the real fix was the opaque status bar, see index.html.)
+  // here - the real fix was the opaque status bar, see index.html.)
   return (
     <>
       {status === 'anon' && <LoginScreen />}

@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — "Georgia" becomes "Summer 2026" (Türkiye → Georgia)
+-- Katitos - "Georgia" becomes "Summer 2026" (Türkiye → Georgia)
 --   • country tag on itinerary items + photos (TR | GE; null = both/unset)
 --   • a single optional photo per itinerary item (image_path)
 --   • trip_legs: the multi-leg route Istanbul→Trabzon→Batumi→Tbilisi with a

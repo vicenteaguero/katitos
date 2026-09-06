@@ -51,7 +51,7 @@ export function useWaterTree(partnerName?: string, selfName?: string) {
       void notifyPartner({
         kind: 'tree',
         title: '🌳',
-        body: `${selfName ?? 'Your love'} watered our tree — your turn 💧`,
+        body: `${selfName ?? 'Your love'} watered our tree - your turn 💧`,
         url: '/tree',
         tag: 'tree-water',
       });

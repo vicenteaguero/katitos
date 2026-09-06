@@ -44,8 +44,8 @@ const LAST_USER = 'katitos:last-user';
  * Forget everything this device remembers for the previous person.
  *
  * The persisted query snapshot is painted before the server is asked, for
- * whoever opens the app next — rows the server would never hand the other
- * account, the hidden gift included — and the photo cache serves by path
+ * whoever opens the app next - rows the server would never hand the other
+ * account, the hidden gift included - and the photo cache serves by path
  * without ever checking the signature. On a shared computer, signing out has
  * to actually empty the room.
  */
@@ -72,7 +72,7 @@ function forgetPreviousUser(qc: QueryClient) {
 }
 
 /**
- * Note who is signed in — and if it is not who it was, forget the previous
+ * Note who is signed in - and if it is not who it was, forget the previous
  * person first. Covers the case sign-out cannot: a session that expired and a
  * different account signed in over it.
  */

@@ -46,7 +46,7 @@ const LANG_IN: Record<Lang, Record<Lang, string>> = {
  *
  * Homework is the same material asked back, and she was building it from an
  * empty page. For every word the lesson taught: choose its meaning from four,
- * write it from its meaning, and — where her recording exists — write what
+ * write it from its meaning, and - where her recording exists - write what
  * you hear. Pure and deterministic, so it is tested rather than hoped at;
  * the caller writes the rows.
  */

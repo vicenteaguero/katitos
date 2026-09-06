@@ -10,7 +10,7 @@ import { currentMonthUtc, monthKey } from '../lib/months';
  * Put a bouquet in a month (or replace the one that's there).
  *
  * Goes through `usePhotoUpload`, unlike the old version, so a thumbnail is
- * actually generated — a year of full-resolution photos three-across was going
+ * actually generated - a year of full-resolution photos three-across was going
  * to be brutal on her phone.
  */
 export function useUpsertFlower() {
@@ -29,7 +29,7 @@ export function useUpsertFlower() {
     }) => {
       const occasion = monthKey(month);
       // Versioned path so replacing a bouquet never overwrites the bytes of
-      // the one it replaced — same rule as the polaroids.
+      // the one it replaced - same rule as the polaroids.
       const path = `${occasion}/${Date.now()}.jpg`;
       await uploadPhoto(BUCKETS.flowers, path, blob);
 
@@ -56,7 +56,7 @@ export function useUpsertFlower() {
       void qc.invalidateQueries({ queryKey: ['signed-urls'] });
 
       // Only THIS month's bouquet is news. Backfilling last spring is tidying
-      // up an album, and a phone buzzing for each one would be noise — the
+      // up an album, and a phone buzzing for each one would be noise - the
       // exact reason most of the app's other pings were muted for months.
       if (occasion.slice(0, 7) === currentMonthUtc()) {
         void notifyPartner({

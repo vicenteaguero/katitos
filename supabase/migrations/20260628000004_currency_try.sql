@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — Türkiye lira (TRY) + per-member preferred currency
+-- Katitos - Türkiye lira (TRY) + per-member preferred currency
 --   • TRY baseline rates: full directed pairs with USD/CLP/RUB/GEL so the
 --     converter works on prod immediately (edge fn overwrites with live FX).
 --     Baseline ≈ 1 USD = 38 TRY.

@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — core schema
+-- Katitos - core schema
 -- The "couple kernel": the two members, shared settings, membership gate,
 -- presence, push subscriptions, currency rates. Every feature table later
 -- gates on public.is_member().
@@ -62,7 +62,7 @@ as $$
   );
 $$;
 
--- "The other one" — returns the partner's user_id for the current user.
+-- "The other one" - returns the partner's user_id for the current user.
 create or replace function public.partner_id()
 returns uuid
 language sql
@@ -92,7 +92,7 @@ create table public.push_subscriptions (
   created_at timestamptz not null default now()
 );
 
--- Currency rates (RUB/CLP/USD …) — refreshed by an Edge Function or by hand.
+-- Currency rates (RUB/CLP/USD …) - refreshed by an Edge Function or by hand.
 create table public.currency_rates (
   base text not null,
   quote text not null,

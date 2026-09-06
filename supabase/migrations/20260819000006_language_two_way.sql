@@ -1,8 +1,8 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — the classroom goes both ways
+-- Katitos - the classroom goes both ways
 --
 --   The dictionary was built to hold a word in three languages with one of
---   them marked as the one being taught (`term_lang`) — and then `ru` was made
+--   them marked as the one being taught (`term_lang`) - and then `ru` was made
 --   NOT NULL, which forces every Spanish word's headword into a column called
 --   `ru`. That is exactly the lie the column comment warned about, and the
 --   backfill walked straight into it: the five words on production are

@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — new wishes are hidden unless you say otherwise
+-- Katitos - new wishes are hidden unless you say otherwise
 --
 --   The column shipped as `default true` so that adding it didn't retroactively
 --   hide every existing item from the other one. Now that both phones run a

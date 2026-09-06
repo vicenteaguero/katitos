@@ -4,8 +4,8 @@ import type { Lang, TableBlockData } from '../types';
  * A table you can type on a phone.
  *
  * Nobody builds a six-case declension grid by tapping "add column" thirty
- * times. She writes it the way she would on paper — one row per line, columns
- * separated by a comma — and the first line is the headings:
+ * times. She writes it the way she would on paper - one row per line, columns
+ * separated by a comma - and the first line is the headings:
  *
  *     , singular, plural
  *     nominative, стол, столы
@@ -22,7 +22,7 @@ export function parseTable(
   const before = previous?.headings ?? [];
   const raw = text.split('\n').map((l) => l.trim());
   while (raw.length && !raw[raw.length - 1]) raw.pop();
-  // A table that already has headings may open with a BLANK first line —
+  // A table that already has headings may open with a BLANK first line -
   // "not translated into this language yet" (see `formatTable`). That line
   // is still the heading line; dropping it promoted the first row to the
   // headings and lost it.
@@ -32,7 +32,7 @@ export function parseTable(
   const cells = (line: string) => line.split(',').map((c) => c.trim());
   const [first, ...rest] = lines;
 
-  // A single line is data, not headings — otherwise typing one row shows an
+  // A single line is data, not headings - otherwise typing one row shows an
   // empty table.
   if (!rest.length && !before.length)
     return { headings: [], rows: [cells(first)] };
@@ -55,7 +55,7 @@ export function parseTable(
  *
  * Only the headings in THIS language. Filling the box from another language
  * looked helpful, but the next blur saved that text under the language being
- * edited — the English headings quietly became the Spanish ones. An empty
+ * edited - the English headings quietly became the Spanish ones. An empty
  * heading cell now honestly means "not translated yet".
  */
 export function formatTable(data: TableBlockData, support: Lang): string {
@@ -68,7 +68,7 @@ export function formatTable(data: TableBlockData, support: Lang): string {
   return lines.join('\n');
 }
 
-/** How wide the widest row is — the grid is ragged until she finishes typing. */
+/** How wide the widest row is - the grid is ragged until she finishes typing. */
 export function columnCount(data: TableBlockData): number {
   return Math.max(
     data.headings?.length ?? 0,

@@ -15,7 +15,7 @@ export interface CameraCaptureProps {
   quality?: number;
   /**
    * Frame the preview as a white-bordered 1:1 square and centre-crop the saved
-   * photo to match (the daily polaroid) — so what you shoot IS the polaroid.
+   * photo to match (the daily polaroid) - so what you shoot IS the polaroid.
    */
   square?: boolean;
 }
@@ -69,7 +69,7 @@ export function CameraCapture({
       }
       await attach();
     } catch {
-      setError('Camera unavailable — check permissions.');
+      setError('Camera unavailable - check permissions.');
     }
   }, [facing, attach]);
 
@@ -168,7 +168,7 @@ export function CameraCapture({
       </div>
 
       {square ? (
-        // A white-bordered square — the polaroid window. What you see is what
+        // A white-bordered square - the polaroid window. What you see is what
         // you get, since the capture centre-crops to the same square.
         <div className="flex flex-1 flex-col items-center justify-center px-6">
           <div className="w-full max-w-sm rounded-md bg-white p-3 pb-12 shadow-loge">

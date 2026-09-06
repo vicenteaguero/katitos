@@ -1,4 +1,4 @@
-/** The combining acute — the stress mark she writes on a vowel. */
+/** The combining acute - the stress mark she writes on a vowel. */
 export const ACUTE = '́';
 
 const VOWELS = 'аеёиоуыэюя';
@@ -9,7 +9,7 @@ export function stripStress(s: string): string {
 }
 
 /**
- * Every way to stress a word — one per vowel — and which one she meant.
+ * Every way to stress a word - one per vowel - and which one she meant.
  *
  * Russian stress is unwritten and moves, and getting it wrong changes the
  * word (за́мок is a castle, замо́к is a lock). A question that asks WHERE

@@ -12,7 +12,7 @@ import {
 } from '../../api/summer.mutations';
 import { type CountryFilter, type Trip } from '../../types';
 
-/** Wishlist — quick, undated "to do / eat / buy" items. Its own tab now. */
+/** Wishlist - quick, undated "to do / eat / buy" items. Its own tab now. */
 export function WishlistTab({
   trip,
   country,

@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — reusable engines
+-- Katitos - reusable engines
 -- ONE deck engine powers quizzes / this-or-that / would-you-rather / QOTD /
 -- swipe wishlists. ONE game_scores table powers every game's leaderboard.
 -- ════════════════════════════════════════════════════════════════════════

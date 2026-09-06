@@ -28,7 +28,7 @@ const GENDERS = [
 ];
 
 /**
- * The sweet-nothing editor. Admin only — it's rendered nowhere else, and RLS
+ * The sweet-nothing editor. Admin only - it's rendered nowhere else, and RLS
  * refuses the writes regardless.
  *
  * `gender` is who a phrase may be sent TO. That distinction is the whole
@@ -72,7 +72,7 @@ export function PhraseEditor() {
             Sweet nothings
           </p>
           <p className="font-sans text-xs text-muted">
-            {phrases?.length ?? 0} in the pot · only you can edit these
+            {phrases?.length ?? 0} in the pot - only you can edit these
           </p>
         </div>
         <IconButton

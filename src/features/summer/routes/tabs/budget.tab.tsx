@@ -189,7 +189,7 @@ export function BudgetTab({ trip }: { trip: Trip }) {
             onChange={(e) =>
               setSprintForm((f) => ({ ...f, name: e.target.value }))
             }
-            placeholder="Name — e.g. Before Jul 26"
+            placeholder="Name - e.g. Before Jul 26"
             autoFocus
           />
           <Input
@@ -217,7 +217,7 @@ export function BudgetTab({ trip }: { trip: Trip }) {
               onChange={(e) =>
                 setLineEdit({ ...lineEdit, label: e.target.value })
               }
-              placeholder="What for — flights, food, stay…"
+              placeholder="What for - flights, food, stay…"
               autoFocus
             />
             <Select

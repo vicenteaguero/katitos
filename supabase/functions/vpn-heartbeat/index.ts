@@ -2,7 +2,7 @@
 //
 // Every server posts one small object a minute. Nothing polls them from the
 // outside on purpose: a poller would be a datacentre IP touching her endpoints
-// on a schedule, once a minute, forever — which is the exact shape a censor
+// on a schedule, once a minute, forever - which is the exact shape a censor
 // looks for. So the boxes report in, and this writes it down.
 //
 // The door is a shared secret in a header, not a Supabase JWT. The servers hold
@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   );
 
-  // One row per minute, and the primary key is (server_id, at) — a clock that
+  // One row per minute, and the primary key is (server_id, at) - a clock that
   // fires twice in the same second must not be an error the box retries.
   const at = new Date();
   at.setSeconds(0, 0);

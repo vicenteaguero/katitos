@@ -15,7 +15,7 @@
 
 begin;
 
--- Tier B — real concepts we did not come back to.
+-- Tier B - real concepts we did not come back to.
 drop table if exists public.decision_positions;
 drop table if exists public.decisions;
 drop table if exists public.finance_contributions;
@@ -23,7 +23,7 @@ drop table if exists public.finance_goals;
 drop table if exists public.fights;
 drop table if exists public.game_scores;
 
--- Tier C — the same list, written five times.
+-- Tier C - the same list, written five times.
 drop table if exists public.countdowns;
 drop table if exists public.cute_words;
 drop table if exists public.ideas;

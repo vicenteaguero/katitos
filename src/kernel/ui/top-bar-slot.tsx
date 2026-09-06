@@ -23,7 +23,7 @@ export function TopBarSlotProvider({ children }: { children: ReactNode }) {
   );
 }
 
-/** Read side — the TopBar renders whatever the active route injected. */
+/** Read side - the TopBar renders whatever the active route injected. */
 export function useTopBarSlot(): ReactNode {
   return useContext(TopBarSlotContext)?.action ?? null;
 }

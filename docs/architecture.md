@@ -1,34 +1,34 @@
-# Katitos — Architecture
+# Katitos - Architecture
 
 A private long-distance-relationship PWA for two. React + TypeScript + Vite,
 Supabase backend, runs locally in Docker, cloud-ready for Vercel + Supabase.
 
 ## Stack
 
-- **Vite + React 19 + TypeScript** — static SPA, no SSR.
-- **vite-plugin-pwa** — installable PWA, offline shell, web-push service worker.
-- **Supabase** — Postgres + RLS, Auth, Storage, Realtime, Edge Functions.
-- **TanStack Query** (server state) · **Zustand** (small local state).
-- **react-router v7** — routes generated from the feature registry.
-- **Tailwind + CSS-variable tokens** (see `src/index.css`) — visual redesign = edit the token block only.
-- **ESLint flat + eslint-plugin-boundaries** — enforces feature isolation. **Vitest + Playwright** — tests.
+- **Vite + React 19 + TypeScript** - static SPA, no SSR.
+- **vite-plugin-pwa** - installable PWA, offline shell, web-push service worker.
+- **Supabase** - Postgres + RLS, Auth, Storage, Realtime, Edge Functions.
+- **TanStack Query** (server state) - **Zustand** (small local state).
+- **react-router v7** - routes generated from the feature registry.
+- **Tailwind + CSS-variable tokens** (see `src/index.css`) - visual redesign = edit the token block only.
+- **ESLint flat + eslint-plugin-boundaries** - enforces feature isolation. **Vitest + Playwright** - tests.
 
 ## Layout
 
 ```
 src/
-  app/      composition root (shell, router, registries) — knows nothing about specific features
+  app/      composition root (shell, router, registries) - knows nothing about specific features
   kernel/   the shared "OS": supabase, query, auth, couple, realtime, storage, push,
             ui, hooks, lib, registry, engines/deck
   features/ one self-contained vertical slice per feature
 ```
 
 **Isolation (lint-enforced):** a feature imports only from `@kernel/*` and its
-own `./` files — never another feature, never `@app/*`. Only `app/` imports
+own `./` files - never another feature, never `@app/*`. Only `app/` imports
 feature barrels. `kernel` imports nothing from `features`/`app`.
 Dependency DAG: `features → kernel`, `app → features + kernel`, `kernel → ∅`.
 
-## Extensibility — adding things is cheap
+## Extensibility - adding things is cheap
 
 ### Add a feature
 
@@ -36,16 +36,16 @@ Dependency DAG: `features → kernel`, `app → features + kernel`, `kernel → 
 2. One line in `src/app/features.registry.ts`. Routes + nav are derived automatically.
 
 A feature folder mirrors `src/features/wishlists/` (the reference):
-`types.ts · api/*.queries.ts · api/*.mutations.ts · components/ · routes/ · feature.ts · index.ts`.
+`types.ts - api/*.queries.ts - api/*.mutations.ts - components/ - routes/ - feature.ts - index.ts`.
 
 Keep the barrel thin. `features.registry.ts` imports every barrel at boot, so
-anything re-exported there lands in the boot chunk — see the note in
+anything re-exported there lands in the boot chunk - see the note in
 `src/features/album/index.ts` for what that cost once.
 
 ### Add a home widget
 
 Export a self-fetching component from the feature and render it directly in
-`src/app/routes/home.route.tsx`. There is no widget registry — one existed, was
+`src/app/routes/home.route.tsx`. There is no widget registry - one existed, was
 never adopted, and was removed. Home is a written layout, not a grid of tiles.
 
 ### Add an idea to the "Soon" shelf

@@ -9,7 +9,7 @@ import { WaitingCard } from './waiting-card';
 import { RevealCard } from './reveal-card';
 
 /**
- * One question's full lifecycle — answer → wait → reveal — scoped entirely to
+ * One question's full lifecycle - answer → wait → reveal - scoped entirely to
  * its own day_id. The route renders one per question, so the day can carry
  * several without any shared state between them.
  */

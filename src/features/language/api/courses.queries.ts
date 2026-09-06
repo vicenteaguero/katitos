@@ -73,7 +73,7 @@ export function useUnits(courseId: string | undefined) {
         ...u,
         lessons: [...((u.lessons ?? []) as Lesson[])]
           // A draft belongs to whoever is writing it. The migration says "he
-          // only ever sees published" and nothing enforced it — half-written
+          // only ever sees published" and nothing enforced it - half-written
           // lessons appeared in his list and opened.
           .filter((l) => !l.deleted_at)
           .filter((l) => l.status === 'published' || l.created_by === userId)
@@ -86,7 +86,7 @@ export function useUnits(courseId: string | undefined) {
 /**
  * How far along each of us is.
  *
- * Both rows come back, not just mine — she is the teacher and the whole point
+ * Both rows come back, not just mine - she is the teacher and the whole point
  * is that she can see what he has handed in. Plain rows out of the queryFn; the
  * lookup is built in `select`, because a Map in cached data rehydrates from
  * localStorage as an empty object.
@@ -133,7 +133,7 @@ export function useDueLessons(target: TargetLang) {
     staleTime: 60_000,
     queryFn: async (): Promise<Lesson[]> => {
       // Only the language you are LEARNING. Without this the home screen told
-      // him his own Spanish homework was due — the homework he set for her.
+      // him his own Spanish homework was due - the homework he set for her.
       // Filtered on the SERVER: filtering after the limit meant the twenty
       // oldest rows were mostly the other course's, and one person's widget
       // went blank as the other's history grew.

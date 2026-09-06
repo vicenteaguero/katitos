@@ -46,7 +46,7 @@ export function useMoveNote() {
  * Scale, rotation and width in ONE write.
  *
  * A single pinch produces all three at once, so sending them as two separate
- * mutations meant two round-trips and two full refetches per gesture — and a
+ * mutations meant two round-trips and two full refetches per gesture - and a
  * window where the note was half-updated on the other screen.
  */
 export function useTransformNote() {

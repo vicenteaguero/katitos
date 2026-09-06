@@ -9,7 +9,7 @@ import { cn } from '../lib/cn';
 
 // A clearly-recessed field: a light hairline border + a darker inset fill so
 // inputs stand out on BOTH the page (surface) and inside sheets/cards
-// (surface-2) — they used to share surface-2 and vanish.
+// (surface-2) - they used to share surface-2 and vanish.
 // `min-w-0 max-w-full` keeps native date/time inputs (which carry an intrinsic
 // min-width) from overflowing a sheet/grid cell on iOS.
 const base =
@@ -91,7 +91,7 @@ export function Field({
 }
 
 /**
- * A labelled GROUP of controls — a segmented switch, a row of chips.
+ * A labelled GROUP of controls - a segmented switch, a row of chips.
  *
  * `Field` is a `<label>`, which is right for exactly one input and wrong for
  * anything else: a label wraps its control, so a Segmented inside one had every

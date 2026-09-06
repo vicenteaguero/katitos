@@ -1,9 +1,9 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — the sweet nothings move into the database
+-- Katitos - the sweet nothings move into the database
 --
 --   They used to be a hardcoded array inside the Home component, and some of
 --   them were feminine-only ('Liubimonkeykaya', 'любиминки') sitting in the
---   shared pool — so she kept sending him phrases addressed to a woman.
+--   shared pool - so she kept sending him phrases addressed to a woman.
 --
 --   `gender` here is the gender of the RECIPIENT a phrase is valid for:
 --     'f'   → only ever sent TO her

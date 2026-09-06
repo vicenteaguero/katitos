@@ -71,7 +71,7 @@ const KIND_LABEL: Record<LessonKind, string> = {
 /**
  * One course: its units, and the lessons inside them.
  *
- * A single scroll rather than a drill-down — a course is a shape you want to
+ * A single scroll rather than a drill-down - a course is a shape you want to
  * see all of, and tapping through three screens to find last week's homework
  * is how a course stops being used.
  */
@@ -337,7 +337,7 @@ export function CourseRoute() {
             </Field>
             <Fieldset
               label="Start from"
-              hint="Empty blocks in the usual order — throw away what you do not need"
+              hint="Empty blocks in the usual order - throw away what you do not need"
             >
               <div className="grid grid-cols-2 gap-1.5">
                 {LESSON_TEMPLATES.filter((t) => t.for.includes(lessonKind)).map(
@@ -406,7 +406,7 @@ function LessonRow({
   waiting: boolean;
   /** The couple's day, for "due tomorrow". */
   today: string;
-  /** Drag to reorder — the teacher's, not his. */
+  /** Drag to reorder - the teacher's, not his. */
   handle?: DragHandleProps;
   onDelete?: () => void;
 }) {

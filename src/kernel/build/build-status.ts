@@ -8,7 +8,7 @@
 export interface BuildStamp {
   /** Full commit sha the bundle was built from. */
   sha: string;
-  /** First 7 of it — what a person actually reads and compares. */
+  /** First 7 of it - what a person actually reads and compares. */
   short: string;
   /** Branch name at build time. */
   ref: string;
@@ -22,7 +22,7 @@ export interface BuildStamp {
   version: string;
   /** 'production' | 'preview' | 'development' on Vercel, 'local' otherwise. */
   env: string;
-  /** The build had uncommitted changes in it — it matches no commit. */
+  /** The build had uncommitted changes in it - it matches no commit. */
   dirty: boolean;
 }
 
@@ -31,7 +31,7 @@ export type BuildState =
   | 'checking'
   /** Running exactly what the server is serving. */
   | 'current'
-  /** The server has moved on — this app is behind. */
+  /** The server has moved on - this app is behind. */
   | 'stale'
   /** Built from a working tree with uncommitted changes. */
   | 'dirty'
@@ -40,7 +40,7 @@ export type BuildState =
 
 /**
  * `dirty` outranks `stale` on purpose: if the running build contains
- * uncommitted work, "you are behind the server" is not the useful sentence —
+ * uncommitted work, "you are behind the server" is not the useful sentence -
  * "this build matches no commit at all" is.
  */
 export function compareBuilds(
@@ -76,7 +76,7 @@ export const AUTO_UPDATE_WINDOW_MS = 30_000;
  * Should the app take the newer version by itself, right now?
  *
  * The service worker installs a new build and then waits, which means a phone
- * can sit three deploys behind and look completely normal — you only find out
+ * can sit three deploys behind and look completely normal - you only find out
  * when something does not work. So the app stops asking and just updates.
  *
  * `triedSha` is the version we already tried to apply this session. Without it
@@ -85,7 +85,7 @@ export const AUTO_UPDATE_WINDOW_MS = 30_000;
  *
  * `sinceLaunchMs` is how long the app has been open. The check re-runs every
  * time the app comes back to the foreground, and the reload it leads to throws
- * away whatever is being typed — the lesson she is half-way through writing.
+ * away whatever is being typed - the lesson she is half-way through writing.
  * So a version found after the launch window is left for the Version row in
  * Settings, and taken on the next launch instead.
  */

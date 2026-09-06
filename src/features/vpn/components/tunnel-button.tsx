@@ -4,8 +4,8 @@ import { useWhereAmI } from '../api/vpn.queries';
 /**
  * The way in, from the top bar of the home screen.
  *
- * Same circle as the currency button beside it — same 36px, same gilt
- * hairline, same lift — because they are the same kind of thing: one tap, one
+ * Same circle as the currency button beside it - same 36px, same gilt
+ * hairline, same lift - because they are the same kind of thing: one tap, one
  * answer. Only the fill differs, and that is what tells them apart: currency
  * is wine, this is her glossy green when it is on and a quiet panel when it is
  * not.
@@ -15,7 +15,7 @@ import { useWhereAmI } from '../api/vpn.queries';
  *
  * Letters, not a shield: a shield is a symbol for people who already know what
  * the thing is, and the point of this feature is that she does not have to.
- * In the sans face at 11px — the display face at this size was unreadable.
+ * In the sans face at 11px - the display face at this size was unreadable.
  */
 export function TunnelButton() {
   const { data: where } = useWhereAmI();

@@ -63,7 +63,7 @@ function DrawerRow({
 }
 
 /**
- * The "More" drawer — every feature that is not on the bar.
+ * The "More" drawer - every feature that is not on the bar.
  *
  * Shared by the phone's bottom bar and the desk's side rail, so the shelf is
  * the same shelf whichever one opened it.
@@ -99,14 +99,14 @@ export function MoreDrawer({
         </NavLink>
       }
     >
-      {/* Open features all sit together at the top — the live app, one tap
+      {/* Open features all sit together at the top - the live app, one tap
             away. The "Soon" rows keep their categories beneath. No tiles, no
             borders; tone + spacing separate, a running --i staggers rows. */}
       <div className="curtain-stagger flex flex-col gap-4 pb-2">
         {(() => {
           const open = entries.filter((e) => !e.locked);
           // Shipped-but-locked features, plus the ideas that have no code at
-          // all yet (see soon.ts) — both read the same on the shelf.
+          // all yet (see soon.ts) - both read the same on the shelf.
           const locked = [
             ...entries.filter((e) => e.locked),
             ...SOON.map((e) => ({ ...e, locked: true })),

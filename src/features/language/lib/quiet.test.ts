@@ -13,9 +13,9 @@ describe('isAsleep', () => {
   });
 
   it('treats the edges the way a person would', () => {
-    // 05:00 UTC = 08:00 Moscow — up.
+    // 05:00 UTC = 08:00 Moscow - up.
     expect(isAsleep('Europe/Moscow', at('2026-08-30T05:00:00'))).toBe(false);
-    // 20:00 UTC = 23:00 Moscow — asleep.
+    // 20:00 UTC = 23:00 Moscow - asleep.
     expect(isAsleep('Europe/Moscow', at('2026-08-30T20:00:00'))).toBe(true);
   });
 

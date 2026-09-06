@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — local seed (runs after migrations on `supabase db reset`/start).
+-- Katitos - local seed (runs after migrations on `supabase db reset`/start).
 -- Creates the two members and light sample data so every feature has content.
 -- NOTE: seed runs as `postgres` (auth.uid() is null here), so created_by/owner
 -- columns are set EXPLICITLY below.

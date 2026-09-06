@@ -47,7 +47,7 @@ describe('startOfDay', () => {
   it('survives the night Chile has no midnight', () => {
     // 6 September 2026: the clocks go 23:59:59 → 01:00. The first instant of
     // the 6th is 01:00 local. Offset arithmetic answers 03:00Z here, which is
-    // 23:00 on the 5th — an hour early, on the one night it matters.
+    // 23:00 on the 5th - an hour early, on the one night it matters.
     expect(iso(startOfDay(CURICO, '2026-09-06'))).toBe(
       '2026-09-06T04:00:00.000Z'
     );

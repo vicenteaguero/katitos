@@ -16,7 +16,7 @@ const reviewsByVocab = (rows: VocabReview[]) => {
 };
 
 /**
- * The dictionary — every word either of us has ever been taught.
+ * The dictionary - every word either of us has ever been taught.
  *
  * One row per word, so correcting a stress mark corrects it in every lesson
  * that word appears in. That was the whole reason for moving off the old
@@ -28,12 +28,12 @@ export function useVocab(target?: Lang, search?: string) {
     staleTime: 30_000,
     queryFn: async (): Promise<Vocab[]> => {
       // A word that was put away stays out of every list until Undo brings
-      // it back — the row itself is kept, so nothing about it is lost.
+      // it back - the row itself is kept, so nothing about it is lost.
       let q = supabase.from('lang_vocab').select('*').is('deleted_at', null);
       if (target) q = q.eq('term_lang', target);
       if (search?.trim()) {
         // Quoted and escaped. PostgREST's `or=()` is a comma-separated list,
-        // so an unescaped comma in what she types — "мама, папа" — split the
+        // so an unescaped comma in what she types - "мама, папа" - split the
         // filter into nonsense and the whole query came back 400.
         const term = `"%${search.trim().replace(/["\\]/g, '\\$&')}%"`;
         q = q.or(`ru.ilike.${term},en.ilike.${term},es.ilike.${term}`);
@@ -48,7 +48,7 @@ export function useVocab(target?: Lang, search?: string) {
 }
 
 /**
- * Every word in one language, unfiltered — the study session's queue.
+ * Every word in one language, unfiltered - the study session's queue.
  *
  * The language is always passed in. It used to default to Russian, which meant
  * every screen that forgot to think about it silently became Russian-only, and
@@ -89,7 +89,7 @@ export function useAddVocab() {
       tags?: string[];
       audio?: AudioClip | null;
     }) => {
-      // The headword is whichever column `termLang` names — checking `ru` for
+      // The headword is whichever column `termLang` names - checking `ru` for
       // a Spanish word found nothing, every time, and quietly made duplicates.
       const term = (v[v.termLang] ?? '').trim();
       if (!term)
@@ -107,14 +107,14 @@ export function useAddVocab() {
         .limit(1);
       if (lookErr) throw lookErr;
       if (existing?.length) {
-        // The word is already here — so what she just gave it goes ONTO it:
+        // The word is already here - so what she just gave it goes ONTO it:
         // the recording always, a translation only where the row had none.
         // Returning early threw the recording away and called it a success,
         // which is why a word had to be recorded twice.
         const row = existing[0];
         const patch: Partial<Vocab> = {};
-        // A word that was put away comes back — with its recording, its
-        // lessons and both people's history — rather than being made twice.
+        // A word that was put away comes back - with its recording, its
+        // lessons and both people's history - rather than being made twice.
         if (row.deleted_at) patch.deleted_at = null;
         if (!row.ru && v.ru?.trim()) patch.ru = v.ru.trim();
         if (!row.en && v.en?.trim()) patch.en = v.en.trim();
@@ -165,7 +165,7 @@ export function useAddVocab() {
       if (error) throw error;
 
       if (v.audio) {
-        // The extension follows the recording, not a guess — that mismatch is
+        // The extension follows the recording, not a guess - that mismatch is
         // exactly what made clips unplayable across devices. And a path of
         // its own per recording, so a replacement is never served from the
         // cache as the clip it replaced.
@@ -191,7 +191,7 @@ export function useAddVocab() {
 }
 
 /**
- * Edit a word — audio included.
+ * Edit a word - audio included.
  *
  * The old screens could only attach a recording when the card was first
  * created, so fixing a bad clip meant deleting the card and losing every
@@ -293,7 +293,7 @@ export function useAddVocabMany() {
       }[];
     }) => {
       if (!v.words.length) return 0;
-      // Against the WHOLE dictionary, put-away rows included — the screen's
+      // Against the WHOLE dictionary, put-away rows included - the screen's
       // list is search-filtered and would have let duplicates through. A
       // word that was put away comes back rather than being made twice.
       const { data: have, error: lookErr } = await supabase
@@ -347,7 +347,7 @@ export function useAddVocabMany() {
   });
 }
 
-/** The same tags onto many words at once — added, never replaced. */
+/** The same tags onto many words at once - added, never replaced. */
 export function useTagVocabMany() {
   const qc = useQueryClient();
   return useMutation({
@@ -368,7 +368,7 @@ export function useTagVocabMany() {
   });
 }
 
-/** Put many words away — one statement, one Undo. */
+/** Put many words away - one statement, one Undo. */
 export function useDeleteVocabMany() {
   const qc = useQueryClient();
   return useMutation({
@@ -402,7 +402,7 @@ export function useRestoreVocabMany() {
   });
 }
 
-/** The lessons a word appears in — so a word knows where it is taught. */
+/** The lessons a word appears in - so a word knows where it is taught. */
 export function useWordUses(vocabId: string | undefined) {
   return useQuery({
     queryKey: [...qk.lang.vocab(), 'uses', vocabId ?? 'none'] as const,
@@ -480,7 +480,7 @@ export function useMyReviews() {
   });
 }
 
-/** Everyone's — she needs to see what he keeps forgetting. */
+/** Everyone's - she needs to see what he keeps forgetting. */
 export function useAllReviews() {
   return useQuery({
     queryKey: [...qk.lang.vocabReviews(), 'all'] as const,
@@ -497,7 +497,7 @@ export function useAllReviews() {
 /**
  * Record how a word went, and when to ask again.
  *
- * The interval maths is the same unit-tested SM-2 as before — only the table
+ * The interval maths is the same unit-tested SM-2 as before - only the table
  * it writes to changed.
  */
 export function useGradeVocab() {

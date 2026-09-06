@@ -20,7 +20,7 @@ const attempt = (over: Partial<Attempt>): Attempt =>
  *
  * Attempts are append-only so homework can be redone, which means the screen
  * has to pick the newest row per question. It is right only because the query
- * orders `answered_at` descending — reverse that and he'd be shown his first,
+ * orders `answered_at` descending - reverse that and he'd be shown his first,
  * usually wrong, answer forever.
  */
 describe('latestPerExercise', () => {
@@ -46,7 +46,7 @@ describe('latestPerExercise', () => {
     expect(latestPerExercise([])).toEqual([]);
   });
 
-  it('takes the FIRST row it sees per question — the query orders them', () => {
+  it('takes the FIRST row it sees per question - the query orders them', () => {
     // Feeding them oldest-first proves the dependency rather than hiding it:
     // this function trusts the caller's ordering, and that is worth pinning.
     const out = latestPerExercise([

@@ -38,7 +38,7 @@ function splitAnswers(text: string, sep = '/'): string[] {
     .filter(Boolean);
 }
 
-/** The prompt goes under the language it was written in — all three exist. */
+/** The prompt goes under the language it was written in - all three exist. */
 function promptPatch(lang: Lang, prompt: string) {
   const value = prompt || null;
   if (lang === 'ru') return { prompt_ru: value };
@@ -50,7 +50,7 @@ function promptPatch(lang: Lang, prompt: string) {
  * Writing a question, on a phone.
  *
  * Everything is checked with the same `validateExercise` the runner uses before
- * it is allowed to save — an exercise with three gaps and two answers cannot be
+ * it is allowed to save - an exercise with three gaps and two answers cannot be
  * marked, and finding that out while teaching is not acceptable.
  */
 export function ExerciseEditor({
@@ -66,9 +66,9 @@ export function ExerciseEditor({
   lessonId: string;
   position: number;
   exercise: Exercise | null;
-  /** The language the lesson teaches — the one the answer options are in. */
+  /** The language the lesson teaches - the one the answer options are in. */
   target: Lang;
-  /** The block this question follows — or none, for one at the end. */
+  /** The block this question follows - or none, for one at the end. */
   blockId?: string | null;
   onClose: () => void;
 }) {
@@ -77,7 +77,7 @@ export function ExerciseEditor({
   const { native: support } = useLanguages();
 
   const [kind, setKind] = useState<ExerciseKind>('choice');
-  // Choose, asked as "where is the stress?" — the options are made for her.
+  // Choose, asked as "where is the stress?" - the options are made for her.
   const [variant, setVariant] = useState<'stress' | 'pair' | null>(null);
   const [prompt, setPrompt] = useState('');
   const [options, setOptions] = useState<ExerciseOption[]>([
@@ -98,7 +98,7 @@ export function ExerciseEditor({
     if (!exercise) return;
     setKind(exercise.kind as ExerciseKind);
     // This language's prompt, or nothing. Falling back to another language
-    // read well and then SAVED that text under this one on the next save —
+    // read well and then SAVED that text under this one on the next save -
     // a Russian prompt quietly became the English prompt too.
     setPrompt(exercise[`prompt_${support}`] ?? '');
     const payload = exercise.payload as Record<string, unknown>;
@@ -119,7 +119,7 @@ export function ExerciseEditor({
     }
     if (payload?.pairs) {
       // Back into the shape she typed, so a match question can be corrected
-      // instead of retyped — it used to open empty and refuse to save.
+      // instead of retyped - it used to open empty and refuse to save.
       setText(
         (payload.pairs as { left: string; right: string }[])
           .map((p) => `${p.left} = ${p.right}`)
@@ -169,7 +169,7 @@ export function ExerciseEditor({
     switch (kind) {
       case 'choice': {
         if (variant === 'pair') {
-          // Her word first, its lookalikes after; the reader shuffles nothing —
+          // Her word first, its lookalikes after; the reader shuffles nothing -
           // the order is stable and the answer is by id.
           const words = [
             answerText.trim(),
@@ -202,7 +202,7 @@ export function ExerciseEditor({
       case 'listen':
         return { payload: { audioPath }, answer: splitAnswers(answerText) };
       case 'complete':
-        // One entry per gap, and each gap may itself offer alternatives —
+        // One entry per gap, and each gap may itself offer alternatives -
         // "живу / проживаю | Москве".
         return {
           payload: {
@@ -221,7 +221,7 @@ export function ExerciseEditor({
         return { payload: { tokens: scrambleTokens(tokens) }, answer: tokens };
       }
       case 'match': {
-        // Split on the FIRST "=" only — a right-hand side may contain one.
+        // Split on the FIRST "=" only - a right-hand side may contain one.
         const pairs = text
           .split('\n')
           .map((line) => {
@@ -256,7 +256,7 @@ export function ExerciseEditor({
     const between = (a: ExerciseKind, b: ExerciseKind) =>
       (kind === a && next === b) || (kind === b && next === a);
     setKind(next);
-    // Choose and Choose-several share their options — one tap between them
+    // Choose and Choose-several share their options - one tap between them
     // used to wipe every option she had typed. A typed answer survives
     // Type ↔ Listen the same way.
     if (between('choice', 'multi')) {
@@ -285,17 +285,17 @@ export function ExerciseEditor({
       // Uploaded once: a second press of Save must not send it again.
       setAudio(null);
     }
-    // The clip this one replaces is nobody's — once the save has gone
+    // The clip this one replaces is nobody's - once the save has gone
     // through. Removing it first meant a refused save left the question
     // pointing at a recording that no longer existed.
     const stored =
       (exercise?.payload as { audioPath?: string } | null)?.audioPath ?? null;
     if (variant === 'pair' && !path) {
-      toast.error('Record the word — the whole question is your voice');
+      toast.error('Record the word - the whole question is your voice');
       return;
     }
     if (variant === 'stress' && stressVariants(answerText).answer < 0) {
-      toast.error('Put the accent on a vowel — спаси́бо');
+      toast.error('Put the accent on a vowel - спаси́бо');
       return;
     }
     const { payload, answer } = buildWith(path);
@@ -369,7 +369,7 @@ export function ExerciseEditor({
         {variant === 'stress' && (
           <Field
             label="The word, with its stress"
-            hint="Type the accent on the stressed vowel — спаси́бо. He is offered every vowel."
+            hint="Type the accent on the stressed vowel - спаси́бо. He is offered every vowel."
           >
             <Input
               value={answerText}
@@ -384,7 +384,7 @@ export function ExerciseEditor({
           <>
             <Field
               label="The word you say"
-              hint="Recorded below — he hears it and picks"
+              hint="Recorded below - he hears it and picks"
             >
               <Input
                 value={answerText}
@@ -395,7 +395,7 @@ export function ExerciseEditor({
             </Field>
             <Field
               label="Its lookalikes"
-              hint="One per line — the words it is easy to mistake it for"
+              hint="One per line - the words it is easy to mistake it for"
             >
               <Textarea
                 value={text}
@@ -430,7 +430,7 @@ export function ExerciseEditor({
                   }
                 />
                 <Input
-                  // In the language being taught — a Spanish course's options
+                  // In the language being taught - a Spanish course's options
                   // are Spanish, not Russian. Read with a fallback: every
                   // option written before this was filed under `ru` whatever
                   // the course, and opened as an empty box.
@@ -483,7 +483,7 @@ export function ExerciseEditor({
             </Field>
             <Field
               label="The answers"
-              hint={`One per gap with | — ${gapCount(text)} needed. Alternatives with /`}
+              hint={`One per gap with | - ${gapCount(text)} needed. Alternatives with /`}
             >
               <Input
                 value={answerText}
@@ -493,7 +493,7 @@ export function ExerciseEditor({
             </Field>
             <Field
               label="Under each gap"
-              hint="The word in brackets, the case wanted — one per gap with |"
+              hint="The word in brackets, the case wanted - one per gap with |"
             >
               <Input
                 value={hints}
@@ -503,7 +503,7 @@ export function ExerciseEditor({
             </Field>
             <Field
               label="Why"
-              hint="Shown after he answers — one per gap with |"
+              hint="Shown after he answers - one per gap with |"
             >
               <Input
                 value={why}
@@ -541,7 +541,7 @@ export function ExerciseEditor({
             label={
               kind === 'listen' ? 'What he will hear' : 'How it should sound'
             }
-            hint="In your voice — that is the point"
+            hint="In your voice - that is the point"
             currentPath={audioPath}
             onClip={setAudio}
           />
@@ -562,7 +562,7 @@ export function ExerciseEditor({
 
         <Field
           label="Worth"
-          hint="Points out of the lesson — 1 unless it matters more"
+          hint="Points out of the lesson - 1 unless it matters more"
         >
           <Input
             value={points}

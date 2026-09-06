@@ -5,7 +5,7 @@ import { useCallback, useRef, useState, type KeyboardEvent } from 'react';
  *
  * Thirty-four letter keys between the answer box and Check were thirty-four
  * presses of Tab. With roving focus the group is one stop, and ← → (and ↑ ↓)
- * walk the keys — the pattern every toolbar and radio group on the web uses.
+ * walk the keys - the pattern every toolbar and radio group on the web uses.
  *
  *     const roving = useRovingFocus(items.length);
  *     <div {...roving.containerProps}>

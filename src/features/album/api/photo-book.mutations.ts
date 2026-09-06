@@ -4,13 +4,13 @@ import { qk } from '@kernel/query';
 
 /**
  * Placing, moving, styling and removing stickers now lives in
- * `placements.mutations.ts`, and uploading in `library.mutations.ts` — a photo
+ * `placements.mutations.ts`, and uploading in `library.mutations.ts` - a photo
  * and its place on a page stopped being the same row when the library arrived.
  * Only page-level work is left here.
  */
 
 /**
- * Add a SHEET to the end of the book — which is two pages, not one.
+ * Add a SHEET to the end of the book - which is two pages, not one.
  *
  * Paper has two sides. Adding one page at a time left the book with an odd
  * number of them, which meant a blank endpaper had to be conjured up to keep

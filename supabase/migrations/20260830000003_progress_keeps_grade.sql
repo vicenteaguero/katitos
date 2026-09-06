@@ -1,11 +1,11 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — a marked lesson stays marked
+-- Katitos - a marked lesson stays marked
 --
 --   Checking one answer again after she had graded the lesson wrote
 --   `in_progress` and a null score over her row: her mark, her note's
---   context and the "Marked · 80%" he was shown all vanished, and the policy
+--   context and the "Marked - 80%" he was shown all vanished, and the policy
 --   on this table (both members may write any row, so that she can write his)
---   let it through. The client no longer sends that write — but a trigger
+--   let it through. The client no longer sends that write - but a trigger
 --   protects the bundle that is still running until the next launch too.
 --
 --   Silent on purpose: keep her fields and let the update carry on, rather

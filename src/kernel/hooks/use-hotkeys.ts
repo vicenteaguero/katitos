@@ -6,7 +6,7 @@ type Handler = (e: KeyboardEvent) => void;
  * Keyboard shortcuts for a screen: `{ 'mod+s': save, 'j': next, 'escape': close }`.
  *
  * `mod` is ⌘ on a Mac and Ctrl elsewhere. A plain letter never fires while
- * something is being typed — a "j" in a text box is a letter, not "next" —
+ * something is being typed - a "j" in a text box is a letter, not "next" -
  * but a modified combo does, so ⌘↵ submits from inside the field.
  * Handlers are read through a ref, so inline arrows are fine.
  */

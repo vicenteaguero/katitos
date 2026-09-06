@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — his voice
+-- Katitos - his voice
 --
 --   Until now the only voice in the classroom was hers. A `speak` question
 --   asked him to say the word and mark himself, and she never heard it.

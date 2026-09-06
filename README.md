@@ -1,16 +1,16 @@
 # Katitos 💛
 
-A tiny private app for two — our long-distance place. Daily polaroids,
+A tiny private app for two - our long-distance place. Daily polaroids,
 countdowns, quizzes, a chalkboard wall, games, the Georgia 2026 trip, language
 practice, and a pile of little widgets. Built to keep growing: every feature is
 a self-contained folder wired through one registry line.
 
 > Private, for two people. Not for sale. Visual design is intentionally minimal
-> for now — the focus is a clean, extensible foundation.
+> for now - the focus is a clean, extensible foundation.
 
 ## Stack
 
-Vite · React 19 · TypeScript · Tailwind · PWA · **Supabase** (Postgres + RLS,
+Vite - React 19 - TypeScript - Tailwind - PWA - **Supabase** (Postgres + RLS,
 Auth, Storage, Realtime, Edge Functions). Runs fully **local in Docker**;
 cloud-ready for **Vercel + Supabase** with no code changes.
 
@@ -45,7 +45,7 @@ password `katitos123`).
 | `npm run db:types`         | Regenerate `database.types.ts` from the local DB                 |
 | `npm run db:reset`         | Reset local DB (re-run migrations + seed)                        |
 
-Run by hand, not wired to a script — each documents its own invocation at the
+Run by hand, not wired to a script - each documents its own invocation at the
 top of the file:
 
 | Tool                    | What                                                   |
@@ -56,10 +56,10 @@ top of the file:
 
 ## Docs
 
-- [docs/architecture.md](docs/architecture.md) — structure, the registries, how to add a feature/widget/game.
-- [docs/deployment.md](docs/deployment.md) — the (later) Vercel + Supabase cloud steps.
-- [docs/vpn.md](docs/vpn.md) — design for her exit server, so she has working
+- [docs/architecture.md](docs/architecture.md) - structure, the registries, how to add a feature/widget/game.
+- [docs/deployment.md](docs/deployment.md) - the (later) Vercel + Supabase cloud steps.
+- [docs/vpn.md](docs/vpn.md) - design for her exit server, so she has working
   internet from Russia. Why it is shaped the way it is.
-- [docs/vpn-setup.md](docs/vpn-setup.md) — the runbook: buy the box, provision it,
+- [docs/vpn-setup.md](docs/vpn-setup.md) - the runbook: buy the box, provision it,
   put it in her phone. Scripts in `infra/vpn/`.
-- [docs/research/possible-features.md](docs/research/possible-features.md) — backlog of ideas.
+- [docs/research/possible-features.md](docs/research/possible-features.md) - backlog of ideas.

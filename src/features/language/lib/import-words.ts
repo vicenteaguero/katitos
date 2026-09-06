@@ -1,8 +1,8 @@
 /**
- * Words pasted from anywhere — a spreadsheet, a note, a message.
+ * Words pasted from anywhere - a spreadsheet, a note, a message.
  *
  * One word per line. The word and its meaning are told apart by whatever the
- * line uses: a tab, " = ", " — ", " - ", ";", "," or ":" — tried in that order,
+ * line uses: a tab, " = ", " - ", " - ", ";", "," or ":" - tried in that order,
  * so "мама, папа = mum, dad" splits at the "=" and keeps the commas. A third
  * column is the transliteration; anything after "#" on the line is a tag.
  */
@@ -13,14 +13,14 @@ export interface ImportedWord {
   tags: string[];
 }
 
-const SEPARATORS = ['\t', ' = ', ' — ', ' – ', ' - ', ';', ',', ':'];
+const SEPARATORS = ['\t', ' = ', ' - ', ' – ', ' - ', ';', ',', ':'];
 
 export function parseWordList(text: string): ImportedWord[] {
   const out: ImportedWord[] = [];
   for (const raw of text.split(/\r?\n/)) {
     let line = raw.trim();
     if (!line) continue;
-    // #tag #another — anywhere on the line.
+    // #tag #another - anywhere on the line.
     const tags: string[] = [];
     line = line
       .replace(/#([^\s#]+)/g, (_, t: string) => {

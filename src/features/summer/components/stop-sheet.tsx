@@ -42,7 +42,7 @@ const EMPTY = {
 };
 
 /**
- * The one place a trip stop is created — itinerary item + optional map pin.
+ * The one place a trip stop is created - itinerary item + optional map pin.
  * Minimal: a name, a kind, a flag, an optional day, a search, a note.
  */
 export function StopSheet({
@@ -207,7 +207,7 @@ export function StopSheet({
         {form.lat && form.lng && (
           <p className="flex items-center gap-2 font-sans text-xs text-copper">
             <MapPin className="h-3.5 w-3.5" />
-            Pinned · {Number(form.lat).toFixed(3)},{' '}
+            Pinned - {Number(form.lat).toFixed(3)},{' '}
             {Number(form.lng).toFixed(3)}
             <button
               type="button"
@@ -227,7 +227,7 @@ export function StopSheet({
           rows={2}
           placeholder="Notes (optional)"
         />
-        {/* Delete lives here now (off the list row) — only when editing. */}
+        {/* Delete lives here now (off the list row) - only when editing. */}
         <div className="flex gap-2">
           {editItem && (
             <Button

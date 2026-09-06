@@ -1,9 +1,9 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — the Spanish course's Russian, filed under English
+-- Katitos - the Spanish course's Russian, filed under English
 --
 --   The lesson builder assumed Russian was always the language being taught:
 --   its first box always wrote `body_ru`, and its "explanation" box wrote
---   `body_es` when the explanation was Spanish and `body_en` otherwise —
+--   `body_es` when the explanation was Spanish and `body_en` otherwise -
 --   "otherwise" including Russian. So in a Spanish course the Spanish sentence
 --   went into `body_ru` and her Russian explanation into `body_en`; the
 --   exercise editor did the same with prompts, and the table editor with
@@ -13,7 +13,7 @@
 --   moves INTO a Russian column, only text without it moves OUT of one, and
 --   nothing overwrites a column that already has something in it.
 --
---   GATE — run only when BOTH phones are on the bundle with the fixed writers
+--   GATE - run only when BOTH phones are on the bundle with the fixed writers
 --   (`make db-gate`). The old bundle writes the columns the wrong way round on
 --   every blur, so repairing under it would be undone by the next edit.
 -- ════════════════════════════════════════════════════════════════════════
@@ -80,7 +80,7 @@ update public.lang_blocks b
    and b.kind = 'table'
    and c.target_lang = 'es'
    and jsonb_typeof(b.data -> 'headings') = 'array'
-   -- Only a table that actually has a Cyrillic heading filed as English —
+   -- Only a table that actually has a Cyrillic heading filed as English -
    -- so running this twice really does change nothing.
    and exists (
      select 1 from jsonb_array_elements(b.data -> 'headings') as h

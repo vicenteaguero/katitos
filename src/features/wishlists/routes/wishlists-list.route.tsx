@@ -7,7 +7,7 @@ import { useWishlistCounts, useWishlists } from '../api/wishlists.queries';
 /**
  * The two gift lists.
  *
- * They provision themselves on first open, so there is nothing to set up — you
+ * They provision themselves on first open, so there is nothing to set up - you
  * arrive and both are already here, one with each of our names on it.
  */
 export function WishlistsListRoute() {
@@ -59,10 +59,10 @@ export function WishlistsListRoute() {
               <span className="block font-sans text-xs text-muted">
                 {c?.total
                   ? `${c.total} ${c.total === 1 ? 'wish' : 'wishes'}${
-                      c.got ? ` · ${c.got} done` : ''
+                      c.got ? ` - ${c.got} done` : ''
                     }`
                   : forMe
-                    ? 'nothing on it yet — add what you want'
+                    ? 'nothing on it yet - add what you want'
                     : 'nothing on it yet'}
               </span>
             </span>

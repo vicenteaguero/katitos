@@ -1,12 +1,12 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — "am I actually on it right now?"
+-- Katitos - "am I actually on it right now?"
 --
 --   The one question the status list cannot answer. Every dot can be green
 --   while her phone is routing around the tunnel entirely, and she would have
 --   no way to tell except by noticing what does not load.
 --
 --   Answering it means comparing the address she is coming from against the
---   addresses of our servers — and those addresses are the one thing
+--   addresses of our servers - and those addresses are the one thing
 --   20260905000001 deliberately kept out of this database, because a leak of
 --   Supabase must not be a leak of her tunnel.
 --

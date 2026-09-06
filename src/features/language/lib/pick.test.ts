@@ -26,7 +26,7 @@ describe('pick', () => {
     expect(pick({ body_ru: 'Привет' }, 'body', 'es')).toBe('Привет');
   });
 
-  it('treats whitespace as missing — a space is not a translation', () => {
+  it('treats whitespace as missing - a space is not a translation', () => {
     expect(pick({ ...row, body_es: '   ' }, 'body', 'es')).toBe('Hello');
   });
 
@@ -44,7 +44,7 @@ describe('meaningOf', () => {
     expect(meaningOf({ ru: 'вода', en: 'water' }, 'es')).toBe('water');
   });
 
-  it('never answers with the word itself — that explains nothing', () => {
+  it('never answers with the word itself - that explains nothing', () => {
     expect(meaningOf({ ru: 'вода' }, 'es')).toBe('');
   });
 });
@@ -103,7 +103,7 @@ describe('a Spanish lesson, read in Russian', () => {
   it('explains in Russian first, and never in the language being taught', () => {
     const row = { body_ru: 'яблоко', body_en: 'apple', body_es: 'manzana' };
     expect(pick(row, 'body', 'ru')).toBe('яблоко');
-    // Spanish is the thing being learned, so it is the last resort — the same
+    // Spanish is the thing being learned, so it is the last resort - the same
     // rule that puts Russian last in a Russian lesson.
     expect(pick({ body_es: 'manzana' }, 'body', 'ru')).toBe('manzana');
     expect(pick({ body_es: 'manzana', body_en: 'apple' }, 'body', 'ru')).toBe(

@@ -1,10 +1,10 @@
 // Refreshes currency_rates from a free FX API. Intended to run on a schedule
-// (Supabase cron) in the cloud; can be invoked manually locally. Optional —
+// (Supabase cron) in the cloud; can be invoked manually locally. Optional -
 // the app falls back to whatever rates are already seeded.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders, json } from '../_shared/cors.ts';
 
-// Must match RATE_CODES in src/app/shell/cache-warmer.tsx — the client is what
+// Must match RATE_CODES in src/app/shell/cache-warmer.tsx - the client is what
 // actually keeps these fresh; this function is the manual/scheduled fallback.
 const CURRENCIES = ['USD', 'CLP', 'RUB', 'GEL', 'TRY', 'EUR'];
 

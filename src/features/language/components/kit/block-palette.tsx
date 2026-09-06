@@ -18,7 +18,7 @@ const BLOCKS: { kind: BlockKind; label: string; icon: LucideIcon }[] = [
   { kind: 'divider', label: 'break', icon: Minus },
 ];
 
-/** What a lesson can be made of — one control per kind, plus a question. */
+/** What a lesson can be made of - one control per kind, plus a question. */
 export function BlockPalette({
   onAdd,
   onQuestion,

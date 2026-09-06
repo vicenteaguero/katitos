@@ -1,4 +1,4 @@
-# Katitos VPN — the build, start to finish
+# Katitos VPN - the build, start to finish
 
 The runbook for turning money into her working internet. Design and reasoning
 live in [vpn.md](vpn.md); this is only the doing.
@@ -9,7 +9,7 @@ live in [vpn.md](vpn.md); this is only the doing.
 > three things, and expect them to be in steps 4 and 5.
 
 **Time:** about 90 minutes, of which 10 are yours and the rest is waiting.
-**Cost:** ~5 €/month for one box, ~10 € for the pair. No domain — see vpn.md.
+**Cost:** ~5 €/month for one box, ~10 € for the pair. No domain - see vpn.md.
 
 ---
 
@@ -34,12 +34,12 @@ vpn.md. This survives being blocked; it does not avoid it forever.
 | Field    | Value                                                                                                                                      |
 | :------- | :----------------------------------------------------------------------------------------------------------------------------------------- |
 | Location | **Helsinki, Finland (fi-hel1 or fi-hel2)**                                                                                                 |
-| Plan     | Smallest — 1 vCPU / 1 GB / ~2 TB transfer, ~5 €/month                                                                                      |
-| OS       | **Ubuntu 24.04 LTS** — not Debian. The AmneziaWG kernel module comes from an Ubuntu PPA; on Debian you point it at a `focal` repo and hope |
+| Plan     | Smallest - 1 vCPU / 1 GB / ~2 TB transfer, ~5 €/month                                                                                      |
+| OS       | **Ubuntu 24.04 LTS** - not Debian. The AmneziaWG kernel module comes from an Ubuntu PPA; on Debian you point it at a `focal` repo and hope |
 | SSH keys | **Paste your public key.** Do not choose a password login                                                                                  |
 | IPv4     | Yes, and note the address                                                                                                                  |
 
-Your public key, if you need it: `cat ~/.ssh/id_ed25519.pub` — and if that file
+Your public key, if you need it: `cat ~/.ssh/id_ed25519.pub` - and if that file
 does not exist, `ssh-keygen -t ed25519` first.
 
 Pay with the Chilean card. Nothing here needs crypto or a Russian card.
@@ -47,7 +47,7 @@ Pay with the Chilean card. Nothing here needs crypto or a Russian card.
 > **Do not buy a second box yet.** Get one working end to end first. The spare
 > is step 8, and it is fifteen minutes once you have done it once.
 
-### The UpCloud trial will lock you out — deposit first
+### The UpCloud trial will lock you out - deposit first
 
 UpCloud's 7-day trial locks its own network firewall on, above the server, and
 trial accounts cannot edit it:
@@ -58,7 +58,7 @@ trial accounts cannot edit it:
 | Outbound  | 53, 80, 443, 8080, 123 |
 
 Plus a 100 Mbit/s cap. Against this design that means **SSH on 52201 never
-answers** — `provision.sh` moves the port, sshd reloads, and the box is gone —
+answers** - `provision.sh` moves the port, sshd reloads, and the box is gone -
 and it also kills the AmneziaWG port, the second Xray inbound and the panel. The
 heartbeat survives, because it dials out on 443.
 
@@ -69,7 +69,7 @@ plan. **Deposit before deploying.**
 If you really do want to test on the trial first, then: `SSH_PORT=22
 ./provision.sh`, XHTTP+REALITY on 443 only, panel over an SSH tunnel
 (`ssh -L 41100:localhost:41100 …`), and no AmneziaWG. That tests the main path
-and nothing else — do not read a good result there as the design working.
+and nothing else - do not read a good result there as the design working.
 
 ---
 
@@ -91,8 +91,8 @@ chmod +x *.sh
 ```
 
 Roughly ten minutes. It does the base hardening (key-only SSH on a non-standard
-port, ufw, fail2ban, unattended security updates), turns on **BBR** — the single
-biggest speed win available on a long path like hers — installs 3x-ui with
+port, ufw, fail2ban, unattended security updates), turns on **BBR** - the single
+biggest speed win available on a long path like hers - installs 3x-ui with
 random credentials, builds the AmneziaWG kernel module, and lays down the
 heartbeat timer.
 
@@ -125,7 +125,7 @@ supabase secrets set VPN_BEAT_SECRET="$BEAT_SECRET"
 `--no-verify-jwt` is required and is the point: the caller is a bash script on a
 VPS, not a signed-in phone. Its door is the secret in a header instead.
 
-Then create the server's row — Supabase dashboard → SQL editor:
+Then create the server's row - Supabase dashboard → SQL editor:
 
 ```sql
 insert into public.vpn_servers (label, city, country, role, protocols, sort)
@@ -149,14 +149,14 @@ A silent run is a good run. `beat failed: http 401` is a wrong secret;
 ## 4. The Xray inbounds, in the panel
 
 Open `https://<IP>:<PANEL_PORT>/<PANEL_PATH>/`. The browser will warn about the
-certificate — it is self-signed, that is expected here, accept it once.
+certificate - it is self-signed, that is expected here, accept it once.
 
 **First: pick a REALITY destination.** REALITY works by borrowing a real site's
 certificate, so a probe that pokes at your server gets that site and believes it.
 The site must be:
 
 - reachable from Russia and **not blocked** (test from her connection if unsure),
-- **not behind Cloudflare** — Russian operators cap Cloudflare responses at ~16 KB
+- **not behind Cloudflare** - Russian operators cap Cloudflare responses at ~16 KB
   since June 2025, which breaks it,
 - TLS 1.3 + X25519 + HTTP/2,
 - ideally hosted in or near Finland, so the geography is not absurd.
@@ -176,7 +176,7 @@ political, and anything already famous as a REALITY dest.
 
 **Whatever you build, verify it with sing-box, not with Xray.** Karing runs the
 sing-box core only. An Xray client will happily connect to configurations her
-phone can never use — that mistake cost an evening here.
+phone can never use - that mistake cost an evening here.
 
 ```bash
 # On the box, as the real client core:
@@ -186,15 +186,15 @@ tar xzf sb.tar.gz && ./sing-box-*/sing-box run -c client.json &
 curl -s --proxy socks5h://127.0.0.1:10810 https://api.ipify.org   # want: the server's IP
 ```
 
-**Inbound A — gRPC + REALITY, port 443.** Transport `grpc`, service name
-something ordinary (`assets`), `multiMode` **off** — it is an Xray extension
+**Inbound A - gRPC + REALITY, port 443.** Transport `grpc`, service name
+something ordinary (`assets`), `multiMode` **off** - it is an Xray extension
 sing-box does not speak. Security REALITY, uTLS fingerprint **`firefox`**.
 
 > **Not Chrome, not Safari, not iOS.** The Xray-core issue tracking 2026 Russian
 > blocking lists those three as _suspicious_ to the censor; Firefox and the
 > Android clients pass on most operators.
 
-**Inbound B — TCP + REALITY + Vision, port 8443.** Same REALITY settings, flow
+**Inbound B - TCP + REALITY + Vision, port 8443.** Same REALITY settings, flow
 `xtls-rprx-vision`. Its own port so the two fail independently.
 
 **Not XHTTP.** sing-box has no such transport, so it is unusable by her, however
@@ -202,7 +202,7 @@ well it performs elsewhere. See vpn.md.
 
 ### Pin the Xray core at 26.6.27
 
-26.7.x breaks REALITY for every sing-box client — `reality verification failed`,
+26.7.x breaks REALITY for every sing-box client - `reality verification failed`,
 silently. If the panel ever updates the core, her internet stops with no
 explanation:
 
@@ -219,7 +219,7 @@ systemctl restart x-ui && /usr/local/x-ui/bin/xray-linux-amd64 version | head -1
 - **Xray Settings → routing:** enable the rule that blocks private IP ranges
   (`geoip:private`) as a destination. Without it, anyone holding her config
   reaches the provider's internal network from inside.
-- Create **one client per person**, not per device — Xray clients can hold
+- Create **one client per person**, not per device - Xray clients can hold
   several devices. Hers is separate from yours so it can be revoked alone.
 - **Subscription:** leave it off for now. Her config carries both servers from
   the start, which is what actually does the failover; the subscription URL only
@@ -227,13 +227,13 @@ systemctl restart x-ui && /usr/local/x-ui/bin/xray-linux-amd64 version | head -1
 
 ---
 
-## 5. AmneziaWG — her second tunnel
+## 5. AmneziaWG - her second tunnel
 
 ```bash
 ./awg-add-client.sh anastasia-iphone
 ```
 
-Prints a QR and writes the config. One run per **device** here, unlike Xray —
+Prints a QR and writes the config. One run per **device** here, unlike Xray -
 two devices on one key cannot both connect.
 
 The obfuscation values (`Jc`, `S1`, `H1`…) are randomised per server and copied
@@ -247,14 +247,14 @@ the packets: server and client must match exactly, and two of your servers must
 
 **App: Karing**, still in the Russian App Store as of 5 September 2026. Free,
 Russian interface, no region change, no second Apple ID. (Apple removed 1,213
-apps from the Russian store on RKN request in 2025 — Streisand, V2Box, v2RayTun
+apps from the Russian store on RKN request in 2025 - Streisand, V2Box, v2RayTun
 and Happ all went in one sweep on 28 March 2026. Karing is what is left.)
 
 For AmneziaWG she needs **AmneziaVPN**, separately.
 
 Send her, in one message, over something private:
 
-1. The App Store link — **a direct link, never an aggregator.** Fake "free VPN"
+1. The App Store link - **a direct link, never an aggregator.** Fake "free VPN"
    APKs carrying banking trojans are circulating.
 2. The two `vless://` links from the panel (the copy button next to her client).
 3. The AmneziaWG QR from step 5.
@@ -267,7 +267,7 @@ Instruction, and this is the whole of it: _open the app, tap +, paste, enable._
   VPN users is a formal condition for a Russian service to be in the mobile
   whitelist, and around twenty large ones enforce it. In Karing: route
   `geosite:category-ru` and `geoip:ru` **direct**.
-- **Her bank never goes through the tunnel.** Not "preferably" — never. Foreign
+- **Her bank never goes through the tunnel.** Not "preferably" - never. Foreign
   CAs revoked certificates for Sberbank, VTB and Russian Railways in August 2026;
   Russian banking lives in its own trust world now. Add its domain as direct.
 - **Keep the app updated.** A March 2026 disclosure found nearly every mobile
@@ -278,14 +278,14 @@ Instruction, and this is the whole of it: _open the app, tap +, paste, enable._
 And the one social rule, which matters more than any of the above: **using it is
 fine, talking about it publicly is not.** Advertising or recommending
 circumvention tools costs a private citizen 50,000–80,000 ₽ and is enforced
-broadly — the second known case was a single link in a WhatsApp Business
+broadly - the second known case was a single link in a WhatsApp Business
 catalogue. No posting the config, no forwarding it in open channels.
 
 ---
 
 ## 7. Open it in Katitos
 
-Once a green dot appears — meaning the box has actually reported in:
+Once a green dot appears - meaning the box has actually reported in:
 
 1. `src/app/features.registry.ts` → add `'vpn'` to the `OPEN` set.
 2. `src/app/changelog.ts` → a new entry at the top, in her words. One line about
@@ -302,12 +302,12 @@ is the moment Katitos will not load for her.
 ## 8. Day two
 
 **The spare, and this is the important one.** Repeat steps 1–5 at a _different
-company in a different country_ — Stockholm (78 ms) or Frankfurt (81 ms). Add
+company in a different country_ - Stockholm (78 ms) or Frankfurt (81 ms). Add
 both servers to her client. That is the failover: when one stops answering, her
 app moves to the next in seconds, having fetched nothing from anyone.
 
 **When a server is burned.** Symptom: connections stop establishing while the
-heartbeat stays green — the box is healthy, the path to it is not. Mark it
+heartbeat stays green - the box is healthy, the path to it is not. Mark it
 retired (`update public.vpn_servers set retired_at = now() where id = '…'`), buy
 a replacement, and run steps 1–5 again. Fifteen minutes.
 
@@ -316,7 +316,7 @@ new link. Instant and total.
 
 **A subscription URL, when you want one.** Once there are two or more servers,
 serving a list beats sending links. It needs HTTPS, and since 15 January 2026
-Let's Encrypt issues certificates for bare IP addresses — no domain:
+Let's Encrypt issues certificates for bare IP addresses - no domain:
 
 ```bash
 acme.sh --issue --server letsencrypt -d <IP> \
@@ -333,7 +333,7 @@ renewal check has to run far more often than the usual 90-day habit.
 | Symptom                         | Where to look                                                                                                                                           |
 | :------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | No dot in Katitos               | `journalctl -u katitos-beat -n 50` on the box                                                                                                           |
-| Dot green, no internet for her  | **Her operator.** Whitelist episode, or the tunnel is blocked while the box is fine. Have her try wifi vs mobile data — that one test separates the two |
+| Dot green, no internet for her  | **Her operator.** Whitelist episode, or the tunnel is blocked while the box is fine. Have her try wifi vs mobile data - that one test separates the two |
 | Connects, then dies after ~60 s | The February 2026 pattern. Switch her to the other profile                                                                                              |
 | Nothing connects, both profiles | The IP is burned. Step 8                                                                                                                                |
 | Panel unreachable               | ufw, or you changed the port. `ssh` in and `x-ui settings`                                                                                              |

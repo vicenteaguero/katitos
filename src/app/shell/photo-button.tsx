@@ -5,14 +5,14 @@ import { cn } from '@kernel/lib';
 import { usePolaroidDraft, usePolaroidNudge } from '@features/polaroid';
 
 /**
- * The raised button in the middle of the bar — the one thing in this app that
+ * The raised button in the middle of the bar - the one thing in this app that
  * gets used every single day.
  *
  * It answers one question at a glance: is my photo in? Three states, never
  * hidden, always tappable:
  *
  *   shoot   wine, camera, twinkling. Tapping opens the PHONE's camera.
- *   rescue  glossy green, a full heart, and a slow tug — today is done, but the
+ *   rescue  glossy green, a full heart, and a slow tug - today is done, but the
  *           day borrowed from the other clock is still empty and closing.
  *           Tapping goes straight to that day's upload.
  *   done    grey, a full heart, perfectly still. Nothing until tomorrow.
@@ -32,7 +32,7 @@ export function PhotoButton({ raised = true }: { raised?: boolean } = {}) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Until the answer is in, look like the neutral "take one" button but stay
-  // quiet — a beacon that twinkles and then vanishes reads as a glitch.
+  // quiet - a beacon that twinkles and then vanishes reads as a glitch.
   const settled = !isLoading;
   const done = settled && state === 'done';
   const rescue = settled && state === 'rescue';
@@ -48,7 +48,7 @@ export function PhotoButton({ raised = true }: { raised?: boolean } = {}) {
   const label = rescue
     ? `Add the photo for ${rescueDay} before that day closes`
     : done
-      ? 'Your photo is in — open the Polaroid album'
+      ? 'Your photo is in - open the Polaroid album'
       : "Take today's photo";
 
   return (

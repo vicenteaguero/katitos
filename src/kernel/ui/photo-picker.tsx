@@ -6,7 +6,7 @@ import { CameraCapture } from './camera/camera-capture';
 import { SquareCropper } from './square-cropper';
 
 /**
- * "Add a picture" — pick one, frame it, done.
+ * "Add a picture" - pick one, frame it, done.
  *
  * Every screen that attaches a photo was wiring the same three pieces together
  * by hand (file picker → cropper → preview), each slightly differently. This is

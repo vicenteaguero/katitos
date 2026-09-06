@@ -1,9 +1,9 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — a put-away word keeps its place in the block
+-- Katitos - a put-away word keeps its place in the block
 --
 --   `set_block_vocab` replaced the block's whole word list, and the picker
 --   can only hand back the words it can see. A word that had been put away
---   (soft-deleted, one tap from Undo) was invisible to it — so the next
+--   (soft-deleted, one tap from Undo) was invisible to it - so the next
 --   edit of that block's list deleted the link, and Undo brought the word
 --   back into the dictionary but not into the lesson it was taught in.
 --

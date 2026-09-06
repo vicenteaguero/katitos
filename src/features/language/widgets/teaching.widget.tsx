@@ -8,7 +8,7 @@ import { daysUntil, dueSentence } from '../lib/due';
 import { useToday } from '../lib/use-today';
 import { LANG_LABELS } from '../types';
 
-/** Handed in, or marked — either way, off his plate. */
+/** Handed in, or marked - either way, off his plate. */
 const DONE = new Set(['submitted', 'graded']);
 
 /**
@@ -16,7 +16,7 @@ const DONE = new Set(['submitted', 'graded']);
  *
  * Three lines, each gone when it is zero: work to mark, homework due this
  * week that he has not handed in, and words with no recording of you yet.
- * Her side of the loop — the other widget is his.
+ * Her side of the loop - the other widget is his.
  */
 export function TeachingWidget() {
   const { native, ready } = useLanguages();
@@ -61,7 +61,7 @@ export function TeachingWidget() {
           <Row
             to={`/language/lesson/${thisWeek[0].id}`}
             lead={`${thisWeek.length} due this week`}
-            note={`${thisWeek[0].title} · ${dueSentence(thisWeek[0].due_on!, today)}`}
+            note={`${thisWeek[0].title} - ${dueSentence(thisWeek[0].due_on!, today)}`}
           />
         )}
         {silent > 0 && (

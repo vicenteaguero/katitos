@@ -29,7 +29,7 @@ export function useSubmitAnswer(dayId: string | undefined) {
     onError: (e: Error) => toast.error(e.message),
     mutationFn: async ({ own, guess }: { own: string; guess: string }) => {
       if (!dayId) throw new Error('No question to answer');
-      // Target THIS question explicitly — a day now holds several.
+      // Target THIS question explicitly - a day now holds several.
       const { error } = await supabase.rpc('know_me_submit_day', {
         p_day_id: dayId,
         p_own: own,
@@ -39,7 +39,7 @@ export function useSubmitAnswer(dayId: string | undefined) {
       void notifyPartner({
         kind: 'know-me',
         title: 'Katitos ❤️',
-        body: `${self?.display_name ?? 'Your love'} answered — see how you did`,
+        body: `${self?.display_name ?? 'Your love'} answered - see how you did`,
         url: '/know-me',
       });
     },

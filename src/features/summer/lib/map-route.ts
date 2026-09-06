@@ -56,7 +56,7 @@ export function buildRoute(cities: RouteCity[], seeded: SeededLeg[]): MapLeg[] {
 }
 
 /**
- * Move city `i` by `dir` and renormalise positions to indices — returns only the
+ * Move city `i` by `dir` and renormalise positions to indices - returns only the
  * minimal {id, position} writes needed so the drawn route and the list agree
  * (also self-heals any items still stuck at the default position 0).
  */

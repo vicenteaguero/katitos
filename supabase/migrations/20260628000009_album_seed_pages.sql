@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — give every album book at least 5 pages.
+-- Katitos - give every album book at least 5 pages.
 --   The app seeds pages on first open, but that runs client-side and is cached
 --   (staleTime Infinity), so books opened before the change (e.g. Summer Panini
 --   showing "1 / 1") never topped up. Seed positions 0–4 for every book here.

@@ -8,7 +8,7 @@ import {
 import { cn } from '../lib/cn';
 
 /**
- * Somewhere to drop a file — and, tapped, the same file picker as always.
+ * Somewhere to drop a file - and, tapped, the same file picker as always.
  *
  * On a computer she drags a worksheet in from the desktop; on a phone she
  * taps and picks. One control, both gestures. `accept` is honoured for a drop
@@ -30,7 +30,7 @@ export function Dropzone({
   disabled?: boolean;
   /**
    * Tapping opens the picker. Off for a zone that wraps a whole list of
-   * controls — a list that was itself a giant button opened the picker on
+   * controls - a list that was itself a giant button opened the picker on
    * every tap inside it and ate Space on every checkbox.
    */
   pick?: boolean;

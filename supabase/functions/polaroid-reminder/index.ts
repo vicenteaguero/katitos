@@ -2,7 +2,7 @@
 //
 // Called every ten minutes by pg_cron (see 20260830000012). Everything else in
 // this app pushes because a phone did something; this pushes because a phone
-// DIDN'T — which means no phone is awake to notice, and the decision has to be
+// DIDN'T - which means no phone is awake to notice, and the decision has to be
 // made here.
 //
 // Two nudges, each at most once ever, per person, per day:
@@ -12,7 +12,7 @@
 //              wakes on the 12th while Curicó is still on the 11th; her 11th
 //              lives only as long as his date does.
 //
-// Unlike push-notify, this reaches EITHER of them — it is not "notify my
+// Unlike push-notify, this reaches EITHER of them - it is not "notify my
 // partner", it is "notify whoever is about to lose something". That is why it
 // is a separate function with its own door: the only caller is the scheduler,
 // holding the service-role key.
@@ -51,15 +51,15 @@ interface Due {
 /**
  * Is this the scheduler, and not one of them?
  *
- * The platform gateway has already checked the token's signature — an invalid
+ * The platform gateway has already checked the token's signature - an invalid
  * one never reaches this file, it is refused upstream with
  * UNAUTHORIZED_INVALID_JWT_FORMAT. What it does NOT check is WHO: either of
  * their ordinary signed-in tokens would sail through, and this function can
  * push to both of them, so it needs its own door.
  *
  * That door is the `role` claim, not a string comparison against the service
- * key. Supabase issues service keys in two shapes now — the legacy JWT and the
- * newer opaque `sb_secret_…` — and the one injected into this function's
+ * key. Supabase issues service keys in two shapes now - the legacy JWT and the
+ * newer opaque `sb_secret_…` - and the one injected into this function's
  * environment is not always the one the scheduler holds. Comparing the two
  * bytewise fails for a reason that has nothing to do with authorisation, and
  * that failure is silent and total: every reminder simply stops. So we ask the
@@ -108,7 +108,7 @@ function weekday(isoDay: string): string {
 /**
  * How much of the day is left, in words that are true.
  *
- * Normally this reads "3 hours" — the job runs every ten minutes and fires the
+ * Normally this reads "3 hours" - the job runs every ten minutes and fires the
  * moment there are three or fewer. But if the scheduler was down, or there was
  * no phone to push to for a while, the first chance to say anything might come
  * with twenty minutes left, and calling that "1 hour" would be a lie told at
@@ -121,7 +121,7 @@ function timeLeft(ms: number): string {
   return hours === 1 ? '1 hour' : `${hours} hours`;
 }
 
-/** 'Aug 11' — short, for the day about to disappear. */
+/** 'Aug 11' - short, for the day about to disappear. */
 function shortDate(isoDay: string): string {
   return new Date(`${isoDay}T12:00:00Z`).toLocaleDateString('en-US', {
     month: 'short',
@@ -143,7 +143,7 @@ Deno.serve(async (req) => {
     Deno.env.get('VAPID_SUBJECT') ?? 'mailto:hello@katitos.local';
 
   // The scheduler is the only caller. A JWT from either of them must NOT be
-  // able to make the app notify the other on demand — that is push-notify's
+  // able to make the app notify the other on demand - that is push-notify's
   // job, and it has its own rules about who may be reached.
   if (!isScheduler(req.headers.get('Authorization') ?? '', SERVICE_KEY)) {
     return json({ error: 'unauthorized' }, 401);
@@ -160,7 +160,7 @@ Deno.serve(async (req) => {
    *
    * Every interesting thing this function does happens in a three-hour window
    * before a midnight eleven time zones from here. Waiting for the right hour
-   * to find out whether it works is not testing, it is hoping — so the caller
+   * to find out whether it works is not testing, it is hoping - so the caller
    * may name the instant. Only the scheduler can reach this, and nothing else
    * changes: the ledger is still claimed and the push is still real.
    */
@@ -186,7 +186,7 @@ Deno.serve(async (req) => {
     .select('user_id, role, timezone');
   if (!members || members.length === 0) return json({ sent: 0, due: 0 });
 
-  // Every date that is currently being lived by one of us — the same rule the
+  // Every date that is currently being lived by one of us - the same rule the
   // app and `polaroid_day_open()` use, written a third time because this runs
   // in Deno with neither of them in reach.
   const open = [...new Set(members.map((m) => localDay(zoneOf(m), now)))].sort(
@@ -206,7 +206,7 @@ Deno.serve(async (req) => {
 
   /**
    * When `day` stops being anybody's date. A day is gone at the LATEST of its
-   * midnights across our zones — that lateness is the borrowed time itself.
+   * midnights across our zones - that lateness is the borrowed time itself.
    */
   const closesAt = (day: string) =>
     Math.max(
@@ -236,7 +236,7 @@ Deno.serve(async (req) => {
           title: `📸 ${timeLeft(left)} of ${weekday(today)} left`,
           body: has(partner?.user_id ?? '', today)
             ? `${theirName}'s photo is up and yours isn't 🤍`
-            : 'Your day is still an empty plate — tap to take it 🤍',
+            : 'Your day is still an empty plate - tap to take it 🤍',
           url: '/polaroid?shoot=1',
         });
       }
@@ -290,7 +290,7 @@ Deno.serve(async (req) => {
     const { error: claim } = await admin
       .from('polaroid_reminders')
       .insert({ user_id: item.member.user_id, day: item.day, kind: item.kind });
-    if (claim) continue; // 23505 — already said, or the row won't take. Either way: silence.
+    if (claim) continue; // 23505 - already said, or the row won't take. Either way: silence.
 
     const message = JSON.stringify({
       title: item.title,
@@ -321,7 +321,7 @@ Deno.serve(async (req) => {
     }
 
     if (delivered === 0) {
-      // Nothing actually landed — give the next tick its turn rather than
+      // Nothing actually landed - give the next tick its turn rather than
       // leaving a ledger row that says we warned someone we never warned.
       await admin
         .from('polaroid_reminders')

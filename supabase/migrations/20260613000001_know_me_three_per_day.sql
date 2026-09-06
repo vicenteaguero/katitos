@@ -1,14 +1,14 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — Know-Me: THREE questions per couple-day (was one)
+-- Katitos - Know-Me: THREE questions per couple-day (was one)
 --
 -- A day now carries up to three question assignments, addressed by `slot`
 -- (0,1,2). Each slot is an independent know_me_days row, so answers, presence,
--- reveal and history all keep working unchanged — they're already keyed by
+-- reveal and history all keep working unchanged - they're already keyed by
 -- day_id. The only new surface is submitting against a SPECIFIC day_id
 -- (know_me_submit_day), because "today" is no longer a single row.
 -- ════════════════════════════════════════════════════════════════════════
 
--- couple_day is no longer unique on its own — (couple_day, slot) is.
+-- couple_day is no longer unique on its own - (couple_day, slot) is.
 alter table public.know_me_days
   drop constraint if exists know_me_days_couple_day_key;
 

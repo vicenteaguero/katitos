@@ -148,7 +148,7 @@ interface FlipBookRef {
   pageFlip: () => FlipApi | undefined;
 }
 
-/** One paper leaf — ref-forwarded so StPageFlip can grab the DOM node. */
+/** One paper leaf - ref-forwarded so StPageFlip can grab the DOM node. */
 const FlipPage = forwardRef<
   HTMLDivElement,
   {
@@ -173,12 +173,12 @@ const FlipPage = forwardRef<
 });
 
 /**
- * The shared photo-book engine — a wine-bound book with real boards at each
+ * The shared photo-book engine - a wine-bound book with real boards at each
  * end, rendered as ONE PIECE (case + both pages) that is WIDER than the screen.
  * You see one full page + a peek of the facing page. Each focused page is split
  * down the middle: the OUTER half gives StPageFlip's native finger-curl
  * (`useMouseEvents`), the SPINE half is a transparent overlay that SLIDES the
- * piece between the two pages of a spread. The two never fight — ownership is
+ * piece between the two pages of a spread. The two never fight - ownership is
  * decided by which half the touch starts on. A cover has no facing page, so it
  * simply turns.
  *
@@ -197,7 +197,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
   const book = props.bookId ? byId.data : byScope.data;
   const bookLoading = props.bookId ? byId.isLoading : byScope.isLoading;
   const bookError = props.bookId ? byId.error : byScope.error;
-  // `maybeSingle` resolves to null for a book that no longer exists — a stale
+  // `maybeSingle` resolves to null for a book that no longer exists - a stale
   // link, or the partner deleting the one you had open. That is a real answer,
   // not a loading state, and it used to spin forever.
   const bookGone = props.bookId ? !byId.isLoading && byId.data === null : false;
@@ -235,12 +235,12 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
    * Where the case is heading while a board is turning.
    *
    * A hard cover rotates about the spine across BOTH halves of the case, and
-   * `onFlip` only fires when the animation ends — so sliding the piece
+   * `onFlip` only fires when the animation ends - so sliding the piece
    * afterwards made opening the book a two-beat, 1.1-second affair. The slide
    * starts with the turn instead.
    */
   const [slideAhead, setSlideAhead] = useState<number | null>(null);
-  /** A board — a cover — is mid-turn, so the paper holds its photos back. */
+  /** A board - a cover - is mid-turn, so the paper holds its photos back. */
   const [boarding, setBoarding] = useState(false);
   const flippingRef = useRef(false);
   const bookRef = useRef<FlipBookRef | null>(null);
@@ -272,7 +272,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
     restR: 0,
     vw: 0,
     viewportH: 0,
-    /** All the room the book was given — usually more than it takes. */
+    /** All the room the book was given - usually more than it takes. */
     availH: 0,
   });
   const teardownRef = useRef<(() => void) | null>(null);
@@ -288,7 +288,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
       const elW = el.getBoundingClientRect().width; // padded content width
       const controlsH = controlsRef.current?.offsetHeight ?? 96;
       // The photo strip only exists while arranging, and it was never taken out
-      // of the height budget — so the page kept its full size, the strip pushed
+      // of the height budget - so the page kept its full size, the strip pushed
       // the page arrows down, and they ended up UNDERNEATH the nav bar. Which
       // is exactly the "I can't change pages in edit mode" you hit.
       const stripH = stripRef.current?.offsetHeight ?? 0;
@@ -303,7 +303,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
     };
     computeRef.current = compute;
     compute();
-    // Re-measure once the curtain-reveal transform settles — the one-shot mount
+    // Re-measure once the curtain-reveal transform settles - the one-shot mount
     // read happens mid-animation, so this locks in the resting geometry.
     const raf = requestAnimationFrame(compute);
     const t = window.setTimeout(compute, 420);
@@ -346,7 +346,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
     () => placeLeaf(focused, leafCount),
     [focused, leafCount]
   );
-  /** The paper page this leaf shows — null on either cover, or the endpaper. */
+  /** The paper page this leaf shows - null on either cover, or the endpaper. */
   const currentPage =
     focused >= 1 && focused <= pageCount
       ? (pages?.[focused - 1] ?? null)
@@ -359,7 +359,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
   /**
    * Sign every photo in the book in ONE request per bucket.
    *
-   * Each sticker used to sign its own proxy AND its own original — two
+   * Each sticker used to sign its own proxy AND its own original - two
    * round-trips per photo, on a screen that shows a dozen at a time. The book
    * asks once and hands each page its slice.
    */
@@ -373,8 +373,8 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
     }
     return out;
     // The LIBRARY is deliberately not in here. Folding it in put every
-    // uploaded photo into the book's query key, so adding one — thirty times
-    // over during a bulk upload — changed the key, changed the data, and
+    // uploaded photo into the book's query key, so adding one - thirty times
+    // over during a bulk upload - changed the key, changed the data, and
     // re-initialised the whole flip book each time.
   }, [pages]);
 
@@ -404,7 +404,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
     : undefined;
 
   // The strip's own thumbnails, signed separately and only while it is on
-  // screen — it is hidden while reading, so there is nothing to sign then.
+  // screen - it is hidden while reading, so there is nothing to sign then.
   const libraryPaths = useMemo(
     () =>
       (library ?? []).map((p) => p.image_path).filter((p): p is string => !!p),
@@ -422,7 +422,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
         photo.source === 'polaroid' ? BUCKETS.polaroids : BUCKETS.album;
       const map =
         photo.source === 'polaroid' ? polaroidUrls.data : albumUrls.data;
-      // The book's own batch first — and failing that, ANY signature already
+      // The book's own batch first - and failing that, ANY signature already
       // held for this path. A photo placed from the strip is already signed;
       // waiting for the book to sign it again is a round trip and a flash for
       // a picture the browser is currently displaying two centimetres away.
@@ -437,7 +437,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
    * A URL map PER PAGE, not one for the whole book.
    *
    * `useSignedUrls` keys on the full path list, so adding a single photo gives
-   * a brand-new Map — and handing that same Map to every leaf would invalidate
+   * a brand-new Map - and handing that same Map to every leaf would invalidate
    * all of them and make StPageFlip re-initialise. A page's slice only changes
    * when that page's photos change.
    */
@@ -461,7 +461,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
    * Warm the pages either side of the one being read.
    *
    * The signed-URL Map has no meaningful order, so the order has to be built
-   * here — nearest pages first, because those are the ones about to be turned
+   * here - nearest pages first, because those are the ones about to be turned
    * to. Leaf indices, shifted by the cover.
    */
   const prefetch = useMemo(() => {
@@ -481,14 +481,14 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
   usePdfBridge(pages, book?.title ?? 'album');
 
   /**
-   * Changes ONLY when the run of leaves itself changes — a page added, a page
+   * Changes ONLY when the run of leaves itself changes - a page added, a page
    * torn out, the endpaper appearing or going.
    *
    * StPageFlip takes each leaf element OUT of React's tree and re-parents it
    * into its own `.stf__item` wrappers. React does not know that, so when a new
    * page has to be inserted between two existing leaves it looks for a sibling
    * that is no longer where it left it and throws `NotFoundError: The object
-   * can not be found here` — which took the whole route down with it. That is
+   * can not be found here` - which took the whole route down with it. That is
    * the crash behind "adding a page from the back cover adds another cover".
    *
    * Used as a `key`, so the book is rebuilt from scratch on those rare
@@ -540,7 +540,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
     setSlideAhead(null);
     setBoarding(false);
     let leaf = leafAfterFlip(e.data, f, lc);
-    // Never come to rest on the blank endpaper — carry on the way we were
+    // Never come to rest on the blank endpaper - carry on the way we were
     // already going.
     if (isEndPaper(leaf, pc, lc)) leaf += leaf > f ? 1 : -1;
     leaf = Math.min(Math.max(leaf, 0), lc - 1);
@@ -564,7 +564,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
    */
   const onChangeState = useCallback((e: { data: string }) => {
     if (e.data !== 'flipping') {
-      // 'read' is the last thing StPageFlip says — AFTER `onFlip`, and also
+      // 'read' is the last thing StPageFlip says - AFTER `onFlip`, and also
       // after a fold that was picked up and then abandoned. Either way the
       // case must stop leaning towards a page it is not going to: without
       // this, letting go of a half-turned corner left the whole book resting
@@ -592,15 +592,15 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
   const go = useCallback(
     (dir: 1 | -1) => {
       let t = focused + dir;
-      // Step OVER the blank endpaper — it is not a page, and landing on it
+      // Step OVER the blank endpaper - it is not a page, and landing on it
       // reads as "my album has an empty sheet in it".
       if (isEndPaper(t, pageCount, leafCount)) t += dir;
       const lo = mode === 'arrange' ? 1 : 0;
       const hi = mode === 'arrange' ? pageCount : leafCount - 1;
       if (t < lo || t > hi) return;
       setSelectedId(null);
-      // While arranging there is no flip book on screen — the editor shows one
-      // page at a time — so turning is just moving the index. Without this the
+      // While arranging there is no flip book on screen - the editor shows one
+      // page at a time - so turning is just moving the index. Without this the
       // arrows were dead the whole time you were editing, which is exactly
       // when you want to put a photo on the NEXT page.
       if (mode === 'arrange') {
@@ -626,7 +626,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
 
       // Going TO a board: stand under where it is about to come down first.
       // Closing the book from page one means sliding across to page two and
-      // only then bringing the cover over — the mirror of opening it.
+      // only then bringing the cover over - the mirror of opening it.
       if (to.lone && place3.side !== to.side) {
         const near = to.side === 'right' ? focused + 1 : focused - 1;
         if (near >= 0 && near <= leafCount - 1) {
@@ -640,7 +640,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
     [focused, leafCount, pageCount, mode, place3]
   );
 
-  // A page we asked for has arrived — go and stand on it.
+  // A page we asked for has arrived - go and stand on it.
   useEffect(() => {
     const position = landOnRef.current;
     if (position == null || !pages) return;
@@ -651,7 +651,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
   }, [pages]);
 
   // Keep StPageFlip's spread aligned to the focused leaf after a data change
-  // (which re-runs updateFromHtml and can reset it) — but NEVER mid-curl, or
+  // (which re-runs updateFromHtml and can reset it) - but NEVER mid-curl, or
   // the book snaps back under your finger.
   useEffect(() => {
     if (mode === 'read' && !flippingRef.current) {
@@ -723,11 +723,11 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
   const toggleEdit = useCallback(() => {
     setSelectedId(null);
     // A board has nothing on it to arrange. Turn to the first page and start
-    // there — which is what "let me put things in" means when you are looking
+    // there - which is what "let me put things in" means when you are looking
     // at a cover. (The cover's own settings live behind the gear.)
     if (!currentPage) {
       // Not conditional on the pages having arrived. Tapping edit a beat too
-      // early used to do NOTHING AT ALL — no editor, no message — and you were
+      // early used to do NOTHING AT ALL - no editor, no message - and you were
       // left tapping it again wondering what was broken. Leaf 1 is the first
       // page whenever there is one, and the editor simply waits for it.
       setIndex(1);
@@ -757,7 +757,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
   }, [textVal, bookId, place]);
 
   /**
-   * Take a sticker off the page — instantly, and undoably.
+   * Take a sticker off the page - instantly, and undoably.
    *
    * The old ✕ deleted the photo and its bytes with no confirmation, from a
    * target hanging off a rotated sticker. Nothing here loses a picture: the
@@ -811,7 +811,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
    * Two buttons, not four.
    *
    * Adding a photo and adding text only mean anything while you are arranging,
-   * and the strip under the book already offers both — so the top bar carried
+   * and the strip under the book already offers both - so the top bar carried
    * two dead controls in reading mode and four gilt-ringed circles in a row in
    * either. What is left is the album itself and the way into editing it.
    */
@@ -889,7 +889,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
   /**
    * A shut book is ONE board. An open one is a spread.
    *
-   * Only while it is actually settled on a cover, though — during a turn the
+   * Only while it is actually settled on a cover, though - during a turn the
    * board must be full width, because a hard cover swings across both halves
    * of the case and there has to be binding under it the whole way.
    */
@@ -900,7 +900,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
    * It used to start sliding towards the destination the moment the flip
    * began. On a paper page that was a nudge; on the cover it threw the whole
    * book sideways at t=0, so page one was simply THERE before the cover had
-   * gone anywhere — the turn revealed nothing. A book opens where it is
+   * gone anywhere - the turn revealed nothing. A book opens where it is
    * standing, and the case follows afterwards.
    *
    * Which is why this reads the leaf we are ON (`place3`), never the one we
@@ -913,7 +913,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
   /**
    * The binding is not drawn at all while the book is shut.
    *
-   * A closed book is its cover — one board, and nothing behind it. Any binding
+   * A closed book is its cover - one board, and nothing behind it. Any binding
    * left showing is a second wine rectangle around the first, which is exactly
    * the "book lying on another book" this all started as.
    */
@@ -930,7 +930,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
     const position = (pages?.[pageCount - 1]?.position ?? -1) + 1;
     // Remember WHICH page we are waiting for, and turn to it only once it
     // actually exists. Setting the leaf straight away pointed at a leaf the
-    // book did not have yet — on the back board that landed on the board
+    // book did not have yet - on the back board that landed on the board
     // itself, and StPageFlip redrew a second cover where the new page should
     // have been. The board moves to the end on its own; we just follow the
     // page.
@@ -946,7 +946,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
       : focused === leafCount - 1
         ? 'The end'
         : focused > pageCount
-          ? '·'
+          ? '-'
           : `${focused} / ${pageCount}`;
 
   const loading = bookLoading || pagesLoading || !pages || !bookId || !book;
@@ -959,8 +959,8 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
       )}
     >
       <ShapeDefs />
-      {/* The book is usually shorter than the space it is given — a 3:4 page
-          inside a 16:9-ish gap — and it used to sit at the top of that space
+      {/* The book is usually shorter than the space it is given - a 3:4 page
+          inside a 16:9-ish gap - and it used to sit at the top of that space
           with all the slack dumped underneath it. Reading mode looked
           top-heavy while arrange mode did not, because the editor centres
           itself. Now the stage owns the whole budget and centres whatever is
@@ -1044,7 +1044,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
                 </HTMLFlipBook>
               </div>
             </div>
-            {/* Slide zone — the spine half; the outer half stays open for the
+            {/* Slide zone - the spine half; the outer half stays open for the
                 native curl. A board has no facing page, so it gets no zone at
                 all and the whole leaf is free to turn. */}
             {!place3.lone && (
@@ -1082,7 +1082,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
         )}
       </div>
 
-      {/* The book's photos, in the space under it. Only while editing — there
+      {/* The book's photos, in the space under it. Only while editing - there
           is nothing to drop onto while you are reading. */}
       {arranging && !loading && (
         <div ref={stripRef}>
@@ -1145,7 +1145,7 @@ export function PhotoBook3D(props: PhotoBook3DProps) {
 
             {/* BOTH, once you reach the end. The ＋ used to REPLACE the
                 arrow on the last page, which left the back board reachable
-                only by dragging its corner — there was no button that went
+                only by dragging its corner - there was no button that went
                 there at all. */}
             <NavBtn
               label="Next page"

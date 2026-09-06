@@ -8,7 +8,7 @@ import { PhotoBook3D } from '../components/photo-book/photo-book-3d';
  *
  * Every book is opened by id from the shelf. There is no id-less fallback any
  * more: it used to resolve a singleton "life" book, which was never something
- * anyone asked for — the shelf holds as many albums as we want, and that is
+ * anyone asked for - the shelf holds as many albums as we want, and that is
  * enough.
  */
 export function AlbumRoute() {

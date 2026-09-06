@@ -14,7 +14,7 @@ function order(support: Lang): Lang[] {
  * written; adding Spanish later improves it and breaks nothing. So a missing
  * translation must FALL BACK, never blank.
  *
- * The order is the reader's own language, then English, then the rest — which
+ * The order is the reader's own language, then English, then the rest - which
  * lands correctly in both directions without being told which one is being
  * taught. Reading a Russian lesson in Spanish: es → en → ru, and the Russian is
  * last because explaining спасибо in Russian helps nobody. Reading a Spanish
@@ -55,7 +55,7 @@ export function termLangOf(word: Entry): Lang {
 /**
  * The word as it should be READ.
  *
- * Russian stress is phonemic — за́мок is a castle, замо́к is a lock — and it is
+ * Russian stress is phonemic - за́мок is a castle, замо́к is a lock - and it is
  * not written in ordinary text, so a learner has no way to know it. She writes
  * the accented form once and it becomes the headword everywhere the word
  * appears. Spanish writes its own stress, so there is nothing to add there.
@@ -82,7 +82,7 @@ export function termOf(word: Entry): string {
 /**
  * What it means, in the reader's language.
  *
- * Never the headword's own language — a Spanish card whose "meaning" is the
+ * Never the headword's own language - a Spanish card whose "meaning" is the
  * Spanish word is the kind of thing you only notice after showing it to
  * someone.
  */
@@ -100,7 +100,7 @@ export function meaningOf(word: Entry, support: Lang): string {
  * The note about this word, in the reader's language.
  *
  * A note is prose, so it follows the same fallback as everything else rather
- * than picking one hard-coded column — she writes hers in Russian.
+ * than picking one hard-coded column - she writes hers in Russian.
  */
 export function noteOf(
   word: {

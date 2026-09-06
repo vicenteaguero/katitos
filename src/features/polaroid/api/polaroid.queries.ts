@@ -15,7 +15,7 @@ const PAGE_SIZE = 40;
 const RECENT_LIMIT = 120;
 
 /**
- * Recent polaroids, newest first — for the cache warmer and the album's
+ * Recent polaroids, newest first - for the cache warmer and the album's
  * "add a polaroid" picker. The gallery uses `usePolaroidPages()` instead.
  */
 export function usePolaroids() {
@@ -63,7 +63,7 @@ export function usePolaroidPages() {
 }
 
 /**
- * Every photo across the days that are still open — at most two dates, so at
+ * Every photo across the days that are still open - at most two dates, so at
  * most four rows. One request, so the nav button can know the whole picture
  * (today's, and the day borrowed from the other clock) without firing a query
  * per date from inside a loop.
@@ -85,7 +85,7 @@ export function useOpenDayPolaroids(days: string[]) {
 }
 
 /**
- * Every photo for one calendar day — up to two, one each.
+ * Every photo for one calendar day - up to two, one each.
  *
  * Deliberately NOT `.maybeSingle()`: that was correct when a day held one photo
  * for the couple, and it throws PGRST116 the moment we each have our own.

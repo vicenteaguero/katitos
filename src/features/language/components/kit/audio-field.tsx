@@ -16,7 +16,7 @@ import {
  * Her voice, recorded here; or a file she already has, dropped in from the
  * desktop or picked on the phone. Whatever is on the row now plays above, so
  * "replace it" is a decision and not a guess. The three screens that each
- * drew this — the dictionary, the word picker, the question editor — share
+ * drew this - the dictionary, the word picker, the question editor - share
  * it now, and share its fixes: a Fieldset (never a label that presses
  * Record), a reset key so the recorder starts clean after a save.
  */
@@ -31,7 +31,7 @@ export function AudioField({
   hint?: string;
   /** What is on the row already, if anything. */
   currentPath?: string | null;
-  /** The new clip — or null when the recording is discarded. */
+  /** The new clip - or null when the recording is discarded. */
   onClip: (clip: AudioClip | null) => void;
   resetKey?: string | number;
 }) {

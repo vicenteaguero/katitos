@@ -4,7 +4,7 @@ import type { BucketName } from './buckets';
  * An address for an object we may already hold, with no signature on it.
  *
  * The service worker caches storage objects by PATH and ignores the query
- * string, so any token — even a made-up one — reaches the cached bytes.
+ * string, so any token - even a made-up one - reaches the cached bytes.
  * That is what makes a recording playable on a train: nothing here can
  * sign a URL offline, and nothing needs to.
  */

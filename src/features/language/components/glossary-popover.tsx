@@ -13,7 +13,7 @@ import type { Lang } from '../types';
  * Tap a word in a lesson, see what it means.
  *
  * Looked up in the dictionary of the language being taught, with a lemma
- * step in between — «городе» finds «город». When the word is not there,
+ * step in between - «городе» finds «город». When the word is not there,
  * the miss is a question for her, not a dead end.
  */
 export function GlossaryPopover({

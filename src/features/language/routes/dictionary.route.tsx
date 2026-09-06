@@ -56,7 +56,7 @@ import {
  * Every word either of us has ever been taught, and a way to add the next one.
  *
  * Two dictionaries in one, because there are two languages being learned here.
- * The switch at the top says which one you are looking at — it used to say
+ * The switch at the top says which one you are looking at - it used to say
  * EN / ES, which was not the language of the words at all but the language they
  * were explained in, and it left every Spanish word we own unreachable.
  */
@@ -146,7 +146,7 @@ export function DictionaryRoute() {
   const silent = list.filter((w) => !w.audio_path).length;
 
   // ONE signing request for every recording on the screen, rather than one per
-  // word — this list can be five hundred long.
+  // word - this list can be five hundred long.
   const { data: clips } = useSignedUrls(
     BUCKETS.languageAudio,
     list.map((w) => w.audio_path),
@@ -180,12 +180,12 @@ export function DictionaryRoute() {
     const missed = matches.length - hits.length;
     toast.success(
       `${hits.length} ${hits.length === 1 ? 'recording' : 'recordings'} attached${
-        missed ? ` · ${missed} not named after a word` : ''
+        missed ? ` - ${missed} not named after a word` : ''
       }`
     );
   };
 
-  // Put away, not destroyed — and back in one tap. A real delete took the
+  // Put away, not destroyed - and back in one tap. A real delete took the
   // recording and both people's review history with it, with no way back.
   const putAway = (w: Vocab) =>
     del.mutate(w, {
@@ -249,7 +249,7 @@ export function DictionaryRoute() {
           {silent ? `Record the ${silent} silent` : 'Every word has it'}
         </Button>
         <p className="font-sans text-xs text-muted">
-          Or drop sound files on the list — each goes to the word it is named
+          Or drop sound files on the list - each goes to the word it is named
           after.
         </p>
       </div>
@@ -423,7 +423,7 @@ function WordSheet({
   const update = useUpdateVocab();
   const { data: uses } = useWordUses(word?.id);
 
-  // The three columns, always all three — which one is the word and which two
+  // The three columns, always all three - which one is the word and which two
   // are its translations is decided by `lang`, not by the column's name.
   const [text, setText] = useState<Record<Lang, string>>({
     ru: word?.ru ?? '',
@@ -437,7 +437,7 @@ function WordSheet({
   const [audio, setAudio] = useState<AudioClip | null>(null);
 
   // A note is written FOR the person learning, so it is offered in the two
-  // languages that are not the word itself — for a Spanish word that includes
+  // languages that are not the word itself - for a Spanish word that includes
   // Russian, which the old screen had no column for at all.
   const noteLangs = useMemo(() => supportLangs(lang, native), [lang, native]);
   const [noteLang, setNoteLang] = useState<Lang>(noteLangs[0]);
@@ -561,15 +561,15 @@ function WordSheet({
             ))}
           </p>
         )}
-        {/* The escape hatch for a word with no clean one-word translation —
+        {/* The escape hatch for a word with no clean one-word translation -
             успеть, тоска, давай, or "bacán". Written in whichever language the
             person reading it actually thinks in. */}
         <Field
           label="What kind of word"
-          hint="Optional — it makes the drills smarter later"
+          hint="Optional - it makes the drills smarter later"
         >
           <Select value={pos} onChange={(e) => setPos(e.target.value)}>
-            <option value="">—</option>
+            <option value="">-</option>
             <option value="noun">noun</option>
             <option value="verb">verb</option>
             <option value="adjective">adjective</option>
@@ -599,11 +599,11 @@ function WordSheet({
           </div>
         </Fieldset>
 
-        <Field label="Tags" hint="Separate with commas — food, verbs, lesson 8">
+        <Field label="Tags" hint="Separate with commas - food, verbs, lesson 8">
           <Input value={tags} onChange={(e) => setTags(e.target.value)} />
         </Field>
 
-        {/* Recording can be added or replaced at ANY time now — it used to be
+        {/* Recording can be added or replaced at ANY time now - it used to be
             only at creation, so fixing a bad clip meant deleting the word and
             every review of it. */}
         <AudioField
@@ -614,7 +614,7 @@ function WordSheet({
         {word && (
           <Fieldset
             label="Said aloud"
-            hint="Every recording of this word — tries and answers"
+            hint="Every recording of this word - tries and answers"
           >
             <VoiceThread word={word} />
           </Fieldset>

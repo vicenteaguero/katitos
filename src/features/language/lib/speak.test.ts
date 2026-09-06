@@ -35,7 +35,7 @@ describe('grading a spoken answer', () => {
     expect(gradeAnswer(speak, true).correct).toBe(true);
     expect(gradeAnswer(speak, { ok: true, audio: 'x' }).correct).toBe(true);
     expect(gradeAnswer(speak, { ok: false, audio: 'x' }).correct).toBe(false);
-    // A recording alone is for her to judge — not a mark.
+    // A recording alone is for her to judge - not a mark.
     expect(gradeAnswer(speak, { ok: null, audio: 'x' }).correct).toBe(false);
   });
 });

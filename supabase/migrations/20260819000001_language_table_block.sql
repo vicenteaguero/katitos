@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — a lesson can show a table
+-- Katitos - a lesson can show a table
 --
 --   Russian has six cases. You cannot teach the accusative with a paragraph;
 --   every textbook in existence puts the endings in a grid, and without one

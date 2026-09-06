@@ -37,8 +37,8 @@ export function PendingPill() {
     >
       {online ? 'Back online' : 'Offline'}
       {paused
-        ? ` · ${paused} ${paused === 1 ? 'change' : 'changes'} not saved yet — keep the app open`
-        : ' — what you see is from last time'}
+        ? ` - ${paused} ${paused === 1 ? 'change' : 'changes'} not saved yet - keep the app open`
+        : ' - what you see is from last time'}
     </p>
   );
 }

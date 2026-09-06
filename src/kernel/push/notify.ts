@@ -2,7 +2,7 @@ import { supabase } from '@kernel/supabase';
 
 /**
  * Every kind of ping we can send. Naming them is what lets us mute the noisy
- * ones without muting the ones that matter — the old code had a single boolean
+ * ones without muting the ones that matter - the old code had a single boolean
  * that silenced everything except "love", including things worth knowing.
  */
 export type NotifyKind =
@@ -78,7 +78,7 @@ export interface NotifyResult {
 
 /**
  * Ask the push-notify Edge Function to deliver a Web Push to the partner.
- * Best-effort — never throws. Reports both whether the call succeeded AND how
+ * Best-effort - never throws. Reports both whether the call succeeded AND how
  * many devices it actually reached, so callers can tell "couldn't send" from
  * "your love hasn't turned notifications on yet" (delivered === 0).
  */
@@ -103,7 +103,7 @@ export async function notifyPartner(
     if (error) return { ok: false, delivered: 0 };
     return { ok: true, delivered: data?.sent ?? 0 };
   } catch {
-    /* swallow — push is non-critical */
+    /* swallow - push is non-critical */
     return { ok: false, delivered: 0 };
   }
 }

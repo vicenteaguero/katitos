@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — the clock that remembers for us
+-- Katitos - the clock that remembers for us
 --
 --   Every notification in this app until now was fired by a phone that was
 --   already awake: you post a photo, your love's phone buzzes. That model
@@ -7,8 +7,8 @@
 --   is the one that isn't open.
 --
 --   So the database keeps the time. Every ten minutes it pokes the
---   `polaroid-reminder` function, which works out — per person, in that
---   person's own zone — whether a nudge is due, and pushes it. Ten minutes is
+--   `polaroid-reminder` function, which works out - per person, in that
+--   person's own zone - whether a nudge is due, and pushes it. Ten minutes is
 --   the granularity of the promise: "three hours left" can mean 2h50m.
 --
 --   ── SECRETS ─────────────────────────────────────────────────────────────

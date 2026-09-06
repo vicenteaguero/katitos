@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — trip photo albums (used by the Georgia hub + travel).
+-- Katitos - trip photo albums (used by the Georgia hub + travel).
 -- Photos live in the 'georgia-album' storage bucket; rows here index them.
 -- ════════════════════════════════════════════════════════════════════════
 

@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — Wall (chalkboard) notes gain touch transforms
+-- Katitos - Wall (chalkboard) notes gain touch transforms
 --   scale → pinch-to-resize; width → manual text-box width so a short phrase
 --   can stay on one line. rotation already exists (set at creation); the app
 --   now lets you rotate by touch too.

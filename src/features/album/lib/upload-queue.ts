@@ -7,7 +7,7 @@
  * of staring. So: a small window, and every result reported the moment it is
  * ready so the strip fills in while the rest are still going.
  *
- * A job that throws does NOT take the batch down with it — the one bad photo is
+ * A job that throws does NOT take the batch down with it - the one bad photo is
  * recorded as failed and the other twenty still arrive.
  */
 export type JobState = 'queued' | 'working' | 'done' | 'failed';

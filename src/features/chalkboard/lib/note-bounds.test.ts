@@ -15,7 +15,7 @@ describe('visualHalfExtents', () => {
     });
   });
 
-  it('grows when the note is tilted — both edges project onto both axes', () => {
+  it('grows when the note is tilted - both edges project onto both axes', () => {
     const { halfW } = visualHalfExtents(200, 80, 1, 90);
     // Turned on its side, the width you see is the note's height.
     expect(halfW).toBeCloseTo(40, 5);
@@ -36,7 +36,7 @@ describe('noteBounds', () => {
     expect(b).toEqual({ minX: 0, maxX: 160, minY: 0, maxY: 560 });
   });
 
-  it('lets a shrunken note reach the right edge — the bug', () => {
+  it('lets a shrunken note reach the right edge - the bug', () => {
     // Half size: the visible note is 100px wide, so its right edge can travel
     // 100px further than the old `boardW - offsetWidth` allowed.
     const b = noteBounds({ ...board, w: 200, h: 80, scale: 0.5, rotation: 0 });

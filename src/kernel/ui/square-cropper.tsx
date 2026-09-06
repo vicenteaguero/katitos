@@ -27,7 +27,7 @@ export interface SquareCropperProps {
  * Pan-and-pinch square cropper.
  *
  * The app stores square photos (polaroids, flowers, wishlist items) but the
- * kernel camera only centre-crops what it shoots — there was no way to choose
+ * kernel camera only centre-crops what it shoots - there was no way to choose
  * the framing of a photo picked from the library. No cropping library is
  * installed and none is worth adding for this, so the maths is done by hand:
  * the image is laid out "cover" over a square window, the user moves it, and
@@ -102,7 +102,7 @@ export function SquareCropper({
     };
   }, []);
 
-  // Measure the square window (callback ref + observer — the mount-time read
+  // Measure the square window (callback ref + observer - the mount-time read
   // lands mid `.curtain-reveal`, so a one-shot measurement is wrong).
   const setFrame = useCallback((el: HTMLDivElement | null) => {
     frameRef.current = el;
@@ -117,7 +117,7 @@ export function SquareCropper({
   // "Cover" scale: the smaller source edge exactly fills the window.
   const base = img && side ? side / Math.min(img.width, img.height) : 0;
 
-  // Keep the image's edges outside the window — no empty corners, ever.
+  // Keep the image's edges outside the window - no empty corners, ever.
   const clamp = useCallback(
     (next: { zoom: number; tx: number; ty: number }) => {
       if (!img || !side) return next;
@@ -225,7 +225,7 @@ export function SquareCropper({
               )}
             </div>
           )}
-          {/* A gilt hairline marking the crop edge — no heavy grid overlay. */}
+          {/* A gilt hairline marking the crop edge - no heavy grid overlay. */}
           <span
             aria-hidden="true"
             className="pointer-events-none absolute inset-0 rounded-lg"

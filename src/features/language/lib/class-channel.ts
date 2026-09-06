@@ -13,7 +13,7 @@ export interface SlideMessage {
  * The class, live: one channel per lesson, on which teach mode says which
  * block is on screen and the lesson page follows.
  *
- * Broadcast, not a table — nothing about "she is on block four" is worth
+ * Broadcast, not a table - nothing about "she is on block four" is worth
  * keeping. The kernel already had the primitive; the classroom used none of it.
  */
 export function useClassChannel(

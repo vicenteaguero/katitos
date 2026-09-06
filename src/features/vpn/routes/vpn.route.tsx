@@ -20,7 +20,7 @@ const flag = (cc: string | null | undefined) =>
       )
     : '';
 
-/** The QR, drawn only when asked for — the encoder is 40 kB. */
+/** The QR, drawn only when asked for - the encoder is 40 kB. */
 function Qr({ value }: { value: string }) {
   const [png, setPng] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
@@ -119,9 +119,9 @@ function ServerRow({ s, detail }: { s: VpnServer; detail: boolean }) {
           {detail
             ? `${lastSeen(s.last_beat)}${
                 s.protocols.length
-                  ? ` · ${s.protocols.map((p) => PROTOCOL_LABELS[p] ?? p).join(' · ')}`
+                  ? ` - ${s.protocols.map((p) => PROTOCOL_LABELS[p] ?? p).join(' - ')}`
                   : ''
-              }${s.clients != null ? ` · ${s.clients} conn` : ''}`
+              }${s.clients != null ? ` - ${s.clients} conn` : ''}`
             : s.alive
               ? 'Awake'
               : 'Not answering'}
@@ -141,7 +141,7 @@ function ServerRow({ s, detail }: { s: VpnServer; detail: boolean }) {
  *
  * The first draft of this page was a dashboard: uptime percentages, protocol
  * names, last-heartbeat times, two columns of numbers. All true, all useless
- * to the person it is for — she does not want to audit a fleet, she wants to
+ * to the person it is for - she does not want to audit a fleet, she wants to
  * know whether Instagram is going to load.
  *
  * So the page answers exactly one question in the largest type on it, and
@@ -163,7 +163,7 @@ export function VpnRoute() {
 
   // Switching the VPN on happens in ANOTHER app, so she comes back to a page
   // that answered before anything changed. Without a way to ask again, the
-  // only fix is closing and reopening Katitos — which is how you teach someone
+  // only fix is closing and reopening Katitos - which is how you teach someone
   // that your status display cannot be trusted.
   const recheck = () => qc.invalidateQueries({ queryKey: qk.vpn.all() });
 
@@ -188,7 +188,7 @@ export function VpnRoute() {
               </h1>
               <p className="mt-1 font-sans text-base text-muted">
                 Everything is going through {where?.city ?? where?.label}{' '}
-                {flag(where?.country)} — watch what you like.
+                {flag(where?.country)} - watch what you like.
               </p>
             </>
           ) : (
@@ -212,7 +212,7 @@ export function VpnRoute() {
         </button>
       </section>
 
-      {/* Then the servers — for her, awake or not, and nothing else. */}
+      {/* Then the servers - for her, awake or not, and nothing else. */}
       {servers && servers.length > 0 && (
         <ul className="mt-5 divide-y divide-line">
           {servers.map((sv) => (
@@ -246,7 +246,7 @@ export function VpnRoute() {
 
       {/* Everything she might need, in the order she needs it, and out of the
           way until she asks. The steps are here rather than on the page because
-          after the first day the only question left is "is it on?" — and that
+          after the first day the only question left is "is it on?" - and that
           is already answered in the biggest type on the screen. */}
       <Sheet open={help} onClose={() => setHelp(false)} title="How this works">
         <ol className="space-y-4">
@@ -321,7 +321,7 @@ export function VpnRoute() {
                   stopped. Telling her the opposite would have her debugging a
                   dead connection that says it is alive. */}
               <span className="block font-sans text-xs text-muted">
-                Turn it on inside Karing. You can leave it in the background —
+                Turn it on inside Karing. You can leave it in the background -
                 but don’t swipe it away, or everything stops while your phone
                 still says you’re connected.
               </span>
@@ -335,7 +335,7 @@ export function VpnRoute() {
             <p className="font-semibold">It won’t connect</p>
             <p className="mt-1 text-muted">
               You have a second profile. Add it the same way and use that
-              instead — it works differently, so it often works when the first
+              instead - it works differently, so it often works when the first
               one doesn’t.
             </p>
             {me?.alt_url && (
@@ -364,7 +364,7 @@ export function VpnRoute() {
           <div>
             <p className="font-semibold">Still stuck</p>
             <p className="mt-1 text-muted">
-              Tell me and I’ll fix it. Don’t send these codes to anyone else —
+              Tell me and I’ll fix it. Don’t send these codes to anyone else -
               they’re yours.
             </p>
           </div>

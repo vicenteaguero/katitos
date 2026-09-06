@@ -5,7 +5,7 @@ import { notifyPartner } from '@kernel/push';
 import { LATEST_KEY } from '../changelog';
 
 /**
- * Tell her a new version landed — exactly once per release.
+ * Tell her a new version landed - exactly once per release.
  *
  * Runs only on the admin's device (he ships them, she receives them). The claim
  * is a single atomic UPDATE with the old key in the WHERE clause, so if he has
@@ -40,7 +40,7 @@ export function useAnnounceRelease(): void {
           url: '/',
         });
       } catch {
-        /* best-effort — the modal shows on her next open regardless */
+        /* best-effort - the modal shows on her next open regardless */
       }
     })();
   }, [self?.is_admin]);

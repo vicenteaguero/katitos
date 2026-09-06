@@ -53,7 +53,7 @@ export function PolaroidRoute() {
     usePolaroidPages();
 
   const [catchUpOpen, setCatchUpOpen] = useState(false);
-  /** The day a notification sent us here for — its row glows in the sheet. */
+  /** The day a notification sent us here for - its row glows in the sheet. */
   const [urgentDay, setUrgentDay] = useState<string | null>(null);
   /** A notification asked for the camera and the browser wouldn't open it. */
   const [pulseShoot, setPulseShoot] = useState(false);
@@ -84,7 +84,7 @@ export function PolaroidRoute() {
     rows.map((r) => r.image_path)
   );
   // Pull the whole page's thumbnails down at once. You opened the album to
-  // scroll it, so the scroll should never be waiting on a network round-trip —
+  // scroll it, so the scroll should never be waiting on a network round-trip -
   // at ~20 KB each this is a few hundred KB once, then cached by the worker.
   usePrefetchImages(urls?.values());
 
@@ -111,7 +111,7 @@ export function PolaroidRoute() {
   const openCamera = useCallback(() => shootRef.current?.click(), []);
 
   /**
-   * A photo already taken elsewhere — the bottom bar owns the camera input so
+   * A photo already taken elsewhere - the bottom bar owns the camera input so
    * that tapping it IS the gesture that opens the phone's camera. It lands here
    * as a draft; crop it and it is saved.
    */
@@ -127,7 +127,7 @@ export function PolaroidRoute() {
    * We try, and we do not rely on it: opening a file input needs a gesture the
    * browser will not credit a notification tap with, and Safari refuses. So the
    * fallback is not an error message, it is the button below going gold and
-   * pulsing under your thumb — one tap, on the thing you came here to do.
+   * pulsing under your thumb - one tap, on the thing you came here to do.
    */
   useEffect(() => {
     if (params.get('shoot') !== '1') return;
@@ -139,7 +139,7 @@ export function PolaroidRoute() {
     return () => clearTimeout(id);
   }, [params, setParams, openCamera]);
 
-  /** The last-call notification links to `?catchup=<day>` — that exact day. */
+  /** The last-call notification links to `?catchup=<day>` - that exact day. */
   useEffect(() => {
     const day = params.get('catchup');
     if (!day) return;
@@ -169,7 +169,7 @@ export function PolaroidRoute() {
       }
     );
 
-  // Whichever plate is actually in front — that's the caption you can write on.
+  // Whichever plate is actually in front - that's the caption you can write on.
   const frontSide = frontOf(today, todayFocus);
   const focusedPhoto = frontSide === 'mine' ? today.mine : today.theirs;
 
@@ -201,7 +201,7 @@ export function PolaroidRoute() {
           />
         )}
 
-        {/* The focused plate's caption — either of us may write on either one. */}
+        {/* The focused plate's caption - either of us may write on either one. */}
         {focusedPhoto && (
           <Input
             key={focusedPhoto.id}
@@ -274,7 +274,7 @@ export function PolaroidRoute() {
       </section>
 
       {/* The phone's own camera. Front lens, no preview of ours, no permission
-          prompt — the shot comes back as a file and the cropper below makes it
+          prompt - the shot comes back as a file and the cropper below makes it
           square, so what gets saved is still a polaroid. */}
       <input
         ref={shootRef}
@@ -348,7 +348,7 @@ function Gallery({
   urls?: Map<string, string>;
   partnerName: string;
   partnerZone: string | null | undefined;
-  /** Days still writable from here — my love's today included. */
+  /** Days still writable from here - my love's today included. */
   openSet: Set<string>;
   onCatchUp: () => void;
   onOpen: (p: Polaroid) => void;
@@ -406,7 +406,7 @@ function Gallery({
                     partnerZone={partnerZone}
                     stillOpen={openSet.has(d.day)}
                     onShoot={
-                      // Her today, still fillable from here — but only via the
+                      // Her today, still fillable from here - but only via the
                       // deliberate path, never the camera (which is always
                       // "now", and now is a different date).
                       openSet.has(d.day) ? onCatchUp : undefined

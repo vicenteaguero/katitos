@@ -3,7 +3,7 @@ import { DateTime } from 'luxon';
 /**
  * Whole days from today to a due date, on the calendar.
  *
- * `today` is a date, not a moment — the old sums divided "midnight of the
+ * `today` is a date, not a moment - the old sums divided "midnight of the
  * due day minus right now" by a day and rounded, so from noon on the due
  * day the homework read "1 day late". Callers pass the couple's shared day
  * (see `useToday`): eleven hours apart, "due Friday" was a different Friday
@@ -19,7 +19,7 @@ export function daysUntil(
   );
 }
 
-/** "today" · "tomorrow" · "in 3 days" · "2 days late" — a date you can act on. */
+/** "today" - "tomorrow" - "in 3 days" - "2 days late" - a date you can act on. */
 export function dueLabel(dueOn: string, today?: string): string {
   const days = daysUntil(dueOn, today);
   if (days === 0) return 'today';
@@ -29,7 +29,7 @@ export function dueLabel(dueOn: string, today?: string): string {
   return `${Math.abs(days)} days late`;
 }
 
-/** "just now" · "40 min ago" · "3 hrs ago" · "Tue 14:02" — when he did it. */
+/** "just now" - "40 min ago" - "3 hrs ago" - "Tue 14:02" - when he did it. */
 export function agoLabel(iso: string, now: DateTime = DateTime.now()): string {
   const t = DateTime.fromISO(iso);
   if (!t.isValid) return '';
@@ -41,7 +41,7 @@ export function agoLabel(iso: string, now: DateTime = DateTime.now()): string {
   return t.toFormat('ccc HH:mm');
 }
 
-/** "due today" · "due in 3 days" · "2 days late" — for a line under a title. */
+/** "due today" - "due in 3 days" - "2 days late" - for a line under a title. */
 export function dueSentence(dueOn: string, today?: string): string {
   const label = dueLabel(dueOn, today);
   return label.endsWith('late') ? label : `due ${label}`;

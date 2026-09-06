@@ -1,8 +1,8 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — the material that comes with a lesson
+-- Katitos - the material that comes with a lesson
 --
 --   A PDF worksheet, a Word document, a photograph, a YouTube video, a link.
---   A row is EITHER a file we store OR a link somewhere else, never both —
+--   A row is EITHER a file we store OR a link somewhere else, never both -
 --   the CHECK says so, because "which one is it" being ambiguous is how a
 --   media list ends up with rows nothing can render.
 -- ════════════════════════════════════════════════════════════════════════

@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — a photo can be cut, cropped and mounted
+-- Katitos - a photo can be cut, cropped and mounted
 --
 --   Until now a picture on a page was a rectangle, optionally on instant
 --   film, showing all of itself. You could not say "just her face", you
@@ -9,13 +9,13 @@
 --   on the photo itself, so the same picture can be a circle on one page
 --   and a full-bleed rectangle on the next, and nothing is ever re-uploaded
 --   or lost:
---     • shape  — the cut of the window it shows through
---     • crop   — a focal point and how far in, as fractions
---     • frame  — the mount around it, and what colour that mount is
+--     • shape  - the cut of the window it shows through
+--     • crop   - a focal point and how far in, as fractions
+--     • frame  - the mount around it, and what colour that mount is
 --
 --   ── Safe while the old bundle is still running ──
---   Every column is NOT NULL DEFAULT, so the previous build's inserts —
---   which know nothing about them — still succeed, and its reads simply
+--   Every column is NOT NULL DEFAULT, so the previous build's inserts -
+--   which know nothing about them - still succeed, and its reads simply
 --   ignore what they don't recognise. The `frame` check is WIDENED, never
 --   narrowed: 'plain' and 'polaroid' stay in the set because the old
 --   toggle writes exactly those two.
@@ -24,7 +24,7 @@
 alter table public.album_placements
   -- The cut of the window. 'natural' keeps the photograph's own shape.
   add column if not exists shape text not null default 'natural',
-  -- The focal point, in the image's own 0..1 space — the same convention
+  -- The focal point, in the image's own 0..1 space - the same convention
   -- CSS `object-position` uses, so the screen and the printed page can share
   -- one piece of arithmetic instead of two that drift apart.
   add column if not exists crop_x real not null default 0.5,
@@ -55,7 +55,7 @@ alter table public.album_placements add constraint album_placements_frame_color_
 -- By DISCOVERY, not by name: a constraint created by `db reset` locally and
 -- one created by an earlier push in production can carry different generated
 -- names, and dropping a guessed name silently succeeds while leaving the old
--- two-value check in place — after which every new frame is rejected in prod
+-- two-value check in place - after which every new frame is rejected in prod
 -- only. This is the same dance 20260811000003 does for `scope`.
 do $$
 declare c text;

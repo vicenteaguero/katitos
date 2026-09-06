@@ -10,7 +10,7 @@ export type BookScope = 'life' | 'trip';
 export type PhotoSource = 'upload' | 'polaroid' | 'text';
 
 export type AlbumBook = Tables<'album_books'>;
-/** A photo in the book's library — it exists whether or not it is on a page. */
+/** A photo in the book's library - it exists whether or not it is on a page. */
 export type AlbumPhoto = Tables<'album_photos'>;
 /** Where a photo (or a piece of text) sits on one page. */
 export type AlbumPlacement = Tables<'album_placements'>;
@@ -18,7 +18,7 @@ export type AlbumPlacement = Tables<'album_placements'>;
 /**
  * How a sticker is dressed.
  *
- * `plain` is kept as a synonym of `white` — it is what the old build writes,
+ * `plain` is kept as a synonym of `white` - it is what the old build writes,
  * and it will keep writing it for one more session.
  */
 export type StickerFrame =
@@ -62,8 +62,8 @@ export type StickerFont = 'display' | 'sans' | 'hand';
 /**
  * A placement with its library photo attached.
  *
- * The page needs both halves at once — where it sits (placement) and what it
- * looks like (photo) — and joining them here keeps every consumer from having
+ * The page needs both halves at once - where it sits (placement) and what it
+ * looks like (photo) - and joining them here keeps every consumer from having
  * to remember which is which.
  */
 export interface PlacedSticker extends AlbumPlacement {
@@ -73,7 +73,7 @@ export interface PlacedSticker extends AlbumPlacement {
    *
    * A sticker appears the instant you tap, under a made-up id, and is swapped
    * for the database's row a moment later. Keying on `id` made that swap a
-   * REMOUNT — the element was destroyed and rebuilt, which on a page you are
+   * REMOUNT - the element was destroyed and rebuilt, which on a page you are
    * filling with two hundred photos reads as a flicker per photo. Only
    * optimistic rows carry this; everything else is keyed by its id as before.
    */

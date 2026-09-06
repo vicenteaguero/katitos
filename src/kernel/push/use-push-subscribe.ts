@@ -54,7 +54,7 @@ function unsupportedReason(): 'unsupported' | 'needs-install' {
 
 /**
  * Subscribe this device to Web Push and persist the row the partner needs to
- * reach it. Idempotent — upserts on the endpoint, so calling it again after the
+ * reach it. Idempotent - upserts on the endpoint, so calling it again after the
  * browser silently rotates the subscription just refreshes the stored keys.
  * This is what makes "Send love" land as a real notification: without a live
  * row here, the server has nothing to push to.
@@ -86,7 +86,7 @@ async function persistSubscription(
 
 /**
  * Keep this device's push subscription alive whenever permission is already
- * granted — no prompt, no UI. Mount once near the app root so every launch
+ * granted - no prompt, no UI. Mount once near the app root so every launch
  * re-persists the (possibly rotated) subscription, healing the common case
  * where a partner enabled notifications once but the stored row went stale and
  * loves stopped arriving.
@@ -108,7 +108,7 @@ export function useEnsurePushSubscription(): void {
           import.meta.env.VITE_VAPID_PUBLIC_KEY
         );
       } catch {
-        /* best-effort — Settings still offers an explicit retry */
+        /* best-effort - Settings still offers an explicit retry */
       }
     });
     return () => {

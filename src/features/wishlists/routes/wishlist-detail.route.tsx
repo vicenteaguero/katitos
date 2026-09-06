@@ -24,7 +24,7 @@ import type { WishlistItem } from '../types';
 /**
  * One gift list.
  *
- * Reading it is the point — most of the time you're browsing, not editing — so
+ * Reading it is the point - most of the time you're browsing, not editing - so
  * the cards carry the picture, the price and the link, and everything writes
  * optimistically so nothing ever waits on a spinner.
  */
@@ -56,7 +56,7 @@ export function WishlistDetailRoute() {
   );
 
   // The top bar has ONE slot, so the hidden-count and the add button are
-  // injected together — two separate useTopBarAction calls would overwrite
+  // injected together - two separate useTopBarAction calls would overwrite
   // each other and whichever unmounted last would clear the bar entirely.
   const openNew = useRef(() => {});
   openNew.current = () => {

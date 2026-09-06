@@ -1,10 +1,10 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — choosing a block's words must be all-or-nothing
+-- Katitos - choosing a block's words must be all-or-nothing
 --
 --   The client did it in two calls: delete every row for the block, then
 --   insert the new list. The delete commits first, so anything that goes wrong
---   in between — a dropped connection on a train, a word the other one deleted
---   a second earlier — leaves the block with NO words and no way back. She
+--   in between - a dropped connection on a train, a word the other one deleted
+--   a second earlier - leaves the block with NO words and no way back. She
 --   watches an error toast over a list she just lost.
 --
 --   One statement instead. `security invoker` so the members-only policy still

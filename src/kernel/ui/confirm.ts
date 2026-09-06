@@ -4,7 +4,7 @@ export interface ConfirmOptions {
   title: string;
   /** One or two sentences on what will happen. */
   body?: string;
-  /** The verb on the button — "Delete the course", never "OK". */
+  /** The verb on the button - "Delete the course", never "OK". */
   confirmLabel?: string;
   cancelLabel?: string;
   /** Red button: this cannot be undone. */
@@ -42,7 +42,7 @@ export const useConfirmStore = create<ConfirmState>((set, get) => ({
  *
  *     if (!(await confirmDialog({ title: 'Delete this course?', danger: true }))) return;
  *
- * Most deletes should not ask at all — an Undo in the toast is kinder than a
+ * Most deletes should not ask at all - an Undo in the toast is kinder than a
  * question nobody reads. This is for the few that really are forever.
  */
 export function confirmDialog(opts: ConfirmOptions): Promise<boolean> {

@@ -28,7 +28,7 @@ export function useVoiceFor(vocabId: string | undefined) {
 }
 
 /**
- * Say a word for the other one — his try, or her answer to it.
+ * Say a word for the other one - his try, or her answer to it.
  *
  * The clip goes up first, the row second, and the other phone is told
  * unless it is night there. Nothing commercial can do this: the voice he
@@ -70,7 +70,7 @@ export function useSendVoice() {
         void notifyPartner({
           kind: 'lesson',
           title: `«${v.word}»`,
-          body: `${self?.display_name ?? 'Your love'} said it for you — listen`,
+          body: `${self?.display_name ?? 'Your love'} said it for you - listen`,
           url: `/language/dictionary?word=${v.vocabId}&lang=${v.lang}`,
           tag: `voice:${v.vocabId}`,
         });

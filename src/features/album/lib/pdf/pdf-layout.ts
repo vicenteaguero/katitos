@@ -36,7 +36,7 @@ export interface Placed {
   y: number;
   scale: number;
   rotation: number;
-  /** Natural pixel size, when we know it — otherwise it is drawn square. */
+  /** Natural pixel size, when we know it - otherwise it is drawn square. */
   width?: number | null;
   height?: number | null;
   /** The cut of the frame. A shaped frame is NOT the photo's own shape. */
@@ -49,7 +49,7 @@ export interface Box {
   cy: number;
   w: number;
   h: number;
-  /** Degrees, counter-clockwise — what a PDF matrix wants. */
+  /** Degrees, counter-clockwise - what a PDF matrix wants. */
   rotation: number;
 }
 
@@ -96,7 +96,7 @@ export function stickerMatrix(
  * A point offset from a box's centre, measured along the box's OWN axes.
  *
  * The photo window sits above the middle of a polaroid plate, and the caption
- * below it — but once the sticker is tilted, "above" is no longer straight up
+ * below it - but once the sticker is tilted, "above" is no longer straight up
  * the page. Adding the offset in page space slid the photograph off its frame
  * for every sticker that wasn't perfectly level, which is most of them.
  */
@@ -125,7 +125,7 @@ export interface FilmLayout {
 }
 
 const FILM_EDGE = 0.06; // side/top border, as a fraction of the plate width
-const FILM_CHIN = 0.2; // bottom border — deliberately deeper than the rest
+const FILM_CHIN = 0.2; // bottom border - deliberately deeper than the rest
 
 export function filmLayout(width: number): FilmLayout {
   const edge = width * FILM_EDGE;

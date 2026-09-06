@@ -2,7 +2,7 @@ import { createFeatureRegistry, type FeatureModule } from '@kernel/registry';
 
 // ── Feature modules ────────────────────────────────────────────────────────
 // Adding a feature = import its barrel and add it to this array. Nothing else
-// in the shell changes — routes and nav are derived from the registry.
+// in the shell changes - routes and nav are derived from the registry.
 import { polaroidFeature } from '@features/polaroid';
 import { quizzesFeature } from '@features/quizzes';
 import { chalkboardFeature } from '@features/chalkboard';
@@ -67,17 +67,17 @@ const modules: FeatureModule[] = [
 const GATED = true;
 const OPEN = new Set([
   'polaroid',
-  'album', // "Albums" — one book per era of ours; took Summer's nav slot
+  'album', // "Albums" - one book per era of ours; took Summer's nav slot
   'language',
   'chalkboard', // "The wall"
   'currency',
   'wishlists', // gift lists, each item with its own eye
   'flowers', // a bouquet a month, hers to fill
-  'vpn', // "Internet" — Helsinki is up and reporting in
-  // 'summer'   — Türkiye/Georgia is over. Locked, NOT deleted: the code, the
+  'vpn', // "Internet" - Helsinki is up and reporting in
+  // 'summer'   - Türkiye/Georgia is over. Locked, NOT deleted: the code, the
   //              tables and the photos all stay, so the next trip is one line.
-  // 'know-me'  — the daily questions still need some love before she sees them.
-  // 'scavenger' — "Date cards" frozen as-is until we rethink it.
+  // 'know-me'  - the daily questions still need some love before she sees them.
+  // 'scavenger' - "Date cards" frozen as-is until we rethink it.
 ]);
 
 export const features: FeatureModule[] = modules.map((m) => ({

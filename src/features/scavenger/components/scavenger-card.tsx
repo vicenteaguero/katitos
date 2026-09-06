@@ -9,7 +9,7 @@ interface Props {
   ownerRole: 'a' | 'b' | null;
   /** Display name of the card's creator. */
   ownerName: string;
-  /** Display name of the OTHER person — the one who scores this card. */
+  /** Display name of the OTHER person - the one who scores this card. */
   raterName: string;
   viewerIsOwner: boolean;
   /** Stars still available to spend on THIS card (pot left + its own stars). */
@@ -99,7 +99,7 @@ export function DateCardItem({
 
   return (
     <Card className="overflow-hidden p-0">
-      {/* Deck color seam — blue for his, pink for hers. */}
+      {/* Deck color seam - blue for his, pink for hers. */}
       <div className="h-1 w-full" style={{ background: tone.color }} />
 
       <div className="space-y-1.5 p-1.5">
@@ -120,7 +120,7 @@ export function DateCardItem({
             )}
           </div>
           <div className="min-w-0 flex-1">
-            {/* Title carries the deck's colour (no "His/Hers deck" label — the
+            {/* Title carries the deck's colour (no "His/Hers deck" label - the
                 tab above already says whose deck this is). */}
             <h3
               className="truncate font-display text-xl font-semibold tracking-tight"
@@ -145,7 +145,7 @@ export function DateCardItem({
             Owner: private → claim → (waiting | rated → accept). Partner only
             ever sees a claimed, un-cancelled card: score it or cancel review. */}
         {accepted ? (
-          // Locked, final — visible to both.
+          // Locked, final - visible to both.
           <div className="space-y-3">
             {proof}
             <div className="flex items-center justify-between">
@@ -157,7 +157,7 @@ export function DateCardItem({
           </div>
         ) : viewerIsOwner ? (
           !claim ? (
-            // Private to me — nobody else can see it until I claim it.
+            // Private to me - nobody else can see it until I claim it.
             <div className="space-y-3">
               <p className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 px-3 py-1 font-sans text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted">
                 <Lock size={11} /> Only you can see this
@@ -167,10 +167,10 @@ export function DateCardItem({
               </Button>
             </div>
           ) : dismissed ? (
-            // Partner sent it back — claim it again to re-reveal.
+            // Partner sent it back - claim it again to re-reveal.
             <div className="space-y-3">
               <p className="font-sans text-sm text-muted">
-                {raterName} sent this back — claim it again when you are ready.
+                {raterName} sent this back - claim it again when you are ready.
               </p>
               <div className="flex items-center gap-3">
                 <Button full onClick={() => onClaim(card)}>
@@ -186,7 +186,7 @@ export function DateCardItem({
               </div>
             </div>
           ) : rated ? (
-            // Revealed + scored — accept to lock it in, or pull it back.
+            // Revealed + scored - accept to lock it in, or pull it back.
             <div className="space-y-3">
               {proof}
               <div className="flex items-center justify-between">
@@ -200,16 +200,16 @@ export function DateCardItem({
                 </button>
               </div>
               <Button full onClick={() => onAccept(card)}>
-                <Check size={16} /> Accept {stars}★ — lock it in
+                <Check size={16} /> Accept {stars}★ - lock it in
               </Button>
             </div>
           ) : (
-            // Revealed — waiting for the partner's stars.
+            // Revealed - waiting for the partner's stars.
             <div className="space-y-3">
               {proof}
               <div className="flex items-center justify-between gap-3">
                 <p className="font-sans text-sm text-muted">
-                  Revealed to {raterName} · waiting for their stars…
+                  Revealed to {raterName} - waiting for their stars…
                 </p>
                 <button
                   type="button"
@@ -222,7 +222,7 @@ export function DateCardItem({
             </div>
           )
         ) : (
-          // Partner view — only reached when claimed & not cancelled.
+          // Partner view - only reached when claimed & not cancelled.
           <div className="space-y-3">
             {proof}
             {rated ? (
@@ -242,13 +242,13 @@ export function DateCardItem({
                   </button>
                 </div>
                 <p className="font-sans text-xs text-muted">
-                  Tap a star to adjust · waiting for {ownerName} to accept
+                  Tap a star to adjust - waiting for {ownerName} to accept
                 </p>
               </div>
             ) : (
               <div className="space-y-2 text-center">
                 <p className="eyebrow justify-center">
-                  {ownerName} claimed this — how good was it?
+                  {ownerName} claimed this - how good was it?
                 </p>
                 <div className="flex justify-center">
                   <Stars
@@ -260,7 +260,7 @@ export function DateCardItem({
                 {maxStars < 3 && (
                   <p className="font-sans text-xs text-muted">
                     {maxStars === 0
-                      ? 'Pot empty — no stars left to give'
+                      ? 'Pot empty - no stars left to give'
                       : `${maxStars} left in the pot`}
                   </p>
                 )}

@@ -1,10 +1,10 @@
 /* ──────────────────────────────────────────────────────────────────────────
- * Polaroid — co-located motion, layered on top of the global develop / fix /
+ * Polaroid - co-located motion, layered on top of the global develop / fix /
  * warmth keyframes in index.css (which must not be edited). Everything here is
  * GPU-only (transform / opacity) and degrades to stillness under reduced motion.
  * ────────────────────────────────────────────────────────────────────────── */
 
-/* A single chemical sheen sweeping across the plate as the emulsion fixes — the
+/* A single chemical sheen sweeping across the plate as the emulsion fixes - the
  * wet-light glide of a real instant photo coming up. One-shot, hero photos only. */
 @keyframes polaroid-sheen {
   0% {
@@ -52,7 +52,7 @@
 
 /* Coming forward: it eases OUT a little and then settles, so the change reads
  * as a hand moving a photo rather than the two of them blinking past each
- * other. The front plate never grows past its natural size — an overshoot
+ * other. The front plate never grows past its natural size - an overshoot
  * above 1 pushed the outer edge off the side of the phone. --push points away
  * from the centre, per side. */
 @keyframes pair-to-front {
@@ -95,7 +95,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* No swing — the plates just take their places. The z-order still changes,
+  /* No swing - the plates just take their places. The z-order still changes,
      so the interaction still works, it simply does not travel. */
   .pair-plate--front,
   .pair-plate--back {

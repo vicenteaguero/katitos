@@ -32,7 +32,7 @@ export function DeckPlayer({ deckId }: { deckId: string }) {
             <span className="text-muted"> / {deck.total}</span>
           </span>
         </div>
-        {/* a gilt progress hairline — the stage advancing, scene by scene */}
+        {/* a gilt progress hairline - the stage advancing, scene by scene */}
         <div className="relative h-px w-full overflow-hidden bg-border/25">
           <div
             className="absolute inset-y-0 left-0 bg-copper transition-transform duration-500 ease-out"

@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — one dictionary, and it remembers
+-- Katitos - one dictionary, and it remembers
 --
 --   Words used to live inside a deck, so the same word taught in two lessons
 --   was two rows that could disagree with each other. Now there is ONE entry
@@ -7,14 +7,14 @@
 --   is fixed everywhere it was ever taught.
 --
 --   Everything already learned comes across. `phrase_reviews` holds real
---   history — how often he forgot a word, when it is next due — and throwing
+--   history - how often he forgot a word, when it is next due - and throwing
 --   that away would mean starting his Russian again from nothing.
 -- ════════════════════════════════════════════════════════════════════════
 
 create table if not exists public.lang_vocab (
   id uuid primary key default gen_random_uuid(),
   -- Which of the three columns below is the WORD BEING TAUGHT. Almost always
-  -- Russian — but he teaches her Spanish too, and without this the headword of
+  -- Russian - but he teaches her Spanish too, and without this the headword of
   -- a Spanish card would have to sit in a column called `ru`, which is a lie
   -- the rest of the app would then have to work around.
   term_lang text not null default 'ru' check (term_lang in ('ru', 'es', 'en')),
@@ -113,8 +113,8 @@ drop policy if exists members_all on public.lang_block_vocab;
 create policy members_all on public.lang_block_vocab for all
   using (public.is_member()) with check (public.is_member());
 
--- Both of us READ every review — she is the teacher and needs to see how he is
--- doing — but each of us only ever writes our own answers.
+-- Both of us READ every review - she is the teacher and needs to see how he is
+-- doing - but each of us only ever writes our own answers.
 alter table public.lang_vocab_reviews enable row level security;
 drop policy if exists members_all on public.lang_vocab_reviews;
 drop policy if exists lang_vocab_reviews_select on public.lang_vocab_reviews;

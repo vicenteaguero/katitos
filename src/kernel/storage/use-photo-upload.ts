@@ -7,7 +7,7 @@ import { downscaleImage, proxyPath } from './image';
 /**
  * Upload a photo as an original + a small proxy (`thumbs/<path>`). The proxy is
  * best-effort: if downscaling or its upload fails, we keep the original and move
- * on — display falls back to the full image. Returns the original path.
+ * on - display falls back to the full image. Returns the original path.
  */
 export function usePhotoUpload() {
   const { upload, uploading, error } = useUpload();
@@ -22,7 +22,7 @@ export function usePhotoUpload() {
         const proxy = await downscaleImage(blob);
         // A proxy that isn't smaller than what it replaces is not a proxy.
         // Skipping it makes readers fall back to the original, which is the
-        // better of the two — this is how ~300 KB PNG "thumbnails" used to get
+        // better of the two - this is how ~300 KB PNG "thumbnails" used to get
         // stored and then dutifully downloaded on every scroll.
         if (proxy.size < blob.size) {
           await supabase.storage.from(bucket).upload(proxyPath(path), proxy, {
@@ -33,7 +33,7 @@ export function usePhotoUpload() {
           });
         }
       } catch {
-        // No proxy this time — the original is enough to display correctly.
+        // No proxy this time - the original is enough to display correctly.
       }
       return path;
     },

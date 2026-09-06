@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 /**
- * The visible splash is `#boot` in index.html — styled INLINE, so it paints
+ * The visible splash is `#boot` in index.html - styled INLINE, so it paints
  * with zero CSS-load gap and is the ONLY loading screen (no React-rendered
  * second splash to hand off to, which was what flashed the home in between).
  *

@@ -64,7 +64,7 @@ describe('computeLayout', () => {
     expect(computeLayout(1000, 600, M, MIN_PEEK, 16).viewportH).toBe(600);
   });
 
-  it('never overflows a short screen — a phone turned sideways', () => {
+  it('never overflows a short screen - a phone turned sideways', () => {
     // The old 200px floor beat the height budget here and the book was clipped.
     for (const availH of [200, 260, 300, 340]) {
       const { viewportH } = computeLayout(640, availH, M, MIN_PEEK, 16);
@@ -195,7 +195,7 @@ describe('leafAfterFlip', () => {
   it('lands ON the front cover rather than beside it', () => {
     // The regression this whole function exists for: a lone spread has one
     // leaf, so "enter from the right" would put us on page 1 with the cover
-    // already turned — you could never actually see the cover again.
+    // already turned - you could never actually see the cover again.
     expect(leafAfterFlip(0, 1, leafCount)).toBe(0);
   });
 
@@ -229,7 +229,7 @@ describe('coverRest', () => {
     const leafCount = L(4);
 
     // Front board: drawn in the right half of the case, whose own padding is
-    // `M` — so its left edge on screen is translate + M + pageW.
+    // `M` - so its left edge on screen is translate + M + pageW.
     const front = placeLeaf(0, leafCount);
     const frontLeft = coverRest(front, pageW, M, vw) + M + pageW;
     expect(frontLeft).toBeCloseTo((vw - pageW) / 2, 6);
@@ -268,7 +268,7 @@ describe('opening and closing a board', () => {
   it('lands on what the front cover was covering, then settles to page one', () => {
     // Off the cover, StPageFlip reports the new spread's first leaf: 1.
     const landed = leafAfterFlip(1, 0, leafCount);
-    expect(landed).toBe(2); // page two — the leaf the cover sat on top of
+    expect(landed).toBe(2); // page two - the leaf the cover sat on top of
     expect(
       settleAfterBoard(placeLeaf(0, leafCount), placeLeaf(landed, leafCount))
     ).toBe(1); // …and then across to page one

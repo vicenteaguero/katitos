@@ -1,4 +1,4 @@
-# Katitos VPN — design
+# Katitos VPN - design
 
 An exit server so she has working internet from Russia, plus a small Katitos
 feature to see its status.
@@ -56,13 +56,13 @@ episodes on mobile, nothing will work, and it will not be a configuration proble
   17 Feb 2026 across wired ISPs, with sessions dropping after a minute or never
   establishing, and a second wave in June 2026. The community default moved to
   **XHTTP or gRPC with multiplexing**.
-- ⚠️ **The mechanism**, measured on MTS Novosibirsk — her city — in November 2025:
+- ⚠️ **The mechanism**, measured on MTS Novosibirsk - her city - in November 2025:
   opening roughly twelve TLS connections **with the same SNI** in a short window
   triggers a ~120 s freeze where the handshake stops reaching the server.
   Multiplexing collapses many logical streams into few TCP connections and never
   reaches the threshold. Connections with no SNI are unaffected. Changing
   fingerprint mid-freeze **escalates** the penalty to ~600 s.
-  _This specific mechanism is the weakest claim here — one community analysis that
+  _This specific mechanism is the weakest claim here - one community analysis that
   self-flags as hypothesis. The practical conclusion (use mux) is solid regardless._
 - **IP prefix reputation is central.** RKN blocked whole hosting-provider ranges in
   April 2025 (AWS, Hetzner, DigitalOcean, GoDaddy, Ionos, Kamatera). Hetzner and
@@ -71,14 +71,14 @@ episodes on mobile, nothing will work, and it will not be a configuration proble
   operators cap server-to-client transfer at ~16 KB per connection, across
   HTTP/1.1, HTTP/2 and HTTP/3. Confirmed by Cloudflare itself.
 - **QUIC censorship is port-agnostic and unidirectional.** QUIC v2 remains
-  uncensored because the parser is incomplete — a real but fragile gap. Do not
+  uncensored because the parser is incomplete - a real but fragile gap. Do not
   build on it.
 
 ### The principle that matters more than any recipe
 
 AmneziaWG shipped 3.1 on 31 Aug 2026 specifically against the June–July blocking.
 Their own diagnosis is the sentence to remember: censors now assess _"the connection
-as a whole, as a data flow, together with the endpoint"_ — packet sizes,
+as a whole, as a data flow, together with the endpoint"_ - packet sizes,
 inter-packet timing, handshake patterns, keepalives, connection counts. Their
 conclusion: _"changing one or even several parameters isn't enough."_
 
@@ -109,8 +109,8 @@ technologies and expect to keep moving.**
 
 | Role          | Where                                                                                  | Notes                                                                                                                                           |
 | :------------ | :------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Primary**   | Small VPS in **Helsinki** — see the latency table below                                | ~4–5 €/month. Pick an uncommon provider in a clean range. **Not Hetzner, not DigitalOcean, not Aeza, not a free tier**                          |
-| **Secondary** | A second small VPS, **different provider, different country** — Stockholm or Frankfurt | Another ~4–5 €/month, and the only kind of spare worth having: a different company, a different address range, a different day of being noticed |
+| **Primary**   | Small VPS in **Helsinki** - see the latency table below                                | ~4–5 €/month. Pick an uncommon provider in a clean range. **Not Hetzner, not DigitalOcean, not Aeza, not a free tier**                          |
+| **Secondary** | A second small VPS, **different provider, different country** - Stockholm or Frankfurt | Another ~4–5 €/month, and the only kind of spare worth having: a different company, a different address range, a different day of being noticed |
 
 Both are hers from day one, in that order, in her config. The point of the second
 box is not capacity, it is that the two are **unrelated to each other**: one
@@ -126,7 +126,7 @@ There is no usable free option, and this was checked:
 | Cloudflare Workers, Vercel, Railway, Deno | **Terms explicitly prohibit** VPN/proxy use                                                                                           |
 | Koyeb, Render, Zeabur, Replit             | Sleep on inactivity                                                                                                                   |
 
-### Where, measured — 5 September 2026
+### Where, measured - 5 September 2026
 
 Her ISPs route **west**, and the question is closed. Measured round trip from
 Novosibirsk:
@@ -146,7 +146,7 @@ Novosibirsk:
 Tokyo losing to Helsinki is the whole proof. Novosibirsk is ~5,000 km from Tokyo
 and ~3,500 km from Helsinki in a straight line; 88 ms east is only possible if the
 traffic goes up to Moscow and comes back. Seoul at 251 ms and Hong Kong at 309 ms
-put it beyond argument — those are neighbours, priced like the far side of the
+put it beyond argument - those are neighbours, priced like the far side of the
 planet. Russian forums have complained about Rostelecom hauling Asian traffic
 through Europe for years, and the operator keeps calling it temporary.
 
@@ -154,22 +154,22 @@ through Europe for years, and the operator keeps calling it temporary.
 node, so add roughly 20–30 ms for her flat; the ORDER is what decides, and it does
 not move.
 
-_(19 RIPE Atlas probes are live on her actual ISPs — Novotelecom AS31200,
-Sibirskie Seti AS34757, Rostelecom AS12389 — if this ever needs measuring from a
+_(19 RIPE Atlas probes are live on her actual ISPs - Novotelecom AS31200,
+Sibirskie Seti AS34757, Rostelecom AS12389 - if this ever needs measuring from a
 real Novosibirsk household rather than a rack.)_
 
 ### Protocols
 
 | Priority | Transport                         | Why                                                                                                            |
 | :------- | :-------------------------------- | :------------------------------------------------------------------------------------------------------------- |
-| 1        | **VLESS + REALITY over gRPC**     | HTTP/2 multiplexes many streams over one TLS connection and one SNI — which is what the measured filter counts |
+| 1        | **VLESS + REALITY over gRPC**     | HTTP/2 multiplexes many streams over one TLS connection and one SNI - which is what the measured filter counts |
 | 2        | VLESS + REALITY over TCP + Vision | Still fine where the newer filter has not been applied                                                         |
 | 3        | **AmneziaWG 3.1**                 | Unrelated technology, different detection surface                                                              |
 
 ### Why not XHTTP, which this document used to lead with
 
-**Her client cannot run it.** Karing — the one app still in the Russian App
-Store — ships the **sing-box core only**, and sing-box has no XHTTP transport;
+**Her client cannot run it.** Karing - the one app still in the Russian App
+Store - ships the **sing-box core only**, and sing-box has no XHTTP transport;
 its author has said he does not plan one. XHTTP is an Xray-only transport.
 
 That is not a detail to design around later. It rules out the transport
@@ -184,7 +184,7 @@ measured on MTS Novosibirsk never sees a burst.
 
 ### The Xray version is pinned, and must stay pinned
 
-**26.6.27.** Xray **26.7.x breaks REALITY against every sing-box client** —
+**26.6.27.** Xray **26.7.x breaks REALITY against every sing-box client** -
 `reality verification failed`, on both transports, silently. Reproduced here on
 26.7.28 and fixed by downgrading; it matches the reports against 26.7.11, and
 the open Karing issue about 3x-ui servers.
@@ -196,7 +196,7 @@ as maintenance.
 All three configured from the start. Switching is a profile change in her app, not
 a support call.
 
-**XHTTP runs on top of REALITY, not only on top of TLS** — tested on Xray-core
+**XHTTP runs on top of REALITY, not only on top of TLS** - tested on Xray-core
 v26.3.27 on 24–25 August 2026. That matters more than it sounds: REALITY borrows a
 real third party's certificate and SNI, so the transport that is currently
 surviving best **needs no domain of ours at all**.
@@ -209,14 +209,14 @@ one would be worse than free:
 - **The tunnel doesn't need it.** REALITY presents someone else's certificate.
 - **The subscription URL doesn't need it either.** Let's Encrypt has issued
   certificates for bare IP addresses since July 2025, generally available since
-  **15 January 2026** — 160-hour certs that renew themselves. HTTPS on an IP, no
+  **15 January 2026** - 160-hour certs that renew themselves. HTTPS on an IP, no
   domain, no DNS.
 - **And a TLS connection to an IP carries no SNI**, which is the one field the
   measured MTS Novosibirsk freeze keys on. Connections with no SNI were the ones
   it did not touch.
 
 A domain of ours would add ten dollars a year, a DNS record, and one more thing
-that can be burned and traced — in exchange for nothing.
+that can be burned and traced - in exchange for nothing.
 
 ### Per-user rules
 
@@ -249,12 +249,12 @@ Fallbacks if it goes: TestFlight, which is still in the Russian store and needs 
 region change, though builds expire after 90 days; or a separate US Apple ID with
 payment method "None", signing out **only** of Media & Purchases, never iCloud.
 
-_Android is much easier — Hiddify, Happ and AmneziaVPN are still on Play. Do not
+_Android is much easier - Hiddify, Happ and AmneziaVPN are still on Play. Do not
 install NekoBox from Play; that listing has been third-party controlled since 2024._
 
 ⚠️ **Keep the client updated.** A March 2026 disclosure found that nearly all mobile
 xray/sing-box clients exposed an **unauthenticated local SOCKS5 proxy**, and in one
-case a local API that let any other app on the phone dump the full config — keys,
+case a local API that let any other app on the phone dump the full config - keys,
 server address and SNI. Fixed only in current versions.
 
 ⚠️ Fake "free VPN" APKs carrying banking trojans are circulating. Send one direct
@@ -262,7 +262,7 @@ link, never an aggregator.
 
 ### How the config reaches her
 
-**A subscription URL served by the VPN infrastructure — not by Katitos.** Her client
+**A subscription URL served by the VPN infrastructure - not by Katitos.** Her client
 fetches it hourly and updates itself.
 
 **Katitos cannot host this.** Katitos does not load from Russia without a VPN, so
@@ -291,7 +291,7 @@ A **dashboard for when things work**. Nice to have, deliberately not load-bearin
 **Explicitly not in Katitos:**
 
 - **The "it's down" button.** If it is down she cannot open Katitos to press it.
-  That alert needs a channel that works in Russia without a tunnel — SMS, or
+  That alert needs a channel that works in Russia without a tunnel - SMS, or
   whatever local messenger works for her.
 - **The subscription URL.** See above.
 - **Anything her connection depends on.** If Katitos is down, her internet does not
@@ -329,7 +329,7 @@ carrying the risk and should decide knowing them.
   draft that was not adopted.
 - **The real exposure is publicity.** Advertising or recommending circumvention
   tools carries **50,000–80,000 ₽** for a private citizen, enforced actively and
-  interpreted broadly — the second known case was **a single link** in a WhatsApp
+  interpreted broadly - the second known case was **a single link** in a WhatsApp
   Business catalogue.
 - **Searching for listed extremist material** carries 3,000–5,000 ₽ and requires
   proven intent. Five known sanctions nationwide through June 2026. VPN use is not
@@ -348,7 +348,7 @@ the app in writing in public.
 ~4–5 €/month per box, and the recommendation is two of them in unrelated ranges:
 **~8–10 €/month, all in.** No domain (see above), no licences, nothing else.
 
-This is **Katitos hosting**, not an expense of the workstation project — the
+This is **Katitos hosting**, not an expense of the workstation project - the
 zero-cost rule there was written for a dev box, not for her internet.
 
 ---
@@ -357,7 +357,7 @@ zero-cost rule there was written for a dev box, not for her internet.
 
 1. **She installs Karing** and confirms it is still in the Russian App Store on her
    account.
-2. ~~She runs a ping to Frankfurt and to Tokyo.~~ **Answered** — see the latency
+2. ~~She runs a ping to Frankfurt and to Tokyo.~~ **Answered** - see the latency
    table. Her traffic goes west through Moscow, Tokyo is slower than three
    European cities, and the destination is Helsinki.
 3. **Decide on the ~8–10 €/month** for two boxes. Nothing else is blocking.

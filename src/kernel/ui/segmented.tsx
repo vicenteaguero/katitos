@@ -7,7 +7,7 @@ export interface SegmentOption<T extends string> {
 }
 
 /**
- * One of a few — a radio group that looks like a pill.
+ * One of a few - a radio group that looks like a pill.
  *
  * A real radio group to the keyboard and to a screen reader: ONE tab stop,
  * ← → (and ↑ ↓) change the selection, Home/End jump to the ends, and the

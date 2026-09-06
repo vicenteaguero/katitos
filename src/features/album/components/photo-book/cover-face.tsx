@@ -10,7 +10,7 @@ import { bookSpan } from '../../lib/book-span';
  * A real leaf, not a picture of one: StPageFlip is told `showCover`, which
  * makes the first and last leaves rigid and gives them a spread to themselves,
  * so the book opens by turning its cover the way a book does. Everything about
- * it is CSS — the grain, the gilt, the bevel — because a texture file would be
+ * it is CSS - the grain, the gilt, the bevel - because a texture file would be
  * one more thing to download before the album could be looked at.
  */
 export const CoverFace = forwardRef<
@@ -29,7 +29,7 @@ export const CoverFace = forwardRef<
       className={cn('pb-cover', `pb-mat-${material}`, back && 'pb-cover--back')}
     >
       {/*
-        Everything lives in an inner, absolutely-positioned face — NOT on the
+        Everything lives in an inner, absolutely-positioned face - NOT on the
         leaf itself.
 
         StPageFlip rewrites each leaf's entire `cssText` on every draw, and
@@ -47,7 +47,7 @@ export const CoverFace = forwardRef<
         {back ? (
           // Stamped in gilt, big, the way a binder's mark goes on a back
           // board. The gradient it paints with is defined once in `ShapeDefs`
-          // — an SVG paint server is document-scoped, so it reaches across
+          // - an SVG paint server is document-scoped, so it reaches across
           // from there into this entirely separate <svg>.
           <span className="pb-cover-mark">
             <KatitosMark className="pb-cover-logo" fill="url(#pb-gilt-grad)" />

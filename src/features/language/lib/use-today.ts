@@ -3,7 +3,7 @@ import { useNow } from '@kernel/hooks';
 import { coupleDay } from '@kernel/lib';
 
 /**
- * Today, for the two of us — the earlier of our two dates, as the rest of
+ * Today, for the two of us - the earlier of our two dates, as the rest of
  * the app counts it.
  *
  * "Due Friday" used to mean midnight in whichever zone the phone was in;

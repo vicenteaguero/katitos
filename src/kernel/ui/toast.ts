@@ -32,7 +32,7 @@ export interface ToastOptions {
    * The default for a toast carrying an Undo is generous, because it is the
    * only way back from a destructive tap. But a REPEATED action resets the
    * countdown, so clearing a page of six stickers kept pushing the deadline
-   * further out — nine seconds of a message sitting over the thing you are
+   * further out - nine seconds of a message sitting over the thing you are
    * editing. Callers that repeat should ask for something short.
    */
   duration?: number;
@@ -90,7 +90,7 @@ export const useToastStore = create<ToastState>((set) => ({
  * Imperative toast helper, usable outside React.
  *
  * The optional action is what makes a destructive tap safe to make one tap:
- * "Taken off the page · Undo" beats a confirmation dialog nobody reads. Pass a
+ * "Taken off the page - Undo" beats a confirmation dialog nobody reads. Pass a
  * `key` for anything you might do twice in a row.
  */
 export const toast = {

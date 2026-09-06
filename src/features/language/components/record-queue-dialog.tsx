@@ -108,7 +108,7 @@ export function RecordQueueDialog({
             </Button>
           </div>
           <p className="text-center font-sans text-xs text-muted">
-            Enter keeps · Space skips
+            Enter keeps - Space skips
           </p>
         </div>
       )}

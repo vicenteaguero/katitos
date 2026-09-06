@@ -15,7 +15,7 @@ export interface Languages {
   learning: Lang;
   /**
    * Whether the pair above is known yet. Until the members row has loaded
-   * the fallbacks stand in — and for the half-second that lasts she is
+   * the fallbacks stand in - and for the half-second that lasts she is
    * "learning Russian", so anything that decides who is the teacher must
    * wait for this rather than flash the wrong screen.
    */
@@ -32,7 +32,7 @@ export interface Languages {
  * screen can tell which side of it you are on from that alone.
  *
  * The fallbacks exist so a half-filled member row degrades to something usable
- * instead of a blank screen — never to invent a third arrangement.
+ * instead of a blank screen - never to invent a third arrangement.
  */
 export function languagesOf(
   self:
@@ -64,7 +64,7 @@ export function useLanguages(): Languages {
  *
  * Nothing in the database says "teacher": the courses are shared and the
  * policies let either of us write anything. But a course teaches one of our
- * two languages, and whoever speaks it is the one giving it — so the
+ * two languages, and whoever speaks it is the one giving it - so the
  * builder, the marking and the edit pencil follow that.
  */
 export function isTeacherOf(

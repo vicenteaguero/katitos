@@ -9,7 +9,7 @@ const OPTIONS: { value: CountryFilter; label: string }[] = [
   })),
 ];
 
-/** Compact All · Türkiye · Georgia filter pill for the Summer hub. */
+/** Compact All - Türkiye - Georgia filter pill for the Summer hub. */
 export function CountrySwitch({
   value,
   onChange,

@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Know-Me — grow the starter catalog (~24 → ~48)
+-- Know-Me - grow the starter catalog (~24 → ~48)
 --
 -- At three questions a day the original two-dozen recycled in about a week.
 -- Doubling the pool pushes the first repeat out past two weeks and keeps the

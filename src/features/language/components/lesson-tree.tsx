@@ -5,7 +5,7 @@ import { Kicker } from '@kernel/ui';
 import { useCourse, useUnits } from '../api/courses.queries';
 
 /**
- * The course, as a tree — the desk's left rail.
+ * The course, as a tree - the desk's left rail.
  *
  * Units and their lessons, the one she is on lit up, every other one a click
  * away without going back through the course screen. A phone never shows it;

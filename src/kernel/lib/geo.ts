@@ -32,7 +32,7 @@ function toDeg(rad: number): number {
 
 /**
  * A great-circle arc between two points as `[lat, lng]` vertices (spherical
- * interpolation) — for drawing a smooth geodesic flight line. `n` = segments;
+ * interpolation) - for drawing a smooth geodesic flight line. `n` = segments;
  * the result has `n + 1` points, starting at `a` and ending at `b`.
  */
 export function greatCircle(a: Coords, b: Coords, n = 64): [number, number][] {

@@ -26,7 +26,7 @@ function refresh(qc: ReturnType<typeof useQueryClient>) {
 }
 
 /**
- * Writes are admin-only, enforced in RLS — the UI hides the editor from her,
+ * Writes are admin-only, enforced in RLS - the UI hides the editor from her,
  * and the database would refuse her anyway.
  */
 export function useAddLovePhrase() {

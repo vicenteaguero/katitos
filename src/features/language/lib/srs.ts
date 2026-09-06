@@ -17,10 +17,10 @@ export interface ReviewState {
   last_seen_at?: string | null;
 }
 
-/** What you did with a card. Three buttons, not six — this is a phone. */
+/** What you did with a card. Three buttons, not six - this is a phone. */
 export type Grade =
-  | 0 // blank — no idea
-  | 1 // shaky — got there, slowly
+  | 0 // blank - no idea
+  | 1 // shaky - got there, slowly
   | 2; // knew it
 
 /** The scheduling state we care about; the rest of the row is bookkeeping. */
@@ -34,7 +34,7 @@ export interface Schedule {
 
 const MIN_EASE = 1.3;
 const MAX_EASE = 3.5;
-/** Never push a card further out than this — she may reteach it any time. */
+/** Never push a card further out than this - she may reteach it any time. */
 const MAX_INTERVAL = 180;
 
 const FRESH: Schedule = {
@@ -49,7 +49,7 @@ const FRESH: Schedule = {
  * SM-2, trimmed to what a couple actually needs.
  *
  * The full algorithm has six grades and a fussy ease formula; almost all of its
- * value comes from two ideas — get it right and the gap grows, get it wrong and
+ * value comes from two ideas - get it right and the gap grows, get it wrong and
  * you see it again today. That's what this keeps.
  *
  * Pure and injectable so the intervals are unit-tested rather than hoped at.
@@ -153,8 +153,8 @@ export function buildSession<T extends { id: string }>(
   };
   const rank = (c: T) => {
     const r = reviews.get(c.id);
-    if (isNew(c)) return 2; // unseen — last
-    // Forgotten RECENTLY — the last answer was a blank, or it lapsed and has
+    if (isNew(c)) return 2; // unseen - last
+    // Forgotten RECENTLY - the last answer was a blank, or it lapsed and has
     // not yet been got right three times since. A word forgotten once in
     // March used to be pinned to the front of every session for good.
     if (r!.last_grade === 0 || (r!.lapses > 0 && r!.reps < 3)) return 0;

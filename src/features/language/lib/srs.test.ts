@@ -55,7 +55,7 @@ describe('schedule', () => {
     expect(third.interval_days).toBe(Math.round(3 * second.ease));
   });
 
-  it('halves the gap for a shaky answer — not a quarter, not a third', () => {
+  it('halves the gap for a shaky answer - not a quarter, not a third', () => {
     const next = schedule(sched({ interval_days: 30, reps: 6 }), 1, TODAY);
     expect(next.interval_days).toBe(15);
   });
@@ -63,7 +63,7 @@ describe('schedule', () => {
   it('keeps ease inside its bounds however badly it goes', () => {
     let s = sched();
     for (let i = 0; i < 30; i++) s = schedule(s, 0, TODAY);
-    // Pinned to the floor exactly — this is the value the database CHECK has
+    // Pinned to the floor exactly - this is the value the database CHECK has
     // to accept, and it once didn't.
     expect(s.ease).toBe(1.3);
 
@@ -150,7 +150,7 @@ describe('buildSession', () => {
       review({ reps: 4, lapses: 2, last_grade: 2, due_on: '2026-08-01' })
     );
     const s = buildSession(cards, healed, { today: TODAY });
-    // Still due, still in — but ordered by its date like any other review.
+    // Still due, still in - but ordered by its date like any other review.
     expect(s.map((c) => c.id).indexOf('forgotten')).toBeGreaterThanOrEqual(0);
     expect(s[0].id).toBe('forgotten'); // the longest overdue of the band
   });
@@ -200,7 +200,7 @@ describe('a course keeps teaching', () => {
 
   it('fills a whole session when there is nothing else to review', () => {
     // A beginner with an empty history should get a full session, not five
-    // words — the reservation exists to stop reviews CROWDING OUT new words,
+    // words - the reservation exists to stop reviews CROWDING OUT new words,
     // not to ration them.
     const out = buildSession(many(50, 'new'), new Map(), { today: TODAY });
     expect(out).toHaveLength(20);

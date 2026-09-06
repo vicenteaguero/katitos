@@ -7,8 +7,8 @@ import { OptionGrid } from './option-grid';
 
 /**
  * Two private steps held in local state until one Submit:
- *   step 1 — "About you" (own truth)
- *   step 2 — "Guess {partner}" (guess of partner)
+ *   step 1 - "About you" (own truth)
+ *   step 2 - "Guess {partner}" (guess of partner)
  * The partner sees nothing until submit (no choice ever leaves the device early).
  */
 export function DailyCard({ today }: { today: QuestionWithDay }) {

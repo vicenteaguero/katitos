@@ -18,7 +18,7 @@ const SPARKS = 16;
 /**
  * "CHANGES ARE MADE!"
  *
- * She asked to be told what her Katito adds — so this is a small occasion
+ * She asked to be told what her Katito adds - so this is a small occasion
  * rather than a release note: the gilt rays and the slam from the Date Cards
  * reveal, a burst of hearts, and the list in plain words. Shown once per
  * changelog, and again the moment the changelog text changes.
@@ -31,7 +31,7 @@ export function ChangelogModal() {
   const closing = useRef(false);
 
   const seen = self?.changelog_seen_key ?? null;
-  // Wait for the member row before deciding — otherwise it flashes on every
+  // Wait for the member row before deciding - otherwise it flashes on every
   // boot while `self` is still loading.
   const show = !!self && seen !== LATEST_KEY && !dismissed;
 
@@ -108,7 +108,7 @@ export function ChangelogModal() {
   );
 }
 
-/** The list itself — reused by Settings, so it can never drift from the modal. */
+/** The list itself - reused by Settings, so it can never drift from the modal. */
 export function ChangelogBody({ entry }: { entry: ChangelogEntry }) {
   return (
     <div className="relative z-[1]">

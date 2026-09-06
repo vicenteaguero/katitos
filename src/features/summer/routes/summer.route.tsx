@@ -64,7 +64,7 @@ export function SummerRoute() {
   }, [tab]);
 
   // The one Summer trip just exists. If the DB has no row (fresh/cloud, seeds
-  // don't run there), materialize it once, silently — incl. the route legs.
+  // don't run there), materialize it once, silently - incl. the route legs.
   const triedCreate = useRef(false);
   useEffect(() => {
     if (!isLoading && !trip && !triedCreate.current) {

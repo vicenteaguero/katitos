@@ -74,7 +74,7 @@ function simulate(days: number, perDay: number): Watering[] {
   return log;
 }
 
-describe('deriveTree — 5-year cadences land in sensible ranges', () => {
+describe('deriveTree - 5-year cadences land in sensible ranges', () => {
   const FIVE_Y = 1825;
   const now = T0 + FIVE_Y * MS_PER_DAY;
 
@@ -100,7 +100,7 @@ describe('deriveTree — 5-year cadences land in sensible ranges', () => {
   });
 });
 
-describe('deriveTree — structure is monotonic, streaks correct', () => {
+describe('deriveTree - structure is monotonic, streaks correct', () => {
   it('growth_points never decrease across the log prefix', () => {
     const log = simulate(60, 1);
     let prev = -1;

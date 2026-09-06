@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — Our Tree
+-- Katitos - Our Tree
 -- A single shared living tree. Event-sourced: tree_waterings is the append-only
 -- log; tree_state is a cache the water_tree() RPC maintains atomically. The
 -- alternating-waterer rule (you can't water twice in a row) is enforced under a
@@ -75,7 +75,7 @@ alter publication supabase_realtime add table public.tree_waterings;
 alter publication supabase_realtime add table public.tree_milestones;
 
 -- ════════════════════════════════════════════════════════════════════════
--- water_tree() — the ONLY way to water. Computes the couple-day server-side,
+-- water_tree() - the ONLY way to water. Computes the couple-day server-side,
 -- enforces the alternating rule atomically under a row lock, advances the
 -- cache (growth/streak), and returns the new tree_state row. The growth/health
 -- math here MUST mirror src/features/tree/lib/tree-growth.ts.

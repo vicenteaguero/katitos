@@ -78,7 +78,7 @@ export function ScavengerRoute() {
   const partnerName = nameOf(myRole === 'a' ? 'b' : 'a');
   const toneOf = (c: ScavengerCardFull) => TONE[roleOf(c.created_by) ?? 'a'];
 
-  // Visibility — claim to reveal: I see ALL my own cards in any state; my
+  // Visibility - claim to reveal: I see ALL my own cards in any state; my
   // partner's cards are hidden until they claim one (and not cancel it), or it
   // is accepted. A brand-new, unclaimed card is invisible to the partner.
   const visible = (cards ?? []).filter((c) => {
@@ -139,7 +139,7 @@ export function ScavengerRoute() {
       title: card.title,
       tone: toneOf(card),
       photoUrl: blob ? URL.createObjectURL(blob) : null,
-      // Show the PROOF (fresh blob, or the existing claim's proof) — fall back
+      // Show the PROOF (fresh blob, or the existing claim's proof) - fall back
       // to the card's own photo only if there's truly no proof.
       cardImagePath: card.scavenger_claims?.image_path ?? card.card_image_path,
     });
@@ -183,7 +183,7 @@ export function ScavengerRoute() {
 
   return (
     <div className="curtain-reveal space-y-2">
-      {/* The leaderboard — two decks drawing from one shared pot of stars. */}
+      {/* The leaderboard - two decks drawing from one shared pot of stars. */}
       <Card className="space-y-1.5 px-3 py-2">
         <div className="flex items-stretch text-center">
           {(['a', 'b'] as Role[]).map((role, i) => {
@@ -217,7 +217,7 @@ export function ScavengerRoute() {
         </div>
       </Card>
 
-      {/* Whose deck · Add — one line. */}
+      {/* Whose deck - Add - one line. */}
       <div className="flex items-center gap-2">
         <div className="min-w-0 flex-1">
           <Segmented
@@ -310,7 +310,7 @@ export function ScavengerRoute() {
                 <p className="min-w-0 flex-1 truncate font-display text-base text-fg">
                   {c.title}
                   <span className="ml-1.5 font-sans text-xs text-muted">
-                    · {nameOf(roleOf(c.created_by) ?? 'a')}
+                    - {nameOf(roleOf(c.created_by) ?? 'a')}
                   </span>
                 </p>
                 <span className="shrink-0 font-display text-lg font-semibold tabular-nums text-gold">

@@ -8,7 +8,7 @@ export const QUIET_UNTIL = 8;
  * Is it night where they are?
  *
  * Eleven time zones apart, her "just marked it" is his three in the
- * morning half the time. A push held back is not lost — the thing it was
+ * morning half the time. A push held back is not lost - the thing it was
  * about is on the home screen when he wakes. An unknown zone never holds
  * anything back: better one buzz at night than a lesson that never arrives.
  */
@@ -21,7 +21,7 @@ export function isAsleep(
   return hour >= QUIET_FROM || hour < QUIET_UNTIL;
 }
 
-/** "02:40" — what their clock says right now. */
+/** "02:40" - what their clock says right now. */
 export function clockIn(
   zone: string | null | undefined,
   now: DateTime = DateTime.now()

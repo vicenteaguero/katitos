@@ -15,7 +15,7 @@ export interface NavEntry {
   placement?: 'primary' | 'more';
   /** Drawer section, e.g. 'Play' / 'Memories' / 'Us' / 'Practical'. */
   category?: string;
-  /** Mirrors the owning feature's `locked` flag — render inert/greyed. */
+  /** Mirrors the owning feature's `locked` flag - render inert/greyed. */
   locked?: boolean;
 }
 
@@ -31,11 +31,11 @@ export interface FeatureModule {
   nav?: NavEntry[];
   /** Default drawer section for this feature's nav entries. */
   category?: string;
-  /** Feature flag — set false to hide without deleting. */
+  /** Feature flag - set false to hide without deleting. */
   enabled?: boolean;
   /**
    * Shipped but not yet open to the couple. Still listed (greyed, in "More")
-   * so the shape of what's coming is visible, but the row is inert — no
+   * so the shape of what's coming is visible, but the row is inert - no
    * navigation, no route reachable from the UI.
    */
   locked?: boolean;

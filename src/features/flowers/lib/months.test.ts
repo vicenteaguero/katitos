@@ -52,7 +52,7 @@ describe('lastYear', () => {
   });
 });
 
-describe('groupByYear — reading', () => {
+describe('groupByYear - reading', () => {
   const flowers = [
     flower('2026-04-01'),
     flower('2026-07-01'),
@@ -81,7 +81,7 @@ describe('groupByYear — reading', () => {
   });
 });
 
-describe('groupByYear — editing', () => {
+describe('groupByYear - editing', () => {
   it('starts at June 2025 and never earlier', () => {
     const years = groupByYear([], { editing: true, now: AUG_2026 });
     const first = years[years.length - 1];
@@ -125,16 +125,16 @@ describe('groupByYear — editing', () => {
     expect(y.total).toBe(12);
   });
 
-  it('newest year first — this year is what you look at', () => {
+  it('newest year first - this year is what you look at', () => {
     const years = groupByYear([], { editing: true, now: AUG_2026 });
     expect(years[0].year).toBeGreaterThan(years[1].year);
   });
 });
 
-describe('groupByYear — a photo is never hidden', () => {
+describe('groupByYear - a photo is never hidden', () => {
   // The bug this covers: the June-2025 floor was applied as a DISPLAY filter,
   // so a bouquet stored before it existed in the database and simply never
-  // rendered — and if it was the only one that year, the whole year vanished.
+  // rendered - and if it was the only one that year, the whole year vanished.
   it('shows a bouquet from before June 2025', () => {
     const years = groupByYear([flower('2025-03-01')], {
       editing: false,
@@ -174,11 +174,11 @@ describe('groupByYear — a photo is never hidden', () => {
   });
 });
 
-describe('groupByYear — order', () => {
+describe('groupByYear - order', () => {
   it('walks straight back in time down the page', () => {
     const years = groupByYear([], { editing: true, now: AUG_2026 });
     const labels = years.flatMap((y) => y.slots.map((s) => s.key));
-    // Every step down is older than the one above it — no zigzag at the
+    // Every step down is older than the one above it - no zigzag at the
     // year boundary, which is what reading Jan..Dec inside a descending list
     // of years used to produce.
     for (let i = 1; i < labels.length; i++) {

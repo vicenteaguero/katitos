@@ -60,7 +60,7 @@ describe('usePolaroidNudge', () => {
     expect(result.current.rescueDay).toBeNull();
   });
 
-  it('goes quiet once his day is in — the day ahead is not his to lose', () => {
+  it('goes quiet once his day is in - the day ahead is not his to lose', () => {
     // The 12th is open to him too (it is already her date), but it is a day he
     // has yet to live. Nothing is running out, so the button rests.
     as({ id: HIM, zone: CURICO }, NOVOSIBIRSK);

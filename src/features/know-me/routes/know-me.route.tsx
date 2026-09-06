@@ -28,7 +28,7 @@ export function KnowMeRoute() {
   // today's questions, refresh Know-Me (replaces a per-question subscription).
   useTableSync('know_me_presence', qk.knowMe.all());
 
-  // Fire ensure-today once per couple-day (the string only detects rollover —
+  // Fire ensure-today once per couple-day (the string only detects rollover -
   // the no-arg RPC computes the authoritative day server-side).
   const ensure = useEnsureToday();
   const firedFor = useRef<string | null>(null);
@@ -43,7 +43,7 @@ export function KnowMeRoute() {
 
   const { data: questions, isLoading, isError, refetch } = useTodayAll();
   const items = questions ?? [];
-  // The day only ever "loads" while genuinely fetching or first creating it —
+  // The day only ever "loads" while genuinely fetching or first creating it -
   // never an open-ended spinner. Settled-with-nothing gets its own message.
   const settling = (isLoading || ensure.isPending) && items.length === 0;
   const failed = (isError || ensure.isError) && items.length === 0;
@@ -92,7 +92,7 @@ export function KnowMeRoute() {
               <Empty
                 icon="🌙"
                 title="No questions yet"
-                hint="Tonight's questions are being set — check back in a moment."
+                hint="Tonight's questions are being set - check back in a moment."
               />
             ) : (
               <div className="space-y-7">

@@ -1,5 +1,5 @@
 /* ──────────────────────────────────────────────────────────────────────────
- * Skeleton — the "it's already here, just developing" placeholder.
+ * Skeleton - the "it's already here, just developing" placeholder.
  *
  * Deliberately quieter than `.gold-shimmer` (which is a 4s decorative gilt
  * sweep for *loaded* content): this is a faint warm band travelling once per
@@ -36,7 +36,7 @@
   }
 }
 
-/* Still legible as "loading" without motion — the plate just sits there. */
+/* Still legible as "loading" without motion - the plate just sits there. */
 @media (prefers-reduced-motion: reduce) {
   .kx-skeleton::after {
     animation: none !important;

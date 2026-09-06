@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — feature tables
+-- Katitos - feature tables
 -- One (or a few) tables per feature. All gate on public.is_member() via the
 -- uniform policy applied in the DO block at the bottom.
 -- ════════════════════════════════════════════════════════════════════════

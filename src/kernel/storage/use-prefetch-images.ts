@@ -10,7 +10,7 @@ import { useEffect } from 'react';
  *
  * The proxies are ~20 KB each, so fetching a page of them up front costs a few
  * hundred KB once, and the service worker keeps them for next time. Opening the
- * album is a deliberate act — it should be paid for properly and then be fast.
+ * album is a deliberate act - it should be paid for properly and then be fast.
  */
 export function usePrefetchImages(urls: Iterable<string> | undefined): void {
   // Joined so the effect keys on the actual set, not the iterable's identity.
@@ -27,7 +27,7 @@ export function usePrefetchImages(urls: Iterable<string> | undefined): void {
       for (const url of key.split('|')) {
         const img = new Image();
         img.decoding = 'async';
-        // CORS, so the service worker can read — and keep — the response.
+        // CORS, so the service worker can read - and keep - the response.
         img.crossOrigin = 'anonymous';
         img.src = url;
         images.push(img);

@@ -4,7 +4,7 @@
  * A note is painted with `translate3d(x, y) rotate(r) scale(s)` about its own
  * centre, so its layout box and the shape you actually see are two different
  * rectangles. The old bounds used the layout width alone, which is only correct
- * at scale 1 and no rotation — every note that had been pinched or tilted got
+ * at scale 1 and no rotation - every note that had been pinched or tilted got
  * stopped early, and a shrunken one could never reach the right-hand edge at
  * all, because the gap it was refused was the empty air its own transform had
  * already given back.
@@ -54,7 +54,7 @@ export function visualHalfExtents(
 }
 
 /**
- * The travel available to `x`/`y` — the values written to `translate3d`, which
+ * The travel available to `x`/`y` - the values written to `translate3d`, which
  * are offsets of the *layout* box, not of the visible shape.
  *
  * A note larger than the slate has no legal position at all; rather than

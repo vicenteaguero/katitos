@@ -1,10 +1,10 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — a draft belongs to whoever is writing it
+-- Katitos - a draft belongs to whoever is writing it
 --
 --   `20260818000003` says "he only ever sees 'published'", and nothing
 --   enforced it: every lesson was readable by both of us, so half-written
 --   lessons showed up in his list and opened. There was no way to enforce it
---   either — the table never recorded WHO was writing.
+--   either - the table never recorded WHO was writing.
 --
 --   Both of them teach (she teaches him Russian, he teaches her Spanish), so
 --   this is per-author rather than per-role. Additive with a default, so the

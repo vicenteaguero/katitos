@@ -18,7 +18,7 @@ function label(card: DeckCard, answer: unknown): string {
     return (
       card.prompt.options?.find((o) => o.id === a.optionId)?.label ?? a.optionId
     );
-  return a.text ?? '—';
+  return a.text ?? '-';
 }
 
 export function DeckCardView({
@@ -177,7 +177,7 @@ export function DeckCardView({
 
           {mode === 'quiz' && card.correct != null && (
             <p className="text-center font-sans text-xs uppercase tracking-[0.16em] text-muted">
-              Correct · {label(card, card.correct)}
+              Correct - {label(card, card.correct)}
             </p>
           )}
         </div>

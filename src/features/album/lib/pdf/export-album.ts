@@ -35,7 +35,7 @@ import {
  * something to be sharp with.
  */
 export interface ExportOptions {
-  /** Hand the file to the OS share sheet — the only thing that works in an
+  /** Hand the file to the OS share sheet - the only thing that works in an
    *  installed iOS PWA, where an `<a download>` quietly does nothing. */
   share?: boolean;
   /** Skip the download and just return the Blob (used by tests). */
@@ -44,7 +44,7 @@ export interface ExportOptions {
 
 /** Font used for captions rendered to pixels. Must match the on-screen page. */
 const CAPTION_FONT = "italic 600 %SIZE%px 'Cormorant Garamond', Georgia, serif";
-/** Draw text at 3× and let the PDF scale it down — cheap sharpness. */
+/** Draw text at 3× and let the PDF scale it down - cheap sharpness. */
 const TEXT_OVERSAMPLE = 3;
 
 async function fetchOriginal(url: string): Promise<Uint8Array> {
@@ -126,7 +126,7 @@ const FONT_STACK: Record<string, string> = {
  * Build the PDF for one book.
  *
  * `pages` comes from the same query the screen uses, so what prints is exactly
- * what is arranged — same order, same depths, same positions.
+ * what is arranged - same order, same depths, same positions.
  */
 export async function buildAlbumPdf(
   pages: AlbumPageWithPhotos[]
@@ -189,8 +189,8 @@ export async function buildAlbumPdf(
         rotation: st.rotation,
         width: st.photo?.width,
         height: st.photo?.height,
-        // A polaroid's window is square whatever the row says — that is what
-        // the format is — and the screen makes the same substitution.
+        // A polaroid's window is square whatever the row says - that is what
+        // the format is - and the screen makes the same substitution.
         shape:
           st.frame === 'polaroid'
             ? 'square'
@@ -198,7 +198,7 @@ export async function buildAlbumPdf(
       });
 
       if (st.kind === 'text') {
-        // × the sticker's scale, exactly as the page does — the screen sizes
+        // × the sticker's scale, exactly as the page does - the screen sizes
         // text as `font_size * scale`, so leaving `scale` out here printed
         // every resized caption at the wrong size.
         const size = st.font_size * (st.scale || 1) * PAGE_W;
@@ -213,7 +213,7 @@ export async function buildAlbumPdf(
         images.push({ name, ref });
         // The canvas was drawn at TEXT_OVERSAMPLE times the point size, so
         // dividing by it lands the words at exactly the size the page asked
-        // for — just with three times the pixels behind them.
+        // for - just with three times the pixels behind them.
         const wPt = img.width / TEXT_OVERSAMPLE;
         const textBox: Box = {
           cx: box.cx,
@@ -241,8 +241,8 @@ export async function buildAlbumPdf(
        * shape. With a shape or a crop on it that is simply the wrong picture,
        * so both go through one clip: the frame, and the window inside it.
        *
-       * The cut itself (a circle, an arch) is not reproduced — a PDF clip path
-       * per shape is a bigger piece of work than a console-only export earns —
+       * The cut itself (a circle, an arch) is not reproduced - a PDF clip path
+       * per shape is a bigger piece of work than a console-only export earns -
        * so a shaped photo prints as the correctly-cropped rectangle it is cut
        * out of. Worth knowing before the first book goes to a printer.
        */
@@ -259,7 +259,7 @@ export async function buildAlbumPdf(
         );
 
       if (st.frame === 'polaroid') {
-        // The white plate is vector — a rectangle costs nothing and stays
+        // The white plate is vector - a rectangle costs nothing and stays
         // crisp at any print size.
         const film = filmLayout(box.w);
         const plate: Box = {
@@ -271,7 +271,7 @@ export async function buildAlbumPdf(
         };
         ops += fillRect(0, 0, 1, 1, [0.992, 0.98, 0.957], stickerMatrix(plate));
         const window: Box = {
-          // Offset along the PLATE's axes, not the page's — a tilted polaroid
+          // Offset along the PLATE's axes, not the page's - a tilted polaroid
           // used to print with its photograph slid off the frame.
           ...offsetInFrame(
             box,

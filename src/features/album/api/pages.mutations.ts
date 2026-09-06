@@ -11,7 +11,7 @@ import { toast } from '@kernel/ui';
  *
  * ONLY the page you chose. Pages are added in pairs because paper has two
  * sides, but tearing out its twin to keep the physics tidy would throw away
- * work you never asked to lose — so instead a fresh blank page is added at the
+ * work you never asked to lose - so instead a fresh blank page is added at the
  * end when what remains is odd. The book stays even; nothing you made goes.
  */
 export function useDeletePage() {

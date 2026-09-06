@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# Katitos VPN — turn a fresh Ubuntu 24.04 box into one of her exit servers.
+# Katitos VPN - turn a fresh Ubuntu 24.04 box into one of her exit servers.
 #
 # Idempotent: run it again after a reboot, a kernel upgrade, or a half-finished
-# first attempt, and it converges. That is deliberate — the day this matters is
+# first attempt, and it converges. That is deliberate - the day this matters is
 # a day something already went wrong, and a script you are afraid to re-run is
 # no use then.
 #
@@ -25,7 +25,7 @@ set -euo pipefail
 # 22, and that is a deliberate retreat. An earlier version moved SSH to a high
 # port; the 3x-ui installer restarted ssh.service mid-run, the socket override
 # did not survive it, and the box locked itself out with ufw already closed on
-# 22. Port obscurity buys quieter logs, nothing else — key-only auth and
+# 22. Port obscurity buys quieter logs, nothing else - key-only auth and
 # fail2ban are what actually hold the door. It is not worth a lockout.
 # Set SSH_PORT to something else and the box listens on BOTH, never only the
 # new one, so a failed move is survivable.
@@ -56,13 +56,13 @@ rnd() { tr -dc 'a-zA-Z0-9' </dev/urandom | head -c "${1:-24}"; }
 # ── Preflight ───────────────────────────────────────────────────────────────
 [[ $EUID -eq 0 ]] || die "run as root"
 . /etc/os-release
-[[ "${ID:-}" == "ubuntu" ]] || die "this expects Ubuntu 24.04 — got ${PRETTY_NAME:-unknown}"
+[[ "${ID:-}" == "ubuntu" ]] || die "this expects Ubuntu 24.04 - got ${PRETTY_NAME:-unknown}"
 [[ "${VERSION_ID:-}" == "24.04" ]] || echo "  ! not 24.04 (${VERSION_ID}); the Amnezia PPA may not have a build"
 
 # Locking yourself out is the one mistake with no undo. If root has no
 # authorized key, hardening sshd would strand you the moment it reloads.
 [[ -s /root/.ssh/authorized_keys ]] || \
-  die "no key in /root/.ssh/authorized_keys — add one and re-run, or you will lock yourself out"
+  die "no key in /root/.ssh/authorized_keys - add one and re-run, or you will lock yourself out"
 
 mkdir -p "$STATE_DIR" && chmod 700 "$STATE_DIR"
 
@@ -102,7 +102,7 @@ net.ipv4.tcp_max_syn_backlog = 8192
 EOF
 sysctl --system >/dev/null
 [[ "$(sysctl -n net.ipv4.tcp_congestion_control)" == "bbr" ]] \
-  && ok "bbr + fq active" || echo "  ! bbr not active — check kernel"
+  && ok "bbr + fq active" || echo "  ! bbr not active - check kernel"
 
 # ── Firewall ────────────────────────────────────────────────────────────────
 say "Firewall"
@@ -114,7 +114,7 @@ ufw allow 22/tcp            comment 'ssh'    >/dev/null
 ufw allow "$XRAY_PORT"/tcp  comment 'xray xhttp'  >/dev/null
 ufw allow "$XRAY_PORT2"/tcp comment 'xray reality' >/dev/null
 ufw allow "$AWG_PORT"/udp   comment 'awg'    >/dev/null
-# Only ever used by the ACME challenge when the panel's certificate renews —
+# Only ever used by the ACME challenge when the panel's certificate renews -
 # IP certificates last 160 hours, so that is roughly every five days, forever.
 ufw allow 80/tcp            comment 'acme'   >/dev/null
 ufw --force enable >/dev/null
@@ -128,7 +128,7 @@ say "SSH"
   echo "KbdInteractiveAuthentication no"
   echo "MaxAuthTries 3"
   # Both, always. Closing 22 in the same breath as opening the new port is how
-  # you find out the new port did not work — from the outside, with no way in.
+  # you find out the new port did not work - from the outside, with no way in.
   [[ "$SSH_PORT" != "22" ]] && { echo "Port 22"; echo "Port $SSH_PORT"; }
 } >/etc/ssh/sshd_config.d/99-katitos.conf
 
@@ -147,7 +147,7 @@ fi
 # the port we just claimed, say so loudly rather than at the end of the run.
 sleep 1
 if [[ "$SSH_PORT" != "22" ]] && ! ss -Hltn "sport = :$SSH_PORT" | grep -q .; then
-  echo "  ! nothing is listening on $SSH_PORT — staying reachable on 22"
+  echo "  ! nothing is listening on $SSH_PORT - staying reachable on 22"
 fi
 ok "key-only$([[ "$SSH_PORT" != "22" ]] && echo ", ports 22 + $SSH_PORT" || echo ", port 22")"
 
@@ -195,7 +195,7 @@ if [[ ! -f "$STATE_DIR/panel.env" ]]; then
     PANEL_PASS="${PANEL_PASS:-$(rnd 28)}"
     PANEL_PATH="${PANEL_PATH:-$(rnd 20)}"
     "$XUI_BIN" setting -username "$PANEL_USER" -password "$PANEL_PASS" >/dev/null \
-      || die "could not set panel credentials — do it by hand with 'x-ui' before this box is reachable"
+      || die "could not set panel credentials - do it by hand with 'x-ui' before this box is reachable"
     "$XUI_BIN" setting -port "$PANEL_PORT" -webBasePath "/$PANEL_PATH/" >/dev/null || true
     printf 'PANEL_USER=%s\nPANEL_PASS=%s\nPANEL_PORT=%s\nPANEL_PATH=%s\n' \
       "$PANEL_USER" "$PANEL_PASS" "$PANEL_PORT" "$PANEL_PATH" >"$STATE_DIR/panel.env"
@@ -206,7 +206,7 @@ else
   ok "credentials already recorded (see $STATE_DIR/panel.env)"
 fi
 
-# Whatever the panel actually listens on wins over our default — the installer
+# Whatever the panel actually listens on wins over our default - the installer
 # picked a port before we did, and firewalling the port we *assumed* would leave
 # the panel unreachable while looking like it worked.
 PANEL_PORT_REAL="$("$XUI_BIN" setting -show 2>/dev/null | grep -oE 'port: *[0-9]+' | grep -oE '[0-9]+' | head -1)"
@@ -218,7 +218,7 @@ systemctl restart x-ui
 systemctl enable x-ui >/dev/null 2>&1 || true
 
 # ── AmneziaWG ───────────────────────────────────────────────────────────────
-# The second, unrelated technology. Not a backup in the "worse copy" sense — a
+# The second, unrelated technology. Not a backup in the "worse copy" sense - a
 # different detection surface, so that one advance in DPI does not take both.
 say "AmneziaWG"
 if ! modinfo amneziawg >/dev/null 2>&1; then
@@ -227,7 +227,7 @@ if ! modinfo amneziawg >/dev/null 2>&1; then
   apt-get install -y -qq amneziawg amneziawg-tools >/dev/null
 fi
 modinfo amneziawg >/dev/null 2>&1 && ok "kernel module present" \
-  || die "amneziawg module did not build — check 'dkms status' and that linux-headers match $(uname -r)"
+  || die "amneziawg module did not build - check 'dkms status' and that linux-headers match $(uname -r)"
 
 AWG_DIR=/etc/amnezia/amneziawg
 mkdir -p "$AWG_DIR" && chmod 700 "$AWG_DIR"
@@ -239,7 +239,7 @@ if [[ ! -f "$AWG_DIR/awg0.conf" ]]; then
 
   # The obfuscation parameters. Jc/Jmin/Jmax add junk packets before the
   # handshake; S1/S2 pad the two handshake messages; H1..H4 replace WireGuard's
-  # four fixed message-type constants. Randomised per server ON PURPOSE — two
+  # four fixed message-type constants. Randomised per server ON PURPOSE - two
   # boxes sharing a signature is two boxes blocked at once, which is the whole
   # thing this design is trying not to do.
   H1=$((RANDOM * RANDOM % 2000000000 + 5))
@@ -278,7 +278,7 @@ EOF
   chmod 600 "$AWG_DIR/awg0.conf"
   ok "awg0 generated with its own obfuscation signature"
 else
-  ok "awg0.conf already exists — left alone"
+  ok "awg0.conf already exists - left alone"
 fi
 systemctl enable --now awg-quick@awg0 >/dev/null 2>&1 || systemctl restart awg-quick@awg0
 awg show awg0 >/dev/null 2>&1 && ok "awg0 up on $AWG_PORT/udp"
@@ -287,7 +287,7 @@ awg show awg0 >/dev/null 2>&1 && ok "awg0 up on $AWG_PORT/udp"
 say "Heartbeat"
 install -m 700 "$(dirname "$0")/heartbeat.sh" /usr/local/bin/katitos-beat 2>/dev/null \
   || curl -fsSL "${BEAT_SCRIPT_URL:-}" -o /usr/local/bin/katitos-beat 2>/dev/null \
-  || echo "  ! heartbeat.sh not found next to this script — copy it to /usr/local/bin/katitos-beat by hand"
+  || echo "  ! heartbeat.sh not found next to this script - copy it to /usr/local/bin/katitos-beat by hand"
 chmod 700 /usr/local/bin/katitos-beat 2>/dev/null || true
 
 if [[ ! -f "$STATE_DIR/beat.env" ]]; then
@@ -299,7 +299,7 @@ BEAT_URL=https://<project-ref>.supabase.co/functions/v1/vpn-heartbeat
 BEAT_SECRET=
 EOF
   chmod 600 "$STATE_DIR/beat.env"
-  ok "template written — fill $STATE_DIR/beat.env"
+  ok "template written - fill $STATE_DIR/beat.env"
 else
   ok "beat.env already filled"
 fi
@@ -348,13 +348,13 @@ IP4="$(curl -fsS --max-time 5 https://api.ipify.org 2>/dev/null || echo '?')"
 cat <<EOF
 
   ─────────────────────────────────────────────
-  Panel   port $PANEL_PORT — credentials in $STATE_DIR/panel.env
+  Panel   port $PANEL_PORT - credentials in $STATE_DIR/panel.env
   SSH     ssh root@$IP4
   AWG     $AWG_PORT/udp   pubkey $(cat "$AWG_DIR/server.pub" 2>/dev/null || echo '?')
   ─────────────────────────────────────────────
 
   The panel is HTTP-only as installed. Give it a certificate before you log in
-  over the open internet — Let's Encrypt issues them for bare IPs now:
+  over the open internet - Let's Encrypt issues them for bare IPs now:
 
       x-ui        →  SSL Certificate Management  →  Let's Encrypt for IP
 

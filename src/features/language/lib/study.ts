@@ -21,7 +21,7 @@ export function hash(s: string): number {
  * How a card is asked, by how well it is known.
  *
  * A new word is shown before it is asked; a word being learned is asked in
- * the easy directions; a known word has to be produced — typed, or written
+ * the easy directions; a known word has to be produced - typed, or written
  * down from her voice. The old wheel ignored all of that, and `mastery()`
  * sat unused beside it.
  */
@@ -82,8 +82,8 @@ export function choicesFor(card: Vocab, all: Vocab[], seed: number): Vocab[] {
 
 /**
  * Every form a typed answer may match: the word, and the stressed spelling
- * she wrote for it. If the stressed form has a typo in it — a wrong vowel,
- * a missing letter — it must not make the word unanswerable, so both count.
+ * she wrote for it. If the stressed form has a typo in it - a wrong vowel,
+ * a missing letter - it must not make the word unanswerable, so both count.
  */
 export function expectedForms(card: Vocab): string[] {
   const forms = [termOf(card), card.stress ?? ''].filter(Boolean);
@@ -98,7 +98,7 @@ const plain = (s: string) =>
     .normalize('NFD')
     .replace(/\p{M}/gu, '')
     .toLowerCase()
-    .replace(/[-–—]/g, ' ')
+    .replace(/[-–, ]/g, ' ')
     .replace(/[^\p{L}\p{N}\s]/gu, '')
     .replace(/\s+/g, ' ')
     .replace(/ё/g, 'е')
@@ -123,7 +123,7 @@ function levenshtein(a: string, b: string): number {
 }
 
 /**
- * A red cross needs a reason. Once accents are graded strictly (they are —
+ * A red cross needs a reason. Once accents are graded strictly (they are -
  * `está` and `esta` are different words), "wrong" alone teaches nothing;
  * "you missed the accent" teaches the thing.
  */
@@ -154,13 +154,13 @@ export function missMessage(
     case 'exact':
       return 'Exactly right 🌟';
     case 'accent':
-      return `Almost — mind the accent: ${expected}`;
+      return `Almost - mind the accent: ${expected}`;
     case 'spaces':
-      return `Almost — it is written as separate words: ${expected}`;
+      return `Almost - it is written as separate words: ${expected}`;
     case 'typo':
-      return `Almost — one letter off: ${expected}`;
+      return `Almost - one letter off: ${expected}`;
     default:
-      return `You wrote "${typed}" — it is ${expected}`;
+      return `You wrote "${typed}" - it is ${expected}`;
   }
 }
 

@@ -20,7 +20,7 @@ export function currentMonthUtc(now: DateTime = DateTime.utc()): string {
   return now.toUTC().toFormat('yyyy-MM');
 }
 
-/** 'Apr 2026' — the caption printed on the polaroid's chin. */
+/** 'Apr 2026' - the caption printed on the polaroid's chin. */
 export function monthLabel(date: string): string {
   return DateTime.fromISO(date).toFormat('LLL yyyy');
 }
@@ -28,7 +28,7 @@ export function monthLabel(date: string): string {
 /**
  * The last year you can put a bouquet in.
  *
- * The whole current year is always open — she shouldn't have to wait for a
+ * The whole current year is always open - she shouldn't have to wait for a
  * month to arrive before filling it. And once December comes round, next year
  * opens too, so there is never a moment where the shelf has run out of room.
  */
@@ -44,7 +44,7 @@ export interface MonthSlot {
 }
 
 /**
- * Every month from June 2025 to this one, newest first — the shape the page has
+ * Every month from June 2025 to this one, newest first - the shape the page has
  * before anything has loaded.
  *
  * The loading state used to be six anonymous tiles, so the page jumped from a
@@ -66,7 +66,7 @@ export function allMonthsToNow(now: DateTime = DateTime.now()): string[] {
   return keys.reverse();
 }
 
-/** Those months grouped into years, newest year first — skeleton scaffolding. */
+/** Those months grouped into years, newest year first - skeleton scaffolding. */
 export function skeletonYears(
   now: DateTime = DateTime.now()
 ): { year: number; months: string[] }[] {
@@ -93,7 +93,7 @@ export interface FlowerYear {
 /**
  * Arrange bouquets into years.
  *
- * Reading mode shows only the months that actually have a bouquet — a wall of
+ * Reading mode shows only the months that actually have a bouquet - a wall of
  * empty frames is a list of things you didn't do. Edit mode shows every month
  * from June 2025 to the end of the open year, so she can tap the one she wants.
  */
@@ -110,7 +110,7 @@ export function groupByYear(
    * Is this an empty month we're willing to OFFER?
    *
    * June 2025 is where we started counting and `end` is as far ahead as we let
-   * her reach. This governs empty slots only — it must never decide whether an
+   * her reach. This governs empty slots only - it must never decide whether an
    * existing photo is shown.
    */
   const offerable = (year: number, month: number) =>
@@ -130,7 +130,7 @@ export function groupByYear(
     .map((year) => {
       const slots: MonthSlot[] = [];
       // Newest month first, like the years around them. Scrolling down walks
-      // steadily backwards — the most recent bouquet at the top, June 2025 at
+      // steadily backwards - the most recent bouquet at the top, June 2025 at
       // the very bottom. Counting up inside a year while counting down between
       // them made time zigzag down the page.
       for (let m = 12; m >= 1; m--) {

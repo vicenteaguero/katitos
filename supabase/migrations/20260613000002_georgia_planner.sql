@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — Georgia trip planner: coordinates + day scheduling + wishlist
+-- Katitos - Georgia trip planner: coordinates + day scheduling + wishlist
 -- Itinerary items gain a map location (lat/lng) and a planned day, and a new
 -- 'wish' kind so the wishlist (things to buy/eat/bring) lives in the same table.
 -- ════════════════════════════════════════════════════════════════════════

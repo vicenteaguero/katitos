@@ -20,7 +20,7 @@ import { mapWithConcurrency, type JobState } from '../lib/upload-queue';
 /**
  * What we keep as the "original".
  *
- * Album photos used to be stored exactly as the phone produced them — five
+ * Album photos used to be stored exactly as the phone produced them - five
  * megabytes each, downloaded in full any time the proxy was missing, and
  * multiplied by every photo in a book. 2048px at 0.82 is around half a
  * megabyte, still ~340dpi across an A5 page, which is what the printed PDF
@@ -37,20 +37,20 @@ export interface UploadJob {
   error?: string;
   /** A local preview, shown from the instant it is chosen. */
   previewUrl?: string;
-  /** The library row, once it exists — so it can be taken back out again. */
+  /** The library row, once it exists - so it can be taken back out again. */
   photo?: AlbumPhoto;
 }
 
 /**
  * Empty a camera roll into a book.
  *
- * Each photo is shrunk, uploaded, and given its library row IMMEDIATELY — not
- * batched at the end — so the strip fills in as you watch and a failure halfway
+ * Each photo is shrunk, uploaded, and given its library row IMMEDIATELY - not
+ * batched at the end - so the strip fills in as you watch and a failure halfway
  * through costs you only that one photo.
  *
  * The finished row is written STRAIGHT INTO the library cache rather than
  * invalidating it. Twenty photos meant twenty refetches of the whole library,
- * each one re-rendering the book and the sheet on top of it — which is why the
+ * each one re-rendering the book and the sheet on top of it - which is why the
  * buttons in that sheet needed pressing over and over to land.
  */
 export function useBulkAddToLibrary(bookId: string | undefined) {
@@ -68,7 +68,7 @@ export function useBulkAddToLibrary(bookId: string | undefined) {
       if (!bookId || !files.length) return;
       setRunning(true);
       // Previews from the local file, so there is something to look at from
-      // the moment they are chosen — no waiting on a round trip to see what
+      // the moment they are chosen - no waiting on a round trip to see what
       // you picked.
       setJobs((prev) => [
         ...prev,
@@ -96,7 +96,7 @@ export function useBulkAddToLibrary(bookId: string | undefined) {
             });
           } catch {
             // Un-decodable here (an exotic HEIC, a browser without canvas
-            // encoding) — keep the file as it came rather than losing it.
+            // encoding) - keep the file as it came rather than losing it.
           }
 
           // The postage-stamp comes off the SHRUNK blob, so it costs one more
@@ -151,7 +151,7 @@ export function useBulkAddToLibrary(bookId: string | undefined) {
       const failed = results.filter((r) => r.error).length;
       if (failed)
         toast.error(`${failed} photo${failed === 1 ? '' : 's'} failed`);
-      // Once, at the end — the counts line on the shelf is the only thing that
+      // Once, at the end - the counts line on the shelf is the only thing that
       // still needs telling.
       void qc.invalidateQueries({ queryKey: [...qk.album.books(), 'counts'] });
       return results;
@@ -159,7 +159,7 @@ export function useBulkAddToLibrary(bookId: string | undefined) {
     [bookId, qc, uploadPhoto, userId]
   );
 
-  /** Take one back out — the row, the bytes, and the tile. */
+  /** Take one back out - the row, the bytes, and the tile. */
   const remove = useCallback(
     (index: number) => {
       const job = jobsRef.current[index];
@@ -201,7 +201,7 @@ export function useBulkAddToLibrary(bookId: string | undefined) {
   return { run, jobs, running, remove, reset };
 }
 
-/** Add a single photo — the camera, or one picked from the polaroids. */
+/** Add a single photo - the camera, or one picked from the polaroids. */
 export function useAddToLibrary() {
   const qc = useQueryClient();
   const userId = useUserId();
@@ -259,7 +259,7 @@ export function useAddToLibrary() {
 }
 
 /**
- * Delete a photo from the album for good — the row, every placement of it, and
+ * Delete a photo from the album for good - the row, every placement of it, and
  * the bytes.
  *
  * The deliberate, confirmed half of "remove". Taking a sticker off a page is
@@ -304,14 +304,14 @@ export function useDeleteFromLibrary() {
  * Fill in a photo's real pixel size, once, from the browser.
  *
  * `width` / `height` arrived with the library, so every picture added before it
- * has neither — and a sticker with no ratio has no height at all. Rather than a
+ * has neither - and a sticker with no ratio has no height at all. Rather than a
  * migration that cannot open a JPEG, the first render that decodes the image
  * writes what it saw. Fire-and-forget: it must never interrupt looking at the
  * album, and it is harmless if both phones do it at once.
  *
  * It writes the answer STRAIGHT INTO THE CACHE rather than invalidating. The
  * old version invalidated the whole book once per healed photo, so opening an
- * older album with a dozen unmeasured pictures fired a dozen full refetches —
+ * older album with a dozen unmeasured pictures fired a dozen full refetches -
  * each one rebuilding every page element while the images were still decoding.
  */
 const measured = new Set<string>();

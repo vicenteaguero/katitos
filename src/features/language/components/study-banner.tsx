@@ -16,7 +16,7 @@ export function StudyBanner() {
   const { data: words } = useAllVocab(learning);
   const { data: reviews } = useMyReviews();
 
-  // Only once BOTH halves are here — with the reviews still on their way,
+  // Only once BOTH halves are here - with the reviews still on their way,
   // every word looked due and the number jumped after a second.
   if (!words || !reviews) return null;
   const cards = words;
@@ -48,8 +48,8 @@ export function StudyBanner() {
             {/* The session is what a tap actually gives: twenty cards, not the
               whole backlog. The backlog is said too when it is bigger. */}
             {session > 0
-              ? `${session} to practise${due > session ? ` · ${due} due` : ''}`
-              : 'nothing due — come back tomorrow'}
+              ? `${session} to practise${due > session ? ` - ${due} due` : ''}`
+              : 'nothing due - come back tomorrow'}
           </span>
         </span>
         <StatPill value={known} label="known" />

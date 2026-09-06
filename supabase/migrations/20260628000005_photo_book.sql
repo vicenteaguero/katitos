@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — shared 3D photo-book engine (Pololini + Summer Panini)
+-- Katitos - shared 3D photo-book engine (Pololini + Summer Panini)
 --   One engine, two instances:
 --     • scope 'life' → Pololini (year-round, one book)
 --     • scope 'trip' → Summer Panini (one book per trip)

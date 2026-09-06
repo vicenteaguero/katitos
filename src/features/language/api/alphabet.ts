@@ -46,7 +46,7 @@ export function useRecordLetter() {
     }) => {
       // A NEW path per recording. Re-using `alphabet/<id>` meant the browser
       // kept serving the old clip from its cache for an hour, whatever the
-      // signed URL said — she had to record every letter twice.
+      // signed URL said - she had to record every letter twice.
       const path = storagePaths.languageAudio(
         `alphabet/${v.id}-${nanoid(6)}`,
         v.audio.ext

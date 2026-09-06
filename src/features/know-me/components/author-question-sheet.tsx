@@ -15,7 +15,7 @@ import type { KnowMeOption } from '../types';
 const CATEGORIES = ['general', 'love', 'food', 'quirks', 'future'] as const;
 const OPTION_IDS = ['a', 'b', 'c', 'd'] as const;
 
-/** Author a custom question — compact: prompt, category chips, 2×2 options. */
+/** Author a custom question - compact: prompt, category chips, 2×2 options. */
 export function AuthorQuestionSheet({
   open,
   onClose,
@@ -52,7 +52,7 @@ export function AuthorQuestionSheet({
       { prompt: prompt.trim(), category, options, optionImages: images },
       {
         onSuccess: () => {
-          toast.success('Question added — it will be asked soon ❤️');
+          toast.success('Question added - it will be asked soon ❤️');
           reset();
           onClose();
         },
@@ -72,7 +72,7 @@ export function AuthorQuestionSheet({
           className="font-display text-lg"
         />
 
-        {/* Category as quiet chips — no dropdown. */}
+        {/* Category as quiet chips - no dropdown. */}
         <div className="flex flex-wrap gap-2">
           {CATEGORIES.map((c) => (
             <button
@@ -123,7 +123,7 @@ export function AuthorQuestionSheet({
             onClick={() => setWithPics((v) => !v)}
             className="font-sans text-xs font-semibold text-gold"
           >
-            {withPics ? '— text only' : '+ add pictures'}
+            {withPics ? '- text only' : '+ add pictures'}
           </button>
           <Button
             disabled={!valid || author.isPending}

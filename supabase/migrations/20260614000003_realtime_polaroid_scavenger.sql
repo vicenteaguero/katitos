@@ -1,8 +1,8 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — live sync for Polaroid + Date Cards
+-- Katitos - live sync for Polaroid + Date Cards
 --   polaroids / scavenger_cards / scavenger_claims were never added to the
 --   supabase_realtime publication, so their useTableSync subscriptions
---   registered but never fired — a partner's new photo, card move, rating or
+--   registered but never fired - a partner's new photo, card move, rating or
 --   accept only showed up after a manual reload. Add them so changes
 --   propagate live, matching the chalkboard_notes precedent.
 --   replica identity full → UPDATE/DELETE events carry the full old row.

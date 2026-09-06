@@ -9,9 +9,9 @@ import { createPortal } from 'react-dom';
 import { ScavengerProofImage } from './scavenger-proof-image';
 
 interface ClaimRevealProps {
-  /** The claimed date's title — on the legendary card + the flourish below it. */
+  /** The claimed date's title - on the legendary card + the flourish below it. */
   title: string;
-  /** The owner's deck tone (blue/pink) — the card's top seam. */
+  /** The owner's deck tone (blue/pink) - the card's top seam. */
   toneColor: string;
   /** A fresh object URL for the just-captured proof (instant, optional). */
   photoUrl?: string | null;
@@ -24,7 +24,7 @@ const SPARKS = 18;
 
 /**
  * Full-screen, notch-safe "you opened the rarest card in the pack" reveal that
- * plays when the creator claims a date. Portal → <body>; no auto-dismiss — you
+ * plays when the creator claims a date. Portal → <body>; no auto-dismiss - you
  * close it with the quiet Close button. All the spectacle lives in
  * scavenger.css; this just stages it and fires the haptic punch.
  */
@@ -47,7 +47,7 @@ export function ClaimReveal({
     window.setTimeout(() => onDoneRef.current(), 300);
   }, []);
 
-  // Haptic flourish on entrance. NO auto-dismiss — claiming is epic, you linger
+  // Haptic flourish on entrance. NO auto-dismiss - claiming is epic, you linger
   // and close it yourself with the (very quiet) Close button.
   useEffect(() => {
     navigator.vibrate?.([0, 40, 30, 60]);
@@ -108,7 +108,7 @@ export function ClaimReveal({
         <div className="sc-card-veil" />
         <div className="sc-foil" />
         <div className="sc-card-meta">
-          <p className="sc-card-eyebrow">Georgia · date claimed</p>
+          <p className="sc-card-eyebrow">Georgia - date claimed</p>
           <h3 className="sc-card-title">{title}</h3>
         </div>
       </div>

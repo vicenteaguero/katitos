@@ -31,7 +31,7 @@ const day: PolaroidDay = {
 
 function setup(over: Partial<Parameters<typeof DoublePolaroid>[0]> = {}) {
   const onOpen = vi.fn();
-  // The plates render PolaroidImage, which asks for a signed URL — it just
+  // The plates render PolaroidImage, which asks for a signed URL - it just
   // needs a client to hang the (never-resolving) query off.
   const qc = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -79,7 +79,7 @@ describe('DoublePolaroid', () => {
     expect(onOpen).toHaveBeenCalledWith(day.theirs);
   });
 
-  it('has only two states — one is always in front', async () => {
+  it('has only two states - one is always in front', async () => {
     const user = userEvent.setup();
     const { onOpen } = setup();
     // Tap back, then tap back again: never lands on "neither in front".

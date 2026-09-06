@@ -11,14 +11,14 @@ export interface FeatureRegistry {
 /**
  * Collapse a list of feature modules into the shell's view of the world:
  * the enabled features, a sorted nav, and the route tree. The shell consumes
- * only this — it never names a feature.
+ * only this - it never names a feature.
  */
 export function createFeatureRegistry(
   modules: FeatureModule[]
 ): FeatureRegistry {
   const enabled = modules.filter((m) => m.enabled !== false);
 
-  // Nav lists every enabled feature — locked ones included, tagged so the shell
+  // Nav lists every enabled feature - locked ones included, tagged so the shell
   // can grey them out. Routes mount only for UNLOCKED features, so a locked row
   // is inert even if someone hand-types its URL.
   const navEntries = enabled

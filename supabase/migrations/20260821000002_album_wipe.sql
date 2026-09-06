@@ -1,9 +1,9 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — the albums start again
+-- Katitos - the albums start again
 --
 --   Asked for, deliberately: the books that exist were built while the
 --   engine underneath them was changing shape twice a week, and they carry
---   the scars — pages that come back after you tear them out, photos with
+--   the scars - pages that come back after you tear them out, photos with
 --   no size, placements from three different sticker models. Tonight the
 --   Georgia & Türkiye book gets made from nothing, and it deserves nothing
 --   to be made from.
@@ -11,7 +11,7 @@
 --   WHAT SURVIVES: every daily polaroid and every bouquet. They live in
 --   their own buckets and their own tables and are not touched here. A
 --   library row whose source is 'polaroid' only ever POINTED at the
---   polaroids bucket — deleting the row does not delete the picture.
+--   polaroids bucket - deleting the row does not delete the picture.
 --
 --   DELETE, not TRUNCATE, on purpose:
 --     • TRUNCATE does not replicate, so a phone with a book open would keep

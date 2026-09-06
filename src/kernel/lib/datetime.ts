@@ -47,7 +47,7 @@ export interface DurationParts {
 /**
  * Decompose the span since a start date into calendar years / months / weeks /
  * days (each unit the whole remainder of the larger ones). For the "together
- * for N days" hero — the big number stays total days; this is the breakdown.
+ * for N days" hero - the big number stays total days; this is the breakdown.
  */
 export function durationBreakdown(
   startDate: string | Date | null | undefined,
@@ -82,7 +82,7 @@ export function daysBetween(
  *
  * A constant, deliberately. This used to be read from `couple.relationship_
  * start_date`, which meant the number on the home screen was the result of a
- * network round-trip — and until it landed, `daysTogether(undefined)` returned
+ * network round-trip - and until it landed, `daysTogether(undefined)` returned
  * **0**, so the first thing the screen said was that we had been together for
  * no days at all. Nothing about this figure needs a database: it is one
  * subtraction, and the answer is the same on both our phones.
@@ -90,7 +90,7 @@ export function daysBetween(
 export const TOGETHER_START_ISO = '2025-06-15T03:00:00+07:00';
 
 /**
- * Whole days since it started — instant, offline, no query.
+ * Whole days since it started - instant, offline, no query.
  *
  * Counted as elapsed time rather than calendar dates, so it rolls over at 3
  * a.m. in Novosibirsk wherever either of us is standing, and the two phones

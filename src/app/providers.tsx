@@ -20,7 +20,7 @@ export function Providers({ children }: { children: ReactNode }) {
   // Mirror successful queries back to storage for the next open.
   useEffect(() => startPersisting(queryClient), [queryClient]);
 
-  // Offline, a signing query resolves to whatever the phone holds — and that
+  // Offline, a signing query resolves to whatever the phone holds - and that
   // answer is "fresh" for an hour. The moment the network is back, ask again.
   useEffect(
     () =>

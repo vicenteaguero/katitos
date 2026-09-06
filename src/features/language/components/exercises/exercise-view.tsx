@@ -35,12 +35,12 @@ function optionLabel(o: ExerciseOption, support: Lang): string {
 export interface ExerciseViewProps {
   exercise: Exercise;
   support: Lang;
-  /** The language the lesson teaches — which keyboard a typed answer gets. */
+  /** The language the lesson teaches - which keyboard a typed answer gets. */
   target: Lang;
   /** The answer so far. Owned by the runner so it survives a re-render. */
   value: unknown;
   onChange: (value: unknown) => void;
-  /** Set once marked — the view then shows what was right. */
+  /** Set once marked - the view then shows what was right. */
   grade?: Grade | null;
   disabled?: boolean;
 }
@@ -113,7 +113,7 @@ function ChoiceView({
   const options = payload?.options ?? [];
   return (
     <div className="space-y-1.5">
-      {/* "Which did you hear?" — her voice IS the question. */}
+      {/* "Which did you hear?" - her voice IS the question. */}
       {payload?.audioPath && (
         <PlayButton
           bucket={BUCKETS.languageAudio}
@@ -224,7 +224,7 @@ function TypeView({
             ? 'It could be '
             : 'The answer was '}
           <span className="text-fg">
-            {acceptedForms(exercise.answer).join(' · ')}
+            {acceptedForms(exercise.answer).join(' - ')}
           </span>
         </p>
       )}
@@ -249,7 +249,7 @@ function ListenView(props: ExerciseViewProps) {
 }
 
 /**
- * Fill the gaps. Each gap is its own little field, in the sentence — and the
+ * Fill the gaps. Each gap is its own little field, in the sentence - and the
  * letters his keyboard lacks appear for whichever gap he is in.
  */
 function CompleteView({
@@ -340,7 +340,7 @@ function CompleteView({
 }
 
 /**
- * Put the words in order — by TAPPING, not dragging.
+ * Put the words in order - by TAPPING, not dragging.
  *
  * HTML5 drag-and-drop does not work on iOS, and a hand-rolled drag inside a
  * scrolling lesson fights the scroll. Tap a word to add it, tap it in the line
@@ -363,7 +363,7 @@ function OrderView({
 
   return (
     <div className="space-y-2">
-      {/* One tone up from the card it sits in — the same tone was invisible. */}
+      {/* One tone up from the card it sits in - the same tone was invisible. */}
       <div className="flex min-h-[2.5rem] flex-wrap items-center gap-1.5 rounded-lg bg-surface-2 px-2 py-2">
         {chosen.length === 0 && (
           <span className="font-sans text-xs text-muted">
@@ -499,7 +499,7 @@ function MatchView({
  * Say it out loud, then say whether you got it.
  *
  * Nothing in a browser can judge a Russian accent. Pretending otherwise would
- * be worse than trusting him — and she hears the recordings anyway.
+ * be worse than trusting him - and she hears the recordings anyway.
  */
 function SpeakView({ exercise, value, onChange, disabled }: ExerciseViewProps) {
   const path = (exercise.payload as { audioPath?: string })?.audioPath;
@@ -553,7 +553,7 @@ function SpeakView({ exercise, value, onChange, disabled }: ExerciseViewProps) {
             label="Hear yourself"
           />
           <span className="min-w-0 flex-1 font-sans text-xs text-muted">
-            Your recording — she hears it too.
+            Your recording - she hears it too.
           </span>
           {!disabled && (
             <button

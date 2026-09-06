@@ -34,7 +34,7 @@ describe('readJpegSize', () => {
 
   it('steps over the padding a real encoder leaves between segments', () => {
     // 0xFF is legal fill before a marker. Reading it as a segment header
-    // walked into the image data and gave up — and a photo whose size can't
+    // walked into the image data and gave up - and a photo whose size can't
     // be read is a photo the export silently leaves out of the album.
     const padded = Uint8Array.from([
       0xff,
@@ -65,7 +65,7 @@ describe('readJpegSize', () => {
 });
 
 describe('num', () => {
-  it('never emits scientific notation — no PDF reader accepts it', () => {
+  it('never emits scientific notation - no PDF reader accepts it', () => {
     expect(num(0.000000012)).toBe('0.0000');
     expect(num(1234.56789)).toBe('1234.5679');
   });
@@ -136,7 +136,7 @@ describe('PdfDoc', () => {
       .split('\n')
       .filter((l) => / 00000 n $/.test(l));
     // Without this the forEach below passes vacuously if the regex ever stops
-    // matching — a test that checks nothing looks exactly like one that passes.
+    // matching - a test that checks nothing looks exactly like one that passes.
     expect(rows.length).toBeGreaterThan(0);
     rows.forEach((row, i) => {
       const offset = Number(row.slice(0, 10));
@@ -162,7 +162,7 @@ describe('PdfDoc', () => {
     expect(text(doc)).toContain('/Count 3');
   });
 
-  it('puts the JPEG bytes in untouched — that is the whole point', async () => {
+  it('puts the JPEG bytes in untouched - that is the whole point', async () => {
     const doc = new PdfDoc(594, 792);
     const ref = doc.addJpeg(TINY_JPEG, 11, 7);
     doc.addPage('', [{ name: 'Im0', ref }]);
@@ -197,7 +197,7 @@ describe('PdfDoc', () => {
       .split('\n')
       .filter((l) => / 00000 n $/.test(l));
     // Without this the forEach below passes vacuously if the regex ever stops
-    // matching — a test that checks nothing looks exactly like one that passes.
+    // matching - a test that checks nothing looks exactly like one that passes.
     expect(rows.length).toBeGreaterThan(0);
     rows.forEach((row, i) => {
       const offset = Number(row.slice(0, 10));

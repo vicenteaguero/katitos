@@ -74,7 +74,7 @@ export function DateForm({ onCreated }: { onCreated: (id: string) => void }) {
           <option value="cancelled">Cancelled</option>
         </Select>
       </Field>
-      <Field label="When" hint="Optional — for scheduled dates">
+      <Field label="When" hint="Optional - for scheduled dates">
         <Input type="datetime-local" {...register('scheduled_local')} />
       </Field>
       <Button full type="submit" disabled={isSubmitting}>

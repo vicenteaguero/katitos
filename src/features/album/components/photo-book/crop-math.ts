@@ -3,7 +3,7 @@
  *
  * Cropping here never touches the file. A placement stores a focal point and
  * how far in, and both the screen and the printed page derive the same visible
- * window from those three numbers — so the picture you framed on the phone is
+ * window from those three numbers - so the picture you framed on the phone is
  * the picture that comes out of the printer, and the original stays whole for
  * the next time you want a different part of it.
  *
@@ -22,7 +22,7 @@ export interface Crop {
 export interface CropWindow {
   /** Left edge, 0..1. */
   u: number;
-  /** Top edge, 0..1 — measured DOWNWARDS, like the screen. */
+  /** Top edge, 0..1 - measured DOWNWARDS, like the screen. */
   v: number;
   w: number;
   h: number;
@@ -69,7 +69,7 @@ export function cropWindow(
   return { u: c.cropX * (1 - w), v: c.cropY * (1 - h), w, h };
 }
 
-/** Slack left on each axis — zero means that axis has nothing to pan. */
+/** Slack left on each axis - zero means that axis has nothing to pan. */
 export function slackOf(win: CropWindow): { x: number; y: number } {
   return { x: 1 - win.w, y: 1 - win.h };
 }
@@ -82,7 +82,7 @@ export function slackOf(win: CropWindow): { x: number; y: number } {
  * moves the other way.
  *
  * The guard is the important part. At zoom 1, a photo whose shape already
- * matches its frame has NO slack on either axis — `1 - w` is zero — and
+ * matches its frame has NO slack on either axis - `1 - w` is zero - and
  * dividing by it sends the focal point to Infinity, then NaN, then the database
  * rejects the update and a toast fires on every single frame of the drag. An
  * axis with nothing to give simply doesn't move.
@@ -117,7 +117,7 @@ export function panCrop(
  * a plain scale-and-shift with no matrix inversion to get wrong. The one term
  * worth reading twice is the vertical offset: `v` counts down from the top of
  * the image and PDF counts up from the bottom, so an off-centre crop that
- * skips the flip prints vertically mirrored — and a centred one doesn't, which
+ * skips the flip prints vertically mirrored - and a centred one doesn't, which
  * is exactly how that bug survives a smoke test.
  */
 export function cropMatrix(

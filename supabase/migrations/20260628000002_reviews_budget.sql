@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — Summer Travel: Reviews + Budget sprints
+-- Katitos - Summer Travel: Reviews + Budget sprints
 --   • trip_reviews: rate places (restaurant/airbnb/car/museum/view/food/…)
 --     1–5 stars, notes, link, one photo, optional map coords.
 --   • budget_sprints + budget_lines: money grouped by period (anchor date),

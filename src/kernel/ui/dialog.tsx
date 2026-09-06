@@ -46,7 +46,7 @@ export interface DialogProps {
  *
  * The order comes from render, not from an effect: React runs mount effects
  * child-first, so a dialog nested inside another registered before its
- * parent and the parent came out on top — Escape closed the wrong one.
+ * parent and the parent came out on top - Escape closed the wrong one.
  * Render is parent-first, always.
  */
 const stack = new Map<symbol, number>();
@@ -88,7 +88,7 @@ const focusables = (root: HTMLElement) =>
   );
 
 /**
- * THE modal for the whole app — one component, one behaviour.
+ * THE modal for the whole app - one component, one behaviour.
  *
  * `Sheet` is this, pinned to the bottom, and every sheet in the app inherits
  * what this does: focus moves in and is trapped, and goes back where it came
@@ -98,7 +98,7 @@ const focusables = (root: HTMLElement) =>
  *
  * Keyboard handling: the panel stays ANCHORED to the screen bottom (its
  * surface fills all the way down, behind the keyboard), and only the scrolling
- * BODY gets extra bottom padding equal to the keyboard height — so the content
+ * BODY gets extra bottom padding equal to the keyboard height - so the content
  * lifts above the keyboard while the background still reaches the bottom edge.
  *
  * Not the native <dialog>: `showModal()` fights exactly that keyboard
@@ -122,14 +122,14 @@ export function Dialog({
   if (!open) seq.current = 0;
   const titleId = useId();
   // Held in refs so an inline `onClose` from a caller can't re-arm the
-  // listeners on every parent render — that churn was the old sheet's
+  // listeners on every parent render - that churn was the old sheet's
   // most-reported "bug".
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
   const panelRef = useRef<HTMLDivElement>(null);
   const restoreRef = useRef<HTMLElement | null>(null);
 
-  // Mounted while open — and for the exit animation after.
+  // Mounted while open - and for the exit animation after.
   const [mounted, setMounted] = useState(open);
   const [closing, setClosing] = useState(false);
   // On-screen keyboard height (iOS visualViewport). 0 when closed/unsupported.
@@ -156,7 +156,7 @@ export function Dialog({
   const lastRef = useRef({ children, title });
   if (open) lastRef.current = { children, title };
 
-  // Focus in — once the panel exists. `mounted` is a render behind `open`,
+  // Focus in - once the panel exists. `mounted` is a render behind `open`,
   // so on the render where `open` turns true there is no panel yet to focus.
   useLayoutEffect(() => {
     if (!open || !mounted) return;
@@ -170,7 +170,7 @@ export function Dialog({
     }
   }, [open, mounted]);
 
-  // On the stack while open — and focus back where it came from on the way
+  // On the stack while open - and focus back where it came from on the way
   // out, AFTER the pop has made the app behind live again: an element inside
   // an inert root refuses focus, so restoring first restored nothing.
   useEffect(() => {
@@ -208,7 +208,7 @@ export function Dialog({
       setKb(overlap > 80 ? overlap : 0);
     };
     sync();
-    // The keyboard opens from a field's autoFocus DURING mount — its first
+    // The keyboard opens from a field's autoFocus DURING mount - its first
     // visualViewport `resize` can fire before this listener is attached, so
     // re-sync a few times right after open to catch that first one.
     const polls = [120, 320, 600, 900].map((d) => window.setTimeout(sync, d));
@@ -222,7 +222,7 @@ export function Dialog({
     };
   }, [open]);
 
-  // Escape closes the TOP dialog only — one keypress used to close every
+  // Escape closes the TOP dialog only - one keypress used to close every
   // sheet in a stack at once.
   useEffect(() => {
     if (!open || !isTop) return;
@@ -349,7 +349,7 @@ export function Dialog({
           className
         )}
       >
-        {/* Pinned header — grip + title + Close — never scrolls away. */}
+        {/* Pinned header - grip + title + Close - never scrolls away. */}
         <div className="shrink-0 px-5 pt-3">
           <div
             className={cn(

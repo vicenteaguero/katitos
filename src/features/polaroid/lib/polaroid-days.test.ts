@@ -70,7 +70,7 @@ describe('openDays', () => {
     ]);
   });
 
-  it('shuts a day the moment it is over in both places — no grace', () => {
+  it('shuts a day the moment it is over in both places - no grace', () => {
     // 04:30 UTC = 00:30 on the 12th in Curicó, 11:30 on the 12th in
     // Novosibirsk. The 11th is nobody's date any more, so it is NOT on offer:
     // this exact half hour used to hand back a day both of us had finished.
@@ -97,7 +97,7 @@ describe('openDays', () => {
     expect(isDayOpen('2026-08-11', CURICO, NOVOSIBIRSK, lastSecond)).toBe(true);
   });
 
-  it('is symmetric — both of us compute the same set', () => {
+  it('is symmetric - both of us compute the same set', () => {
     expect(openDays(CURICO, NOVOSIBIRSK, SPLIT)).toEqual(
       openDays(NOVOSIBIRSK, CURICO, SPLIT)
     );
@@ -121,7 +121,7 @@ describe('borrowedDay', () => {
     expect(borrowedDay(NOVOSIBIRSK, CURICO, SPLIT)).toBe('2026-08-11');
   });
 
-  it('is nothing from his side — his extra day is one he has yet to live', () => {
+  it('is nothing from his side - his extra day is one he has yet to live', () => {
     // The 12th is open to him too, but it is coming, not going.
     expect(borrowedDay(CURICO, NOVOSIBIRSK, SPLIT)).toBeNull();
   });
@@ -180,7 +180,7 @@ describe('groupByDay', () => {
   });
 
   it('never drops a row it cannot classify', () => {
-    // Signed out (selfId null) — nothing is "mine", but both must still show.
+    // Signed out (selfId null) - nothing is "mine", but both must still show.
     const days = groupByDay(
       [
         row({ id: '1', day: '2026-08-11', user_id: A }),
@@ -216,7 +216,7 @@ describe('frontOf', () => {
     A
   )[0];
 
-  it('puts your love on top by default — that is what you opened it for', () => {
+  it('puts your love on top by default - that is what you opened it for', () => {
     expect(frontOf(both, 'theirs')).toBe('theirs');
   });
 

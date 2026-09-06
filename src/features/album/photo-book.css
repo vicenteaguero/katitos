@@ -1,5 +1,5 @@
 /* ──────────────────────────────────────────────────────────────────────────
- * PhotoBook3D — the shared paper-book engine (Pololini + Summer Panini).
+ * PhotoBook3D - the shared paper-book engine (Pololini + Summer Panini).
  *   A single portrait page shows at a time; the realistic soft-paper curl is
  *   powered by StPageFlip (react-pageflip). Class names are `pb-` prefixed so
  *   they never collide with the legacy `.book-*` sticker album in src/index.css.
@@ -30,7 +30,7 @@
 .pb-mat-leather {
   --pb-board: #6e1423;
   --pb-board-2: #4d0d18;
-  /* A fine pebbled grain — two crossed hairline gradients, almost invisible
+  /* A fine pebbled grain - two crossed hairline gradients, almost invisible
      until the light in the gradient above catches it. */
   --pb-board-grain:
     repeating-linear-gradient(
@@ -105,8 +105,8 @@
 
 /* ── The open book as ONE PIECE ─────────────────────────────────────────────
    A wine-bound double-page book (cover + 2 pages) WIDER than the screen.
-   `.pb-viewport` clips to full screen width; `.pb-track` is the whole piece —
-   the wine `.pb-case` wrapping the StPageFlip landscape spread — and it SLIDES
+   `.pb-viewport` clips to full screen width; `.pb-track` is the whole piece -
+   the wine `.pb-case` wrapping the StPageFlip landscape spread - and it SLIDES
    as one unit so you see one full page + part of the facing page. Width +
    translateX are set inline. */
 .pb-stage {
@@ -115,7 +115,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  /* No break-out: the focused page aligns to the app's own side padding —
+  /* No break-out: the focused page aligns to the app's own side padding -
      page 1 to the left padding, page 2 (when slid) to the right padding. */
 }
 .pb-viewport {
@@ -123,7 +123,7 @@
   position: relative;
   width: 100%;
   /* `clip`, not `hidden`. Per spec, `overflow-y: visible` beside an
-     `overflow-x: hidden` computes to `auto` — a nested scroller that clips the
+     `overflow-x: hidden` computes to `auto` - a nested scroller that clips the
      curl anyway AND steals the horizontal drag. `clip` leaves the other axis
      alone. */
   overflow-x: clip;
@@ -133,7 +133,7 @@
      the book occupies exactly the room it did before. */
   padding-block: var(--pb-curl-pad);
   margin-block: calc(-1 * var(--pb-curl-pad));
-  /* The slide gesture is OURS — stop the browser eating the horizontal drag. */
+  /* The slide gesture is OURS - stop the browser eating the horizontal drag. */
   touch-action: none;
 }
 @supports not (overflow-x: clip) {
@@ -159,7 +159,7 @@
 /*
   The binding itself, as its OWN layer.
 
-  It used to be the background of `.pb-case`, which is always two pages wide —
+  It used to be the background of `.pb-case`, which is always two pages wide -
   so on a cover, where only one board is drawn, the other page's worth of
   binding sat there beside it: a book on top of a book, running off the edge of
   the screen. Now the board is a separate element whose width is set per state,
@@ -178,7 +178,7 @@
     0 2px 0 rgba(255, 255, 255, 0.06) inset;
   pointer-events: none;
 }
-/* Gilt hairline framing the binding — behind the pages (a turning leaf passes
+/* Gilt hairline framing the binding - behind the pages (a turning leaf passes
    over it), so it only shows in the margin. */
 .pb-board::before {
   content: '';
@@ -207,7 +207,7 @@
   position: relative;
   z-index: 1;
 }
-/* The slide zone — a transparent overlay over the SPINE half of the focused
+/* The slide zone - a transparent overlay over the SPINE half of the focused
    page. It owns the pan gesture; the OUTER half is left uncovered so StPageFlip
    receives the native finger-curl there. Position set inline per page side. */
 .pb-slide-zone {
@@ -251,7 +251,7 @@
   justify-content: center;
   overflow: hidden;
   border-radius: inherit;
-  /* So `cqw` below means "a percent of THIS COVER" — without a container the
+  /* So `cqw` below means "a percent of THIS COVER" - without a container the
      unit silently falls back to the viewport, and the title was sized off the
      phone's width instead of off the book's. */
   container-type: inline-size;
@@ -313,7 +313,7 @@
   place-items: center;
   width: 100%;
 }
-/* Big. It is the only thing on the back board, so it can afford to be — and
+/* Big. It is the only thing on the back board, so it can afford to be - and
    the width comes off the BOARD (`cqw`), so it is the same size relative to
    the book on every screen. */
 .pb-cover-logo {
@@ -354,7 +354,7 @@
   overflow: hidden;
   color: var(--pb-ink);
   /* Lit from one place. The highlight and the gutter shadow are MIRRORED per
-     side below — with the same gradient on both leaves the light appeared to
+     side below - with the same gradient on both leaves the light appeared to
      come from two different directions at once, which is what made an open
      spread look wrong without anyone being able to say why. */
   background:
@@ -410,7 +410,7 @@
 }
 
 /* ── Photo stickers (free, draggable) ───────────────────────────────────── */
-/* Depth is set inline from the sorted order — a fixed z-index here is exactly
+/* Depth is set inline from the sorted order - a fixed z-index here is exactly
    what made stacking depend on who was added first. */
 .pb-sticker {
   position: absolute;
@@ -525,7 +525,7 @@
   --pb-mount-ink: #e7e9eb;
   --pb-mount-edge: rgba(255, 255, 255, 0.14);
 }
-/* Still rendered — rows already carry them — just no longer offered. */
+/* Still rendered - rows already carry them - just no longer offered. */
 .pb-mount-white {
   --pb-mount: #ffffff;
   --pb-mount-ink: #3a2c1c;
@@ -558,7 +558,7 @@
 }
 
 /* Card: the workhorse. `plain` is what the previous build writes for
-   "not on film" — same thing. */
+   "not on film" - same thing. */
 .pb-frame-plain,
 .pb-frame-white {
   box-shadow:
@@ -591,7 +591,7 @@
 }
 
 /* Lifted: a print's thin edge, and then it floats. `filter`, never
-   `box-shadow` — a box-shadow traces the border box, so a circle would get a
+   `box-shadow` - a box-shadow traces the border box, so a circle would get a
    rectangle of shade behind it. */
 .pb-frame-shadow {
   box-shadow: none;
@@ -599,7 +599,7 @@
     drop-shadow(0 9px 13px rgba(20, 4, 9, 0.4));
 }
 
-/* Instant film — the SAME object as `PolaroidPlate`, which is what the daily
+/* Instant film - the SAME object as `PolaroidPlate`, which is what the daily
    photo and the flowers show. A square window, a chin deeper than the other
    three edges, and the words printed on the chin.
    No hairline: a printed rule around the picture is the one thing real film
@@ -619,7 +619,7 @@
   border-radius: 2px;
   background: #e3d8c6;
 }
-/* The words sit ON the chin, with the component's own gap above them — and
+/* The words sit ON the chin, with the component's own gap above them - and
    only that gap: the base rule adds a flat 5px which, on top of this, made the
    chin a fifth deeper than the object it is copying. */
 .pb-frame-polaroid .pb-sticker-cap {
@@ -711,7 +711,7 @@
 /* The window the photograph shows through.
    Lost in a refactor, and its absence is subtle and horrible: `.pb-photo` is
    `position: absolute; inset: 0`, so without a positioned parent it resolved
-   against the whole STICKER — the picture covered its own mount, a polaroid
+   against the whole STICKER - the picture covered its own mount, a polaroid
    showed as a hairline of white at the very edge, and a caption ended up
    underneath the photograph. */
 .pb-sticker-photo {
@@ -727,7 +727,7 @@
 }
 
 /* ── The cut of the window ────────────────────────────────────────────────
-   `clip-path` and `border-radius` only — no `path()`, which does not scale
+   `clip-path` and `border-radius` only - no `path()`, which does not scale
    with the element, and no images to download. */
 .pb-shape-rounded {
   border-radius: 12%;
@@ -820,7 +820,7 @@
       )
       no-repeat;
 }
-/* Instant film: a square window and a chin deeper than the other three edges —
+/* Instant film: a square window and a chin deeper than the other three edges -
    the proportions the kernel PolaroidPlate uses everywhere else. The squareness
    is imposed by the shape now, so this is only the plate. */
 .pb-frame-polaroid {
@@ -850,7 +850,7 @@
   width: 24px;
   height: 24px;
   border-radius: 999px;
-  /* Dark disc, thin white ring, white arrows — it reads as something to take
+  /* Dark disc, thin white ring, white arrows - it reads as something to take
      hold of, and as a CONTROL rather than as decoration. In gilt it was just
      another gold thing in a screen already full of them. */
   background:
@@ -864,7 +864,7 @@
   touch-action: none;
 }
 /* The disc stays 24px because a bigger one covers the photograph it is
-   resizing — but the thing you have to HIT is 46px, which is what a thumb
+   resizing - but the thing you have to HIT is 46px, which is what a thumb
    actually needs. Invisible, and outside the sticker, so it never steals a
    tap meant for the picture itself. */
 .pb-sticker-handle::before {
@@ -879,19 +879,19 @@
   padding-top: 5px;
   /* Set per sticker, in page-width units like everything else on the paper.
      This was a hard 11px, so the XS–XL control did nothing at all to a caption
-     — the size only ever moved a standalone text sticker. The face comes from
+     - the size only ever moved a standalone text sticker. The face comes from
      the `pb-font-*` class, which is why the italic is no longer forced here. */
   font-size: var(--pb-cap-size, 3.7cqw);
   font-weight: var(--pb-cap-weight, 400);
   line-height: 1.2;
   text-align: center;
-  /* The paper's ink by default — a caption under a photo sits ON THE PAGE.
+  /* The paper's ink by default - a caption under a photo sits ON THE PAGE.
      Inside a film chin it inherits the mount's ink instead, which is why the
      variable has a fallback rather than a fixed value. */
   color: var(--pb-mount-ink, var(--pb-ink));
 }
 
-/* Text sticker — a title / little message on the page (no photo frame). The
+/* Text sticker - a title / little message on the page (no photo frame). The
    wrapper sets the px font-size (so it scales with the sticker); 1em here. */
 .pb-text-sticker {
   display: block;
@@ -956,7 +956,7 @@
   overflow-x: auto;
   overscroll-behavior-x: contain;
   /* NO scroll snapping. The snap points sat on the photo tiles, so scrolling
-     back always caught on the first PHOTO — and the column of actions in front
+     back always caught on the first PHOTO - and the column of actions in front
      of it (add, text, gallery) could never be reached again. It bounced you
      forward every time. Free scrolling reaches both ends. */
   -webkit-overflow-scrolling: touch;
@@ -1046,7 +1046,7 @@
   background: var(--color-accent, #6e1423);
   color: var(--color-accent-fg, #fff);
 }
-/* Already standing on the page you're looking at — still tappable, because the
+/* Already standing on the page you're looking at - still tappable, because the
    same photo twice is a perfectly reasonable thing to want. */
 .pb-strip-item--used::after {
   content: '';
@@ -1172,7 +1172,7 @@
 .pb-swatch--on .pb-swatch-label {
   color: var(--color-fg, #fbf5f0);
 }
-/* A real slice of the photograph being dressed, wearing the option — nobody
+/* A real slice of the photograph being dressed, wearing the option - nobody
    can picture "arch" from the word. */
 .pb-swatch-photo {
   display: block;
@@ -1308,14 +1308,14 @@
   }
 }
 /* The stage CLIPS. The preview is sized from a measured box, and a measurement
-   that is briefly stale must make the picture look small for one frame — never
+   that is briefly stale must make the picture look small for one frame - never
    push it off the top of the screen. */
 .pb-studio-stage {
   position: relative;
   overflow: hidden;
 }
 /* The preview is a real sticker, so it renders through exactly the same rules
-   as the page — it just sits in the middle of the stage instead of at a
+   as the page - it just sits in the middle of the stage instead of at a
    fraction of a paper page. */
 .pb-studio-sticker {
   position: absolute;
@@ -1329,7 +1329,7 @@
   width: 44px;
   flex: none;
 }
-/* The controls live on a surface of their own — the stage floats over the
+/* The controls live on a surface of their own - the stage floats over the
    blurred album above it, which is the part worth still seeing. */
 .pb-studio-deck {
   padding: 10px 16px max(12px, env(safe-area-inset-bottom));

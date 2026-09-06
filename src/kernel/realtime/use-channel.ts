@@ -49,7 +49,7 @@ export function useRealtimeSubscription<T extends Record<string, unknown>>(
     return () => {
       void supabase.removeChannel(channel);
     };
-    // onChange intentionally excluded — callers pass stable callbacks.
+    // onChange intentionally excluded - callers pass stable callbacks.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [table, event, schema, filter, enabled, instanceId]);
 }
@@ -65,8 +65,8 @@ export function useTableSync(
 ): void {
   const qc = useQueryClient();
   // Read at fire time, not subscribe time. The subscription outlives a key
-  // change when only the key changed — course A to course B on the same
-  // table — and the closure it was given kept invalidating A.
+  // change when only the key changed - course A to course B on the same
+  // table - and the closure it was given kept invalidating A.
   const keyRef = useRef(queryKey);
   keyRef.current = queryKey;
   useRealtimeSubscription(

@@ -16,19 +16,19 @@ export function PolaroidImage({
   className?: string;
   /**
    * A full view (the lightbox). Shows the small proxy at once and swaps in the
-   * original behind it — waiting on the full file first meant a blank plate
+   * original behind it - waiting on the full file first meant a blank plate
    * every time you tapped a photo.
    */
   full?: boolean;
   /**
    * A URL the parent already signed in a batch. When present we skip this
-   * component's own round-trips entirely — which is the whole point: a gallery
+   * component's own round-trips entirely - which is the whole point: a gallery
    * of N photos used to open 2N signed-URL requests from inside its children.
    */
   src?: string;
 }) {
   // Presentation-only: the emulsion "fixes" once the bytes arrive, driving the
-  // develop reveal. No data/behavior change — purely the instant-photo effect.
+  // develop reveal. No data/behavior change - purely the instant-photo effect.
   const [developed, setDeveloped] = useState(false);
   // Proxy missing (a photo from before proxies) → fall back to the original.
   const [proxyGone, setProxyGone] = useState(false);
@@ -97,7 +97,7 @@ export function PolaroidImage({
     <span
       className={cn(
         // No background of its own. The photo's corners are rounded, so
-        // whatever sits behind them shows through — and a colour here meant
+        // whatever sits behind them shows through - and a colour here meant
         // that was four dark notches of "app background" punched into the
         // cream film. Let the plate underneath show instead.
         'relative block overflow-hidden rounded-md',

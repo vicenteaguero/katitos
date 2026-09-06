@@ -2,7 +2,7 @@
  * Civil time in someone else's country, with no library.
  *
  * The whole feature is "three hours left in YOUR day", so every number here has
- * to be the number on that person's wall clock — not the server's, and not a
+ * to be the number on that person's wall clock - not the server's, and not a
  * fixed offset. `Intl` already knows every rule there is, including the two
  * nights a year when Curicó's day is 23 or 25 hours long; these helpers just
  * ask it the right questions.
@@ -65,13 +65,13 @@ export function localDay(zone: string, at: Date): string {
  *
  * Found by bisection, not by arithmetic, and that is deliberate. Chile changes
  * its clocks AT midnight: on 6 September 2026 the time 00:00 simply does not
- * exist there — it goes 23:59:59 straight to 01:00. Every "take midnight UTC
+ * exist there - it goes 23:59:59 straight to 01:00. Every "take midnight UTC
  * and subtract the offset" trick lands an hour on the wrong side of that one
  * boundary, and an hour wrong is the whole difference between "one hour left"
  * and "gone".
  *
- * So we ask the only question that is always well defined — "is it `isoDay`
- * there yet?" — and close in on the moment the answer changes. Correct for
+ * So we ask the only question that is always well defined - "is it `isoDay`
+ * there yet?" - and close in on the moment the answer changes. Correct for
  * every zone and every rule, including the ones nobody has written yet.
  */
 export function startOfDay(zone: string, isoDay: string): Date {
@@ -97,7 +97,7 @@ export function nextDay(isoDay: string): string {
 }
 
 /**
- * When `isoDay` stops being the date on that zone's clock — i.e. its midnight.
+ * When `isoDay` stops being the date on that zone's clock - i.e. its midnight.
  * A day is gone for everyone at the LATEST of these across our two zones.
  */
 export function endOfDay(zone: string, isoDay: string): Date {

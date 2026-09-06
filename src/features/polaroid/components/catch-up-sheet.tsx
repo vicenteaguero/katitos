@@ -7,7 +7,7 @@ import { dayKind, type DayKind } from '../lib/polaroid-days';
 /**
  * "We forgot, and our days don't line up."
  *
- * The camera button always shoots for YOUR today — that's the muscle memory and
+ * The camera button always shoots for YOUR today - that's the muscle memory and
  * it never changes. This is the deliberate, slower path: pick a still-open day
  * and upload from the library. It exists because with eleven hours between us,
  * one of us is regularly living in a day the other hasn't reached yet, and a
@@ -30,13 +30,13 @@ export function CatchUpSheet({
   onClose: () => void;
   /** Still-writable days, newest first. */
   days: string[];
-  /** Days you already have a photo for — offered as "replace". */
+  /** Days you already have a photo for - offered as "replace". */
   filled: Set<string>;
   selfZone: string | null | undefined;
   partnerName: string;
   /**
    * The day a last-call notification sent us here for. Its row arrives lit and
-   * breathing, so the thing you were told about is the thing under your thumb —
+   * breathing, so the thing you were told about is the thing under your thumb -
    * arriving at a list and hunting for the date would waste the warning.
    */
   urgentDay?: string | null;
@@ -80,7 +80,7 @@ export function CatchUpSheet({
                 >
                   {urgent && <Clock className="h-3 w-3 shrink-0" />}
                   {urgent
-                    ? `closing soon — ${describe(kind, partnerName)}`
+                    ? `closing soon - ${describe(kind, partnerName)}`
                     : describe(kind, partnerName)}
                 </span>
               </span>

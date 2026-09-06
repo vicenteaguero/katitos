@@ -1,13 +1,13 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — the spare profile, next to the main one
+-- Katitos - the spare profile, next to the main one
 --
 --   The design was always two unrelated ways in, and one column could only
 --   ever hold one of them. `sub_url` is the profile she uses; `alt_url` is the
---   one she switches to when the first stops establishing — which, per every
+--   one she switches to when the first stops establishing - which, per every
 --   post-mortem of the 2026 blocking waves, is a question of when.
 --
 --   Both are secrets in the strict sense: whoever holds one holds her tunnel.
---   The per-user policy from 20260905000001 already covers this column — she
+--   The per-user policy from 20260905000001 already covers this column - she
 --   sees hers, I see mine, neither sees the other's.
 --
 --   AmneziaWG deliberately does NOT live here. It is the path that has to work

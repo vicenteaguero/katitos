@@ -6,7 +6,7 @@ export interface RoutePoint {
 }
 
 /**
- * Road geometry between two points via the public OSRM demo server — free, no
+ * Road geometry between two points via the public OSRM demo server - free, no
  * key, CORS-enabled. Returns the path as `[lat, lng]` vertices (OSRM gives
  * GeoJSON `[lon, lat]`, so we flip), or `null` if it couldn't route.
  */
@@ -52,7 +52,7 @@ export function useRoadRoutes(pairs: { from: RoutePoint; to: RoutePoint }[]) {
     retry: 1,
     queryFn: async () => {
       const out: ([number, number][] | null)[] = [];
-      // Sequential — a handful of legs, kept gentle on the demo server.
+      // Sequential - a handful of legs, kept gentle on the demo server.
       for (const p of pairs) out.push(await osrmRoute(p.from, p.to));
       return out;
     },

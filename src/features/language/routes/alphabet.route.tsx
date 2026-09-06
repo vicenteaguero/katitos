@@ -16,7 +16,7 @@ import { useAlphabet, useRecordLetter } from '../api/alphabet';
 import { useLanguages } from '../lib/languages';
 
 /**
- * The thirty-three letters — the only place Russian can start.
+ * The thirty-three letters - the only place Russian can start.
  *
  * A dense wrap rather than a grid: no lines, no boxes, just the letters, the
  * way they would be written across a page. Tap one to hear it and read what it
@@ -106,7 +106,7 @@ export function AlphabetRoute() {
                   <span className="font-display text-base text-fg">
                     {open.example_word}
                   </span>
-                  {' — '}
+                  {' - '}
                   {(support === 'es'
                     ? open.example_translation_es
                     : open.example_translation_en) ?? ''}

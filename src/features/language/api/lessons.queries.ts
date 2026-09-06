@@ -18,14 +18,14 @@ import type {
  * each vocab block points at.
  *
  * A lesson is read top to bottom, so it is fetched in one go rather than block
- * by block — and that includes the things blocks REFER to. A vocab block that
+ * by block - and that includes the things blocks REFER to. A vocab block that
  * has to fetch its own words, or a media block that has to fetch its own file,
  * is a waterfall in the middle of a page of text.
  */
 /**
  * The newest answer per question.
  *
- * Correct ONLY because the query orders `answered_at` descending — the first
+ * Correct ONLY because the query orders `answered_at` descending - the first
  * row seen for an exercise is its latest attempt. Hoisted so the reference is
  * stable across renders.
  */
@@ -87,7 +87,7 @@ export function useLesson(lessonId: string | undefined) {
               .is('vocab.deleted_at', null)
               .order('position', { ascending: true })
           : Promise.resolve({ data: [], error: null }),
-        // The attachments this lesson owns — AND the ones its blocks point
+        // The attachments this lesson owns - AND the ones its blocks point
         // at, wherever they were uploaded: a lesson copied from another, or
         // a worksheet picked from the course's library.
         (() => {
@@ -104,7 +104,7 @@ export function useLesson(lessonId: string | undefined) {
       ]);
 
       // These used to swallow their errors, so a refused read rendered a
-      // lesson with no words and no attachments — indistinguishable from a
+      // lesson with no words and no attachments - indistinguishable from a
       // lesson she hadn't filled in yet.
       if (links.error) throw links.error;
       if (media.error) throw media.error;
@@ -122,7 +122,7 @@ export function useLesson(lessonId: string | undefined) {
         (a, b) => a.position - b.position
       );
       // A question can sit INSIDE the lesson, after the block it belongs to
-      // — explain, then try it — or at the end with no block, as before.
+      // - explain, then try it - or at the end with no block, as before.
       const exercisesByBlock: Record<string, Exercise[]> = {};
       const looseExercises: Exercise[] = [];
       for (const ex of exercises) {
@@ -151,7 +151,7 @@ export function useLesson(lessonId: string | undefined) {
 /**
  * My latest answer to each exercise in this lesson.
  *
- * Attempts are deliberately append-only — homework is meant to be redone — so
+ * Attempts are deliberately append-only - homework is meant to be redone - so
  * "where was I" means the newest row per exercise, not the only row.
  */
 export function useMyAttempts(lessonId: string | undefined) {
@@ -177,7 +177,7 @@ export function useMyAttempts(lessonId: string | undefined) {
 }
 
 /**
- * Everything he has answered in a lesson — what she reads when marking.
+ * Everything he has answered in a lesson - what she reads when marking.
  *
  * Both people's rows are visible by policy; this asks for the other person's
  * on purpose, because marking your own homework is not a feature.

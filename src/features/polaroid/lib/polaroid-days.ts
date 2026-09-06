@@ -4,7 +4,7 @@ import type { Polaroid } from '../types';
 /**
  * Which days you may still post a photo for, and how a day's rows pair up.
  *
- * Pure functions, no React, no Supabase — this is the half of the Double
+ * Pure functions, no React, no Supabase - this is the half of the Double
  * Polaroid that has to be *exactly* right across an 11-hour gap, so it's kept
  * testable. The database enforces the same rule independently
  * (`polaroid_day_open`); this mirrors it so the UI never offers a day the
@@ -18,7 +18,7 @@ export function localDay(
   zone: string | null | undefined,
   now: DateTime = DateTime.now()
 ): string {
-  // An unknown zone falls back to UTC, never the host zone — a build running in
+  // An unknown zone falls back to UTC, never the host zone - a build running in
   // UTC must not silently disagree with a phone.
   return now.setZone(zone ?? 'UTC').toISODate() ?? now.toUTC().toISODate()!;
 }
@@ -28,17 +28,17 @@ export function localDay(
  *
  * This is the whole rule, and it is deliberately literal: a day is open while
  * it is the date on somebody's wall clock, and not one minute longer. While
- * it's the 12th in Novosibirsk and still the 11th in Curicó, BOTH are open —
+ * it's the 12th in Novosibirsk and still the 11th in Curicó, BOTH are open -
  * so she can still post her 11th and he can already post the 12th. The instant
  * it's the 12th in both, the 11th is gone.
  *
  * There used to be ±2h of "grace" here, which meant that between midnight and
  * 02:00 in Curicó you could still fill a day that had already ended in BOTH
- * countries — a date nobody anywhere was living. That is not a day you missed
+ * countries - a date nobody anywhere was living. That is not a day you missed
  * narrowly, it is yesterday, and offering it made the whole rule meaningless.
  *
  * The midnight race it was meant to protect (shoot at 23:59:58, upload lands at
- * 00:00:03) is still protected — but by the DATABASE, which accepts a write for
+ * 00:00:03) is still protected - but by the DATABASE, which accepts a write for
  * five more minutes after a day ends. That window exists to keep a photo you
  * already took, never to offer you a day you can no longer live.
  */
@@ -65,11 +65,11 @@ export function isDayOpen(
 }
 
 /**
- * Why a given open day is on offer — so the picker can say "Aug 12 — already
+ * Why a given open day is on offer - so the picker can say "Aug 12 - already
  * today in Novosibirsk" instead of dumping bare dates on someone at midnight.
  *
  * Only two answers now. The third used to be 'grace', for a day that had ended
- * everywhere but was still writable; there is no such day any more — and with
+ * everywhere but was still writable; there is no such day any more - and with
  * it went the need to know your love's zone here, because an open day that
  * isn't yours can only be theirs.
  *
@@ -87,14 +87,14 @@ export function dayKind(
 }
 
 /**
- * The open day that is already behind you — the one you can actually LOSE.
+ * The open day that is already behind you - the one you can actually LOSE.
  *
  * She wakes on the 12th while Curicó is still on the 11th, so her 11th is open
  * for a few more hours and then it is gone forever. That day is the whole point
  * of this function: it is the only date that can expire on you unfilled.
  *
  * Deliberately NOT the mirror case. When it is already the 12th where your love
- * is and still the 11th here, the 12th is open to you too — but you are not
+ * is and still the 11th here, the 12th is open to you too - but you are not
  * about to lose it, you are about to LIVE it. Nothing needs saving, so nothing
  * is returned.
  */
@@ -114,7 +114,7 @@ export interface PolaroidDay {
   shared: Polaroid | null;
   mine: Polaroid | null;
   theirs: Polaroid | null;
-  /** Anything that fits nowhere. Rendered anyway — never lose a photo. */
+  /** Anything that fits nowhere. Rendered anyway - never lose a photo. */
   extras: Polaroid[];
   /** True when this day predates the split and shows as a single plate. */
   isLegacy: boolean;
@@ -177,7 +177,7 @@ export type Focus = 'mine' | 'theirs';
 /**
  * Whose photo is actually in front, given what exists.
  *
- * Your love's sits on top by default — the point of opening the app is to see
+ * Your love's sits on top by default - the point of opening the app is to see
  * their day. A side with no photo can never be the front one, so the caption
  * editor never ends up pointing at nothing.
  */

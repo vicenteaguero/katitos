@@ -6,7 +6,7 @@ import type { PlacedSticker } from '../../types';
  * What you can do to the sticker you just tapped.
  *
  * A bar, not a Sheet: it stands in for the nav row rather than sitting on top
- * of it, so it costs no height at all — and it never covers the page you are
+ * of it, so it costs no height at all - and it never covers the page you are
  * arranging, which a bottom sheet always would.
  */
 export function StickerToolbar({
@@ -28,7 +28,7 @@ export function StickerToolbar({
 
   return (
     <div className="pb-toolbar" role="toolbar" aria-label="Sticker">
-      {/* One place at a time, not all the way — see `stepOrder`. */}
+      {/* One place at a time, not all the way - see `stepOrder`. */}
       <Tool label="Forward one" onClick={onFront}>
         <ChevronUp className="h-4 w-4" />
       </Tool>
@@ -36,7 +36,7 @@ export function StickerToolbar({
         <ChevronDown className="h-4 w-4" />
       </Tool>
       {/* One way in, not two. Cutting, mounting and framing are the same
-          decision made in the same place — and that place is a screen big
+          decision made in the same place - and that place is a screen big
           enough to do it on. */}
       {!isText && (
         <Tool label="Frame and crop" onClick={onStudio}>

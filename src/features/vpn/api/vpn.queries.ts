@@ -10,7 +10,7 @@ import type { VpnClient, VpnServer } from '../types';
  * pulling a week of per-minute rows over the very connection this page exists
  * to worry about.
  *
- * Refetched every half minute while the tab is open — the beats land once a
+ * Refetched every half minute while the tab is open - the beats land once a
  * minute, so anything faster is asking a question whose answer cannot have
  * changed. And no polling in the background: this is a page you look at, not a
  * monitor she should pay for in battery.
@@ -29,7 +29,7 @@ export function useVpnStatus() {
 }
 
 /**
- * My own subscription row — the URL her client polls for an updated list.
+ * My own subscription row - the URL her client polls for an updated list.
  *
  * RLS makes this exactly one row or none: hers is not mine to read. `null` is
  * the normal state for whoever has not been issued a config yet, not an error.
@@ -60,7 +60,7 @@ export interface Where {
  * Is this phone, right now, coming out through one of our servers?
  *
  * The comparison happens in the edge function, against a table no client can
- * read. All that comes back is a name — which is the only part she needs and
+ * read. All that comes back is a name - which is the only part she needs and
  * the only part safe to hand over.
  *
  * `retry: false` because the interesting failure (offline, or the tunnel just

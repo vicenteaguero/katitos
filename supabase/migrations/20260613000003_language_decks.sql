@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — Language: decks ("a course your love built for you")
+-- Katitos - Language: decks ("a course your love built for you")
 -- Words group into decks per language; each partner authors decks for the
 -- other and plays them as a card game. Phrases gain an optional deck_id.
 -- ════════════════════════════════════════════════════════════════════════

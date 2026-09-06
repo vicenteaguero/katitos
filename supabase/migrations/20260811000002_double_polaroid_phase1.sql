@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — Double Polaroid, PHASE 1 (additive only)
+-- Katitos - Double Polaroid, PHASE 1 (additive only)
 --
 --   Until now `polaroids.day` was UNIQUE: one photo per day for the couple,
 --   whoever shot second overwrote the first. That worked while we lived in the
@@ -7,7 +7,7 @@
 --
 --   The model, deliberately simple:
 --     • every row is owned (`user_id`), keyed to the OWNER'S local civil date;
---     • pairing is just `day == day` — her Sunday next to his Sunday, no
+--     • pairing is just `day == day` - her Sunday next to his Sunday, no
 --       offset arithmetic anywhere;
 --     • the 34 existing rows are marked `is_shared` and keep behaving exactly
 --       as they do today (one plate, either of us edits the caption).
@@ -15,7 +15,7 @@
 --   A date is WRITABLE while it is still the current civil date in AT LEAST
 --   ONE of our two timezones. So while it's the 12th in Novosibirsk and still
 --   the 11th in Curicó, both are open; once it's the 12th in both, the 11th
---   closes forever. That is `polaroid_day_open()`, and it is enforced here —
+--   closes forever. That is `polaroid_day_open()`, and it is enforced here -
 --   not just hidden in the UI.
 --
 --   PHASE 1 KEEPS `polaroids_day_key`. The service worker deliberately does
@@ -89,14 +89,14 @@ create unique index if not exists polaroids_day_user_uniq
   on public.polaroids (day, user_id);
 create index if not exists polaroids_user_day_idx
   on public.polaroids (user_id, day desc);
--- At most one shared row per day — the legacy invariant, kept cheaply.
+-- At most one shared row per day - the legacy invariant, kept cheaply.
 create unique index if not exists polaroids_day_shared_uniq
   on public.polaroids (day) where is_shared;
 
 -- ── the rules live in a trigger, not in RLS ────────────────────────────────
 -- Two reasons. A WITH CHECK rejection surfaces as an opaque 42501 *after* the
 -- bytes are already uploaded; and a day-window inside an UPDATE USING clause
--- makes a late caption edit match zero rows and report 204 SUCCESS — the UI
+-- makes a late caption edit match zero rows and report 204 SUCCESS - the UI
 -- would show the caption saved and a refresh would reveal it never was.
 create or replace function public.polaroids_guard()
 returns trigger
@@ -132,7 +132,7 @@ begin
   new.is_shared  := old.is_shared;
   new.created_at := old.created_at;
 
-  -- Captions: either of us, any day, forever — that's the point of sharing.
+  -- Captions: either of us, any day, forever - that's the point of sharing.
   -- Pixels: only your own row, and only while the day is still open. Without
   -- this, one PATCH could replace any photo from any past day.
   if new.image_path is distinct from old.image_path then

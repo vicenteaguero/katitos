@@ -122,7 +122,7 @@ export function TreeCanvas({
           height="100%"
           preserveAspectRatio="xMidYMax meet"
         >
-          {/* The lit stage soil — a gilt hairline ground line the sapling rises from. */}
+          {/* The lit stage soil - a gilt hairline ground line the sapling rises from. */}
           <line
             x1={bounds.minX - pad}
             y1={2}

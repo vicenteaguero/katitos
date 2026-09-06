@@ -28,7 +28,7 @@ const BOARD: Record<CoverMaterial, string> = {
 };
 
 /**
- * The shelf — every album we keep, one per era of ours.
+ * The shelf - every album we keep, one per era of ours.
  *
  * A vertical stack of wide spines rather than a tile grid: an album is a thing
  * with a name and a span of time, and reading those matters more than fitting
@@ -92,7 +92,7 @@ export function AlbumsRoute() {
         <Empty
           icon="📖"
           title="No albums yet"
-          hint="One book per era of ours — start with the one you're living."
+          hint="One book per era of ours - start with the one you're living."
         />
       ) : (
         <div className="curtain-stagger space-y-3">
@@ -127,7 +127,7 @@ export function AlbumsRoute() {
               placeholder="Georgia &amp; Türkiye 2026"
             />
           </Field>
-          <Fieldset label="From — until">
+          <Fieldset label="From - until">
             <FieldRow>
               <Input
                 type="date"
@@ -186,7 +186,7 @@ function AlbumSpine({
       className="lift-press flex items-stretch gap-3 overflow-hidden rounded-lg rounded-tr-[1.75rem] bg-surface-2 shadow-loge"
     >
       {/* The wine board and its gilt line, so the shelf is made of the same
-          book you open — it used to be a flat brown rectangle. */}
+          book you open - it used to be a flat brown rectangle. */}
       <span
         className="relative w-20 shrink-0 overflow-hidden"
         aria-hidden="true"
@@ -216,9 +216,9 @@ function AlbumSpine({
           {book.title}
         </span>
         {/* One quiet line. It used to be two, the second of them shouting
-            EMPTY — START FILLING IT in capitals at you. */}
+            EMPTY - START FILLING IT in capitals at you. */}
         <span className="truncate font-sans text-xs text-muted">
-          {meta.join(' · ')}
+          {meta.join(' - ')}
         </span>
       </span>
     </Link>

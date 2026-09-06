@@ -18,14 +18,14 @@ export interface DragHandleProps {
 }
 
 /**
- * A list you can put in order — by dragging its handle, or with the arrow
+ * A list you can put in order - by dragging its handle, or with the arrow
  * keys on it.
  *
  * Nothing moves until the drop; the list is told the new order once, through
  * `onReorder`, so the caller saves exactly one reorder. Touch and mouse alike
  * (pointer events, and `touch-action: none` on the handle only, so the page
  * still scrolls from anywhere else). Up/Down on the handle moves the row one
- * step — the same reorder, no mouse.
+ * step - the same reorder, no mouse.
  */
 export function SortableList<T>({
   items,
@@ -125,7 +125,7 @@ export function SortableList<T>({
             {children(item, i, {
               onPointerDown: start(i),
               onKeyDown: keys(i),
-              'aria-label': 'Drag to reorder — or use the arrow keys',
+              'aria-label': 'Drag to reorder - or use the arrow keys',
               className:
                 'flex h-8 w-6 shrink-0 cursor-grab items-center justify-center rounded text-muted hover:text-fg active:cursor-grabbing',
               style: { touchAction: 'none' },

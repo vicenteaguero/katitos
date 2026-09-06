@@ -11,6 +11,6 @@ export function lastSeen(iso: string | null, now = Date.now()): string {
 
 /** 0.9931 → "99.3%". Under a full window it is a floor, never a promise. */
 export function uptimeText(v: number | null): string {
-  if (v == null) return '—';
+  if (v == null) return '-';
   return `${(v * 100).toFixed(v > 0.99 ? 1 : 0)}%`;
 }

@@ -63,7 +63,7 @@ describe('mapWithConcurrency', () => {
 });
 
 describe('batchProgress', () => {
-  it('counts a failure as finished — the bar is about waiting, not success', () => {
+  it('counts a failure as finished - the bar is about waiting, not success', () => {
     const states: JobState[] = ['done', 'failed', 'working', 'queued'];
     expect(batchProgress(states)).toEqual({
       done: 1,

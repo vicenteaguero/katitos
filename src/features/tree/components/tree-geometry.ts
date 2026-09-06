@@ -53,7 +53,7 @@ export interface BuildGeometryArgs {
   seed: number;
   /** Continuous stage 0..100 (from tree_state.growth_points). */
   stage: number;
-  /** Live health 0.05..1 — drives leaf density + droop. */
+  /** Live health 0.05..1 - drives leaf density + droop. */
   health: number;
   milestones?: MilestoneAnchor[];
 }
@@ -64,7 +64,7 @@ export const REVEAL_SPAN = 14;
 const TRUNK_LEN = 90;
 const TRUNK_WIDTH = 9;
 
-/** Seeded PRNG — mulberry32. Deterministic 0..1 stream from a 32-bit seed. */
+/** Seeded PRNG - mulberry32. Deterministic 0..1 stream from a 32-bit seed. */
 function mulberry32(seed: number): () => number {
   let a = seed >>> 0;
   return function () {

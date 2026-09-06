@@ -26,6 +26,6 @@ describe('uptimeText', () => {
   });
 
   it('shows a dash rather than 0% for a server with no history', () => {
-    expect(uptimeText(null)).toBe('—');
+    expect(uptimeText(null)).toBe('-');
   });
 });

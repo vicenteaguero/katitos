@@ -9,7 +9,7 @@ import type { WishlistItem } from '../types';
 /**
  * Everything here writes optimistically.
  *
- * The brief was that this has to feel instant — no spinner between deciding to
+ * The brief was that this has to feel instant - no spinner between deciding to
  * add something and seeing it. So the cache is updated first and rolled back
  * only if the server disagrees, which it almost never does.
  */
@@ -43,7 +43,7 @@ export interface NewItemInput {
   link?: string | null;
   price?: number | null;
   currency?: string | null;
-  /** Default is HIDDEN — a gift list is for surprises first. */
+  /** Default is HIDDEN - a gift list is for surprises first. */
   visible: boolean;
   image?: Blob | null;
 }

@@ -18,7 +18,7 @@ interface NominatimHit {
   address?: { country_code?: string };
 }
 
-/** Free OpenStreetMap (Nominatim) geocode — no key. Couple-scale traffic only. */
+/** Free OpenStreetMap (Nominatim) geocode - no key. Couple-scale traffic only. */
 async function geocode(q: string): Promise<CityHit[]> {
   const url =
     'https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=5&accept-language=en&q=' +
@@ -66,7 +66,7 @@ export function CitySearch({
     try {
       setHits(await geocode(q.trim()));
     } catch {
-      toast.error('Could not search — try again');
+      toast.error('Could not search - try again');
     } finally {
       setBusy(false);
     }

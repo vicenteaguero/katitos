@@ -38,7 +38,7 @@ const flagOf = (code: string | null) =>
 const legDot = (c: string | null) =>
   c === 'TR' ? '#b5633a' : c === 'GE' ? '#6e1423' : '#c9a24b';
 
-/** Compact remove control — small, so a list row isn't floored at a 44px box. */
+/** Compact remove control - small, so a list row isn't floored at a 44px box. */
 function RemoveBtn({ onClick }: { onClick: () => void }) {
   return (
     <button
@@ -54,7 +54,7 @@ function RemoveBtn({ onClick }: { onClick: () => void }) {
 
 const CITY_ROW_H = 46; // approx row height (incl. the space-y gap)
 
-/** The ordered cities — drag a row by its handle to reorder (no arrows). */
+/** The ordered cities - drag a row by its handle to reorder (no arrows). */
 function CityRoute({
   cities,
   onReorder,
@@ -94,7 +94,7 @@ function CityRoute({
 
   return (
     <div className="space-y-1.5">
-      <p className="eyebrow px-0.5">Route · drag to reorder</p>
+      <p className="eyebrow px-0.5">Route - drag to reorder</p>
       {cities.map((it, i) => {
         const dragging = dragId === it.id;
         return (
@@ -351,11 +351,11 @@ export function MapTab({
         </div>
       ) : listEmpty ? (
         <p className="py-10 text-center font-sans text-sm text-muted">
-          Nothing here yet — add a city or a place.
+          Nothing here yet - add a city or a place.
         </p>
       ) : (
         <div className="space-y-2">
-          {/* The route — drag a row by its handle to reorder. */}
+          {/* The route - drag a row by its handle to reorder. */}
           {cityItems.length > 0 && (
             <CityRoute
               cities={cityItems}
@@ -364,7 +364,7 @@ export function MapTab({
             />
           )}
 
-          {/* Seeded route legs — only while there's no city route yet. */}
+          {/* Seeded route legs - only while there's no city route yet. */}
           {cityItems.length < 2 &&
             seededLegs.map((l) => (
               <Card
@@ -387,7 +387,7 @@ export function MapTab({
               </Card>
             ))}
 
-          {/* Places — plain pins, no line. */}
+          {/* Places - plain pins, no line. */}
           {placeItems.length > 0 && (
             <div className="space-y-1.5">
               {cityItems.length > 0 && <p className="eyebrow px-0.5">Places</p>}
@@ -430,7 +430,7 @@ export function MapTab({
         </div>
       )}
 
-      {/* Add — City vs place, a flag, a search. */}
+      {/* Add - City vs place, a flag, a search. */}
       <Sheet open={adding} onClose={() => setAdding(false)} title="Add to map">
         <div className="space-y-3">
           {/* City (joins the route) vs place (plain pin). */}
@@ -478,7 +478,7 @@ export function MapTab({
               })}
             </div>
           </div>
-          {/* How you travel onward — colours the route hop. Cities only. */}
+          {/* How you travel onward - colours the route hop. Cities only. */}
           {placeKind === 'city' && (
             <div className="flex gap-1.5">
               {(
@@ -511,8 +511,8 @@ export function MapTab({
           />
           <p className="px-1 text-center font-sans text-xs text-muted">
             {placeKind === 'city'
-              ? 'Cities link into your route — the line is coloured by how you travel.'
-              : 'Places drop a plain pin — no route line.'}
+              ? 'Cities link into your route - the line is coloured by how you travel.'
+              : 'Places drop a plain pin - no route line.'}
           </p>
         </div>
       </Sheet>

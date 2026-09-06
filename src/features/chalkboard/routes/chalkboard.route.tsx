@@ -41,7 +41,7 @@ export function ChalkboardRoute() {
   const [color, setColor] = useState<string>(CHALK_COLORS[0]);
   // The note the top-bar trash would rub out. Picked by tapping it; dropped by
   // tapping the slate. The old per-note × was a 24px target sitting on the
-  // corner of a draggable object — half the taps moved the note instead, and
+  // corner of a draggable object - half the taps moved the note instead, and
   // the other half deleted the wrong one.
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -57,7 +57,7 @@ export function ChalkboardRoute() {
 
   const openAdd = () => {
     if (atMax) {
-      toast.error(`The wall holds ${MAX_NOTES} notes — rub one out first.`);
+      toast.error(`The wall holds ${MAX_NOTES} notes - rub one out first.`);
       return;
     }
     setAdding(true);
@@ -67,7 +67,7 @@ export function ChalkboardRoute() {
     const el = boardRef.current;
     if (!el || !body.trim()) return;
     if (atMax) {
-      toast.error(`The wall holds ${MAX_NOTES} notes — rub one out first.`);
+      toast.error(`The wall holds ${MAX_NOTES} notes - rub one out first.`);
       return;
     }
     const x = Math.max(0, Math.round(el.clientWidth / 2 - 80));
@@ -134,7 +134,7 @@ export function ChalkboardRoute() {
   // all remaining height.
   return (
     <div className="curtain-reveal flex h-full min-h-0 flex-col">
-      {/* Matte-slate board — separated by tone and spacing, not by a line. */}
+      {/* Matte-slate board - separated by tone and spacing, not by a line. */}
       <div
         ref={boardRef}
         className={cn(
@@ -142,7 +142,7 @@ export function ChalkboardRoute() {
           editing && 'ring-1 ring-gold/30'
         )}
         onPointerDown={(e) => {
-          // Only a tap on the slate itself — a tap that lands on a note is the
+          // Only a tap on the slate itself - a tap that lands on a note is the
           // note's own business.
           if (e.target === e.currentTarget) setSelectedId(null);
         }}
@@ -154,7 +154,7 @@ export function ChalkboardRoute() {
           // The slate used to take 2–3 seconds to appear: it's a 150 KB JPEG
           // referenced only from inside this lazily-loaded route, so the
           // browser couldn't even discover it until the chunk had parsed and
-          // rendered — and `jpg` wasn't in the PWA precache glob, so it was a
+          // rendered - and `jpg` wasn't in the PWA precache glob, so it was a
           // fresh network fetch every cold visit. Now it's a 55 KB WebP that
           // ships in the precache, and this inline placeholder means the board
           // is never blank even on a first-ever visit.

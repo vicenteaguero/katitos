@@ -45,7 +45,7 @@ function DateCard({ date, index }: { date: DateWithRatings; index: number }) {
       style={{ '--i': index } as React.CSSProperties}
     >
       <Card className="relative space-y-3 transition active:bg-surface-2">
-        {/* Suit pip — the deck's signature, struck in Imperial Purple */}
+        {/* Suit pip - the deck's signature, struck in Imperial Purple */}
         <span
           aria-hidden
           className="pointer-events-none absolute right-4 top-4 select-none font-display text-lg leading-none text-purple/70"
@@ -74,7 +74,7 @@ function DateCard({ date, index }: { date: DateWithRatings; index: number }) {
           )}
           {date.category && (
             <span className="font-display italic text-copper">
-              · {date.category}
+              - {date.category}
             </span>
           )}
         </div>
@@ -108,7 +108,7 @@ export function DatesListRoute() {
       <p className="eyebrow mb-3">The Date Deck</p>
       <PageHeader
         title="Dates"
-        subtitle="Plan, rate, remember — a deck you play through together"
+        subtitle="Plan, rate, remember - a deck you play through together"
       />
 
       <div className="mb-7 flex justify-center">

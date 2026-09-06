@@ -44,7 +44,7 @@ describe('Dialog', () => {
         <button>b</button>
       </Dialog>
     );
-    // Opens with the panel itself focused — no keyboard pops on a phone.
+    // Opens with the panel itself focused - no keyboard pops on a phone.
     expect(document.activeElement).toBe(screen.getByRole('dialog'));
     await user.tab();
     expect(document.activeElement).toBe(

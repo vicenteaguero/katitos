@@ -1,17 +1,17 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — exercises, homework and marks
+-- Katitos - exercises, homework and marks
 --
 --   The kinds she asked for: choose, choose several, type it, fill the gap,
 --   put it in order, match the pairs, listen, say it. Each one needs a
 --   different shape of question, so the question lives in `payload` (jsonb)
 --   and is validated in the client against a zod schema that IS unit-tested.
---   Adding a ninth kind of exercise is then a client change — which matters,
+--   Adding a ninth kind of exercise is then a client change - which matters,
 --   because the service worker means a migration can never be assumed to have
 --   reached both phones.
 --
 --   `lang_attempts` deliberately has NO unique constraint. The generic deck
---   engine already in this app is `unique(card_id, user_id)` — one answer,
---   forever — which is exactly wrong for homework you are meant to redo until
+--   engine already in this app is `unique(card_id, user_id)` - one answer,
+--   forever - which is exactly wrong for homework you are meant to redo until
 --   you get it right.
 -- ════════════════════════════════════════════════════════════════════════
 
@@ -82,7 +82,7 @@ create policy lang_attempts_write on public.lang_attempts for all
 
 -- Progress is the one place the TEACHER writes on the student's row: the mark
 -- and the note in the margin are hers to leave. That means the uniform policy,
--- and it also means the student can technically overwrite his own grade —
+-- and it also means the student can technically overwrite his own grade -
 -- which is fine here and nowhere else: this app has exactly two users who are
 -- a couple, and the alternative (a policy that lets her write his row but not
 -- him) needs a role check the rest of this schema does not have.

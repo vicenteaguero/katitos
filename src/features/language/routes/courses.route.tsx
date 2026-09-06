@@ -36,7 +36,7 @@ import {
  *
  * There are two languages in this house, not one with a gloss. She teaches him
  * Russian and he teaches her Spanish, so the screen is split by which side of a
- * course you are on rather than by a language switch — the app already knows
+ * course you are on rather than by a language switch - the app already knows
  * which is which from `native_language` and `learning_language`, and asking
  * again would only be a way to get it wrong.
  */
@@ -102,7 +102,7 @@ export function CoursesRoute() {
         <Inbox />
 
         <div className="flex gap-2">
-          {/* The alphabet is Cyrillic: for the one learning it — and for the one
+          {/* The alphabet is Cyrillic: for the one learning it - and for the one
             who records the letters in her own voice, which is the point of the
             screen. Gating it on "learning Russian" hid it from her entirely. */}
           {(learning === 'ru' || native === 'ru') && (
@@ -123,7 +123,7 @@ export function CoursesRoute() {
           <Empty
             icon="📚"
             title="No courses yet"
-            hint="Build the first one — a unit, a lesson, and something to try."
+            hint="Build the first one - a unit, a lesson, and something to try."
             action={
               <Button onClick={() => setOpen(true)}>Start a course</Button>
             }
@@ -222,7 +222,7 @@ function Section({
     <section className="space-y-1.5">
       <p className="eyebrow">
         {title}
-        {note && <span className="ml-1.5 normal-case">· {note}</span>}
+        {note && <span className="ml-1.5 normal-case">- {note}</span>}
       </p>
       <div className="space-y-2">
         {courses.map((c) => (

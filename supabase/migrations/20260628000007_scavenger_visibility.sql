@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — Date Cards visibility ("claim to reveal")
+-- Katitos - Date Cards visibility ("claim to reveal")
 --   New model: a card is PRIVATE to its creator until they CLAIM it (the epic
 --   reveal). Claiming makes it visible to the partner for review. The partner
 --   can cancel the review (dismissed = true) → hidden from them again until the

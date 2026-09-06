@@ -1,13 +1,13 @@
 /**
- * A very small PDF writer — enough to print an album, and nothing more.
+ * A very small PDF writer - enough to print an album, and nothing more.
  *
  * Why not a library: every album photo is ALREADY a JPEG, and PDF's
  * `/DCTDecode` filter takes JPEG bytes verbatim. So the downloaded file is
- * spliced straight into the document — no decode, no canvas, no re-encode, no
+ * spliced straight into the document - no decode, no canvas, no re-encode, no
  * memory spike on a phone, and the printed picture is bit-for-bit the original.
  * A general-purpose library would pull ~120 KB into the bundle to do worse.
  *
- * The trade: this writer only knows what the album needs — JPEG images,
+ * The trade: this writer only knows what the album needs - JPEG images,
  * filled rectangles, and a transform per object. Text is drawn as an image by
  * the caller (see `export-album.ts`), because the fonts a bare PDF gives you
  * cannot spell anything in Russian.
@@ -93,7 +93,7 @@ export class PdfDoc {
       at += bytes.length;
     };
 
-    // The second line must be a comment of RAW bytes above 127 — it is how a
+    // The second line must be a comment of RAW bytes above 127 - it is how a
     // PDF tells every tool downstream "this file is binary, do not line-ending
     // convert it". Written as bytes, not through `TextEncoder`: encoding the
     // string '\xE2\xE3\xCF\xD3' as UTF-8 turns four characters into eight
@@ -142,7 +142,7 @@ export class PdfDoc {
   }
 }
 
-/** PDF numbers: fixed precision, and never `1e-7` — which no reader accepts. */
+/** PDF numbers: fixed precision, and never `1e-7` - which no reader accepts. */
 export function num(n: number): string {
   return (Math.abs(n) < 1e-6 ? 0 : n).toFixed(4);
 }
@@ -188,7 +188,7 @@ export function fillRect(
   return m ? `q ${m.map(num).join(' ')} cm ${paint} Q\n` : `q ${paint} Q\n`;
 }
 
-/** The size of a JPEG, read from its own header — no decoding needed. */
+/** The size of a JPEG, read from its own header - no decoding needed. */
 export function readJpegSize(
   bytes: Uint8Array
 ): { width: number; height: number; components: number } | null {
@@ -202,7 +202,7 @@ export function readJpegSize(
     const marker = bytes[i + 1];
     // 0xFF is legal padding before a marker, and these carry no length field.
     // Treating either as a segment header walked the reader into the middle of
-    // the image and it gave up — and a photo it can't measure is a photo the
+    // the image and it gave up - and a photo it can't measure is a photo the
     // export silently drops.
     if (
       marker === 0xff ||

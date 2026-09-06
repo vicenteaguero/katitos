@@ -41,12 +41,12 @@ export function VocabPickerSheet({
   lessonId: string;
   /** The words already on this block, in order. */
   selected: Vocab[];
-  /** The language this lesson teaches — the words are in it, not in yours. */
+  /** The language this lesson teaches - the words are in it, not in yours. */
   target: Lang;
 }) {
   const { native: support } = useLanguages();
   const [search, setSearch] = useState('');
-  // What the QUERY sees, a beat behind the box — each keystroke used to fire
+  // What the QUERY sees, a beat behind the box - each keystroke used to fire
   // its own 500-row search and keep it in the cache.
   const [term, setTerm] = useState('');
   useEffect(() => {
@@ -190,7 +190,7 @@ export function VocabPickerSheet({
           </Field>
         </FieldRow>
         {/* A Fieldset, not a Field: tapping a label's caption presses the
-            first button inside it — which was Record. */}
+            first button inside it - which was Record. */}
         <AudioField
           label="Say it"
           hint="So the word is not silent in the lesson"

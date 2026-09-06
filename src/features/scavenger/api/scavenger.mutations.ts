@@ -46,7 +46,7 @@ export function useAddDateCard() {
   });
 }
 
-/** CLAIM (or re-claim) a date — the creator did it, so reveal it to the partner
+/** CLAIM (or re-claim) a date - the creator did it, so reveal it to the partner
  *  for review. Upserts the single claim row: claimed by me, NOT dismissed, with
  *  any prior stars/rating wiped (a clean slate for a re-claim). The proof photo
  *  is optional; when present it is uploaded and recorded, otherwise any existing
@@ -96,7 +96,7 @@ export function useClaimCard() {
   });
 }
 
-/** Rate a claimed date 1–3 stars — only the NON-creator calls this (enforced in
+/** Rate a claimed date 1–3 stars - only the NON-creator calls this (enforced in
  *  UI). The stars go to the card's creator; the pot budget is checked first. */
 export function useRateDate() {
   const qc = useQueryClient();
@@ -124,7 +124,7 @@ export function useRateDate() {
   });
 }
 
-/** Cancel the review — the partner hides a claimed card again until it is
+/** Cancel the review - the partner hides a claimed card again until it is
  *  re-claimed, clearing any stars so they leave the pot. Non-creator only. */
 export function useDismissClaim() {
   const qc = useQueryClient();
@@ -161,7 +161,7 @@ export function useAcceptRating() {
   });
 }
 
-/** Unclaim — the creator claimed by mistake; delete the claim row entirely so
+/** Unclaim - the creator claimed by mistake; delete the claim row entirely so
  *  the card is private again, as if it had never been claimed. */
 export function useUnclaimCard() {
   const qc = useQueryClient();

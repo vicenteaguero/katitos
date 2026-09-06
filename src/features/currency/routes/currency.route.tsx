@@ -13,7 +13,7 @@ import { Button, Empty, Input, Sheet, useTopBarAction } from '@kernel/ui';
 import { useRates } from '../api/currency.queries';
 import { ANCHORS, CURRENCIES, isCode, meta, type Code } from '../currencies';
 
-// Shrink the figure as it grows so it never wraps or clips — tool, not poster.
+// Shrink the figure as it grows so it never wraps or clips - tool, not poster.
 const fit = (s: string) =>
   s.length > 14
     ? 'text-3xl'
@@ -29,7 +29,7 @@ interface Entry {
   from: Code;
   to: Code;
   result: number;
-  // A named entry is "kept" — it persists across reloads (in localStorage)
+  // A named entry is "kept" - it persists across reloads (in localStorage)
   // until deleted. Un-named entries are session-only ("saved in the moment").
   name?: string;
 }
@@ -66,14 +66,14 @@ function loadPair(): { from: Code; to: Code } | null {
   return null;
 }
 
-// "rates updated Xh ago" — a quiet freshness line; gently flagged when old.
+// "rates updated Xh ago" - a quiet freshness line; gently flagged when old.
 function freshness(updatedAt: number | null) {
   if (!updatedAt) return null;
   const h = Math.floor((Date.now() - updatedAt) / 3_600_000);
   if (h < 1) return { text: 'rates just updated', stale: false };
   if (h < 24) return { text: `rates updated ${h}h ago`, stale: false };
   const d = Math.floor(h / 24);
-  return { text: `rates ${d}d old · may be off`, stale: d >= 2 };
+  return { text: `rates ${d}d old - may be off`, stale: d >= 2 };
 }
 
 export function CurrencyRoute() {
@@ -100,19 +100,19 @@ export function CurrencyRoute() {
   const n = Number(amount) || 0;
   const result = convert(n, from, to, index);
   const shown = amount === '' ? '0' : amount;
-  // The figure ONLY. The code is rendered once, after it — `formatMoney` used
+  // The figure ONLY. The code is rendered once, after it - `formatMoney` used
   // to prefix the code and the markup appended it again ("CLP 123.4 CLP").
-  const resultText = result != null ? formatAmount(result, to) : '—';
+  const resultText = result != null ? formatAmount(result, to) : '-';
 
   // Whichever of our two everyday currencies isn't already on screen, shown
-  // small underneath — so the number we need to tell each other is always
+  // small underneath - so the number we need to tell each other is always
   // there without converting twice.
   const crossRates = ANCHORS.filter((c) => c !== from && c !== to).map(
     (code) => ({ code, value: convert(n, from, code, index) })
   );
 
   // The OLDEST pair, not the newest: one freshly-written row would otherwise
-  // make a table full of stale rates look current — and the rate you're
+  // make a table full of stale rates look current - and the rate you're
   // reading right now might be one of the stale ones.
   const updatedAt = useMemo(() => {
     let min = Infinity;
@@ -125,7 +125,7 @@ export function CurrencyRoute() {
   const fresh = freshness(updatedAt);
 
   // Freshness lives quietly in the top bar (right), not under the figures.
-  // Tap it to force a refresh — otherwise rates only heal on an 8h-stale open.
+  // Tap it to force a refresh - otherwise rates only heal on an 8h-stale open.
   useTopBarAction(
     fresh ? (
       <button
@@ -146,11 +146,11 @@ export function CurrencyRoute() {
     try {
       localStorage.setItem(SAVED_KEY, JSON.stringify(saved));
     } catch {
-      /* storage may be unavailable (private mode) — non-fatal */
+      /* storage may be unavailable (private mode) - non-fatal */
     }
   }, [saved]);
 
-  // Seed the result currency from the saved preference — once, fresh device.
+  // Seed the result currency from the saved preference - once, fresh device.
   const seeded = useRef(false);
   const touched = useRef(false);
   useEffect(() => {
@@ -172,7 +172,7 @@ export function CurrencyRoute() {
     try {
       localStorage.setItem(PAIR_KEY, JSON.stringify({ from, to }));
     } catch {
-      /* storage may be unavailable (private mode) — non-fatal */
+      /* storage may be unavailable (private mode) - non-fatal */
     }
   }, [from, to]);
 
@@ -221,7 +221,7 @@ export function CurrencyRoute() {
     setPendingName('');
   };
 
-  // Resolve the name prompt — a name keeps it forever; empty leaves it transient.
+  // Resolve the name prompt - a name keeps it forever; empty leaves it transient.
   const resolvePending = () => {
     const name = pendingName.trim();
     if (name && pendingEntry) {
@@ -268,7 +268,7 @@ export function CurrencyRoute() {
 
   return (
     <div className="flex h-full flex-col gap-3">
-      {/* Exchange bar — from 🇷🇺 ⇄ 🇨🇱 to, history on the right. */}
+      {/* Exchange bar - from 🇷🇺 ⇄ 🇨🇱 to, history on the right. */}
       <div className="relative flex shrink-0 items-center justify-center gap-1">
         <CurrencyChip
           code={from}
@@ -298,7 +298,7 @@ export function CurrencyRoute() {
         </button>
       </div>
 
-      {/* Inline flag picker — one tap, no menus. */}
+      {/* Inline flag picker - one tap, no menus. */}
       {editing && (
         <div className="curtain-reveal flex shrink-0 flex-wrap justify-center gap-1.5">
           {CURRENCIES.map((c) => {
@@ -322,7 +322,7 @@ export function CurrencyRoute() {
         </div>
       )}
 
-      {/* The reading — full-width chips, centred in the space between the
+      {/* The reading - full-width chips, centred in the space between the
           currency picker and the numpad. The cross-rates sit with them, so the
           whole group is what gets centred. */}
       <div className="flex min-h-0 flex-1 flex-col justify-center gap-2">
@@ -352,7 +352,7 @@ export function CurrencyRoute() {
               >
                 <span aria-hidden="true">{meta(c.code).flag}</span>
                 <span className="truncate font-semibold text-fg/80">
-                  {c.value != null ? formatAmount(c.value, c.code) : '—'}
+                  {c.value != null ? formatAmount(c.value, c.code) : '-'}
                 </span>
                 <span className="text-muted/70">{c.code}</span>
               </span>
@@ -361,7 +361,7 @@ export function CurrencyRoute() {
         )}
       </div>
 
-      {/* Numpad — bare figures, generous targets. */}
+      {/* Numpad - bare figures, generous targets. */}
       <div className="grid shrink-0 grid-cols-3 gap-2">
         {['7', '8', '9', '4', '5', '6', '1', '2', '3', '.', '0', '⌫'].map(
           (k) => (
@@ -377,7 +377,7 @@ export function CurrencyRoute() {
         )}
       </div>
 
-      {/* Clear · Save — same wine tone, different weight. */}
+      {/* Clear - Save - same wine tone, different weight. */}
       <div className="grid shrink-0 grid-cols-2 gap-2">
         <button
           type="button"
@@ -396,7 +396,7 @@ export function CurrencyRoute() {
         </button>
       </div>
 
-      {/* History — kept + session, no mini-titles, delete only in edit mode. */}
+      {/* History - kept + session, no mini-titles, delete only in edit mode. */}
       <Sheet
         open={showHistory}
         onClose={closeHistory}
@@ -432,7 +432,7 @@ export function CurrencyRoute() {
         )}
       </Sheet>
 
-      {/* Name prompt after Save — optional. */}
+      {/* Name prompt after Save - optional. */}
       <Sheet
         open={!!pendingEntry}
         onClose={resolvePending}
@@ -445,7 +445,7 @@ export function CurrencyRoute() {
             value={pendingName}
             onChange={(e) => setPendingName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && resolvePending()}
-            placeholder="e.g. Groceries — empty just saves the numbers"
+            placeholder="e.g. Groceries - empty just saves the numbers"
           />
           <Button full onClick={resolvePending}>
             {pendingName.trim() ? 'Keep forever' : 'Save'}
@@ -456,7 +456,7 @@ export function CurrencyRoute() {
   );
 }
 
-/** One history line — tap to restore; in edit mode, rename or delete. */
+/** One history line - tap to restore; in edit mode, rename or delete. */
 function HistoryRow({
   entry,
   editing,
@@ -554,7 +554,7 @@ function HistoryRow({
   );
 }
 
-/** A tappable from/to chip — flag + code, nothing more. */
+/** A tappable from/to chip - flag + code, nothing more. */
 function CurrencyChip({
   code,
   open,

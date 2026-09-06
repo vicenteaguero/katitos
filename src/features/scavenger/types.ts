@@ -8,5 +8,5 @@ export type ScavengerCardFull = ScavengerCard & {
   scavenger_claims: ScavengerClaim | null;
 };
 
-/** The shared star pot — both rate from it; nobody scores their own deck. */
+/** The shared star pot - both rate from it; nobody scores their own deck. */
 export const STAR_POT = 40;

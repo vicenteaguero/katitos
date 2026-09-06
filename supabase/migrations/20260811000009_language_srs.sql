@@ -1,9 +1,9 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — Russian lessons that actually remember
+-- Katitos - Russian lessons that actually remember
 --
 --   She is an English teacher and is going to teach him properly. Until now
 --   the feature was a flip card with "Again / Got it" whose answer was thrown
---   away the moment you left the screen — no memory, no progress, no way for
+--   away the moment you left the screen - no memory, no progress, no way for
 --   her to see what he keeps forgetting.
 --
 --   `phrase_reviews` is one row per (card, learner): when it is next due, how
@@ -13,7 +13,7 @@
 --
 --   Turkish and Georgian are NOT dropped here. Migration 20260630000003 ran on
 --   production and INSERTED tr/ka decks and phrases, so re-tightening the CHECK
---   would fail on live rows — and the old bundle can still write 'tr' during
+--   would fail on live rows - and the old bundle can still write 'tr' during
 --   the upgrade window. The UI stops offering them now; the data gets cleaned
 --   up in a later, gated migration.
 -- ════════════════════════════════════════════════════════════════════════
@@ -68,7 +68,7 @@ begin
 end $$;
 
 -- ── teaching notes on a card ───────────────────────────────────────────────
--- Grammar, a case, a warning about stress — the things a teacher writes in the
+-- Grammar, a case, a warning about stress - the things a teacher writes in the
 -- margin. Shown on the answer side.
 alter table public.phrases
   add column if not exists notes text,
@@ -76,7 +76,7 @@ alter table public.phrases
 
 -- ── rescue the orphaned seed phrases ───────────────────────────────────────
 -- seed.sql inserted phrases with deck_id NULL, and every screen filters by
--- deck — so they have been invisible since the day decks were introduced.
+-- deck - so they have been invisible since the day decks were introduced.
 -- Give them a home instead of leaving them stranded.
 do $$
 declare v_deck uuid;

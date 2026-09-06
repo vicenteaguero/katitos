@@ -1,9 +1,9 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — a word is put away, not destroyed
+-- Katitos - a word is put away, not destroyed
 --
 --   Deleting a word from the dictionary was one tap, and it took the
 --   recording, every lesson's link to the word and BOTH people's review
---   history with it (the cascades below it are correct — they are what make
+--   history with it (the cascades below it are correct - they are what make
 --   a real delete a real delete). Nothing can put that back.
 --
 --   So a delete now marks the row and every list stops showing it. The toast

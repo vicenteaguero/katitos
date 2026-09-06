@@ -92,14 +92,14 @@ export function LessonRoute() {
   // "Try again": the screen starts over and the old answers stop seeding it.
   const [retrying, setRetrying] = useState(false);
   // Checked THIS sitting. A verdict brought back from last time is shown but
-  // does not lock the question — homework is meant to be redone.
+  // does not lock the question - homework is meant to be redone.
   const [fresh, setFresh] = useState<Set<string>>(new Set());
 
   /**
    * An exam stays handed in across a reload.
    *
    * This used to live only in component state, so refreshing offered the
-   * "Hand it in" button again on an empty form — and pressing it wrote a
+   * "Hand it in" button again on an empty form - and pressing it wrote a
    * second set of answers and overwrote the real score with zero.
    */
   const mine = progress?.get(lessonId ?? '');
@@ -107,7 +107,7 @@ export function LessonRoute() {
     handedIn ||
     (!retrying && ['submitted', 'graded'].includes(mine?.status ?? ''));
 
-  // Her pencil, not his: the builder is for whoever teaches this language —
+  // Her pencil, not his: the builder is for whoever teaches this language -
   // and only once the pair is known, because for the first half-second the
   // app is guessing, and it guessed him.
   const teacher =
@@ -143,7 +143,7 @@ export function LessonRoute() {
     if (lessonId && ready && targetLang && !teacher) noteOpened(lessonId);
   }, [lessonId, ready, targetLang, teacher, noteOpened]);
 
-  /** His newest go at each question — how many so far, and her margin on it. */
+  /** His newest go at each question - how many so far, and her margin on it. */
   const latest = useMemo(() => {
     const out = new Map<string, Attempt>();
     for (const a of attempts ?? []) out.set(a.exercise_id, a);
@@ -155,7 +155,7 @@ export function LessonRoute() {
    * What he already answered, back on the screen.
    *
    * Answers and verdicts lived only in component state, so a refresh offered
-   * every question again — and homework done in two sittings never counted as
+   * every question again - and homework done in two sittings never counted as
    * done, because "done" was computed from that state. The attempts query
    * already holds the newest answer to each question; it was only being
    * counted. Local state wins where both exist: what he is typing now beats
@@ -217,7 +217,7 @@ export function LessonRoute() {
     });
 
     // Homework has to record that it was done, or it sits on the home screen
-    // forever getting later — only exams were writing a progress row.
+    // forever getting later - only exams were writing a progress row.
     const done = exercises.every((x) => next[x.id]);
     if (done) setRetrying(false);
     // Once she has marked it, a re-check is practice: the attempt is kept,
@@ -242,15 +242,15 @@ export function LessonRoute() {
   /**
    * Hand the whole thing in.
    *
-   * An exam marks everything at the end — checking your answer as you go is
-   * not what an exam is — and the score goes straight onto the progress row
+   * An exam marks everything at the end - checking your answer as you go is
+   * not what an exam is - and the score goes straight onto the progress row
    * she reads.
    */
   const handIn = async () => {
     if (handingIn) return;
     setHandingIn(true);
     try {
-      // One insert for the whole exam, not one request per question — and
+      // One insert for the whole exam, not one request per question - and
       // nothing on screen says "Handed in" until the answers are actually in.
       const marks = await answerMany.mutateAsync({
         lessonId: lesson.id,
@@ -338,7 +338,7 @@ export function LessonRoute() {
         />
         {a?.teacher_note && (
           <p className="font-display text-sm italic text-fg">
-            — {a.teacher_note}
+            - {a.teacher_note}
           </p>
         )}
         {a?.teacher_audio_path && (
@@ -359,7 +359,7 @@ export function LessonRoute() {
             full
             variant="secondary"
             onClick={() => markOne(ex)}
-            // Not until his earlier attempts are known — the attempt
+            // Not until his earlier attempts are known - the attempt
             // number would collide with one already written.
             disabled={answers[ex.id] === undefined || attemptsLoading}
           >
@@ -389,7 +389,7 @@ export function LessonRoute() {
               : lesson.kind === 'exam'
                 ? 'Exam'
                 : 'Lesson'}
-            {lesson.due_on ? ` · due ${dueLabel(lesson.due_on, today)}` : ''}
+            {lesson.due_on ? ` - due ${dueLabel(lesson.due_on, today)}` : ''}
           </p>
           <h1 className="mt-0.5 font-display text-2xl font-semibold text-fg">
             {lesson.title}
@@ -397,7 +397,7 @@ export function LessonRoute() {
           {lesson.subtitle && (
             <p className="font-sans text-sm text-muted">{lesson.subtitle}</p>
           )}
-          {/* The words of THIS lesson, drilled on their own — not the whole
+          {/* The words of THIS lesson, drilled on their own - not the whole
               schedule, which is what tonight's practice should be about. */}
           {!teacher && Object.keys(lesson.vocabByBlock).length > 0 && (
             <Link
@@ -416,10 +416,10 @@ export function LessonRoute() {
             <section className="space-y-1 rounded-lg bg-surface-2 px-4 py-3">
               <p className="eyebrow">
                 {mine.status === 'graded'
-                  ? `Marked${mine.score != null ? ` · ${Math.round(mine.score * 100)}%` : ''}`
+                  ? `Marked${mine.score != null ? ` - ${Math.round(mine.score * 100)}%` : ''}`
                   : mine.status === 'returned'
-                    ? 'Sent back — have another go'
-                    : "Handed in — she'll see it"}
+                    ? 'Sent back - have another go'
+                    : "Handed in - she'll see it"}
               </p>
               {mine.status !== 'submitted' && mine.teacher_note && (
                 <p className="font-display text-base italic leading-snug text-fg">
@@ -458,11 +458,11 @@ export function LessonRoute() {
             }
             className="lift-press sticky top-0 z-10 w-full rounded-full bg-accent px-3 py-1.5 font-sans text-xs text-accent-fg shadow-loge"
           >
-            She is on {live.index + 1} of {live.total} — follow along
+            She is on {live.index + 1} of {live.total} - follow along
           </button>
         )}
 
-        {/* Hers to select and copy — a lesson on a computer is a document. The
+        {/* Hers to select and copy - a lesson on a computer is a document. The
             questions sit where she put them: after the block they belong to. */}
         {lesson.blocks.map((block) => (
           <div key={block.id} id={`block-${block.id}`} className="space-y-3">

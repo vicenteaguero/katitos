@@ -7,8 +7,8 @@ export type OptionState = 'idle' | 'picked' | 'right' | 'wrong';
 /**
  * An answer you tap.
  *
- * Four screens drew this one themselves — a choice in a lesson, a card in
- * practice, a Know-Me option, a quiz option — each with its own four colours
+ * Four screens drew this one themselves - a choice in a lesson, a card in
+ * practice, a Know-Me option, a quiz option - each with its own four colours
  * for the same four states. One shape, one set of colours: quiet until
  * picked, wine when picked, his green when right, error red when wrong.
  */

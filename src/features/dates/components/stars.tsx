@@ -2,7 +2,7 @@ import { cn } from '@kernel/lib';
 
 const VALUES = [1, 2, 3, 4, 5] as const;
 
-/** Interactive 1–5 star selector — gilt points struck on the card. */
+/** Interactive 1–5 star selector - gilt points struck on the card. */
 export function Stars({
   value,
   onChange,
@@ -41,7 +41,7 @@ export function Stars({
   );
 }
 
-/** Read-only star display — the card's struck score, gilt points + a tally. */
+/** Read-only star display - the card's struck score, gilt points + a tally. */
 export function StarsDisplay({
   value,
   className,

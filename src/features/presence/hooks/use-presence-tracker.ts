@@ -11,7 +11,7 @@ import { usePresenceStore } from '../store';
 /**
  * Side-effects that run once the app is open: log the open + refresh last-seen,
  * and toast when the partner opens the app live. We deliberately do NOT
- * push-notify the partner on every open — that was notification spam.
+ * push-notify the partner on every open - that was notification spam.
  */
 export function usePresenceTracker(): void {
   const { self, partner } = usePartner();

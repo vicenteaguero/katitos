@@ -82,7 +82,7 @@ function PageFaceImpl({
    * The sticker currently being manipulated, if any.
    *
    * One thing moves at a time. While a photo is being dragged, resized, turned
-   * or cropped, every OTHER sticker on the page stands still — otherwise a
+   * or cropped, every OTHER sticker on the page stands still - otherwise a
    * stray finger lands on a neighbour halfway through and drags that instead,
    * which is the whole "it feels buggy" of arranging a page.
    */
@@ -95,7 +95,7 @@ function PageFaceImpl({
       aria-hidden={!interactive}
       // `onClick`, not `onPointerDown`. Clearing the selection on pointerdown
       // fired BEFORE the sticker's own tap handler, so tapping the selected
-      // sticker deselected and immediately reselected it — and it could never
+      // sticker deselected and immediately reselected it - and it could never
       // be dismissed by tapping it again. A click on the paper is a click that
       // no sticker stopped.
       onClick={() => {
@@ -181,7 +181,7 @@ function Sticker({
   interactive: boolean;
   eager: boolean;
   selected: boolean;
-  /** Another sticker is being worked on — stand still. */
+  /** Another sticker is being worked on - stand still. */
   frozen: boolean;
   depth: number;
   url?: string;
@@ -209,7 +209,7 @@ function Sticker({
   // nothing here to hold mid-gesture and nothing to re-seed under a finger.
   const crop = cropOf(sticker);
 
-  // Sync to external changes (e.g. partner moved it) — never mid-gesture.
+  // Sync to external changes (e.g. partner moved it) - never mid-gesture.
   useEffect(() => {
     if (!busyRef.current)
       setView({
@@ -233,7 +233,7 @@ function Sticker({
         cancel,
       }) => {
         // TWO FINGERS ARE NEVER A MOVE. They belong to the page, which is
-        // scaling and turning whatever is selected — including when they land
+        // scaling and turning whatever is selected - including when they land
         // on some other sticker, which must not start dragging that one.
         // Checked before anything else so the event still reaches the page.
         if (touches > 1) {
@@ -285,7 +285,7 @@ function Sticker({
       // one pointer is how "I can't crop it, it just runs away" happens.
       enabled: interactive && !frozen,
       eventOptions: { passive: false },
-      // Drag only. Pinch is the PAGE's, always — a sticker that is not
+      // Drag only. Pinch is the PAGE's, always - a sticker that is not
       // selected must not be resizable by putting two fingers on it.
       drag: { filterTaps: true, pointer: { touch: true } },
     }
@@ -337,7 +337,7 @@ function Sticker({
   );
 
   const polaroid = !isText && sticker.frame === 'polaroid';
-  // A polaroid's window is square whatever the sticker says — that squareness
+  // A polaroid's window is square whatever the sticker says - that squareness
   // IS the format, and every existing film sticker was stored as 'natural'.
   const shape: StickerShape = polaroid
     ? 'square'
@@ -351,7 +351,7 @@ function Sticker({
    * Resize and turn the selected sticker from ANYWHERE on the page.
    *
    * The corner handle is the precise control, but a line of text is a
-   * centimetre tall and the handle is smaller still — you cannot pinch that
+   * centimetre tall and the handle is smaller still - you cannot pinch that
    * with two adult thumbs. While something is selected the whole sheet takes
    * the pinch, exactly as it does while cropping.
    */
@@ -389,7 +389,7 @@ function Sticker({
       ref={ref}
       {...(interactive ? bind() : {})}
       // The tap that SELECTS this sticker is a gesture, and the click that
-      // follows it still travels up to the paper — whose job is to clear the
+      // follows it still travels up to the paper - whose job is to clear the
       // selection. Without this, selecting anything immediately deselected it
       // again and the toolbar never appeared.
       onClick={(e) => interactive && e.stopPropagation()}
@@ -444,7 +444,7 @@ function Sticker({
             `pb-fshape-${shape}`,
             `pb-mount-${sticker.frame_color ?? 'cream'}`
           )}
-          // A FRACTION of the sticker, not pixels — the card has to grow with
+          // A FRACTION of the sticker, not pixels - the card has to grow with
           // the photograph. The number lives in `matFraction` so the printed
           // page can use exactly the same one.
           style={{ ['--pb-mat' as string]: `${mat * 100}%` }}
@@ -474,7 +474,7 @@ function Sticker({
           {sticker.frame === 'tape' && (
             <span className="pb-tape-2" aria-hidden="true" />
           )}
-          {/* On film the words live in the chin — that is what the chin is
+          {/* On film the words live in the chin - that is what the chin is
               for. Every other mount keeps its caption OUTSIDE: inside, a
               caption made a circular mount taller than it was wide, so the
               "circle" came out an egg. */}
@@ -497,7 +497,7 @@ function Sticker({
         <span
           className={cn('pb-sticker-cap', `pb-font-${sticker.font_family}`)}
           style={{
-            // A fraction of the PAGE, and smaller than a title would be — the
+            // A fraction of the PAGE, and smaller than a title would be - the
             // same 0.62 the printed page uses, so a caption comes out the size
             // you chose on both.
             ['--pb-cap-size' as string]: `${

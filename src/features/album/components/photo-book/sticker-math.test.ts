@@ -32,7 +32,7 @@ describe('orderStickers', () => {
     expect(out.map((x) => x.id)).toEqual(['a', 'b', 'c']);
   });
 
-  it('breaks a tie by age, then by id — never at random', () => {
+  it('breaks a tie by age, then by id - never at random', () => {
     const out = orderStickers([
       s('y', 0, '2026-05-02T00:00:00Z'),
       s('x', 0, '2026-05-01T00:00:00Z'),
@@ -64,7 +64,7 @@ describe('z depths', () => {
 
   it('front, then back, then front again keeps moving in the right direction', () => {
     // The old version asserted `max([...zs, front]) === front`, which holds
-    // for any implementation returning at least the maximum — including one
+    // for any implementation returning at least the maximum - including one
     // that forgets to add 1.
     let zs = [0, 1, 2];
     const a = nextZFront(zs);
@@ -128,7 +128,7 @@ describe('the corner handle', () => {
   it('turns by the CHANGE in angle, not by where the finger happens to be', () => {
     // Grabbing the handle at 45° and dragging to 90° is a 45° turn. Every
     // other rotation test starts at 0°, where forgetting to subtract the grab
-    // angle makes no difference at all — so this is the one that catches it.
+    // angle makes no difference at all - so this is the one that catches it.
     const { rotation } = handleTransform(
       centre,
       { x: 100, y: 150 },
@@ -217,7 +217,7 @@ describe('dropSpot', () => {
  * Two photos of different shapes should look like a pair, not a mismatch.
  *
  * Everything was 42% of the page wide whatever it was, so a portrait picture
- * towered over the landscape one next to it — same width, nearly twice the
+ * towered over the landscape one next to it - same width, nearly twice the
  * height. Matching area instead is what makes a page look arranged.
  */
 describe('stickerWidth', () => {
@@ -374,7 +374,7 @@ describe('matFraction', () => {
   });
 
   it('lets instant film keep its own proportions', () => {
-    // Film is film — the thickness control does not apply to it.
+    // Film is film - the thickness control does not apply to it.
     for (const w of ['thin', 'medium', 'wide'] as const) {
       expect(matFraction('polaroid', w)).toBe(FILM_EDGE);
     }

@@ -1,13 +1,13 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — her exit servers, and whether they are alive
+-- Katitos - her exit servers, and whether they are alive
 --
 --   Katitos is NOT part of her connection. It does not hand out configs, it
 --   does not proxy anything, and if it is down her internet does not notice.
 --   All this schema does is answer three questions when things already work:
 --
---     · which servers exist, and which one is she meant to be on
---     · did each one report in recently
---     · what has uptime looked like this week
+--     - which servers exist, and which one is she meant to be on
+--     - did each one report in recently
+--     - what has uptime looked like this week
 --
 --   ── What is deliberately NOT here ───────────────────────────────────────
 --   The server ADDRESSES. No hostname, no IP, no port, no key. A leak of this
@@ -15,7 +15,7 @@
 --   to render a dashboard, and they are worth nothing to anyone else.
 --
 --   The one secret that does live here is her subscription URL, in
---   `vpn_clients`, and that row is readable ONLY by the user it belongs to —
+--   `vpn_clients`, and that row is readable ONLY by the user it belongs to -
 --   not by the partner, unlike everything else in this app.
 -- ════════════════════════════════════════════════════════════════════════
 
@@ -27,9 +27,9 @@ create table if not exists public.vpn_servers (
   city        text,
   -- ISO 3166-1 alpha-2, for the little flag. Never her own country.
   country     text check (country is null or country ~ '^[A-Z]{2}$'),
-  -- 'primary'  — the rented VPS she should normally be on
-  -- 'standby'  — a second rented box in an unrelated range
-  -- 'home'     — the Lenovo in Curicó. Slow, but a residential IP that bulk
+  -- 'primary'  - the rented VPS she should normally be on
+  -- 'standby'  - a second rented box in an unrelated range
+  -- 'home'     - the Lenovo in Curicó. Slow, but a residential IP that bulk
   --              sweeps of datacentre ranges do not touch
   role        text not null default 'standby'
                 check (role in ('primary', 'standby', 'home')),
@@ -73,7 +73,7 @@ create index if not exists vpn_beats_at_idx on public.vpn_beats (at desc);
 -- The URL her client polls hourly for an updated server list. It IS a secret:
 -- anyone holding it holds her tunnel. Hence the per-user policy below.
 --
--- The URL is served by the VPN infrastructure, never by Katitos — Katitos does
+-- The URL is served by the VPN infrastructure, never by Katitos - Katitos does
 -- not load from Russia without a tunnel, so it is unreachable at exactly the
 -- moment a new list would be needed. This column is a convenience for showing
 -- her a QR when things already work, and nothing more.
@@ -97,7 +97,7 @@ create policy members_read on public.vpn_beats
   for select using (public.is_member());
 
 -- Writes to servers and beats come from the service role only (the heartbeat
--- function, and me). No insert/update policy on purpose — service role bypasses
+-- function, and me). No insert/update policy on purpose - service role bypasses
 -- RLS, every signed-in client is read-only here.
 
 -- A subscription URL is the one thing in this app that is NOT shared. She sees

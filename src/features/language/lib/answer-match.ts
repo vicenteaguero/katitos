@@ -11,14 +11,14 @@ export interface MatchOptions {
 }
 
 /**
- * Compare a typed answer with the real one, forgivingly — but not carelessly.
+ * Compare a typed answer with the real one, forgivingly - but not carelessly.
  *
  * Forgiven: capitals, punctuation, a stress mark he can't type on a phone,
  * a hyphen written as a space, and ё written as е.
  *
  * NOT forgiven: missing word boundaries. Whitespace used to be deleted along
  * with the punctuation, which quietly accepted `нехочу` for `не хочу` and
- * `вдоме` for `в доме` — writing не and the prepositions separately is one of
+ * `вдоме` for `в доме` - writing не and the prepositions separately is one of
  * the first things a Russian learner gets wrong, and marking it right taught
  * him the mistake.
  */
@@ -30,14 +30,14 @@ export function answerMatches(
   const norm = (s: string) => {
     const base = s
       // One spelling for one word. An accent typed as a separate mark and
-      // one baked into the letter are the same letter — "está" pasted in one
-      // form and typed in the other must match — and й must stay й rather
+      // one baked into the letter are the same letter - "está" pasted in one
+      // form and typed in the other must match - and й must stay й rather
       // than fall apart into и and a breve that the strip below removes.
       .normalize('NFC')
       .toLowerCase()
       // A hyphen is a word boundary here: по-русски and "по русски" are the
       // same answer typed two ways.
-      .replace(/[-–—]/g, ' ')
+      .replace(/[-–, ]/g, ' ')
       // Punctuation goes; letters, digits and SPACES stay. Combining marks
       // (the acute she writes on a stressed vowel) are neither, so they go too.
       .replace(/[^\p{L}\p{N}\s]/gu, '')

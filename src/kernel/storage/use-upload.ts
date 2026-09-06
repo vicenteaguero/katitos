@@ -22,7 +22,7 @@ interface UploadOptions {
  * A replaced file at the SAME path is a new body behind an old address. React
  * Query hands out the signed URL it already holds for up to an hour, and the
  * browser's HTTP cache answers that exact URL with the old bytes for as long
- * as `cacheControl` said — so a re-recorded word played the old clip until the
+ * as `cacheControl` said - so a re-recorded word played the old clip until the
  * second try. New uploads take a fresh path wherever they can; this covers the
  * places that still write to a fixed one (avatars, bouquets, proof photos…),
  * and the service-worker cache, which keys by path and ignores the token.
@@ -39,7 +39,7 @@ export async function evictStoredObject(
   }
   // Only the batches that actually hold this path. The whole bucket used to
   // be invalidated, so a forty-photo import refetched every mounted batch
-  // forty times — the storm the album's bulk add had just been cured of.
+  // forty times - the storm the album's bulk add had just been cured of.
   void qc.invalidateQueries({
     queryKey: ['signed-urls', bucket],
     predicate: (q) => {

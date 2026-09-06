@@ -33,7 +33,7 @@ function genderOf(role: string | null | undefined): 'm' | 'f' {
   return role === 'a' ? 'm' : 'f';
 }
 
-/** "45 min ago" · "3 hrs ago" · "2 days ago" — always a whole number. */
+/** "45 min ago" - "3 hrs ago" - "2 days ago" - always a whole number. */
 function compactAgo(iso: string): string {
   const m = Math.floor((Date.now() - new Date(iso).getTime()) / 60_000);
   if (m < 1) return 'moments ago';
@@ -44,7 +44,7 @@ function compactAgo(iso: string): string {
   return `${d} day${d === 1 ? '' : 's'} ago`;
 }
 
-/** "2 years · 3 months · 1 week · 4 days", trimming leading zero units. */
+/** "2 years - 3 months - 1 week - 4 days", trimming leading zero units. */
 function fmtBreakdown(b: DurationParts): string {
   const plural = (n: number, unit: string) =>
     `${n} ${unit}${n === 1 ? '' : 's'}`;
@@ -53,11 +53,11 @@ function fmtBreakdown(b: DurationParts): string {
   if (b.months) parts.push(plural(b.months, 'month'));
   if (b.weeks) parts.push(plural(b.weeks, 'week'));
   parts.push(plural(b.days, 'day'));
-  return parts.join(' · ');
+  return parts.join(' - ');
 }
 
 /**
- * Is it the monthsversary right now — for either of us?
+ * Is it the monthsversary right now - for either of us?
  *
  * Deliberately the UNION of our two timezones, not `coupleDay`'s MIN: the day
  * we celebrate should be lit for both of us across the whole eleven-hour
@@ -86,12 +86,12 @@ function useMonthsversary(): { count: number } | null {
 }
 
 /**
- * Home — the "Bolshoi Nocturne" overture. Whether your love is here, the kept
+ * Home - the "Bolshoi Nocturne" overture. Whether your love is here, the kept
  * hero (days together, both clocks, the leagues between), tonight's questions,
  * and the last photo you took.
  */
 
-/** The greeting — about your love's presence, with a "loves you" pulse. */
+/** The greeting - about your love's presence, with a "loves you" pulse. */
 function Greeting() {
   const { self, partner } = usePartner();
   const { online } = usePartnerPresence();
@@ -108,11 +108,11 @@ function Greeting() {
       loveNoteFor(phrases ?? [], genderOf(partner?.role), partnerName) ??
       `I love you, ${partnerName} 💕`;
     // Play the on-screen love burst instantly (here) and on the partner's
-    // screen (broadcast) — the native push below still fires for when their
+    // screen (broadcast) - the native push below still fires for when their
     // app is closed.
     sendLoveBurst(note);
     // The push (for when their app is closed) now names the sender and carries
-    // the sweet-nothing itself as the body — so the lock screen reads like a note.
+    // the sweet-nothing itself as the body - so the lock screen reads like a note.
     const fromName = petNameOf(self?.role);
     const { ok, delivered } = await notifyPartner({
       kind: 'love',
@@ -121,14 +121,14 @@ function Greeting() {
       url: '/',
     });
     if (!ok) {
-      toast.error("Couldn't send — try again");
+      toast.error("Couldn't send - try again");
       setSent(false);
       return;
     }
-    // The call succeeded but reached no device — the partner hasn't enabled
+    // The call succeeded but reached no device - the partner hasn't enabled
     // notifications yet, so be honest instead of claiming it was delivered.
     if (delivered === 0) {
-      toast.info(`Sent — ask ${partnerName} to turn on notifications 🔔`);
+      toast.info(`Sent - ask ${partnerName} to turn on notifications 🔔`);
       setSent(false);
       return;
     }
@@ -136,8 +136,8 @@ function Greeting() {
     window.setTimeout(() => setSent(false), 2200);
   };
 
-  // On the 15th — in EITHER of our timezones, so it shows across both our
-  // days — the presence line gives way to the monthsversary.
+  // On the 15th - in EITHER of our timezones, so it shows across both our
+  // days - the presence line gives way to the monthsversary.
   const monthsversary = useMonthsversary();
 
   // The presence one-liner lives in the top bar now (out of the hero).
@@ -153,7 +153,7 @@ function Greeting() {
         <span className="font-semibold">{partnerName}</span>!
         {monthsversary.count > 0 && (
           <span className="ml-1 text-muted">
-            · {monthsversary.count} months
+            - {monthsversary.count} months
           </span>
         )}
       </span>
@@ -172,7 +172,7 @@ function Greeting() {
 
   return (
     <header className="flex flex-col items-center text-center">
-      {/* The hero CTA — gilt-rimmed, softly haloed, a beating heart. */}
+      {/* The hero CTA - gilt-rimmed, softly haloed, a beating heart. */}
       <div className="relative inline-flex">
         <span
           aria-hidden="true"
@@ -200,18 +200,18 @@ function Greeting() {
 }
 
 /**
- * The Novosibirsk Opera (NOVAT) — the couple's hand-painted stained-glass
+ * The Novosibirsk Opera (NOVAT) - the couple's hand-painted stained-glass
  * emblem, floated over a soft, slowly-breathing gilt aura so it feels lit.
  */
 function SilverDome() {
   return (
     <div className="relative isolate mx-auto mt-5 w-[232px]">
-      {/* A SQUARE box so the circle fades out before every edge — the old
+      {/* A SQUARE box so the circle fades out before every edge - the old
           non-square box left the glow uncovered at the top/bottom edges and
           clipped it into a hard rectangle. Stays BEHIND the image (earlier in
           the DOM, so the building paints on top). */}
       {/* Outer span does the centering (static translate); the inner .love-halo
-          only animates SCALE — otherwise the keyframe's `transform` overrides
+          only animates SCALE - otherwise the keyframe's `transform` overrides
           the centering translate and the halo drifts off the emblem's centre. */}
       <span
         aria-hidden="true"
@@ -267,7 +267,7 @@ function Clock({
   );
 }
 
-/** THE KEPT HERO — together for N days, crowned by the dome, clocks + leagues. */
+/** THE KEPT HERO - together for N days, crowned by the dome, clocks + leagues. */
 function TogetherHero() {
   const { self, partner } = usePartner();
   const now = useNow(30_000);
@@ -292,7 +292,7 @@ function TogetherHero() {
       className="relative mt-6 overflow-hidden rounded"
       style={{
         // Gilt hairline as a 1px gradient frame that FOLLOWS the corner radius
-        // (border-image ignores border-radius — this nests a dark panel inside
+        // (border-image ignores border-radius - this nests a dark panel inside
         // a gilt-gradient pad instead, so the gold corners are smooth too).
         background:
           'linear-gradient(150deg,#8a6c28,#e4c36a 42%,#fff1c9 50%,#e4c36a 58%,#8a6c28)',
@@ -327,7 +327,7 @@ function TogetherHero() {
           <p className="gilt-text gold-shimmer gilt-figures m-0 font-display text-[5.6rem] font-semibold tracking-tight">
             {days.toLocaleString()}
           </p>
-          {/* The same span, decomposed — calendar years / months / weeks / days. */}
+          {/* The same span, decomposed - calendar years / months / weeks / days. */}
           <p className="m-0 font-sans text-[10.5px] uppercase tracking-[0.16em] text-[#b08e95]">
             {fmtBreakdown(breakdown)}
           </p>
@@ -343,8 +343,8 @@ function TogetherHero() {
           <div className="flex items-center justify-between gap-2">
             <Clock
               align="left"
-              label={self.city ?? '—'}
-              time={self.timezone ? timeInZone(self.timezone, now) : '—'}
+              label={self.city ?? '-'}
+              time={self.timezone ? timeInZone(self.timezone, now) : '-'}
             />
             <div className="text-center">
               <svg
@@ -369,14 +369,14 @@ function TogetherHero() {
                 />
               </svg>
               <p className="m-0 mt-1 text-[10px] tracking-wide text-[#9c7d84]">
-                {km != null ? formatDistance(km) : '—'}
+                {km != null ? formatDistance(km) : '-'}
               </p>
             </div>
             <Clock
               align="right"
               her
-              label={partner.city ?? '—'}
-              time={partner.timezone ? timeInZone(partner.timezone, now) : '—'}
+              label={partner.city ?? '-'}
+              time={partner.timezone ? timeInZone(partner.timezone, now) : '-'}
             />
           </div>
         </div>

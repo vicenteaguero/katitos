@@ -1,9 +1,9 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — four things the audit found, all of which lose something
+-- Katitos - four things the audit found, all of which lose something
 --
 --   1. Tearing out a page DELETED the photos on it. `album_photos.page_id`
 --      still cascaded from the page it used to live on, and every photo that
---      predates the library split still carries that page_id — so every photo
+--      predates the library split still carries that page_id - so every photo
 --      in Pololini and Panini was one "tear out this page" away from being
 --      gone, along with its stickers on OTHER pages. The whole point of the
 --      library was that a page is an arrangement, not a container.
@@ -11,13 +11,13 @@
 --   2. The self-heal could never see the rows it exists for. The previous
 --      bundle writes `album_photos` with no `book_id` (the column is new), and
 --      the heal filters on `book_id`. A photo added from the not-yet-upgraded
---      phone was invisible on the upgraded one — in the book AND in the strip —
+--      phone was invisible on the upgraded one - in the book AND in the strip -
 --      and would have stayed invisible forever. A trigger fills it in instead,
 --      whichever bundle did the writing.
 --
 --   3. A word could get stuck. `clampEase` floors at exactly 1.3, but the
 --      CHECK compared a `real` against a `double precision` 1.3, and
---      1.3::real is 1.29999995 — just below. Six blanks in a row and that word
+--      1.3::real is 1.29999995 - just below. Six blanks in a row and that word
 --      could never be graded again.
 --
 --   4. Deleting a lesson deleted its worksheets and left the files orphaned.

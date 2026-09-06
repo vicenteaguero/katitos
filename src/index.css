@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /* Native-app feel: text isn't selectable and the iOS long-press callout is off
-   — but real fields stay selectable/editable so typing works normally. */
+   - but real fields stay selectable/editable so typing works normally. */
 body {
   -webkit-user-select: none;
   user-select: none;
@@ -18,51 +18,51 @@ textarea,
 
 /*
  * ════════════════════════════════════════════════════════════════════════════
- *  KATITOS — "Silver Hall" · a clean, modern love app, NOVAT-inspired
+ *  KATITOS - "Silver Hall" - a clean, modern love app, NOVAT-inspired
  *  Single source of truth: design/DESIGN_BIBLE.md
  *  Wine red + WHITE GOLD / silver + black & white, with her purple & his olive.
- *  Inspired by NOVAT (Novosibirsk) — the great silver dome, not gold leaf.
+ *  Inspired by NOVAT (Novosibirsk) - the great silver dome, not gold leaf.
  *  Flat, fast, square corners. The one metal is a fine white-gold hairline.
  *  NOTE: legacy class names (.velvet, .gilt-*, .gold-shimmer) are KEPT so the
- *  whole app re-skins from here — but they now read clean + white-gold, never
+ *  whole app re-skins from here - but they now read clean + white-gold, never
  *  yellow-gold, never a heavy velvet texture.
  * ════════════════════════════════════════════════════════════════════════════
  */
 :root {
-  /* ── THE PALETTE — only their colors ───────────────────────────────────────
-     HER: wine red · brown · glossy green · black · white
-     HIM: sandstorm · military green · charcoal black · snow white
+  /* ── THE PALETTE - only their colors ───────────────────────────────────────
+     HER: wine red - brown - glossy green - black - white
+     HIM: sandstorm - military green - charcoal black - snow white
      METAL: white gold (never yellow). NO PURPLE. ─────────────────────────── */
-  --color-bg: #100408; /* Deep Wine-Black — house lights down */
+  --color-bg: #100408; /* Deep Wine-Black - house lights down */
   --color-surface: #1a0b13; /* raised wine panel */
   --color-surface-2: #241019; /* lifted card/sheet/popover (wine) */
-  --color-border: #c9a24b; /* Warm Gilt Hairline — the one metal line */
-  --color-fg: #fbf5f0; /* Warm Snow — primary text */
-  --color-muted: #b89a86; /* warm taupe — secondary text */
-  --color-accent: #6e1423; /* Wine Red — her brand red, primary action */
+  --color-border: #c9a24b; /* Warm Gilt Hairline - the one metal line */
+  --color-fg: #fbf5f0; /* Warm Snow - primary text */
+  --color-muted: #b89a86; /* warm taupe - secondary text */
+  --color-accent: #6e1423; /* Wine Red - her brand red, primary action */
   --color-accent-fg: #ffffff; /* on wine */
-  --color-danger: #c14b58; /* error red — distinct from wine */
-  --color-success: #6b7344; /* Military Green — his green = "yes" */
-  --color-warning: #d9c9a3; /* Sandstorm — his sandy cream */
+  --color-danger: #c14b58; /* error red - distinct from wine */
+  --color-success: #6b7344; /* Military Green - his green = "yes" */
+  --color-warning: #d9c9a3; /* Sandstorm - his sandy cream */
 
   /* ── Accent layer (her glossy green + brown; WARM gilt metal) ───────────── */
   /* NOTE: --color-purple is REPURPOSED to her GLOSSY GREEN (the name is kept so
-     existing `text-purple`/`bg-purple` usages re-skin from here — there is NO
+     existing `text-purple`/`bg-purple` usages re-skin from here - there is NO
      purple in this app). */
-  --color-purple: #2c8a5e; /* Glossy Green — her vivid emerald accent */
-  --color-green: #2c8a5e; /* alias — her glossy green */
-  --color-brown: #4a2e1e; /* Brown — her warm tone */
-  --color-lapis: #15201a; /* deep green-charcoal — alt "special" surface */
-  --color-copper: #b5633a; /* Terracotta copper — the Georgia warmth */
-  --gold: #e4c36a; /* WARM GILT — theatre gold */
+  --color-purple: #2c8a5e; /* Glossy Green - her vivid emerald accent */
+  --color-green: #2c8a5e; /* alias - her glossy green */
+  --color-brown: #4a2e1e; /* Brown - her warm tone */
+  --color-lapis: #15201a; /* deep green-charcoal - alt "special" surface */
+  --color-copper: #b5633a; /* Terracotta copper - the Georgia warmth */
+  --gold: #e4c36a; /* WARM GILT - theatre gold */
   --gilt-bright: #e4c36a; /* bright pole (warm) */
   --gilt-deep: #9c7a2e; /* deep pole */
   --gilt-spark: #fff1c9; /* specular highlight (candlelit cream) */
 
-  /* ── The NOVAT layer — the great Silver Dome of the Novosibirsk theatre. ── */
-  --silver: #c4c8cd; /* Dome Silver — the colossal silver-grey cupola */
-  --pewter: #7e848c; /* Shadow Pewter — the ribbed/shaded side */
-  --crystal: #eaf2ff; /* Crystal — the chandelier's cool white sparkle */
+  /* ── The NOVAT layer - the great Silver Dome of the Novosibirsk theatre. ── */
+  --silver: #c4c8cd; /* Dome Silver - the colossal silver-grey cupola */
+  --pewter: #7e848c; /* Shadow Pewter - the ribbed/shaded side */
+  --crystal: #eaf2ff; /* Crystal - the chandelier's cool white sparkle */
 
   /* ── Gradients ─────────────────────────────────────────────────────────── */
   /* White-gold sheen (for .gilt-text / shimmer / hairline border-image). */
@@ -82,13 +82,13 @@ textarea,
     #100408 100%
   );
   --grad-velvet-sheen: linear-gradient(0deg, transparent, transparent);
-  /* Footlight — a faint, warm gilt wash rising from below. */
+  /* Footlight - a faint, warm gilt wash rising from below. */
   --grad-footlight: radial-gradient(
     60% 40% at 50% 100%,
     rgba(201, 162, 75, 0.08) 0%,
     transparent 72%
   );
-  /* The fusion seam — her glossy green & wine flow into his sandstorm & olive. */
+  /* The fusion seam - her glossy green & wine flow into his sandstorm & olive. */
   --grad-sash: linear-gradient(
     115deg,
     var(--color-purple) 0%,
@@ -98,7 +98,7 @@ textarea,
     var(--color-success) 100%
   );
 
-  /* ── Depth (clean, neutral — no colored glows) ─────────────────────────── */
+  /* ── Depth (clean, neutral - no colored glows) ─────────────────────────── */
   --shadow-catch: inset 0 1px 0 rgba(255, 255, 255, 0.05);
   --shadow-loge: 0 26px 56px -26px rgba(0, 0, 0, 0.82);
   --ring-candle:
@@ -106,7 +106,7 @@ textarea,
 
   /* ── Geometry: MIXED corners, deliberately. Photos/heroes = rounded-none (0);
      buttons/chips/inputs = rounded (12px); cards/toasts = rounded-lg (20px);
-     sheets = rounded-xl (28px, top). Never marry square or round — mix. ────── */
+     sheets = rounded-xl (28px, top). Never marry square or round - mix. ────── */
   --radius: 12px;
   --radius-lg: 20px;
   --radius-xl: 28px;
@@ -124,7 +124,7 @@ textarea,
 
   /* ── Layout: uncramped phone column ────────────────────────────────────── */
   --app-max-width: 32rem;
-  /* The SHELL's cap. Same as the phone column — until a desk route lifts it.
+  /* The SHELL's cap. Same as the phone column - until a desk route lifts it.
      Kept apart from --app-max-width on purpose: sheets, toasts and the login
      read that one, and they keep their phone width even on a desk. */
   --shell-max-width: var(--app-max-width);
@@ -154,7 +154,7 @@ textarea,
 .desk__rail {
   display: none;
 }
-/* Where a dragged row will land — an inset line, not a border. */
+/* Where a dragged row will land - an inset line, not a border. */
 .drop-before {
   box-shadow: inset 0 2px 0 0 var(--gold);
 }
@@ -265,7 +265,7 @@ textarea,
   -webkit-tap-highlight-color: transparent;
 }
 
-/* This is an app, not a document — nothing selects/long-press-copies, so taps
+/* This is an app, not a document - nothing selects/long-press-copies, so taps
    and drags feel native. Real text fields stay selectable. */
 * {
   user-select: none;
@@ -278,7 +278,7 @@ textarea,
   user-select: text;
   -webkit-user-select: text;
 }
-/* Prose she wrote is hers to copy — a lesson is a document, on the computer
+/* Prose she wrote is hers to copy - a lesson is a document, on the computer
    AND on the phone: long-press on a word to look it up is the point. So this
    is deliberately not scoped to the desk. */
 [data-readable],
@@ -323,7 +323,7 @@ textarea,
 
 /* ── A mouse exists now ─────────────────────────────────────────────────────
    Buttons and links look pressable under it, and a control that has focus
-   from the keyboard shows it — in gilt, not the browser's blue. The kernel
+   from the keyboard shows it - in gilt, not the browser's blue. The kernel
    controls draw their own ring and opt out with `outline-none`. */
 button:not(:disabled),
 [role='button']:not([aria-disabled='true']),
@@ -334,7 +334,7 @@ label[for] {
   cursor: pointer;
 }
 /* `:where` keeps this at zero specificity, so a control's own `outline-none`
-   actually wins — without it the sheet itself drew a gold box when opened
+   actually wins - without it the sheet itself drew a gold box when opened
    from the keyboard. */
 :where(:focus-visible) {
   outline: 2px solid rgba(228, 195, 106, 0.8);
@@ -349,7 +349,7 @@ label[for] {
 /* ── Native date & time fields ─────────────────────────────────────────────
    These have bitten us in every sheet that holds one. Safari lays a date input
    out from its OWN intrinsic box, ignores the width it is given, centres the
-   value inside a margin of its own and then clips it — so "From / Until" sat
+   value inside a margin of its own and then clips it - so "From / Until" sat
    crooked, overflowed a two-up row, and opened a blinding white picker in a
    wine-dark app. All four are fixed here, once, rather than per screen. */
 input[type='date'],
@@ -422,7 +422,7 @@ html,
 body,
 #root {
   height: 100%;
-  /* Lock the document — only <main> (the app-shell) scrolls, so the top bar and
+  /* Lock the document - only <main> (the app-shell) scrolls, so the top bar and
      bottom nav stay put and no iOS rubber-band reveals a gap. The shell sizes
      off this 100% chain (NOT viewport units), which is the one measurement iOS
      standalone gets right on first paint. */
@@ -470,14 +470,14 @@ button {
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
- * OPERA HOUSE TOOLKIT — texture + motion utilities (see design/DESIGN_BIBLE.md).
+ * OPERA HOUSE TOOLKIT - texture + motion utilities (see design/DESIGN_BIBLE.md).
  * Texture is pure CSS (no images). Motion is transform/opacity only (GPU).
  * Everything degrades under prefers-reduced-motion (block at file end).
  * ════════════════════════════════════════════════════════════════════════════ */
 
 /* ── Texture: velvet, marble, gilt ──────────────────────────────────────── */
 
-/* Clean flat panel surfaces (formerly "velvet" — kept as class names so the
+/* Clean flat panel surfaces (formerly "velvet" - kept as class names so the
    whole app re-skins from here; now simply flat, fast, modern). */
 .velvet {
   position: relative;
@@ -488,7 +488,7 @@ button {
   background-color: var(--color-surface-2);
 }
 
-/* The white-gold hairline — now a RARE accent. Default surfaces have NO border;
+/* The white-gold hairline - now a RARE accent. Default surfaces have NO border;
    separate by tone (bg -> surface -> surface-2) and spacing. Use this class on
    at most ONE hero element per screen. */
 .gilt-hairline {
@@ -497,7 +497,7 @@ button {
 }
 /* A 1px gilt gradient frame drawn as a masked pseudo-element so the gold edge
    FOLLOWS the corner radius (border-image ignores border-radius and squares the
-   corners — this keeps them smooth). */
+   corners - this keeps them smooth). */
 .gilt-hairline::before {
   content: '';
   position: absolute;
@@ -512,7 +512,7 @@ button {
   mask-composite: exclude;
   pointer-events: none;
 }
-/* Gilt-filled text — numerals, accents, the logo word. */
+/* Gilt-filled text - numerals, accents, the logo word. */
 .gilt-text {
   background: var(--grad-gilt);
   -webkit-background-clip: text;
@@ -521,7 +521,7 @@ button {
   -webkit-text-fill-color: transparent;
 }
 
-/* Marble — inverted ivory "lit stage" panel; pair with wine serif text. */
+/* Marble - inverted ivory "lit stage" panel; pair with wine serif text. */
 .marble {
   background-color: var(--color-fg);
   background-image:
@@ -540,7 +540,7 @@ button {
   color: var(--color-accent);
 }
 
-/* Footlight — drop behind a hero for a warm candle pool. */
+/* Footlight - drop behind a hero for a warm candle pool. */
 .footlight {
   position: relative;
 }
@@ -553,7 +553,7 @@ button {
   z-index: -1;
 }
 
-/* The Program Eyebrow — playbill section label with flanking gilt fleuron rules. */
+/* The Program Eyebrow - playbill section label with flanking gilt fleuron rules. */
 .eyebrow {
   display: flex;
   align-items: center;
@@ -575,7 +575,7 @@ button {
   opacity: 0.8;
 }
 
-/* The Two-Color Seam — flag-free fusion divider: her colors flow into his. */
+/* The Two-Color Seam - flag-free fusion divider: her colors flow into his. */
 .seam {
   height: 1px;
   width: 100%;
@@ -585,7 +585,7 @@ button {
 
 /* ── Motion ─────────────────────────────────────────────────────────────── */
 
-/* Curtain reveal — content fades + rises on mount. The default screen-enter. */
+/* Curtain reveal - content fades + rises on mount. The default screen-enter. */
 @keyframes curtain-rise {
   from {
     opacity: 0;
@@ -600,7 +600,7 @@ button {
   animation: curtain-rise var(--dur-settle) var(--ease-settle) both;
   will-change: transform, opacity;
 }
-/* Curtain exit — the reverse, for a dialog going away instead of vanishing. */
+/* Curtain exit - the reverse, for a dialog going away instead of vanishing. */
 @keyframes curtain-fall {
   from {
     opacity: 1;
@@ -640,14 +640,14 @@ button {
   pointer-events: none;
 }
 
-/* Staggered children — a list ascends like a stage filling (set --i per child). */
+/* Staggered children - a list ascends like a stage filling (set --i per child). */
 .curtain-stagger > * {
   animation: curtain-rise var(--dur-settle) var(--ease-settle) both;
   animation-delay: calc(var(--i, 0) * 60ms);
   will-change: transform, opacity;
 }
 
-/* Gold shimmer — light travels across a gilt gradient/border. */
+/* Gold shimmer - light travels across a gilt gradient/border. */
 @keyframes gilt-sweep {
   0% {
     background-position:
@@ -662,7 +662,7 @@ button {
 }
 /* A moving glint LAYERED OVER the gilt gradient (paired with .gilt-text). The
    gilt layer stays put so the text is always legible gold; only the highlight
-   sweeps. (Layering matters — a lone shimmer layer would clip the text to just
+   sweeps. (Layering matters - a lone shimmer layer would clip the text to just
    the moving band and flash the rest invisible.) */
 .gold-shimmer {
   background-image:
@@ -683,7 +683,7 @@ button {
   animation: gilt-sweep 4s ease-in-out infinite;
 }
 
-/* Candle flicker — irregular micro opacity pulse for "lit" accents. */
+/* Candle flicker - irregular micro opacity pulse for "lit" accents. */
 @keyframes candle-flicker {
   0%,
   100% {
@@ -707,7 +707,7 @@ button {
   will-change: opacity;
 }
 
-/* Heartbeat — the Send-love heart pulses like a real one (double-thump). */
+/* Heartbeat - the Send-love heart pulses like a real one (double-thump). */
 @keyframes heart-beat {
   0%,
   100% {
@@ -731,7 +731,7 @@ button {
   will-change: transform;
 }
 
-/* Love halo — a soft accent glow that breathes behind the Send-love button. */
+/* Love halo - a soft accent glow that breathes behind the Send-love button. */
 @keyframes love-halo {
   0%,
   100% {
@@ -748,7 +748,7 @@ button {
   will-change: opacity, transform;
 }
 
-/* Lift-press — the button press; deepens + sinks on active. */
+/* Lift-press - the button press; deepens + sinks on active. */
 .lift-press {
   transition:
     transform 120ms var(--ease-settle),
@@ -759,7 +759,7 @@ button {
   transform: translateY(1px) scale(0.99);
 }
 
-/* ── Leaflet popups — wine + gilt, sitting above the pin, easy to close ───── */
+/* ── Leaflet popups - wine + gilt, sitting above the pin, easy to close ───── */
 .leaflet-popup-content-wrapper {
   background: var(--color-surface);
   color: var(--color-fg);
@@ -792,7 +792,7 @@ button {
   color: var(--color-fg) !important;
 }
 
-/* Button catch-light — a skewed gold highlight sweeps on hover/active. */
+/* Button catch-light - a skewed gold highlight sweeps on hover/active. */
 @keyframes catchlight-sweep {
   from {
     transform: translateX(-160%) skewX(-18deg);
@@ -826,7 +826,7 @@ button {
   animation: catchlight-sweep 500ms var(--ease-settle);
 }
 
-/* Draw-rule — a focus hairline draws in from center. */
+/* Draw-rule - a focus hairline draws in from center. */
 @keyframes rule-draw {
   from {
     transform: scaleX(0);
@@ -836,7 +836,7 @@ button {
   }
 }
 /* ──────────────────────────────────────────────────────────────────────────
- * Our Tree — ambient sway + growth/bloom. Transform/opacity only (GPU).
+ * Our Tree - ambient sway + growth/bloom. Transform/opacity only (GPU).
  * ────────────────────────────────────────────────────────────────────────── */
 @keyframes tree-sway {
   0%,
@@ -870,7 +870,7 @@ button {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
- * Polaroid — the instant photo develops on screen. The emulsion settles from
+ * Polaroid - the instant photo develops on screen. The emulsion settles from
  * a blank over-exposed plate into the image: opacity + a faint scale settle,
  * GPU-only (transform/opacity). One copper warmth breathes behind the plate.
  * ────────────────────────────────────────────────────────────────────────── */
@@ -923,9 +923,9 @@ button {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
- * Chalkboard — a chalk note settles onto the slate. The note's own inline
+ * Chalkboard - a chalk note settles onto the slate. The note's own inline
  * `transform: rotate()` carries its tilt, so the entrance touches OPACITY only
- * (a gentle chalk-dust bloom) — never the transform — to avoid fighting drag.
+ * (a gentle chalk-dust bloom) - never the transform - to avoid fighting drag.
  * ────────────────────────────────────────────────────────────────────────── */
 @keyframes chalk-settle {
   0% {
@@ -941,7 +941,7 @@ button {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
- * Flowers — a bouquet blooms onto a lit stage. The signature: each bloom
+ * Flowers - a bouquet blooms onto a lit stage. The signature: each bloom
  * unfurls with a gentle scale + opacity settle (a petal opening), then breathes
  * with .candle-flicker like a living thing. Stems lean to Olive Sash + Andes
  * Copper; the vase rests on a marble pedestal under a footlight pool.
@@ -967,7 +967,7 @@ button {
   transform-origin: center bottom;
   will-change: transform, opacity;
 }
-/* The footlight pool washing up over the marble pedestal — a warm copper glow
+/* The footlight pool washing up over the marble pedestal - a warm copper glow
    that breathes, so the bouquet always sits in stage light. */
 @keyframes flower-footlight {
   0%,
@@ -981,15 +981,15 @@ button {
   }
 }
 /* ──────────────────────────────────────────────────────────────────────────
- * Know Me — the daily intimate question on a candle-lit stage. Its signature is
- * the REVEAL: when both have answered the card illuminates — a purple candle
+ * Know Me - the daily intimate question on a candle-lit stage. Its signature is
+ * the REVEAL: when both have answered the card illuminates - a purple candle
  * halo swells, the gilt edge catches, and the verdict hairline draws across,
  * like stage lights coming up on the answer. The single "both nailed it" moment
  * is the one place Sacred Snow glows. GPU-only (transform/opacity). One
  * Imperial-Purple accent, one motion (candle-flicker + the reveal illumination).
  * ────────────────────────────────────────────────────────────────────────── */
 
-/* The candle behind the daily question — a purple-warmed pool that breathes. */
+/* The candle behind the daily question - a purple-warmed pool that breathes. */
 @keyframes km-candle-pool {
   0%,
   100% {
@@ -1020,7 +1020,7 @@ button {
   will-change: opacity, transform;
 }
 
-/* The reveal illumination — the answer card rises from the dark and settles as
+/* The reveal illumination - the answer card rises from the dark and settles as
    the gilt catches. Opacity + a faint lift only. */
 @keyframes km-illuminate {
   0% {
@@ -1046,7 +1046,7 @@ button {
   animation: rule-draw 420ms var(--ease-settle) 200ms both;
 }
 
-/* A single constellation point in the love-map standings — a faint pulse. */
+/* A single constellation point in the love-map standings - a faint pulse. */
 @keyframes km-star {
   0%,
   100% {
@@ -1117,7 +1117,7 @@ button {
     animation: none !important;
     transition: none !important;
   }
-  /* Entrances collapse to a brief opacity fade — no transform. */
+  /* Entrances collapse to a brief opacity fade - no transform. */
   /* A dialog leaving collapses to a short fade, like one arriving. */
   .curtain-exit,
   .veil-out {
@@ -1141,7 +1141,7 @@ button {
   }
 }
 
-/* ── Photo beacon — a magical, twinkling gilt halo behind the camera button,
+/* ── Photo beacon - a magical, twinkling gilt halo behind the camera button,
  *    shown only when no portrait has been taken today. ─────────────────────── */
 .photo-beacon {
   position: absolute;
@@ -1233,7 +1233,7 @@ button {
 
 /* ── The centre button, once the photo is in ──────────────────────────────── */
 
-/* DONE — everything fillable is filled. Grey, flat, quiet: not a failure state,
+/* DONE - everything fillable is filled. Grey, flat, quiet: not a failure state,
  * a finished one. It stays tappable (it opens the album) because a nav item
  * that goes dead is worse than one that says "nothing until tomorrow". */
 .photo-btn--done {
@@ -1242,7 +1242,7 @@ button {
   box-shadow: inset 0 0 0 1px rgba(251, 245, 240, 0.06);
 }
 
-/* RESCUE — today is in, but the day borrowed from the other clock is still
+/* RESCUE - today is in, but the day borrowed from the other clock is still
  * empty and running out. Her glossy green with a full white heart, breathing
  * slowly: not the urgent twinkle of an empty day, a tug on the sleeve. */
 .photo-btn--rescue {
@@ -1307,7 +1307,7 @@ button {
 /* ── Sent here by a notification ──────────────────────────────────────────── */
 
 /* The day you were warned about, lit and breathing so you land on it rather
- * than hunt for it. A gilt edge, not a border — the one metal line, glowing. */
+ * than hunt for it. A gilt edge, not a border - the one metal line, glowing. */
 .catchup-urgent {
   box-shadow: inset 0 0 0 1px rgba(228, 195, 106, 0.55);
   animation: urgent-breathe 2.4s ease-in-out infinite;

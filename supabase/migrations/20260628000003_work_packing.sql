@@ -1,7 +1,7 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — Summer Travel: shared Work calendar + Luggage checklist
+-- Katitos - Summer Travel: shared Work calendar + Luggage checklist
 --   • work_blocks: each partner's work time blocks, keyed by day. NOT
---     trip-scoped — it's a year-round shared weekly planner.
+--     trip-scoped - it's a year-round shared weekly planner.
 --   • packing_items: the trip packing list, check off before traveling.
 --   New tables get the uniform members_all policy + live sync.
 -- ════════════════════════════════════════════════════════════════════════

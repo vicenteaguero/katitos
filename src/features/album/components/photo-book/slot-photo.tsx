@@ -5,7 +5,7 @@ import type { PhotoSource } from '../../types';
 /**
  * A sticker's image.
  *
- * Pass `url` and this is a plain `<img>` — the book signs every photo in ONE
+ * Pass `url` and this is a plain `<img>` - the book signs every photo in ONE
  * batched request and hands each page its slice, instead of the two signing
  * round-trips per photo this component used to fire on its own. The `path`
  * fallback stays for the odd lone photo outside the book.
@@ -25,7 +25,7 @@ export function SlotPhoto({
   /** The postage-stamp stored on the row: shown until the real one arrives. */
   blur?: string | null;
   alt: string;
-  /** The page being read right now — its photos are not "later". */
+  /** The page being read right now - its photos are not "later". */
   eager?: boolean;
   /**
    * The picture's real shape, once the browser knows it.
@@ -39,7 +39,7 @@ export function SlotPhoto({
   const bucket = source === 'polaroid' ? BUCKETS.polaroids : BUCKETS.album;
   const [failed, setFailed] = useState(false);
   const [ready, setReady] = useState(false);
-  // Nothing is signed here while the book's batched URL is working — that is
+  // Nothing is signed here while the book's batched URL is working - that is
   // the whole point of the batch. But the moment it 404s we DO need the
   // original signed, and asking for it only in that case is what the old
   // `url ? undefined : path` could never do: it had already decided.
@@ -56,7 +56,7 @@ export function SlotPhoto({
 
   // A photo uploaded before proxies existed has no `thumbs/` twin, so the
   // batched URL the book handed us 404s. The `??` chain here used to
-  // short-circuit on `url` and never consult `failed` at all — which is why
+  // short-circuit on `url` and never consult `failed` at all - which is why
   // those photos showed a permanent hole with no fallback underneath them.
   const src = failed ? (fullUrl ?? undefined) : (url ?? proxyUrl ?? fullUrl);
 

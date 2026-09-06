@@ -1,9 +1,9 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — one page per position, per book
+-- Katitos - one page per position, per book
 --
 --   `ensurePages()` in the client seeds a new book with five pages and catches
 --   23505 to survive both of us opening it at once. That catch never fired,
---   because no unique constraint existed — so a simultaneous first open would
+--   because no unique constraint existed - so a simultaneous first open would
 --   quietly create duplicate leaves in the flip book.
 --
 --   Verified empty before adding (no (book_id, position) pair had count > 1).

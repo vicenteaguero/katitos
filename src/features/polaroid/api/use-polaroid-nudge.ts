@@ -6,7 +6,7 @@ import { useOpenDayPolaroids } from './polaroid.queries';
 /**
  * What the camera button in the bottom bar should be, right now.
  *
- * Three states, and every one of them is tappable — the button is never hidden
+ * Three states, and every one of them is tappable - the button is never hidden
  * and never dead, because a nav item that sometimes isn't there is worse than
  * one that says "nothing to do".
  *
@@ -35,7 +35,7 @@ export interface PolaroidNudge {
 /**
  * Re-read the wall clock every minute, but only re-render when the DATE
  * actually turns over. Without this the button keeps yesterday's answer until
- * something else happens to re-render the shell — which, at 00:00, is exactly
+ * something else happens to re-render the shell - which, at 00:00, is exactly
  * when it is most wrong.
  */
 function useCivilDay(zone: string | null | undefined): string {
@@ -66,7 +66,7 @@ export function usePolaroidNudge(): PolaroidNudge {
 
   return useMemo(() => {
     const rows = data ?? [];
-    // A legacy pre-split photo was taken by the couple, so it counts as mine —
+    // A legacy pre-split photo was taken by the couple, so it counts as mine -
     // nagging for a second photo on a day we lived together would be wrong.
     const filled = (day: string) =>
       rows.some(

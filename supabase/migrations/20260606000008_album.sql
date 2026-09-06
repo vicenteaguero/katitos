@@ -1,11 +1,11 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — Pololini Album (a Panini sticker album, for life)
+-- Katitos - Pololini Album (a Panini sticker album, for life)
 -- Catalog (chapters + slots) is immutable shared content. Filled stickers are
 -- couple data (photos in the 'album' bucket). One photo per slot-half; duo
 -- slots take two halves ('a'/'b'); normal slots use 'solo'.
 -- ════════════════════════════════════════════════════════════════════════
 
--- Chapters (created_by NULLABLE — catalog is couple-agnostic).
+-- Chapters (created_by NULLABLE - catalog is couple-agnostic).
 create table public.album_chapters (
   id uuid primary key default gen_random_uuid(),
   position smallint not null,

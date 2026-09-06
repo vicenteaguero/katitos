@@ -9,10 +9,10 @@ describe('parseInline', () => {
   });
 
   it('reads bold, italic and a highlight', () => {
-    expect(parseInline('в **Москве** — *в* ==предложном==')).toEqual([
+    expect(parseInline('в **Москве** - *в* ==предложном==')).toEqual([
       { kind: 'text', text: 'в ' },
       { kind: 'bold', text: 'Москве' },
-      { kind: 'text', text: ' — ' },
+      { kind: 'text', text: ' - ' },
       { kind: 'italic', text: 'в' },
       { kind: 'text', text: ' ' },
       { kind: 'mark', text: 'предложном' },

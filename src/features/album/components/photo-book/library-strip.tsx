@@ -93,7 +93,7 @@ export function LibraryStrip({
         <div className="pb-strip-bar">
           <span>
             {chosen.length} chosen
-            {!canPlace && ' · turn to a page'}
+            {!canPlace && ' - turn to a page'}
           </span>
           <div className="flex items-center gap-1">
             <button type="button" onClick={() => setChosen([])}>

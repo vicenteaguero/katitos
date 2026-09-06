@@ -72,7 +72,7 @@ const KINDS: {
 ];
 
 /**
- * The eight kinds of question, as a gallery — a picture and a line each,
+ * The eight kinds of question, as a gallery - a picture and a line each,
  * instead of eight words split across two rows of a pill.
  *
  * An editorial wrap, not a grid of equal squares; one tab stop, arrows to

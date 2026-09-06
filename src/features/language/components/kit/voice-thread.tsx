@@ -16,7 +16,7 @@ import { headword, termLangOf } from '../../lib/pick';
 import type { Vocab, Voice } from '../../types';
 
 /**
- * The recordings of one word — his tries, her answers — and a way to add
+ * The recordings of one word - his tries, her answers - and a way to add
  * the next one.
  *
  * `compact` is the study card's version: only the other one's latest, and
@@ -29,7 +29,7 @@ export function VoiceThread({
 }: {
   word: Vocab;
   compact?: boolean;
-  /** Open on the microphone straight away — the wrong-list's "say it for him". */
+  /** Open on the microphone straight away - the wrong-list's "say it for him". */
   startOpen?: boolean;
 }) {
   const userId = useUserId();
@@ -81,10 +81,10 @@ export function VoiceThread({
                 bucket={BUCKETS.languageAudio}
                 path={r.audio_path}
                 size="sm"
-                label={`${who(r)} — play`}
+                label={`${who(r)} - play`}
               />
               <span className="min-w-0 flex-1 truncate font-sans text-xs text-muted">
-                {who(r)} · {agoLabel(r.created_at)}
+                {who(r)} - {agoLabel(r.created_at)}
               </span>
               {!compact && r.user_id === userId && (
                 <button

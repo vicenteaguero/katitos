@@ -21,7 +21,7 @@ export const storagePaths = {
     `${deckId}/${cardId}.${ext}`,
   /**
    * A pronunciation clip. The extension is whatever the recorder actually
-   * produced — iOS makes MP4/AAC, Chrome makes WebM — because a clip stored
+   * produced - iOS makes MP4/AAC, Chrome makes WebM - because a clip stored
    * under the wrong name is a clip the other phone silently refuses to play.
    *
    * `id` must be UNIQUE PER RECORDING (`<rowId>-<nanoid>`), never just the
@@ -30,7 +30,7 @@ export const storagePaths = {
    * record twice. The old object is removed by whoever replaces it.
    */
   languageAudio: (id: string, ext = 'webm') => `${id}.${ext}`,
-  /** His answer to a "say it" question — the recording she marks. */
+  /** His answer to a "say it" question - the recording she marks. */
   languageSpeech: (id: string, ext: string) => `speech/${id}.${ext}`,
   /** One of us saying a word for the other: a try, or the answer to one. */
   languageVoice: (id: string, ext: string) => `voice/${id}.${ext}`,

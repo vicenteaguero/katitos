@@ -2,11 +2,11 @@
  * Client-side image proxying. Photos are stored twice: the original at its
  * canonical path, and a small, fast-loading proxy at `thumbs/<path>`. Lists and
  * thumbnails load the proxy (a few KB); only a full-screen view or a download
- * fetches the original. Proxy generation is best-effort — if it fails, the
+ * fetches the original. Proxy generation is best-effort - if it fails, the
  * original still uploads and display falls back to it, so nothing ever breaks.
  */
 
-/** Where a path's proxy lives — a parallel `thumbs/` tree in the same bucket. */
+/** Where a path's proxy lives - a parallel `thumbs/` tree in the same bucket. */
 export function proxyPath(path: string): string {
   return `thumbs/${path}`;
 }
@@ -22,7 +22,7 @@ export interface DecodedImage {
 /**
  * Decode an image Blob into something a canvas can draw.
  *
- * `createImageBitmap` is the fast path, but older iOS Safari throws on HEIC —
+ * `createImageBitmap` is the fast path, but older iOS Safari throws on HEIC -
  * so we fall back to an `<img>` + object URL, which the system decoder handles.
  * Every caller that touches user photos needs this fallback; without it the
  * iPhone camera roll silently fails on exactly the photos we care about.
@@ -69,7 +69,7 @@ interface DownscaleOptions {
  * Downscale a photo Blob to a small WebP proxy (≈30% smaller than JPEG at equal
  * quality, so album/polaroid thumbnails load faster). Falls back to JPEG on
  * engines that can't encode WebP. Resolves to the proxy Blob, or rejects if the
- * browser can't decode/encode — callers treat that as "no proxy".
+ * browser can't decode/encode - callers treat that as "no proxy".
  */
 export async function downscaleImage(
   blob: Blob,
@@ -98,7 +98,7 @@ export async function downscaleImage(
         canvas.toBlob((out) => resolve(out), type, q)
       );
 
-    // `toBlob` does NOT return null for an unsupported type — per spec it
+    // `toBlob` does NOT return null for an unsupported type - per spec it
     // silently falls back to PNG. Safari did exactly that for years, so every
     // "thumbnail" it made was a ~300 KB PNG: three times heavier than the JPEG
     // it was supposed to shrink, which is what made the album crawl. Check what
@@ -107,14 +107,14 @@ export async function downscaleImage(
     if (webp && webp.type === 'image/webp') return webp;
 
     // Safari cannot encode WebP from a canvas, so on her iPhone EVERY proxy
-    // takes this path — and at 0.7 those came out around 76 KB against the
+    // takes this path - and at 0.7 those came out around 76 KB against the
     // 20 KB the WebP ones weigh, which is what made the flowers crawl. JPEG
     // needs a lower number than WebP to reach the same size; at thumbnail
     // scale the difference is invisible.
     const jpeg = await encode('image/jpeg', 0.55);
     if (jpeg && jpeg.type === 'image/jpeg') return jpeg;
 
-    // Neither worked. A PNG proxy is worse than no proxy — callers fall back to
+    // Neither worked. A PNG proxy is worse than no proxy - callers fall back to
     // the original, which is smaller than a lossless re-encode of it.
     throw new Error('no usable proxy encoding');
   } finally {
@@ -139,7 +139,7 @@ export async function imageSize(
  *
  * Twenty-four pixels across, encoded as a data URI: three or four hundred bytes
  * that arrive WITH the page, before anything has been signed for or fetched.
- * Blown up and blurred by CSS it is the shape and the colours of the picture —
+ * Blown up and blurred by CSS it is the shape and the colours of the picture -
  * enough that a page is never a grid of empty grey holes while the real
  * photographs land, including offline and on the very first open.
  *
@@ -153,11 +153,11 @@ export async function tinyPlaceholder(
   try {
     // Sixteen pixels, and low quality on purpose: it is going to be blurred
     // to nothing anyway, and Safari cannot canvas-encode WebP, so on her phone
-    // every one of these is a JPEG — which is roughly twice the size for the
+    // every one of these is a JPEG - which is roughly twice the size for the
     // same picture. Three hundred photos have to fit in a query response AND
     // in a localStorage snapshot beside everything else in the app.
     const small = await downscaleImage(blob, { maxDim, quality: 0.4 });
-    // A placeholder that is not tiny is not a placeholder — it would be dead
+    // A placeholder that is not tiny is not a placeholder - it would be dead
     // weight in every page query and in the persisted cache behind it.
     if (small.size > 900) return null;
     return await new Promise<string | null>((resolve) => {

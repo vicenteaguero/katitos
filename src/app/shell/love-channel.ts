@@ -3,7 +3,7 @@ import { supabase } from '@kernel/supabase';
 
 /**
  * The love-burst broadcast channel. Sending love plays an on-screen burst for
- * the sender instantly and — over this Supabase broadcast channel — on the
+ * the sender instantly and - over this Supabase broadcast channel - on the
  * partner's screen too. (The native push still covers the app-closed case.)
  */
 type Listener = (note: string) => void;
@@ -32,7 +32,7 @@ export function sendLoveBurst(note: string): void {
       payload: { note },
     });
   } catch {
-    /* best-effort — the local burst below still plays */
+    /* best-effort - the local burst below still plays */
   }
   listeners.forEach((l) => l(note));
 }

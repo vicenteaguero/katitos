@@ -16,16 +16,16 @@ export function useSignedUrl(
     staleTime: Math.max(0, (expiresIn - 60) * 1000),
     // …and actually go and refresh it. The app turns off refetch-on-focus,
     // so a stale signature was never asked for again while the screen stayed
-    // open — after an evening lesson the play button quietly did nothing.
+    // open - after an evening lesson the play button quietly did nothing.
     // The batch hook had this fix already; this one never got it.
     refetchInterval: Math.max(60_000, (expiresIn - 60) * 1000),
     refetchIntervalInBackground: false,
-    // Runs offline too — that is the whole point of the branch below. The
+    // Runs offline too - that is the whole point of the branch below. The
     // default mode would leave the query pending until the network is back.
     networkMode: 'offlineFirst',
     queryFn: async () => {
       // No network: an address the worker's cache will answer, if it holds
-      // the bytes — a recording played once keeps playing on a train.
+      // the bytes - a recording played once keeps playing on a train.
       if (isOffline()) {
         const held = await cachedOffline(bucket, path as string);
         if (held) return held;
@@ -74,7 +74,7 @@ export function useProxiedUrl(
     isLoading: proxyQ.isLoading || fullQ.isLoading,
     /**
      * The proxy doesn't exist (a photo taken before proxies, or one whose
-     * downscale failed). Consumers must fall back to the original — otherwise
+     * downscale failed). Consumers must fall back to the original - otherwise
      * the photo silently never renders.
      */
     proxyMissing: proxy && !!path && proxyQ.isError,

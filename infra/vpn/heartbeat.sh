@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Katitos VPN — one line a minute, from the box to Supabase.
+# Katitos VPN - one line a minute, from the box to Supabase.
 #
 # The reporting goes this way round on purpose. The obvious design is a monitor
 # that pings the servers; that monitor would be a datacentre IP touching her

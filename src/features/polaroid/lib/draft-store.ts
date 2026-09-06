@@ -3,8 +3,8 @@ import { create } from 'zustand';
 /**
  * A photo that has been taken but not yet saved, in transit between screens.
  *
- * The bottom bar's camera button opens the PHONE's camera — an
- * `<input capture>`, not `getUserMedia` — because that is the only way to take
+ * The bottom bar's camera button opens the PHONE's camera - an
+ * `<input capture>`, not `getUserMedia` - because that is the only way to take
  * a daily photo without iOS asking permission on every single launch. The catch
  * is that the file arrives wherever the input lives, which is the nav bar, and
  * it needs to reach the Polaroid screen to be cropped and saved.

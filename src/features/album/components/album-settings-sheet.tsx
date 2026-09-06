@@ -21,7 +21,7 @@ import { useDeletePage } from '../api/pages.mutations';
 /**
  * Everything about the book itself.
  *
- * Six things to change, so six controls — no captions under them explaining
+ * Six things to change, so six controls - no captions under them explaining
  * what a title is. What a box is for is written inside it.
  *
  * Two things that used to live here are gone. A page had its own name and
@@ -39,7 +39,7 @@ export function AlbumSettingsSheet({
   open: boolean;
   onClose: () => void;
   book: AlbumBook;
-  /** The page you have open — null on a cover. Only "tear it out" needs it. */
+  /** The page you have open - null on a cover. Only "tear it out" needs it. */
   page?: { id: string } | null;
   onDeleted: () => void;
 }) {
@@ -54,7 +54,7 @@ export function AlbumSettingsSheet({
   const [cover, setCoverBlob] = useState<Blob | null>(null);
 
   // Seeded on IDENTITY, not on the object: `book` comes out of a live query, so
-  // a refetch — the partner moving a sticker is enough — replaced whatever she
+  // a refetch - the partner moving a sticker is enough - replaced whatever she
   // was in the middle of typing.
   useEffect(() => {
     setTitle(book.title);
@@ -64,7 +64,7 @@ export function AlbumSettingsSheet({
   }, [book.id]);
 
   const save = () => {
-    // The toast used to fire here, before either write had been attempted — so
+    // The toast used to fire here, before either write had been attempted - so
     // it cheerfully said "Saved" over a rename that had just been refused.
     update.mutate(
       { id: book.id, title, startsOn, endsOn },
@@ -87,7 +87,7 @@ export function AlbumSettingsSheet({
         />
         {/* One caption for the pair, because two identical date boxes side by
             side with nothing said about either is a riddle, not a saving. */}
-        <Fieldset label="From — until">
+        <Fieldset label="From - until">
           <FieldRow>
             <Input
               type="date"
@@ -161,7 +161,7 @@ export function AlbumSettingsSheet({
               variant="ghost"
               full
               onClick={() => {
-                // The photos survive — only the arrangement goes.
+                // The photos survive - only the arrangement goes.
                 deletePage.mutate({ id: page.id, bookId: book.id });
                 onClose();
               }}

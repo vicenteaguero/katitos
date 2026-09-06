@@ -1,4 +1,4 @@
-/** Karing on the App Store — iPhone, iPad and Mac are the same listing. */
+/** Karing on the App Store - iPhone, iPad and Mac are the same listing. */
 const APP_STORE = 'https://apps.apple.com/app/karing/id6472431552';
 /** Windows, Android and Linux builds. Their own site, never an aggregator. */
 const OTHER = 'https://karing.app/en/download';
@@ -46,7 +46,7 @@ export function AppStoreButton() {
   );
 }
 
-/** Everything that is not an Apple device — same profile, same app. */
+/** Everything that is not an Apple device - same profile, same app. */
 export function OtherPlatformsLink() {
   return (
     <a

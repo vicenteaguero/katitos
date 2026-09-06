@@ -5,7 +5,7 @@ export interface FilePickerButtonProps {
   /** Receives the chosen image as a Blob (a File is a Blob). */
   onPick?: (file: File) => void;
   /**
-   * Receives EVERY chosen file. Set this (with `multiple`) for a bulk pick —
+   * Receives EVERY chosen file. Set this (with `multiple`) for a bulk pick -
    * filling an album a page at a time is not a thing anyone will do twice.
    */
   onPickMany?: (files: File[]) => void;
@@ -16,14 +16,14 @@ export interface FilePickerButtonProps {
   disabled?: boolean;
   /** MIME accept filter; defaults to any image. */
   accept?: string;
-  /** Drop all built-in styling — the caller supplies the whole appearance. */
+  /** Drop all built-in styling - the caller supplies the whole appearance. */
   bare?: boolean;
   /**
    * Ask for the phone's own camera instead of its photo library.
    *
    * This is how the daily polaroid is taken now. `getUserMedia` re-asks for
-   * permission on every cold launch of an installed PWA on iOS — there is no
-   * setting and no API that stops it — so the one camera you use every single
+   * permission on every cold launch of an installed PWA on iOS - there is no
+   * setting and no API that stops it - so the one camera you use every single
    * day uses the system camera, which asks nothing. 'user' is the front lens.
    */
   capture?: 'user' | 'environment';
@@ -56,14 +56,14 @@ export function FilePickerButton({
         disabled={disabled}
         onClick={() => inputRef.current?.click()}
         className={cn(
-          // `bare` hands the whole appearance to the caller — used where the
+          // `bare` hands the whole appearance to the caller - used where the
           // picker IS the thing you tap (a polaroid slot), not a button beside
           // it. `cn` only joins classes, so a caller cannot reliably override
           // ours; opting out is the honest way to do this.
           bare
             ? 'lift-press block w-full disabled:opacity-50'
             : // Otherwise: the same quiet lifted panel as Button's `secondary`.
-              // Separated by tone, never by a line — this was the one kernel
+              // Separated by tone, never by a line - this was the one kernel
               // control with a literal border, so it never matched its
               // neighbours.
               'lift-press inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-surface-2 px-6 font-sans text-sm font-semibold text-fg transition hover:brightness-110 disabled:opacity-50',

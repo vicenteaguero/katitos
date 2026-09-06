@@ -22,7 +22,7 @@ import { ChangelogHistory } from '../shell/changelog-modal';
 // currency meant remembering two places and EUR would have been missing here.
 
 /** Just my emoji + the default converter pair (from → to). Everything else
- *  (name, place, timezone, languages) lives in the DB — only two of us. */
+ *  (name, place, timezone, languages) lives in the DB - only two of us. */
 function MeCard() {
   const { self } = usePartner();
   const update = useUpdateMember();
@@ -178,7 +178,7 @@ const STATE_DOT: Record<string, string> = {
  * An installed PWA hides this completely: the service worker never takes over
  * mid-session, so a phone can run a bundle from days ago and look perfectly
  * normal. The commit is written here so either of us can read it out loud and
- * know we are talking about the same app — and if the server has something
+ * know we are talking about the same app - and if the server has something
  * newer, this is where you take it.
  */
 function VersionRow() {
@@ -201,8 +201,8 @@ function VersionRow() {
             }}
             className="block truncate font-mono text-xs text-muted"
           >
-            {local.version} · {local.short}
-            {local.dirty && '+'} · {made}
+            {local.version} - {local.short}
+            {local.dirty && '+'} - {made}
           </button>
         </div>
         <span
@@ -215,7 +215,7 @@ function VersionRow() {
       </div>
       <p className="mt-1 font-sans text-xs text-muted">
         {BUILD_STATE_LABEL[state]}
-        {stale && server ? ` · ${server.short}` : ''}
+        {stale && server ? ` - ${server.short}` : ''}
       </p>
       {stale && (
         <Button
@@ -242,7 +242,7 @@ export function SettingsRoute() {
       <div className="curtain-stagger space-y-4">
         <MeCard />
         <NotificationsRow />
-        {/* Admin only — she receives the sweet nothings, he writes them. */}
+        {/* Admin only - she receives the sweet nothings, he writes them. */}
         {self?.is_admin && <PhraseEditor />}
         <WhatsNew />
         <VersionRow />

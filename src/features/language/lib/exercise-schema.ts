@@ -6,13 +6,13 @@ import type { ExerciseKind } from '../types';
  * What each kind of exercise is made of, and what counts as getting it right.
  *
  * The shapes live in `payload` (jsonb) rather than in columns, and are checked
- * HERE rather than by the database — deliberately. The service worker means a
+ * HERE rather than by the database - deliberately. The service worker means a
  * migration can never be assumed to have reached both phones, so a ninth kind
  * of exercise has to be addable without one. The price is that this file must
  * be strict, which is why every branch below is unit-tested.
  */
 
-/** One option, in all three languages — the same trilingual rule as prose. */
+/** One option, in all three languages - the same trilingual rule as prose. */
 export const optionSchema = z.object({
   id: z.string().min(1),
   ru: z.string().optional().nullable(),
@@ -23,7 +23,7 @@ export type ExerciseOption = z.infer<typeof optionSchema>;
 
 export const payloadSchemas = {
   /**
-   * Pick exactly one — or, as `variant: 'stress'`, pick where the stress
+   * Pick exactly one - or, as `variant: 'stress'`, pick where the stress
    * falls; as `variant: 'pair'`, pick which of two lookalikes she said
    * (`audioPath` carries her voice).
    */
@@ -42,7 +42,7 @@ export const payloadSchemas = {
    */
   complete: z.object({
     template: z.string().min(1),
-    /** One per gap: the lemma in brackets, the case wanted — what a textbook prints under the blank. */
+    /** One per gap: the lemma in brackets, the case wanted - what a textbook prints under the blank. */
     hints: z.array(z.string()).optional(),
     /** One per gap: why that form, shown after marking. */
     why: z.array(z.string()).optional(),
@@ -57,11 +57,11 @@ export const payloadSchemas = {
   }),
   /**
    * Hear it, then write what you heard. The recording is the whole exercise,
-   * so it is required — a listening question with nothing to listen to is just
+   * so it is required - a listening question with nothing to listen to is just
    * a typing question with no prompt.
    */
   listen: z.object({ audioPath: z.string().min(1) }),
-  /** Say it out loud and mark yourself — nothing else here would be honest. */
+  /** Say it out loud and mark yourself - nothing else here would be honest. */
   speak: z.object({ audioPath: z.string().optional().nullable() }),
 } as const;
 
@@ -85,7 +85,7 @@ export const answerSchemas = {
   multi: z.array(z.string()).min(1),
   type: writtenAnswer,
   complete: z.array(writtenAnswer),
-  // One accepted ordering, or several — Russian word order is pragmatic, not
+  // One accepted ordering, or several - Russian word order is pragmatic, not
   // fixed, so "я тебя люблю" and "я люблю тебя" are both right.
   order: z.union([z.array(z.string()), z.array(z.array(z.string())).min(1)]),
   match: z.record(z.string(), z.string()),
@@ -115,7 +115,7 @@ export interface ExerciseLike {
 
 export interface Grade {
   correct: boolean;
-  /** 0..1 — partial credit where partial credit is meaningful. */
+  /** 0..1 - partial credit where partial credit is meaningful. */
   score: number;
   /** Per-item verdicts, for showing WHICH gap was wrong. */
   detail?: boolean[];
@@ -136,7 +136,7 @@ export function splitTemplate(template: string): string[] {
 /**
  * Jumble the words of a put-in-order question.
  *
- * Without this the pool is stored — and therefore shown — in the answer's own
+ * Without this the pool is stored - and therefore shown - in the answer's own
  * order, so the exercise is solved by tapping left to right. Deterministic on
  * purpose (same sentence, same jumble): the alternative reshuffles under the
  * learner's fingers on every render, and it could not be tested.
@@ -238,7 +238,7 @@ const sameSet = (a: string[], b: string[]) =>
  * Mark an answer.
  *
  * Typed answers go through `answerMatches`, which already forgives case,
- * punctuation and the two Russian letters that look alike — being marked wrong
+ * punctuation and the two Russian letters that look alike - being marked wrong
  * over a missing diaeresis teaches nobody anything.
  */
 /** What a spoken answer holds: the old bare self-mark, or a recording with one. */
@@ -275,7 +275,7 @@ export function gradeAnswer(ex: ExerciseLike, given: unknown): Grade {
       // Credit for what was right MINUS the share of the wrong ones, measured
       // against how many wrong answers there were to avoid. The old formula
       // divided the penalty by the number of CORRECT answers, so ticking every
-      // box scored 67% on a four-option question — this scores it 0, whatever
+      // box scored 67% on a four-option question - this scores it 0, whatever
       // the shape of the question.
       const options = (ex.payload as { options?: unknown[] })?.options ?? [];
       const k = want.data.length;
@@ -322,7 +322,7 @@ export function gradeAnswer(ex: ExerciseLike, given: unknown): Grade {
           correct: exact,
           score: want.length ? kept.length / want.length : 0,
           // A word is marked wrong only if it is not part of the best
-          // matching run — inserting one word early used to shift every word
+          // matching run - inserting one word early used to shift every word
           // after it and paint the whole sentence red.
           detail: got.map((_, i) => kept.includes(i)),
         };
@@ -356,7 +356,7 @@ export function gradeAnswer(ex: ExerciseLike, given: unknown): Grade {
     case 'speak':
       // Self-marked: nothing in a browser can judge a Russian accent, and
       // pretending otherwise would be worse than trusting him. The recording
-      // is for her — she can overrule him from the marking screen.
+      // is for her - she can overrule him from the marking screen.
       return speakAnswer(given).ok === true
         ? { correct: true, score: 1 }
         : WRONG;

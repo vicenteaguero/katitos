@@ -20,7 +20,7 @@ const extOf = (name: string) =>
   name.includes('.') ? name.split('.').pop()!.toLowerCase() : 'bin';
 
 /**
- * Everything ever attached in a course — the library a media block can pick
+ * Everything ever attached in a course - the library a media block can pick
  * from, so a worksheet uploaded for lesson 3 is one tap away in lesson 9.
  */
 export function useCourseMedia(courseId: string | undefined) {
@@ -111,7 +111,7 @@ export function youtubeId(url: string): string | null {
   return null;
 }
 
-/** Attach a video or a link — no upload, just an address. */
+/** Attach a video or a link - no upload, just an address. */
 export function useAddLink() {
   const qc = useQueryClient();
   return useMutation({
@@ -130,7 +130,7 @@ export function useAddLink() {
           kind: id ? 'youtube' : 'link',
           title: v.title?.trim() || null,
           url: v.url.trim(),
-          // The still frame, so a lesson full of videos still opens instantly —
+          // The still frame, so a lesson full of videos still opens instantly -
           // the player itself is only loaded when someone taps it.
           poster_path: id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : null,
         })

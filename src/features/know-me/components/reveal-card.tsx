@@ -25,7 +25,7 @@ export function RevealCard({
 
   const partnerName = partner?.display_name ?? 'them';
   const labelOf = (id: string | null) =>
-    today.options.find((o) => o.id === id)?.label ?? '—';
+    today.options.find((o) => o.id === id)?.label ?? '-';
 
   const me = rows.find((r) => r.is_self);
   const them = rows.find((r) => !r.is_self);
@@ -93,7 +93,7 @@ export function RevealCard({
           bothNailed ? 'candle-flicker text-accent-fg' : 'text-muted'
         )}
       >
-        {iGotIt ? '🎯 You nailed it' : '😄 Missed this one'} ·{' '}
+        {iGotIt ? '🎯 You nailed it' : '😄 Missed this one'} , {' '}
         {theyGotIt ? `${partnerName} got you` : `${partnerName} missed you`}
       </p>
 

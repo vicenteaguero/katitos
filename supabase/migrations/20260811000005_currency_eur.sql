@@ -1,8 +1,8 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — the euro joins the bench
+-- Katitos - the euro joins the bench
 --
 --   Baseline rates only. The client refreshes the whole matrix from one
---   keyless USD fetch whenever the rates are ≥8h old OR a pair is missing —
+--   keyless USD fetch whenever the rates are ≥8h old OR a pair is missing -
 --   that second condition is new, and it is what makes adding a currency work
 --   at all. Without it, EUR would have sat here as the seed values forever,
 --   because every existing row was fresh and the refresh returned early.

@@ -3,7 +3,7 @@ import { youtubeId } from '../api/media';
 
 /**
  * She will paste whatever the YouTube app on her phone gave her, which is a
- * `youtu.be` short link about half the time. Getting this wrong doesn't error —
+ * `youtu.be` short link about half the time. Getting this wrong doesn't error -
  * it silently files the video as a plain "link" with no poster and no player.
  */
 describe('youtubeId', () => {

@@ -22,7 +22,7 @@ export function LoginScreen() {
   return (
     <div className="mx-auto flex min-h-full max-w-app items-center justify-center px-[1.75rem] py-[3rem]">
       <div className="curtain-reveal w-full">
-        {/* The entrance — a footlight pool rising behind the mark and names. */}
+        {/* The entrance - a footlight pool rising behind the mark and names. */}
         <div className="footlight mb-[3rem] flex flex-col items-center text-center">
           <KatitosMark size={92} className="mb-6" />
           <h1 className="font-display gilt-text text-5xl font-semibold leading-none tracking-tight">

@@ -8,7 +8,7 @@ interface WaterButtonProps {
   selfId: string;
   selfName?: string;
   partnerName?: string;
-  /** Live health 0.05..1 — drives the thirsty hint when it's not your turn. */
+  /** Live health 0.05..1 - drives the thirsty hint when it's not your turn. */
   health: number;
 }
 
@@ -32,7 +32,7 @@ export function WaterButton({
         </Button>
         {health < THIRSTY && (
           <p className="font-sans text-xs text-muted">
-            The tree is thirsty 🥀 — {partnerName ?? 'they'} can water it
+            The tree is thirsty 🥀 - {partnerName ?? 'they'} can water it
           </p>
         )}
       </div>

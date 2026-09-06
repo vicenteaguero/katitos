@@ -4,7 +4,7 @@
  *     **bold**   *italic*   ==highlighted==
  *
  * That is the whole language. A teacher's page needs an ending stressed, a
- * word set off, a rule lit up — not headings, links and tables, which the
+ * word set off, a rule lit up - not headings, links and tables, which the
  * blocks already are. Unclosed marks stay as typed; nothing ever disappears.
  */
 export type InlineKind = 'text' | 'bold' | 'italic' | 'mark';

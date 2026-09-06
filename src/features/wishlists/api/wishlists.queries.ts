@@ -13,7 +13,7 @@ function giftListTitle(role: string | null | undefined): string {
 const OLD_TITLES = new Set(['For Katito', 'For Katita']);
 
 /**
- * The gift lists — one per person, self-provisioned on first open.
+ * The gift lists - one per person, self-provisioned on first open.
  *
  * Production ships no seed, so the two lists have to create themselves the way
  * the album book does. Insert races are survivable: a duplicate just loses and
@@ -49,7 +49,7 @@ export function useWishlists() {
           missing.map((m, i) => ({
             title: giftListTitle(m.role),
             owner_user_id: m.user_id,
-            // Whatever each of us picked in Settings — one face per person
+            // Whatever each of us picked in Settings - one face per person
             // everywhere in the app, rather than a second hardcoded one here.
             emoji: m.emoji,
             position: i,
@@ -62,7 +62,7 @@ export function useWishlists() {
 
       // Heal the lists we provisioned under the old names, and follow whatever
       // face each of us has chosen since. Only ever touches a list still
-      // carrying a title we wrote ourselves — a list either of us renamed by
+      // carrying a title we wrote ourselves - a list either of us renamed by
       // hand is left completely alone.
       const stale = lists.filter((l) => {
         const owner = (members ?? []).find(
@@ -98,7 +98,7 @@ export function useWishlists() {
 /**
  * The items on one list.
  *
- * Hidden items simply do not arrive for the person they're hidden from — the
+ * Hidden items simply do not arrive for the person they're hidden from - the
  * filtering is in RLS, not here, so there is no way for the UI to leak one by
  * accident.
  */
@@ -125,7 +125,7 @@ export function useWishlistCounts() {
   const userId = useUserId();
   return useQuery({
     queryKey: [...qk.wishlists.all(), 'counts', userId] as const,
-    // Rows from the queryFn, Map in `select` — query data is persisted to
+    // Rows from the queryFn, Map in `select` - query data is persisted to
     // localStorage, and a Map does not survive that round-trip.
     queryFn: async () => {
       const { data, error } = await supabase

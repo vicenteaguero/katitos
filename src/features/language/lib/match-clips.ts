@@ -4,7 +4,7 @@ import type { Vocab } from '../types';
  * Which word a dropped sound file belongs to.
  *
  * She records a folder of clips on her computer and names each one after
- * its word — "спасибо.m4a", "spasibo.m4a", or the row's id. The name (minus
+ * its word - "спасибо.m4a", "spasibo.m4a", or the row's id. The name (minus
  * its extension) is matched against the word, its transliteration and its id,
  * case-insensitively and with the stress mark ignored.
  */

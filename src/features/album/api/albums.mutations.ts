@@ -12,7 +12,7 @@ function refresh(qc: ReturnType<typeof useQueryClient>) {
 }
 
 /**
- * Start a new album — one era of ours per book.
+ * Start a new album - one era of ours per book.
  *
  * New books are `scope: 'era'`. That is not cosmetic: the two originals
  * (Pololini, Summer Panini) are still resolved by scope with `.maybeSingle()`,
@@ -155,7 +155,7 @@ export function useSetAlbumCover() {
 /**
  * Delete an album and everything in it.
  *
- * Only ever offered for `scope: 'era'` books — Pololini and the trip book are
+ * Only ever offered for `scope: 'era'` books - Pololini and the trip book are
  * not deletable from the UI. Pages and photos cascade; the stored image bytes
  * are deliberately left behind rather than risking deleting a photo that is
  * also referenced from the polaroid album.

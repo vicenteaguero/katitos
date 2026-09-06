@@ -3,7 +3,7 @@
  *
  * A study session mounts thirty cards; thirty native `<audio controls>` meant
  * thirty media elements, thirty preloads and a screen of chrome nobody asked
- * for. Only one sound is ever playing, so only one player exists — and it
+ * for. Only one sound is ever playing, so only one player exists - and it
  * lives here rather than beside the component so the module stays a plain
  * module (and fast refresh keeps working).
  */
@@ -28,7 +28,7 @@ export function claimAudio(onStopped: () => void): HTMLAudioElement {
   return sharedAudio();
 }
 
-/** Stop whatever is playing — e.g. when a screen unmounts mid-clip. */
+/** Stop whatever is playing - e.g. when a screen unmounts mid-clip. */
 export function stopSharedAudio(): void {
   el?.pause();
   release?.();

@@ -4,7 +4,7 @@
 // with an address. That asymmetry is the whole design: the client learns
 // "Helsinki" or "no", and nothing it could paste anywhere would help a censor.
 //
-// Runs with the caller's own JWT verified (unlike vpn-heartbeat) — this is a
+// Runs with the caller's own JWT verified (unlike vpn-heartbeat) - this is a
 // question only the two of them get to ask.
 //
 // Deploy:
@@ -16,12 +16,12 @@ import { corsHeaders, json } from '../_shared/cors.ts';
  * Every address in the chain, closest hop last.
  *
  * `x-forwarded-for` is a list appended to by each proxy, and which end holds
- * the true peer depends on the edge in front of us — a guess there would fail
+ * the true peer depends on the edge in front of us - a guess there would fail
  * silently and forever, always answering "not on the tunnel". So we compare
  * ALL of them and match on any.
  *
  * That would be forgeable if this were open: send the header, claim to be on
- * the tunnel. It is not open — the caller must already be one of the two of
+ * the tunnel. It is not open - the caller must already be one of the two of
  * them, and lying to yourself about your own VPN is not a threat model. An
  * internal hop can never collide, because it would have to equal one of our
  * servers' public addresses.
@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
-  // Only the two of them. The anon key alone is not enough — this needs a
+  // Only the two of them. The anon key alone is not enough - this needs a
   // signed-in user, and RLS on vpn_servers does the rest.
   const auth = req.headers.get('Authorization') ?? '';
   const asUser = createClient(

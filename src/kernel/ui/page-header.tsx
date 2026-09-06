@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 /**
  * Page header. The app's top bar already shows the screen's title, so this
- * renders only an optional subtitle + action — keeping exactly ONE title per
+ * renders only an optional subtitle + action - keeping exactly ONE title per
  * page. `title` is still accepted (callers pass it) but intentionally not
  * rendered here to avoid a duplicate heading.
  */

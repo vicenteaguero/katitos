@@ -1,21 +1,21 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — wishlists become gift lists
+-- Katitos - wishlists become gift lists
 --
---   One list per person, shared between us — except each item carries an eye.
+--   One list per person, shared between us - except each item carries an eye.
 --   A hidden item is visible ONLY to whoever added it, so a surprise stays a
 --   surprise. That is enforced in RLS: the partner never receives the row at
 --   all, rather than being trusted not to look.
 --
 --   `visible` DEFAULTS TO TRUE HERE, on purpose. Shipping `false` today would
---   retroactively hide every existing item from the other one — both screens
---   would just empty out mid-session with no explanation — and anything added
+--   retroactively hide every existing item from the other one - both screens
+--   would just empty out mid-session with no explanation - and anything added
 --   from the old bundle (which has no eye control) would become an invisible
 --   "surprise" nobody chose. The default flips to false in a follow-up, once
 --   the new bundle is live on both phones.
 --
 --   NOTE: wishlist_items is deliberately NOT added to supabase_realtime.
 --   Realtime applies RLS to INSERT/UPDATE payloads but DELETE events bypass
---   it — deleting a hidden item would broadcast the whole row, title included.
+--   it - deleting a hidden item would broadcast the whole row, title included.
 -- ════════════════════════════════════════════════════════════════════════
 
 alter table public.wishlist_items
@@ -85,7 +85,7 @@ create policy wishlist_items_delete on public.wishlist_items for delete
 -- Otherwise they're an existence oracle: the partner could read wishlist_votes
 -- and learn the item_ids of rows they are not allowed to see. The EXISTS runs
 -- under the CALLER's RLS on wishlist_items, so it hides exactly the same rows.
--- No recursion — the items policy never references votes.
+-- No recursion - the items policy never references votes.
 drop policy if exists members_all        on public.wishlist_votes;
 drop policy if exists wishlist_votes_all on public.wishlist_votes;
 create policy wishlist_votes_all on public.wishlist_votes for all

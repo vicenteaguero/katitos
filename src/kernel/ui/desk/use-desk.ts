@@ -3,7 +3,7 @@ import { create } from 'zustand';
 import { useMediaQuery } from '../../hooks/use-media-query';
 
 /**
- * Where the desk begins. Tablets and up; a phone never sees any of this —
+ * Where the desk begins. Tablets and up; a phone never sees any of this -
  * not even on its side, which is why height is part of the question. Kept
  * in step with the two media queries in index.css by hand.
  */
@@ -25,7 +25,7 @@ const useDeskStore = create<DeskState>((set) => ({
 /**
  * Let THIS route have a desk.
  *
- * The app is deliberately phone-shaped and stays that way — but she builds
+ * The app is deliberately phone-shaped and stays that way - but she builds
  * her lessons on a computer, and a 32rem column is a miserable place to lay
  * out a course. A route that calls this gets the whole window from a tablet
  * up: the shell drops its cap, the bottom tab bar becomes a side rail, and the

@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — Know-Me (the daily "how well do you know me" game)
+-- Katitos - Know-Me (the daily "how well do you know me" game)
 -- ONE shared question per couple-day. Both partners answer about themselves
 -- (truth) AND guess the other; reveal when both submit; score the guesses.
 --

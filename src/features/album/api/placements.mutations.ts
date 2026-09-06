@@ -29,7 +29,7 @@ type Pages = AlbumPageWithPhotos[];
  * Patch ONE sticker in the cached book, in place.
  *
  * Every drag used to end with `invalidateQueries`, which refetched the whole
- * book, rebuilt every page element and made StPageFlip re-initialise — on each
+ * book, rebuilt every page element and made StPageFlip re-initialise - on each
  * release. The row we changed is the row we already know, so we write it
  * straight into the cache and leave the rest of the book untouched. The
  * partner's changes still arrive on their own through `useTableSync`.
@@ -44,7 +44,7 @@ function patchSticker(
   const before = qc.getQueryData<Pages>(key);
   qc.setQueryData<Pages>(key, (pages) =>
     // ONLY the page that actually changed gets a new object. Cloning every
-    // page — which `pages.map(p => ({...p}))` did — broke `PageFace`'s memo for
+    // page - which `pages.map(p => ({...p}))` did - broke `PageFace`'s memo for
     // all of them at once, so `flipPages` came back all-new and StPageFlip
     // re-ran its layout for the whole book on every single drag release.
     pages?.map((p) => {
@@ -54,7 +54,7 @@ function patchSticker(
       );
       return {
         ...p,
-        // Depth is DRAWN from the order of this array, not from the raw `z` —
+        // Depth is DRAWN from the order of this array, not from the raw `z` -
         // so changing `z` without re-sorting moved nothing at all until a
         // refetch happened to reorder it. Which is why bringing a photo to the
         // front only appeared to work once you left the editor.
@@ -75,7 +75,7 @@ function depthsOnPage(
   return pages?.find((p) => p.id === pageId)?.stickers.map((s) => s.z) ?? [];
 }
 
-/** Where a sticker sits, how big it is and which way up — one row, no refetch. */
+/** Where a sticker sits, how big it is and which way up - one row, no refetch. */
 export function useMoveSticker() {
   const qc = useQueryClient();
   return useMutation({
@@ -129,7 +129,7 @@ export function useMoveSticker() {
  * order, and one press of the other button undoes it.
  *
  * The whole page is renumbered 0..n-1 as it goes, which also keeps the sparse
- * depths from drifting — so the old `needsNormalize` dance is no longer needed.
+ * depths from drifting - so the old `needsNormalize` dance is no longer needed.
  */
 export function useRestack() {
   const qc = useQueryClient();
@@ -148,7 +148,7 @@ export function useRestack() {
       const rows = stepOrder(page.stickers, v.id, v.to === 'front' ? 1 : -1);
       if (!rows.length) return; // already at that end
 
-      // On screen first — depth is drawn from the ORDER of the array, so the
+      // On screen first - depth is drawn from the ORDER of the array, so the
       // cache write has to re-sort, not just re-number.
       const key = qk.album.pages(v.bookId);
       const previous = qc.getQueryData<Pages>(key);
@@ -186,7 +186,7 @@ export function useRestack() {
   });
 }
 
-/** Everything about how a sticker looks — words, cut, mount and crop. */
+/** Everything about how a sticker looks - words, cut, mount and crop. */
 export interface StickerStyle {
   caption?: string | null;
   body?: string | null;
@@ -202,7 +202,7 @@ export interface StickerStyle {
   font_weight?: number;
 }
 
-/** Caption, words, frame, font, shape, crop — how a sticker looks. */
+/** Caption, words, frame, font, shape, crop - how a sticker looks. */
 export function useStyleSticker() {
   const qc = useQueryClient();
   return useMutation({
@@ -244,7 +244,7 @@ export const isPending = (id: string) => id.startsWith(PENDING);
 /** Put a library photo (or a new line of text) on a page, in front.
  *
  * OPTIMISTIC, because this is the tap you make two hundred times while
- * building a book. It used to invalidate the whole book on success — a full
+ * building a book. It used to invalidate the whole book on success - a full
  * refetch and a StPageFlip re-initialisation per photo placed, which is why
  * filling a page felt like wading. The sticker appears at once and the real
  * row quietly replaces it.
@@ -331,7 +331,7 @@ export function usePlaceSticker() {
       toast.error(e.message);
     },
     onSuccess: (row, v, ctx) => {
-      // Swap the stand-in for the real row IN PLACE — no refetch, so the book
+      // Swap the stand-in for the real row IN PLACE - no refetch, so the book
       // never re-initialises and the page you are looking at does not blink.
       qc.setQueryData<Pages>(qk.album.pages(v.bookId), (pages) =>
         pages?.map((p) =>
@@ -401,7 +401,7 @@ export function useRestoreSticker() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (v: { sticker: PlacedSticker; bookId: string }) => {
-      // `localKey` is ours, not the database's — it exists only so React can
+      // `localKey` is ours, not the database's - it exists only so React can
       // keep the element it already drew.
       const { photo: _photo, localKey: _localKey, ...row } = v.sticker;
       // Upsert, not insert: Undo is a button you can press twice, and the

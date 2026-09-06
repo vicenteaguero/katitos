@@ -34,14 +34,14 @@ function sameAsCached(
 }
 
 /**
- * Keep the open book in step with the other phone — and ONLY the other phone.
+ * Keep the open book in step with the other phone - and ONLY the other phone.
  *
  * `album_placements` has no `book_id` (a placement belongs to a page, and the
  * page belongs to the book), so this subscription cannot be filtered
  * server-side: it hears every sticker moved in every album. Worse, Postgres
  * echoes your OWN writes straight back, so the previous version refetched the
  * entire book on every drag release, every photo placed and every photo taken
- * off — which is exactly what the careful optimistic cache writes were supposed
+ * off - which is exactly what the careful optimistic cache writes were supposed
  * to avoid, and why the book kept re-initialising mid-gesture.
  *
  * Two questions, in order: is this even our book, and does it tell us anything
@@ -53,7 +53,7 @@ export function usePlacementSync(
   pages: AlbumPageWithPhotos[] | undefined
 ) {
   const qc = useQueryClient();
-  // A live mirror, so the subscription callback can stay stable — re-creating
+  // A live mirror, so the subscription callback can stay stable - re-creating
   // it would tear the channel down and rebuild it on every render.
   const live = useRef({ bookId, pages });
   live.current = { bookId, pages };
@@ -75,7 +75,7 @@ export function usePlacementSync(
 
       const cached = page.stickers.find((s) => s.id === row.id);
       if (payload.eventType === 'DELETE') {
-        // Already gone here — this is the echo of our own removal.
+        // Already gone here - this is the echo of our own removal.
         if (!cached) return;
       } else if (cached && sameAsCached(cached, row)) {
         return;

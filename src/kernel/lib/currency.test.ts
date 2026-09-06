@@ -30,7 +30,7 @@ describe('currency.convert', () => {
 });
 
 describe('currency.formatAmount', () => {
-  it('never includes the currency code — the caller places it', () => {
+  it('never includes the currency code - the caller places it', () => {
     // This is the whole bug: Intl's `style: 'currency'` PREFIXED the code and
     // the UI appended it again, giving "CLP 123.4 CLP".
     expect(formatAmount(1234.5, 'CLP')).not.toMatch(/CLP/);

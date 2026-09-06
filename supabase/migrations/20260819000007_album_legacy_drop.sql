@@ -1,9 +1,9 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — the album's legacy half, removed
+-- Katitos - the album's legacy half, removed
 --
 --   `album_photos` used to be both the picture AND its place on a page. Since
 --   the library split, `album_placements` owns the position and the photo row
---   is just the photo — but `page_id`, `slot` and the `(page_id, slot)` unique
+--   is just the photo - but `page_id`, `slot` and the `(page_id, slot)` unique
 --   index stayed behind so the previous bundle could keep working during the
 --   changeover. That window is closed: the app now updates itself on launch.
 --
@@ -12,7 +12,7 @@
 --   them for months.
 --
 --   Nothing loses a picture. Anything still pinned to a page the old way is
---   turned into a placement first, right here — the client-side heal that used
+--   turned into a placement first, right here - the client-side heal that used
 --   to do that (`adoptLegacyRows`) is deleted in this same release, so this
 --   cannot be left to it.
 -- ════════════════════════════════════════════════════════════════════════

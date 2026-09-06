@@ -6,7 +6,7 @@ import { agoLabel, dueSentence } from '../lib/due';
 import { useToday } from '../lib/use-today';
 
 /**
- * What he has handed in and she has not marked — across every course.
+ * What he has handed in and she has not marked - across every course.
  *
  * The badge on a lesson row only helped if she was already in the right
  * course. A teacher's home is a to-review list; that is the thing that makes
@@ -31,7 +31,7 @@ export function Inbox() {
     <section className="space-y-1.5">
       <p className="eyebrow">
         To mark
-        <span className="ml-1.5 normal-case">· {waiting.length}</span>
+        <span className="ml-1.5 normal-case">- {waiting.length}</span>
       </p>
       <ul className="space-y-1">
         {waiting.map((r) => (
@@ -50,7 +50,7 @@ export function Inbox() {
                     ? `handed in ${agoLabel(r.submitted_at)}`
                     : 'handed in'}
                   {r.lesson?.due_on
-                    ? ` · ${dueSentence(r.lesson.due_on, today)}`
+                    ? ` - ${dueSentence(r.lesson.due_on, today)}`
                     : ''}
                 </span>
               </span>

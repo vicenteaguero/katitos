@@ -6,7 +6,7 @@ import { claimAudio, sharedAudio, stopSharedAudio } from './shared-audio';
  *
  * A study session shows a screenful of words, each with its own play button.
  * The rule is simple and easy to get wrong: starting one must stop whatever
- * was playing, and must tell THAT button it is no longer playing — without
+ * was playing, and must tell THAT button it is no longer playing - without
  * anything reaching back and stopping the clip that just started.
  */
 describe('the shared player', () => {
@@ -17,7 +17,7 @@ describe('the shared player', () => {
     el.play = vi.fn().mockResolvedValue(undefined);
   });
 
-  it('is the same element every time — one player, not thirty', () => {
+  it('is the same element every time - one player, not thirty', () => {
     expect(sharedAudio()).toBe(sharedAudio());
   });
 
@@ -54,7 +54,7 @@ describe('the shared player', () => {
     claimAudio(owner);
     stopSharedAudio();
     stopSharedAudio();
-    // Released once, not once per call — a second stop must not re-notify a
+    // Released once, not once per call - a second stop must not re-notify a
     // button that already knows.
     expect(owner).toHaveBeenCalledTimes(1);
   });

@@ -1,7 +1,7 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — a page can say what it is
+-- Katitos - a page can say what it is
 --
---   "Santorini, the morning we missed the boat" — a page deserves a name and a
+--   "Santorini, the morning we missed the boat" - a page deserves a name and a
 --   date of its own, and the shelf wants to know when a book last changed.
 --   Purely additive: the old bundle selects * and ignores what it doesn't know.
 -- ════════════════════════════════════════════════════════════════════════

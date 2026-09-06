@@ -42,18 +42,18 @@ import type { Attempt, Exercise } from '../types';
 
 /** What he actually typed or picked, in a form worth reading. */
 function shown(answer: unknown): string {
-  if (answer === null || answer === undefined) return '—';
+  if (answer === null || answer === undefined) return '-';
   if (typeof answer === 'boolean') return answer ? 'said it' : 'not yet';
-  if (Array.isArray(answer)) return answer.join(' · ');
+  if (Array.isArray(answer)) return answer.join(' - ');
   if (typeof answer === 'object') {
     return Object.entries(answer as Record<string, string>)
       .map(([l, r]) => `${l} → ${r}`)
-      .join(' · ');
+      .join(' - ');
   }
   return String(answer);
 }
 
-/** "Tue 14:02" — when a thing happened. */
+/** "Tue 14:02" - when a thing happened. */
 function at(iso: string | null | undefined): string | null {
   if (!iso) return null;
   const t = DateTime.fromISO(iso);
@@ -72,7 +72,7 @@ type Margin = {
  *
  * The app can say whether an answer matched; it cannot say whether he has
  * understood, and it certainly cannot write him a note. So everything here
- * is her reading HIS answers — and hearing them, when he was asked to speak:
+ * is her reading HIS answers - and hearing them, when he was asked to speak:
  * a tick or a cross of her own on each, a word in the margin, typed or said,
  * a mark that writes itself from the ticks until she says otherwise. On a
  * desk, all of it from the home row.
@@ -97,7 +97,7 @@ function MarkLesson() {
   const navigate = useNavigate();
   const desk = useIsDesk();
   useDesk();
-  // His answers arrive while she is looking — homework handed in mid-call.
+  // His answers arrive while she is looking - homework handed in mid-call.
   useTableSync('lang_attempts', qk.lang.attempts(lessonId ?? 'none'), {
     enabled: !!lessonId,
   });
@@ -226,7 +226,7 @@ function MarkLesson() {
   const asleep = isAsleep(partner?.timezone);
   const clock = clockIn(partner?.timezone);
 
-  /** Still waiting after this one, oldest first — marking is a queue. */
+  /** Still waiting after this one, oldest first - marking is a queue. */
   const queue = (hisRows ?? [])
     .filter((r) => r.status === 'submitted' && r.lesson_id !== lessonId)
     .sort((a, b) => (a.submitted_at ?? '').localeCompare(b.submitted_at ?? ''));
@@ -264,7 +264,7 @@ function MarkLesson() {
           const verb = status === 'graded' ? 'Marked' : 'Sent back';
           const next = queue[0];
           if (next?.lesson) {
-            toast.success(`${verb} · next: ${next.lesson.title}`);
+            toast.success(`${verb} - next: ${next.lesson.title}`);
             navigate(`/language/mark/${next.lesson_id}`, { replace: true });
           } else {
             toast.success(verb);
@@ -322,14 +322,14 @@ function MarkLesson() {
 
   const right = verdicts.filter((v) => v?.correct).length;
 
-  /** Her verdict — the desk's right pane, under the answers on a phone. */
+  /** Her verdict - the desk's right pane, under the answers on a phone. */
   const verdict = (
     <div className="space-y-3">
       <div className="space-y-0.5">
         <Kicker as="p">His side</Kicker>
         <p className="font-sans text-xs text-muted">
           {seen ? `opened ${seen}` : 'not opened yet'}
-          {handed ? ` · handed in ${handed}` : ''}
+          {handed ? ` - handed in ${handed}` : ''}
         </p>
       </div>
       <Field
@@ -337,7 +337,7 @@ function MarkLesson() {
         hint={
           scoreTouched
             ? 'Yours'
-            : 'From the ticks — change it if that is unfair'
+            : 'From the ticks - change it if that is unfair'
         }
       >
         <Input
@@ -379,7 +379,7 @@ function MarkLesson() {
         <p className="font-sans text-xs text-muted">
           It's {clock} for him
           {asleep
-            ? ' — his phone stays quiet; he will find it on his home screen'
+            ? ' - his phone stays quiet; he will find it on his home screen'
             : ''}
           .
         </p>
@@ -411,9 +411,9 @@ function MarkLesson() {
       </Button>
       {desk && (
         <p className="font-sans text-xs leading-6 text-muted">
-          <Kbd>J</Kbd> <Kbd>K</Kbd> move · <Kbd>Y</Kbd> <Kbd>N</Kbd> tick, cross
-          · <Kbd>U</Kbd> undo · <Kbd>C</Kbd> a word in the margin · <Kbd>V</Kbd>{' '}
-          say it · <Kbd>⌘↵</Kbd> give it back
+          <Kbd>J</Kbd> <Kbd>K</Kbd> move - <Kbd>Y</Kbd> <Kbd>N</Kbd> tick, cross
+          - <Kbd>U</Kbd> undo - <Kbd>C</Kbd> a word in the margin - <Kbd>V</Kbd>{' '}
+          say it - <Kbd>⌘↵</Kbd> give it back
         </p>
       )}
     </div>
@@ -433,7 +433,7 @@ function MarkLesson() {
       <div className="curtain-reveal space-y-3">
         <header className="min-w-0">
           <p className="eyebrow">
-            {partner?.display_name ?? 'His'} answers · {right} of{' '}
+            {partner?.display_name ?? 'His'} answers - {right} of{' '}
             {answered.length} right
           </p>
           <h1 className="mt-0.5 truncate font-display text-2xl font-semibold text-fg">
@@ -472,7 +472,7 @@ function MarkLesson() {
                       ) : (
                         <X className="h-3.5 w-3.5 text-danger" />
                       )}
-                      {i + 1} · {ex.kind}
+                      {i + 1} - {ex.kind}
                       {ex.points > 1 && <span>{ex.points} pts</span>}
                       {a.attempt_no > 1 && (
                         <span className="text-copper">
@@ -507,12 +507,12 @@ function MarkLesson() {
                     )}
                     {!v.correct && ex.kind !== 'speak' && (
                       <p className="font-sans text-xs text-muted">
-                        wanted: {acceptedForms(ex.answer).join(' · ') || '—'}
+                        wanted: {acceptedForms(ex.answer).join(' - ') || '-'}
                       </p>
                     )}
                     {a.teacher_note && noteFor !== a.id && (
                       <p className="font-display text-sm italic text-fg">
-                        — {a.teacher_note}
+                        - {a.teacher_note}
                       </p>
                     )}
                     {a.teacher_audio_path && voiceFor !== a.id && (
@@ -596,7 +596,7 @@ function MarkLesson() {
                       if (e.key === 'Escape') setNoteFor(null);
                     }}
                     rows={2}
-                    placeholder="почти — watch the ending"
+                    placeholder="почти - watch the ending"
                   />
                 )}
                 {voiceFor === a.id && (

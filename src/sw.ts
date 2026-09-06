@@ -15,7 +15,7 @@ declare const self: ServiceWorkerGlobalScope & {
 };
 
 /**
- * A tiny stable hash of the precache manifest — the shell cache is named by
+ * A tiny stable hash of the precache manifest - the shell cache is named by
  * it, so every deploy gets a cache of its own and `activate` throws the last
  * one away. A single fixed name kept every deploy's hashed assets forever.
  */
@@ -50,7 +50,7 @@ const PRECACHE_URLS = [
 ];
 
 // Last-resort offline page when the cached shell itself is gone (iOS purges
-// SW caches after ~7 days of non-use) — a visible message beats a dead tab.
+// SW caches after ~7 days of non-use) - a visible message beats a dead tab.
 const OFFLINE_HTML = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Katitos</title><style>html,body{height:100%;margin:0;background:#100408;color:#f3e9ec;font-family:-apple-system,system-ui,sans-serif;display:flex;align-items:center;justify-content:center}div{text-align:center;padding:2rem}h1{font-weight:600;letter-spacing:.02em}p{opacity:.65;font-size:.9rem}</style></head><body><div><h1>Katitos</h1><p>You're offline. We'll be here when you're back.</p></div></body></html>`;
 
 self.addEventListener('install', (event) => {
@@ -58,12 +58,12 @@ self.addEventListener('install', (event) => {
     (async () => {
       const cache = await caches.open(CACHE);
       // Resilient precache: cache.addAll is atomic, so a single missing asset
-      // would abort the whole shell. Cache each entry independently instead —
+      // would abort the whole shell. Cache each entry independently instead -
       // partial precache still launches; never activate with an empty cache.
       await Promise.allSettled(PRECACHE_URLS.map((url) => cache.add(url)));
       // NO skipWaiting: a new version installs and WAITS, then activates on the
       // next clean launch (when no tab is open). This avoids swapping the app
-      // out from under a running session — which caused the "it shows 3
+      // out from under a running session - which caused the "it shows 3
       // different versions" flashing as each rapid deploy force-took-over.
     })()
   );
@@ -72,7 +72,7 @@ self.addEventListener('install', (event) => {
 /**
  * Keep one copy of each photograph, and not too many of them.
  *
- * Entries were keyed by the FULL url — signed token and all — while lookups
+ * Entries were keyed by the FULL url - signed token and all - while lookups
  * matched with `ignoreSearch`, so every hourly token rotation quietly stored
  * another complete copy of the same picture, forever, in a cache that was never
  * trimmed. An album browsed over a few weeks was paying for the same photos
@@ -84,7 +84,7 @@ async function storeObject(
   resp: Response,
   max: number
 ) {
-  // A media element asks with a Range header and gets a 206 — a partial
+  // A media element asks with a Range header and gets a 206 - a partial
   // body that `cache.put` refuses. Only a whole object is worth keeping.
   if (resp.status !== 200) return;
   // Drop the token before storing: the object path IS the identity, and this
@@ -95,7 +95,7 @@ async function storeObject(
   await cache.put(key, resp);
   const keys = await cache.keys();
   if (keys.length <= max) return;
-  // Oldest first — `cache.keys()` is insertion-ordered.
+  // Oldest first - `cache.keys()` is insertion-ordered.
   await Promise.all(
     keys.slice(0, keys.length - max).map((k) => cache.delete(k))
   );
@@ -160,7 +160,7 @@ self.addEventListener('fetch', (event) => {
   // loading offline and across token rotations). Revalidate in the background.
   // Only a response the worker can READ gets stored: an <img> or <audio>
   // fetched without `crossOrigin` comes back opaque (`ok` false) and is
-  // passed through untouched — which is why every loader in the app now
+  // passed through untouched - which is why every loader in the app now
   // asks for CORS. Storage answers with `Access-Control-Allow-Origin: *`.
   if (/\/storage\/v1\/(object|render\/image)\//.test(url.pathname)) {
     const audio = AUDIO_BUCKETS.test(url.pathname);
@@ -211,7 +211,7 @@ interface PushPayload {
 }
 
 /**
- * Take over now — only ever when asked by hand.
+ * Take over now - only ever when asked by hand.
  *
  * The install handler deliberately does not skipWaiting, so a deploy never
  * swaps the app out mid-session. This is the escape hatch behind the version
@@ -239,7 +239,7 @@ self.addEventListener('push', (event) => {
       icon: '/icons/icon-192.png',
       badge: '/icons/icon-192.png',
       // A second ping of the same kind should replace the first quietly rather
-      // than stack — except it still needs to buzz, hence renotify.
+      // than stack - except it still needs to buzz, hence renotify.
       renotify: !!payload.tag,
       ...(payload.image ? { image: payload.image } : {}),
       ...(payload.vibrate ? { vibrate: payload.vibrate } : {}),

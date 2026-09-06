@@ -41,7 +41,7 @@ function legColor(mode?: string | null): string {
     case 'walk':
       return '#9a8a6a'; // muted
     default:
-      return '#b5633a'; // car — copper
+      return '#b5633a'; // car - copper
   }
 }
 
@@ -78,7 +78,7 @@ function esc(s: string): string {
   );
 }
 
-/** Leaflet/OSM map of the whole Summer arc (Istanbul→Tbilisi) — vanilla Leaflet
+/** Leaflet/OSM map of the whole Summer arc (Istanbul→Tbilisi) - vanilla Leaflet
  *  in a ref'd div, with styled HTML pins + polyline legs (no marker assets). */
 export function SummerMap({
   pins,
@@ -102,7 +102,7 @@ export function SummerMap({
       zoomSnap: 0, // fractional zoom → fitBounds lands exactly, no coarse jumps
       zoomDelta: 0.5,
     }).setView([41.4, 38.0], 6);
-    // Esri NatGeo — warm topographic basemap (free, no key; tiles to z16).
+    // Esri NatGeo - warm topographic basemap (free, no key; tiles to z16).
     L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}',
       { maxZoom: 16 }
@@ -201,7 +201,7 @@ export function SummerMap({
           <div style="width:${d}px;height:${d}px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);
             background:${color};border:${isCity ? 2 : 1.5}px solid ${isCity ? '#fff1c9' : '#e4c36a'};
             box-shadow:0 2px 6px rgba(0,0,0,.5)"></div></div>`,
-        // The rotated teardrop's sharp tip sits ~tipY down from the icon's top —
+        // The rotated teardrop's sharp tip sits ~tipY down from the icon's top -
         // anchor THERE so the point lands exactly on the lat/lng at any zoom.
         iconSize: [d, tipY],
         iconAnchor: [d / 2, tipY],

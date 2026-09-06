@@ -26,10 +26,10 @@ begin
   -- ── Türkiye ────────────────────────────────────────────────────────────
   if not exists (
     select 1 from public.language_decks
-    where language = 'tr' and title = 'Türkiye — travel basics'
+    where language = 'tr' and title = 'Türkiye - travel basics'
   ) then
     insert into public.language_decks (language, title, description, emoji, created_by)
-    values ('tr', 'Türkiye — travel basics', 'The essentials for our days in Türkiye', '🇹🇷', v_creator)
+    values ('tr', 'Türkiye - travel basics', 'The essentials for our days in Türkiye', '🇹🇷', v_creator)
     returning id into v_deck;
     insert into public.phrases (deck_id, language, text, translation, transliteration, category, added_by) values
       (v_deck, 'tr', 'Merhaba', 'Hello', 'mer-ha-BA', 'travel', v_creator),
@@ -51,10 +51,10 @@ begin
   -- ── Georgia ────────────────────────────────────────────────────────────
   if not exists (
     select 1 from public.language_decks
-    where language = 'ka' and title = 'Georgia — travel basics'
+    where language = 'ka' and title = 'Georgia - travel basics'
   ) then
     insert into public.language_decks (language, title, description, emoji, created_by)
-    values ('ka', 'Georgia — travel basics', 'The essentials for our days in Georgia', '🇬🇪', v_creator)
+    values ('ka', 'Georgia - travel basics', 'The essentials for our days in Georgia', '🇬🇪', v_creator)
     returning id into v_deck;
     insert into public.phrases (deck_id, language, text, translation, transliteration, category, added_by) values
       (v_deck, 'ka', 'გამარჯობა', 'Hello', 'ga-mar-JO-ba', 'travel', v_creator),

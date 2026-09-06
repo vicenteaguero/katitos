@@ -16,7 +16,7 @@ const entry: ChangelogEntry = {
 };
 
 describe('changelogKey', () => {
-  it('is stable for identical content — an accepted modal stays accepted', () => {
+  it('is stable for identical content - an accepted modal stays accepted', () => {
     expect(changelogKey(entry)).toBe(changelogKey({ ...entry }));
   });
 

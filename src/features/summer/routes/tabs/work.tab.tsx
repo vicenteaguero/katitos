@@ -208,7 +208,7 @@ export function WorkTab() {
                             {b.title || 'Work'}
                           </p>
                           <p className="font-sans text-[0.7rem] text-muted">
-                            {hhmm(b.start_min)}–{hhmm(b.end_min)} ·{' '}
+                            {hhmm(b.start_min)}–{hhmm(b.end_min)} , {' '}
                             {nameOf(b.user_id)}
                           </p>
                         </div>
@@ -243,10 +243,10 @@ export function WorkTab() {
           <Input
             value={form.title}
             onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-            placeholder="What — standup, deep work, call…"
+            placeholder="What - standup, deep work, call…"
             autoFocus
           />
-          {/* Two columns with a gap — the Input's min-w-0/max-w-full keeps the
+          {/* Two columns with a gap - the Input's min-w-0/max-w-full keeps the
               native time pickers from overflowing the sheet or touching. */}
           <div className="grid grid-cols-2 gap-3">
             <Field label="From">

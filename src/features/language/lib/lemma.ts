@@ -5,7 +5,7 @@ import type { Lang } from '../types';
  *
  * He taps «городе» in a lesson and the dictionary holds «город». Without a
  * step like this the tap-a-word glossary finds nothing for almost every
- * Russian word on the page — nouns decline, verbs conjugate, and only the
+ * Russian word on the page - nouns decline, verbs conjugate, and only the
  * dictionary form is ever stored. This is not morphology; it is a list of
  * endings and a handful of stems to try, which is enough to land on the
  * right row nearly every time a lesson uses a word it also teaches.
@@ -158,7 +158,7 @@ export function normalHead(s: string): string {
  * The dictionary row a tapped word belongs to, if any.
  *
  * Exact dictionary form first, then the candidate forms, then a row whose
- * headword starts with the longest stem — «говорим» finds «говорить».
+ * headword starts with the longest stem - «говорим» finds «говорить».
  */
 export function findWord<T extends { id: string }>(
   word: string,

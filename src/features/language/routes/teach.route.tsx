@@ -35,7 +35,7 @@ import {
   type MediaBlockData,
 } from '../types';
 
-/** The right answer, said plainly — for "show him". */
+/** The right answer, said plainly - for "show him". */
 function answerText(ex: Exercise, target: Lang): string {
   const payload = ex.payload as {
     options?: ExerciseOption[];
@@ -51,12 +51,12 @@ function answerText(ex: Exercise, target: Lang): string {
       return (payload?.options ?? [])
         .filter((o) => ids.includes(o.id))
         .map(label)
-        .join(' · ');
+        .join(' - ');
     }
     case 'match':
       return (payload?.pairs ?? [])
         .map((p) => `${p.left} = ${p.right}`)
-        .join(' · ');
+        .join(' - ');
     case 'order': {
       const a = ex.answer as unknown;
       const first = Array.isArray(a) && Array.isArray(a[0]) ? a[0] : a;
@@ -65,11 +65,11 @@ function answerText(ex: Exercise, target: Lang): string {
     case 'complete':
       return ((ex.answer as unknown[]) ?? [])
         .map((gap) => acceptedForms(gap).join(' / '))
-        .join(' · ');
+        .join(' - ');
     case 'speak':
       return '';
     default:
-      return acceptedForms(ex.answer).join(' · ');
+      return acceptedForms(ex.answer).join(' - ');
   }
 }
 
@@ -82,7 +82,7 @@ function useWakeLock() {
       try {
         lock = await navigator.wakeLock.request('screen');
       } catch {
-        /* a phone that will not — the screen dims, nothing else */
+        /* a phone that will not - the screen dims, nothing else */
       }
     };
     void take();
@@ -104,7 +104,7 @@ interface Slide {
 }
 
 /**
- * Teach mode — the lesson on the video call.
+ * Teach mode - the lesson on the video call.
  *
  * One block at a time, big enough to read off a shared screen; her audio a
  * tap away; the questions with their answers held back until she says so;
@@ -233,7 +233,7 @@ export function TeachRoute() {
                 />
                 {shown.has(ex.id) ? (
                   <p className="font-display text-2xl text-gold">
-                    {answerText(ex, lesson.targetLang) || '—'}
+                    {answerText(ex, lesson.targetLang) || '-'}
                   </p>
                 ) : (
                   <Button
@@ -264,7 +264,7 @@ export function TeachRoute() {
           </Button>
           {desk && (
             <p className="font-sans text-xs text-muted">
-              <Kbd>→</Kbd> next · <Kbd>A</Kbd> answers · <Kbd>W</Kbd> a word
+              <Kbd>→</Kbd> next - <Kbd>A</Kbd> answers - <Kbd>W</Kbd> a word
             </p>
           )}
         </div>
@@ -285,7 +285,7 @@ export function TeachRoute() {
 
 /**
  * A word that came up mid-class, into the dictionary and into this lesson
- * in one go — the thing she used to do afterwards from memory, or not.
+ * in one go - the thing she used to do afterwards from memory, or not.
  */
 function CatchWord({
   open,
@@ -301,7 +301,7 @@ function CatchWord({
 }) {
   const { learning } = useLanguages();
   const target = lesson.targetLang;
-  // The meaning is for the one LEARNING — in their language, not hers.
+  // The meaning is for the one LEARNING - in their language, not hers.
   const meaningLang: Lang = learning === target ? 'en' : learning;
   const add = useAddVocab();
   const setBlockVocab = useSetBlockVocab();
@@ -323,7 +323,7 @@ function CatchWord({
         audio: clip,
       });
       // Into this slide's word list, else the lesson's last one, else a
-      // new one at the end — the word must land in the lesson, not only in
+      // new one at the end - the word must land in the lesson, not only in
       // the dictionary.
       let block =
         blockId ??

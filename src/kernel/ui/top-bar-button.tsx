@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import { cn } from '../lib/cn';
 
 /**
- * The round control in the top bar — the wine "add" circle with its gilt
+ * The round control in the top bar - the wine "add" circle with its gilt
  * ring, or the quiet lifted one for settings and edit.
  *
  * Five screens each drew this from scratch, inline border and all. It is a

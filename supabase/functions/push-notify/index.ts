@@ -1,5 +1,5 @@
 // Web-push fan-out. Called by the client (or a DB webhook) to notify the
-// partner — e.g. "Vicente just opened Katitos" or a new chalkboard note.
+// partner - e.g. "Vicente just opened Katitos" or a new chalkboard note.
 //
 // Sends to every push subscription belonging to the target user. Identical code
 // runs locally and in the cloud; only the VAPID env differs.

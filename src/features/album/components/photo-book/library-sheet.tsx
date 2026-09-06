@@ -7,7 +7,7 @@ import type { AlbumPhoto } from '../../types';
 /**
  * Every photo in the album, all at once.
  *
- * The strip under the book is for REACHING — the handful you are placing right
+ * The strip under the book is for REACHING - the handful you are placing right
  * now. This is for MANAGING: finding the one from the ferry among ninety, or
  * throwing out the eleven blurred shots of the same doorway. They are different
  * jobs and they were sharing one 56-pixel-tall row and a hand-rolled popup menu
@@ -34,7 +34,7 @@ export function LibrarySheet({
 }) {
   const [chosen, setChosen] = useState<string[]>([]);
 
-  // A fresh sheet is a fresh choice — an old selection surviving a close is
+  // A fresh sheet is a fresh choice - an old selection surviving a close is
   // how you end up deleting something you picked ten minutes ago.
   useEffect(() => {
     if (!open) setChosen([]);
@@ -118,7 +118,7 @@ export function LibrarySheet({
                 onDeleteMany(going);
                 setChosen([]);
                 // Deleting a photo takes its bytes with it, so this one is not
-                // undoable — say so plainly rather than pretending.
+                // undoable - say so plainly rather than pretending.
                 toast.info(
                   going.length === 1
                     ? 'Gone from the album'

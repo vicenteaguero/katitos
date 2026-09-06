@@ -13,7 +13,7 @@ const VERSION_URL = '/version.json';
  * What this app is running, and whether the server has something newer.
  *
  * `BUILD` is compiled into the bundle, so it describes the code actually
- * executing — cached shell, old chunks and all. `version.json` is fetched from
+ * executing - cached shell, old chunks and all. `version.json` is fetched from
  * the network every time, so it describes what the server would hand out to a
  * fresh visitor. The two together are the only honest answer to "am I looking
  * at the latest?", because the service worker never skipWaiting: a phone can
@@ -46,7 +46,7 @@ export function useBuildStatus() {
       await reg?.update();
       setWaiting(!!reg?.waiting);
     } catch {
-      /* no service worker (dev, or an unsupported browser) — not a failure */
+      /* no service worker (dev, or an unsupported browser) - not a failure */
     }
   }, []);
 
@@ -65,7 +65,7 @@ export function useBuildStatus() {
   /**
    * Take the newer version now.
    *
-   * The service worker never calls skipWaiting on its own — that is what stops
+   * The service worker never calls skipWaiting on its own - that is what stops
    * a deploy swapping the app out mid-session, and what lets a migration land
    * safely one session ahead of the code. Asking for it BY HAND is a different
    * thing: it only ever moves forward, and the reload right after means no
@@ -90,7 +90,7 @@ export function useBuildStatus() {
         await swapped;
       }
     } catch {
-      /* fall through to the reload — it is the useful half anyway */
+      /* fall through to the reload - it is the useful half anyway */
     }
     window.location.reload();
   }, []);

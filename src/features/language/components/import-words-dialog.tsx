@@ -8,7 +8,7 @@ import { LANG_LABELS, type Lang, type Vocab } from '../types';
 /**
  * Paste a list, get a dictionary.
  *
- * Whatever she has — a spreadsheet column pair, a note, a message — one word
+ * Whatever she has - a spreadsheet column pair, a note, a message - one word
  * per line, meaning beside it. The preview says what will go in and what is
  * already here before anything is written.
  */
@@ -53,25 +53,25 @@ export function ImportWordsDialog({
           rows={8}
           spellCheck={false}
           autoFocus
-          placeholder={`стол = table\nстул\tchair\tstul #furniture\nокно — window`}
+          placeholder={`стол = table\nстул\tchair\tstul #furniture\nокно - window`}
           className="font-display"
         />
         <p className="font-sans text-xs text-muted">
-          One a line. A tab, “=”, “—”, “;” or “:” between the word and its
+          One a line. A tab, “=”, “, ”, “;” or “:” between the word and its
           meaning; a third part is how it sounds; #tags anywhere.
         </p>
         {parsed.length > 0 && (
           <div className="space-y-1.5 rounded-lg bg-surface px-3 py-2">
             <Kicker as="p">
               {fresh.length} new
-              {known.length ? ` · ${known.length} already here` : ''}
+              {known.length ? ` - ${known.length} already here` : ''}
             </Kicker>
             <ul className="max-h-40 space-y-0.5 overflow-y-auto font-sans text-sm">
               {fresh.slice(0, 40).map((w, i) => (
                 <li key={i} className="flex gap-2">
                   <span className="font-display text-fg">{w.term}</span>
                   <span className="min-w-0 flex-1 truncate text-muted">
-                    {w.meaning || '—'}
+                    {w.meaning || '-'}
                   </span>
                 </li>
               ))}

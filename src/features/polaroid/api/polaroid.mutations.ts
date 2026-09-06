@@ -10,16 +10,16 @@ import { qk } from '@kernel/query';
  * Turn a Postgres error from the polaroid guard into something worth reading.
  *
  * The trigger raises P0001 with a machine-readable `hint`, the same way
- * `water_tree` raises 'not your turn' — so the UI can say what actually
+ * `water_tree` raises 'not your turn' - so the UI can say what actually
  * happened instead of surfacing a raw constraint name.
  */
 export function polaroidErrorMessage(err: unknown): string {
   const e = err as { hint?: string; code?: string; message?: string };
   switch (e?.hint) {
     case 'day_closed':
-      return "That day has ended for both of us — it's closed now 🌙";
+      return "That day has ended for both of us - it's closed now 🌙";
     case 'not_owner':
-      return "That's your love's photo — you can only change your own";
+      return "That's your love's photo - you can only change your own";
     case 'shared_locked':
       return 'That one belongs to our history 🤍';
     case 'day_shared':
@@ -39,7 +39,7 @@ function invalidate(qc: ReturnType<typeof useQueryClient>) {
  * Save (or replace) YOUR photo for a day.
  *
  * Every shot lands at a unique versioned path, so a retake never deletes the
- * bytes it replaces — the old photo just stops being referenced.
+ * bytes it replaces - the old photo just stops being referenced.
  *
  * `user_id` is sent explicitly and the conflict target is `(day, user_id)`:
  * your retake updates your row and cannot touch your love's.
@@ -94,7 +94,7 @@ export function useUpsertPolaroid() {
       void qc.invalidateQueries({ queryKey: ['signed-urls'] });
 
       // The nudge that makes the daily habit work: your love learns their day
-      // is up, and — if theirs isn't — that it's their turn.
+      // is up, and - if theirs isn't - that it's their turn.
       void notifyPartner({
         kind: 'polaroid',
         title: `📸 ${selfName ?? 'Your love'}'s day is up`,
@@ -106,7 +106,7 @@ export function useUpsertPolaroid() {
 }
 
 /**
- * Rename a photo's caption — either of us, on either photo, forever.
+ * Rename a photo's caption - either of us, on either photo, forever.
  *
  * Keyed by row id, NOT by day: with two photos on a day, `.eq('day', …)` would
  * quietly rewrite both captions at once.

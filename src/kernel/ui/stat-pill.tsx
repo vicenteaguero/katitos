@@ -1,7 +1,7 @@
 import { cn } from '../lib/cn';
 import { Kicker } from './kicker';
 
-/** A number with its caption under it — "12 · known", "80%". */
+/** A number with its caption under it - "12 - known", "80%". */
 export function StatPill({
   value,
   label,

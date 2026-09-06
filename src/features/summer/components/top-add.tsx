@@ -1,5 +1,5 @@
 /**
- * The Summer "Add" control — injected into the top bar by each tab (via
+ * The Summer "Add" control - injected into the top bar by each tab (via
  * `useTopBarAction`) so adding is always in the same place, small and tidy. No
  * plus, just "Add"; the active tab decides what it adds.
  */

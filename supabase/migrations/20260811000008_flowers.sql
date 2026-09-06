@@ -1,14 +1,14 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — flowers, one bouquet per month
+-- Katitos - flowers, one bouquet per month
 --
 --   The feature existed but was never opened: a free-form date, a two-column
 --   card grid, camera-only capture, and anyone could post. What she wants is a
---   year at a time, three across, each square captioned with its month — and
+--   year at a time, three across, each square captioned with its month - and
 --   for it to be HERS to fill.
 --
 --   `occasion_date` becomes the FIRST OF ITS MONTH. That reuses the unique
 --   constraint the table already has as the one-per-month rule, so the client's
---   existing `on_conflict=occasion_date` upsert keeps working — rather than
+--   existing `on_conflict=occasion_date` upsert keeps working - rather than
 --   adding a second unique key and leaving two competing arbiters.
 --
 --   Prod was verified empty before writing this (0 rows), so the normalize and
@@ -35,7 +35,7 @@ update public.flowers
 -- ── who may plant one ──────────────────────────────────────────────────────
 -- Her (role 'b'), or the admin. The admin half is the point: it lets him test
 -- and fix things now, and it is revocable later by flipping ONE boolean in
--- Settings — no redeploy, no migration.
+-- Settings - no redeploy, no migration.
 create or replace function public.can_upload_flowers()
 returns boolean
 language sql

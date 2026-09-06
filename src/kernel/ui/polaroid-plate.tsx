@@ -6,7 +6,7 @@ import { cn } from '../lib/cn';
  * printed on the chin.
  *
  * The daily photo, the flowers and the album all show the same object, so the
- * proportions live here instead of being re-guessed each time — that is how
+ * proportions live here instead of being re-guessed each time - that is how
  * the flowers ended up with a square frame that cropped its own caption.
  *
  * The square window is the important part: it must stay square at every size,
@@ -26,12 +26,12 @@ export function PolaroidPlate({
 }: {
   /** The image (or placeholder) that fills the square window. */
   children: ReactNode;
-  /** Printed on the chin — a date, a month, a name. */
+  /** Printed on the chin - a date, a month, a name. */
   caption?: ReactNode;
   /**
    * How the chin reads. `label` is a date or a month: small, spaced, copper.
    * `note` is something one of us actually wrote, so it keeps the handwritten
-   * italic — a caption set in tracked uppercase stops sounding like a person.
+   * italic - a caption set in tracked uppercase stops sounding like a person.
    */
   captionTone?: 'label' | 'note';
   /** `md` full width, `sm` for a three-across row. */

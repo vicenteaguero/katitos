@@ -10,7 +10,7 @@ import { useAddToLibrary, type UploadJob } from '../../api/library.mutations';
 /**
  * Photos in, and nothing else.
  *
- * Three ways in — the camera roll, the camera, or one of our daily polaroids —
+ * Three ways in - the camera roll, the camera, or one of our daily polaroids -
  * as three small buttons on ONE row, because they are a means to an end and
  * they used to take up half the sheet before a single photo had been chosen.
  * Everything below them is the photos themselves: what you picked, how far
@@ -164,7 +164,7 @@ export function LibraryUploadSheet({
                       <Check className="h-3 w-3" />
                     </span>
                   )}
-                  {/* Wrong photo? Out it goes — the row and its bytes are
+                  {/* Wrong photo? Out it goes - the row and its bytes are
                       cleaned up behind you, so nothing here waits on a
                       round trip. */}
                   <button
@@ -183,7 +183,7 @@ export function LibraryUploadSheet({
               {running
                 ? 'Adding them…'
                 : failed
-                  ? `${failed} didn’t make it — the rest are in`
+                  ? `${failed} didn’t make it - the rest are in`
                   : 'All in. Tap one under the book to place it.'}
             </p>
           </>

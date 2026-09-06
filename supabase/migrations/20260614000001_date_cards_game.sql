@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — "Date cards" game (the secret-dates envelope deck for Georgia)
+-- Katitos - "Date cards" game (the secret-dates envelope deck for Georgia)
 --   • each card gets a photo of the physical card (card_image_path)
 --   • completion: either partner uploads the date photo (existing image_path)
 --   • rating: ONLY the non-owner stars the date 1–3 (free), from a shared

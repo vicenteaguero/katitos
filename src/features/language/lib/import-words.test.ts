@@ -17,7 +17,7 @@ describe('parseWordList', () => {
 
   it('reads dashes, semicolons and colons too', () => {
     expect(
-      parseWordList('окно — window\nдверь; door\nдом: house').map(
+      parseWordList('окно - window\nдверь; door\nдом: house').map(
         (w) => w.meaning
       )
     ).toEqual(['window', 'door', 'house']);

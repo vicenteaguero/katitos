@@ -13,7 +13,7 @@ describe('coupleDay', () => {
     expect(coupleDay(SANTIAGO, MOSCOW, now)).toBe('2026-06-06');
   });
 
-  it('is symmetric — argument order does not matter', () => {
+  it('is symmetric - argument order does not matter', () => {
     const now = DateTime.fromISO('2026-06-07T02:00:00', { zone: 'utc' });
     expect(coupleDay(SANTIAGO, MOSCOW, now)).toBe(
       coupleDay(MOSCOW, SANTIAGO, now)

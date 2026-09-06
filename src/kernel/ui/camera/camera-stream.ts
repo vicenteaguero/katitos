@@ -4,7 +4,7 @@ type Facing = 'user' | 'environment';
  * One camera stream for the whole app session.
  *
  * iOS re-prompts for permission on every fresh `getUserMedia()` in an installed
- * PWA — it does not remember the grant the way a normal tab does. The camera
+ * PWA - it does not remember the grant the way a normal tab does. The camera
  * component already reused its stream across capture/retake, but it stopped the
  * tracks when it unmounted, so closing and reopening the camera meant another
  * prompt. Taking three photos meant being asked three times.
@@ -26,7 +26,7 @@ const IDLE_MS = 90_000;
 /**
  * How long the app may sit in the background before the camera is dropped.
  *
- * It used to be zero — hide the app, lose the stream, and coming back cost
+ * It used to be zero - hide the app, lose the stream, and coming back cost
  * another permission prompt. Glancing at a notification and returning two
  * seconds later is the commonest way to leave an app, and it should not cost
  * anything at all.
@@ -57,7 +57,7 @@ function clearHidden() {
 
 /**
  * Backgrounded: let go, but not instantly. The camera indicator must never
- * stay lit behind another app, and after the grace below it never does —
+ * stay lit behind another app, and after the grace below it never does -
  * while a glance away and straight back costs nothing.
  */
 if (typeof document !== 'undefined') {
@@ -99,7 +99,7 @@ export async function acquireCamera(want: Facing): Promise<MediaStream> {
       audio: false,
     });
   } catch (e) {
-    // Denied or unavailable — drop the hold we just took, or the count never
+    // Denied or unavailable - drop the hold we just took, or the count never
     // returns to zero and the stream is never released.
     holders = Math.max(0, holders - 1);
     throw e;

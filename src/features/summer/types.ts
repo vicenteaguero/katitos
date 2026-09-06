@@ -12,7 +12,7 @@ export type WorkBlock = Tables<'work_blocks'>;
 export type Country = 'TR' | 'GE';
 export type CountryFilter = 'all' | Country;
 
-/** The two legs of the summer — Türkiye then Georgia. */
+/** The two legs of the summer - Türkiye then Georgia. */
 export const COUNTRIES = [
   { code: 'TR', flag: '🇹🇷', label: 'Türkiye', tint: '#b5633a' },
   { code: 'GE', flag: '🇬🇪', label: 'Georgia', tint: '#6e1423' },

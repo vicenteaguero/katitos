@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — seed the Summer route legs for the EXISTING special trip.
+-- Katitos - seed the Summer route legs for the EXISTING special trip.
 --   The app self-heals legs only when it CREATES the trip, but prod's trip
 --   already existed (it was renamed, not created), so it had no legs and the
 --   route map drew nothing. Seed Istanbul→Trabzon→Batumi→Tbilisi here.

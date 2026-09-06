@@ -1,5 +1,5 @@
 /**
- * Currency-exchange glyph — the ₽ and $ coins trading places along two swap
+ * Currency-exchange glyph - the ₽ and $ coins trading places along two swap
  * arrows (the icon Katito picked). A FILL icon: inherits `currentColor`, size
  * via the `size` prop (px). Artwork is flush to its viewBox (no margins).
  */

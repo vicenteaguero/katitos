@@ -6,7 +6,7 @@ import { isNextDay } from '@kernel/lib';
  * THIS MUST MIRROR the plpgsql in supabase/migrations/20260606000006_tree.sql
  * (health + growthForWater). The DB is authoritative for `growth_points`; the
  * UI maps that to stage/height with the curves here. `deriveTree` is used only
- * for (a) live health between renders and (b) unit tests — never to re-derive
+ * for (a) live health between renders and (b) unit tests - never to re-derive
  * the displayed stage (which reads tree_state.growth_points directly).
  */
 
@@ -24,18 +24,18 @@ export function health(lastWateredAt: number | null, now: number): number {
   return Math.max(HEALTH_FLOOR, Math.pow(0.5, days / HEALTH_HALF_LIFE_DAYS));
 }
 
-/** Growth points granted by one valid watering — mildly health-gated. */
+/** Growth points granted by one valid watering - mildly health-gated. */
 export function growthForWater(h: number): number {
   return 1.0 * (0.6 + 0.4 * h);
 }
 
-/** Stage 0..100 from accumulated points (asymptotic — 100 is unreachable). */
+/** Stage 0..100 from accumulated points (asymptotic - 100 is unreachable). */
 export function stageFromPoints(points: number): number {
   const s = Math.min(100, 100 * (1 - Math.exp(-points / STAGE_K)));
   return Math.round(s * 100) / 100;
 }
 
-/** Height in metres (asymptotic toward 12m — climbs the whole 5-year arc). */
+/** Height in metres (asymptotic toward 12m - climbs the whole 5-year arc). */
 export function heightMeters(points: number): number {
   return HEIGHT_MAX_M * (1 - Math.exp(-HEIGHT_K * points));
 }

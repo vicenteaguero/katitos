@@ -2,7 +2,7 @@
  * Pure geometry + gesture decisions for the open-book sliding engine.
  *
  * Kept out of the component so the math (page sizing, the two rest offsets, and
- * the slide-vs-flip half split) can be unit-tested directly — it's the part
+ * the slide-vs-flip half split) can be unit-tested directly - it's the part
  * that has bitten us before (off-by-margin peeks, drag bounce). No React here.
  *
  * ── LEAVES, NOT PAGES ──────────────────────────────────────────────────────
@@ -16,14 +16,14 @@
  *
  * Which half of the case a leaf sits in is therefore no longer "is the index
  * even". It flipped, and it flips again every time a page is added to an
- * odd-length book — so nothing here takes a raw number any more. Everything
+ * odd-length book - so nothing here takes a raw number any more. Everything
  * takes a `LeafPlace`, computed once from the same rule StPageFlip itself uses.
  */
 
 /**
  * A sanity floor, deliberately far below any real screen.
  *
- * It exists so a mis-measurement can't produce a zero-width book — NOT to keep
+ * It exists so a mis-measurement can't produce a zero-width book - NOT to keep
  * the book "big enough". A floor high enough to fight the height budget is
  * what made the book overflow and clip its own fold on a short screen.
  */
@@ -42,7 +42,7 @@ export interface BookLayout {
   restL: number;
   /** translateX that puts the RIGHT page's right edge at the content-right. */
   restR: number;
-  /** The viewport (padded content) width — for splitting the drag halves. */
+  /** The viewport (padded content) width - for splitting the drag halves. */
   vw: number;
 }
 
@@ -59,10 +59,10 @@ export function computeLayout(
   curlPad = 0
 ): BookLayout {
   // The curl needs room ABOVE and BELOW the paper, so it comes out of the
-  // height budget before the page is sized — not bolted on afterwards, which
+  // height budget before the page is sized - not bolted on afterwards, which
   // is how the book ended up taller than the space it was given.
   const byH = Math.floor((availH - 2 * m - 2 * curlPad) * 0.75);
-  // The height budget WINS. A hard 200px floor could beat it — on a short
+  // The height budget WINS. A hard 200px floor could beat it - on a short
   // screen (a phone turned sideways, which the app now allows) that made the
   // book taller than the space it was given, and the fold was clipped again.
   // A small complete book beats a big clipped one.
@@ -87,7 +87,7 @@ export function computeLayout(
  *
  * StPageFlip pairs leaves two at a time after the cover, and whatever is left
  * over at the end is drawn alone AND forced to `density: hard`. With an odd
- * number of paper pages that leftover is the last page, not the cover — so the
+ * number of paper pages that leftover is the last page, not the cover - so the
  * back cover would land beside a photograph and a paper page would flip like a
  * board. One blank leaf keeps the count even and the covers where they belong.
  */
@@ -108,7 +108,7 @@ export function leafOfPage(pageIndex: number): number {
 /**
  * Is this leaf the blank endpaper?
  *
- * It exists ONLY to keep the leaf count even so the back board flips alone —
+ * It exists ONLY to keep the leaf count even so the back board flips alone -
  * it is not a page and it is not a cover, and nobody should ever be left
  * standing on it wondering why the album has a blank sheet in it. The buttons
  * step over it; you see it in passing, mid-turn, which is what an endpaper is.
@@ -150,7 +150,7 @@ export function landscapeSpreads(
 export interface LeafPlace {
   /** The leaf itself, clamped into range. */
   leaf: number;
-  /** Index into `landscapeSpreads()` — also the `e.data` StPageFlip reports. */
+  /** Index into `landscapeSpreads()` - also the `e.data` StPageFlip reports. */
   spread: number;
   /** Which half of the wine case this leaf occupies. */
   side: 'left' | 'right';
@@ -159,7 +159,7 @@ export interface LeafPlace {
 }
 
 /**
- * Where a leaf sits — derived from the spread table, never from `leaf % 2`.
+ * Where a leaf sits - derived from the spread table, never from `leaf % 2`.
  *
  * The parity is not a constant: adding one page to an odd-length book moves the
  * endpaper and every leaf after it. Deriving means a future padding change
@@ -194,7 +194,7 @@ export function placeLeaf(
 /**
  * The leaf we land on after StPageFlip finishes a flip.
  *
- * `onFlip` hands us the FIRST LEAF of the new spread — not a spread number,
+ * `onFlip` hands us the FIRST LEAF of the new spread - not a spread number,
  * whatever the old comment here said. Going forwards that first leaf is where
  * we want to be; going backwards we are re-entering a spread from its right
  * page, which is the sliding-window continuity the whole engine is built on.
@@ -209,7 +209,7 @@ export function leafAfterFlip(
   const dest = placeLeaf(data, leafCount, showCover);
   if (dest.lone) return dest.leaf;
 
-  // Coming off a BOARD, you land on whatever was underneath it — which is the
+  // Coming off a BOARD, you land on whatever was underneath it - which is the
   // leaf on the board's own side. Open the front cover and page two is what
   // the cover was covering; the book then slides across to page one. Landing
   // straight on page one instead meant the case had to jump the width of a
@@ -238,7 +238,7 @@ export function settleAfterBoard(
 /**
  * Where a CLOSED book rests: centred, and only one board wide.
  *
- * A cover has no facing page, but the case behind it is still two pages wide —
+ * A cover has no facing page, but the case behind it is still two pages wide -
  * so the binding stuck out past the board on one side and ran off the screen
  * on the other, and the whole thing read as a book lying on top of another
  * book. A shut book is one board; it sits in the middle of the screen; you
@@ -250,7 +250,7 @@ export function coverRest(
   m: number,
   vw: number
 ): number {
-  // The BOARD is the whole book when it is shut — there is no binding behind
+  // The BOARD is the whole book when it is shut - there is no binding behind
   // it to leave room for, so this centres the leaf itself. Leaving the case's
   // margin visible around it was the second half of the "book on top of a
   // book" look: two rounded rectangles, one inside the other, both wine.
@@ -299,7 +299,7 @@ export function slideDx(
 /**
  * There is deliberately no `decideGesture` here any more.
  *
- * One used to exist, complete with six passing tests — and nothing imported
+ * One used to exist, complete with six passing tests - and nothing imported
  * it. The real split is not a function at all: `.pb-slide-zone` is a
  * transparent overlay covering the SPINE half of the focused leaf, so the DOM
  * decides who owns a touch before any of our code runs, and StPageFlip gets

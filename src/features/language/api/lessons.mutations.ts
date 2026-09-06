@@ -124,7 +124,7 @@ export function useCreateLesson() {
 }
 
 /**
- * Change a lesson — including publishing it.
+ * Change a lesson - including publishing it.
  *
  * Publishing homework is the one edit that reaches out of the app: he has no
  * reason to keep checking, so the app tells him once, and only when the thing
@@ -170,7 +170,7 @@ export function useUpdateLesson() {
         .single();
       if (error) throw error;
 
-      // Not at three in the morning his time, unless she says so — a held
+      // Not at three in the morning his time, unless she says so - a held
       // push is not lost, the lesson is on his home screen when he wakes.
       if (
         v.status === 'published' &&
@@ -547,7 +547,7 @@ export function useDeleteBlock() {
 }
 
 /**
- * Put a deleted block back, exactly as it was — its own id, its text, its
+ * Put a deleted block back, exactly as it was - its own id, its text, its
  * table, and the words it taught.
  *
  * This is what makes deleting safe with one tap: the toast's Undo has nine
@@ -587,7 +587,7 @@ export function useRestoreBlock() {
   });
 }
 
-/** A block again, right under itself — words and all. */
+/** A block again, right under itself - words and all. */
 export function useDuplicateBlock() {
   const qc = useQueryClient();
   return useMutation({
@@ -630,7 +630,7 @@ export function useDuplicateBlock() {
 }
 
 /** Re-order the blocks of a lesson after a drag. */
-/** Questions move too — within their block, or among the ones at the end. */
+/** Questions move too - within their block, or among the ones at the end. */
 export function useReorderExercises() {
   const qc = useQueryClient();
   return useMutation({
@@ -794,7 +794,7 @@ export function useDeleteExercise() {
 /**
  * Answer one exercise.
  *
- * Marked here, on the device, against the same pure function the tests cover —
+ * Marked here, on the device, against the same pure function the tests cover -
  * so the verdict is instant and the stored row already knows whether it was
  * right. Nothing is overwritten: every attempt is kept, which is what makes
  * "you got this wrong twice" possible later.
@@ -870,12 +870,12 @@ export function useAnswerExercises() {
 }
 
 /**
- * Where a lesson stands for one of us — and the push that closes the loop.
+ * Where a lesson stands for one of us - and the push that closes the loop.
  *
  * Every state change funnels through here, so this is the one place that
  * tells the other phone: his hand-in reaches her, her mark or "have another
  * go" reaches him. Not at night, their time, unless `wake` says so; a held
- * push is not lost — the thing it was about is on the home screen.
+ * push is not lost - the thing it was about is on the home screen.
  */
 export function useSaveProgress() {
   const qc = useQueryClient();
@@ -890,7 +890,7 @@ export function useSaveProgress() {
       /** Her voice on the whole lesson, already uploaded. */
       teacherAudioPath?: string | null;
       forUserId?: string;
-      /** The lesson's title — with it, the other phone is told. */
+      /** The lesson's title - with it, the other phone is told. */
       title?: string;
       /** Buzz them even if it is night where they are. */
       wake?: boolean;
@@ -922,7 +922,7 @@ export function useSaveProgress() {
 
       if (!v.title || v.status === 'in_progress') return;
       if (isAsleep(partner?.timezone) && !v.wake) return;
-      const pct = v.score != null ? ` · ${Math.round(v.score * 100)}%` : '';
+      const pct = v.score != null ? ` - ${Math.round(v.score * 100)}%` : '';
       const [title, body, url] =
         v.status === 'submitted'
           ? ['Handed in', v.title, `/language/mark/${v.lessonId}`]
@@ -957,7 +957,7 @@ export function useSaveProgress() {
 /**
  * He opened it.
  *
- * A quiet row so she knows he has seen the lesson before the call — only
+ * A quiet row so she knows he has seen the lesson before the call - only
  * `opened_at` is sent, so a row that already says "handed in" keeps saying
  * it; a lesson he has never touched gets a `not_started` row with a time on it.
  */
@@ -983,7 +983,7 @@ export function useMarkOpened() {
   });
 }
 
-/** Her tick, her cross, or a word in the margin — on one of his answers. */
+/** Her tick, her cross, or a word in the margin - on one of his answers. */
 export function useMarkAttempt() {
   const qc = useQueryClient();
   return useMutation({

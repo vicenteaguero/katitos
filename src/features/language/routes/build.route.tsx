@@ -85,14 +85,14 @@ const KIND_LABEL: Record<LessonKind, string> = {
   exam: 'Exam',
 };
 
-/** "Write it here" — in the language of the box. */
+/** "Write it here" - in the language of the box. */
 const PROSE_PLACEHOLDER: Record<Lang, string> = {
   ru: 'По-русски…',
   es: 'En español…',
   en: 'In English…',
 };
 
-/** The column a language's prose belongs in — all three exist, none is special. */
+/** The column a language's prose belongs in - all three exist, none is special. */
 function bodyPatch(lang: Lang, text: string) {
   const value = text || null;
   if (lang === 'ru') return { body_ru: value };
@@ -110,7 +110,7 @@ type Editing = { exercise: Exercise | null; blockId: string | null };
  * Where she builds the lesson.
  *
  * On a desk: the course down the left, the page in the middle, what to add
- * and what this lesson is on the right — and every language of a block side
+ * and what this lesson is on the right - and every language of a block side
  * by side. On a phone the same page, one language of explanation at a time.
  * Questions sit inside the page, after the block they belong to; the ones
  * with no block come at the end.
@@ -147,7 +147,7 @@ export function BuildRoute() {
   const createHomework = useCreateHomework();
   const { native } = useLanguages();
 
-  // The two languages this lesson can be EXPLAINED in — everything except the
+  // The two languages this lesson can be EXPLAINED in - everything except the
   // one it teaches. A Russian lesson offers Español and English; a Spanish one
   // offers Русский and English. On a desk both boxes are on screen at once;
   // on a phone the top bar picks which one.
@@ -160,7 +160,7 @@ export function BuildRoute() {
   const [wordsFor, setWordsFor] = useState<Block | null>(null);
   const [attachFor, setAttachFor] = useState<Block | null>(null);
 
-  // The order on screen the moment a drag ends — until the server confirms.
+  // The order on screen the moment a drag ends - until the server confirms.
   const [localOrder, setLocalOrder] = useState<string[] | null>(null);
   useEffect(() => setLocalOrder(null), [lesson?.blocks]);
   const blocks = useMemo(() => {
@@ -172,7 +172,7 @@ export function BuildRoute() {
     );
   }, [lesson?.blocks, localOrder]);
 
-  // "Saved · just now" — what the inspector says about the page.
+  // "Saved - just now" - what the inspector says about the page.
   const saving =
     updateBlock.isPending ||
     createBlock.isPending ||
@@ -257,7 +257,7 @@ export function BuildRoute() {
         <Kicker as="span" className="block">
           {ex.kind}
           {ex.points !== 1 && (
-            <span className="ml-1.5 text-muted">· {ex.points} pts</span>
+            <span className="ml-1.5 text-muted">- {ex.points} pts</span>
           )}
         </Kicker>
         <span className="block truncate font-sans text-sm text-fg">
@@ -294,7 +294,7 @@ export function BuildRoute() {
     </div>
   );
 
-  /** The questions of one place — a block's, or the end's — in an order she can change. */
+  /** The questions of one place - a block's, or the end's - in an order she can change. */
   const questionList = (exs: Exercise[]) =>
     exs.length ? (
       <SortableList
@@ -334,12 +334,12 @@ export function BuildRoute() {
         <Kicker as="p">This lesson</Kicker>
         <p className="font-sans text-sm text-fg">
           {KIND_LABEL[lesson.kind as LessonKind] ?? lesson.kind}
-          {lesson.due_on ? ` · due ${lesson.due_on}` : ''}
-          {lesson.est_minutes ? ` · ${lesson.est_minutes} min` : ''}
+          {lesson.due_on ? ` - due ${lesson.due_on}` : ''}
+          {lesson.est_minutes ? ` - ${lesson.est_minutes} min` : ''}
         </p>
         <p className="font-sans text-xs text-muted">
           {lesson.status === 'published' ? 'He has it.' : 'Not sent yet.'}
-          {' · '}
+          {' - '}
           {saving ? 'Saving…' : savedAt ? 'Saved' : 'Every box saves itself'}
         </p>
         <div className="flex flex-wrap gap-1.5">
@@ -405,7 +405,7 @@ export function BuildRoute() {
                 {
                   courseId: lesson.courseId,
                   unitId: lesson.unit_id,
-                  title: `${lesson.title} — homework`,
+                  title: `${lesson.title} - homework`,
                   position: lessonCount,
                   support,
                   specs,
@@ -505,7 +505,7 @@ export function BuildRoute() {
                   })
                 }
                 onDelete={() => {
-                  // Gone from the page at once — and back in one tap for the
+                  // Gone from the page at once - and back in one tap for the
                   // next nine seconds, words and all.
                   const words = (lesson.vocabByBlock[block.id] ?? []).map(
                     (w) => w.id
@@ -564,7 +564,7 @@ export function BuildRoute() {
         )}
 
         {/* Mounted only while open, so it always starts from the lesson as it
-          is now — an edit abandoned with the X used to sit in the sheet and go
+          is now - an edit abandoned with the X used to sit in the sheet and go
           out with the next publish. */}
         {settingsOpen && (
           <LessonSettingsSheet
@@ -637,8 +637,8 @@ export function BuildRoute() {
 /**
  * One box that saves itself.
  *
- * Every keystroke is kept locally; a short pause after the last one — or
- * leaving the box — writes it. A change that arrives from the other device
+ * Every keystroke is kept locally; a short pause after the last one - or
+ * leaving the box - writes it. A change that arrives from the other device
  * replaces the text only while nothing here is unsaved, so last-blur-wins
  * across two devices is no longer how it works.
  */
@@ -655,7 +655,7 @@ function useAutosave(
 
   useEffect(() => {
     if (!dirty.current) setText(fromServer);
-    // Only when the row itself changes — not on every render.
+    // Only when the row itself changes - not on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serverVersion]);
 
@@ -684,7 +684,7 @@ function useAutosave(
  * A block, in every language at once.
  *
  * The language being taught on top, and under it an explanation box per
- * language it can be explained in — both on a desk, the chosen one on a
+ * language it can be explained in - both on a desk, the chosen one on a
  * phone. Each box reads and writes ITS OWN column: "Russian on top, English
  * or Spanish under" was hardwired, so a Spanish course filed its Spanish as
  * Russian and her Russian explanations as English.
@@ -711,7 +711,7 @@ function BlockEditor({
   /** The one a phone shows. */
   visible: Lang;
   desk: boolean;
-  /** The language the lesson teaches — the top box. */
+  /** The language the lesson teaches - the top box. */
   target: Lang;
   /** What this block currently holds, so the row can say so. */
   words?: Vocab[];
@@ -784,7 +784,7 @@ function BlockEditor({
           className="font-display"
         />
         <p className="font-sans text-xs text-muted">
-          A grid of endings — cases, persons, plurals. Type it like a list: the
+          A grid of endings - cases, persons, plurals. Type it like a list: the
           first line is the headings, then one row per line, commas between the
           columns.
         </p>
@@ -802,9 +802,9 @@ function BlockEditor({
     const isVocab = block.kind === 'vocab';
     const summary = isVocab
       ? words?.length
-        ? words.map((w) => w[target] ?? w.ru).join(' · ')
-        : 'No words yet — tap to choose them'
-      : (media?.title ?? 'Nothing attached yet — tap to add a file or a link');
+        ? words.map((w) => w[target] ?? w.ru).join(' - ')
+        : 'No words yet - tap to choose them'
+      : (media?.title ?? 'Nothing attached yet - tap to add a file or a link');
     return (
       <BlockCard kind={isVocab ? 'words' : 'material'} toolbar={toolbar}>
         <button
@@ -962,7 +962,7 @@ function LessonSettingsSheet({
           </Field>
           <Field
             label="About how long"
-            hint="Minutes — so he knows what he is starting"
+            hint="Minutes - so he knows what he is starting"
           >
             <Input
               value={minutes}
@@ -983,7 +983,7 @@ function LessonSettingsSheet({
         >
           Save
         </Button>
-        {/* Publishing is what tells him it exists — nothing reaches his phone
+        {/* Publishing is what tells him it exists - nothing reaches his phone
             until she decides it is ready. */}
         <Button
           full
@@ -1005,7 +1005,7 @@ function LessonSettingsSheet({
           <p className="font-sans text-xs text-muted">
             It's {clock} for him
             {asleep
-              ? ' — his phone stays quiet; he will find it on his home screen'
+              ? ' - his phone stays quiet; he will find it on his home screen'
               : ''}
             .
           </p>

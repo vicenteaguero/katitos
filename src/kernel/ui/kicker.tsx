@@ -13,8 +13,8 @@ const tones: Record<Tone, string> = {
 /**
  * The tiny label over a thing: "words", "table", "3 of 8", "known".
  *
- * One size and one tracking for all of them. The feature had grown four —
- * 0.68, 0.62, 0.6 and 0.55rem — for what is the same voice every time.
+ * One size and one tracking for all of them. The feature had grown four -
+ * 0.68, 0.62, 0.6 and 0.55rem - for what is the same voice every time.
  * (`.eyebrow` is a different device: the centred display-face heading with
  * gilt rules either side, for a section, not a row.)
  */

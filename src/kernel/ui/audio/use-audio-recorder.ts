@@ -5,7 +5,7 @@ import { acquireMic, releaseMic } from './audio-stream';
  * A finished recording: the bytes, plus what they ACTUALLY are.
  *
  * The mime type is not decoration. Every browser records whatever container it
- * feels like — Chrome gives WebM/Opus, Safari gives MP4/AAC — and a clip stored
+ * feels like - Chrome gives WebM/Opus, Safari gives MP4/AAC - and a clip stored
  * under the wrong name or the wrong `Content-Type` simply refuses to play on
  * the other person's phone. So the recorder reports the truth and the caller
  * stores it.
@@ -14,7 +14,7 @@ export interface AudioClip {
   blob: Blob;
   /** e.g. 'audio/webm;codecs=opus' or 'audio/mp4'. */
   mime: string;
-  /** File extension matching `mime` — 'webm' | 'mp4' | 'm4a' | 'ogg' | 'wav'. */
+  /** File extension matching `mime` - 'webm' | 'mp4' | 'm4a' | 'ogg' | 'wav'. */
   ext: string;
   durationMs: number;
 }
@@ -35,8 +35,8 @@ export interface AudioRecorderState {
 /**
  * Container types we're willing to record, best first.
  *
- * MP4/AAC first: it is the only thing iOS Safari can make, and — the half
- * that matters now that lessons are written on a computer — the thing every
+ * MP4/AAC first: it is the only thing iOS Safari can make, and - the half
+ * that matters now that lessons are written on a computer - the thing every
  * phone can PLAY. Chrome records it too these days. Opus in WebM is smaller,
  * but WebM audio through an <audio> element was broken on iOS for two years
  * and only came right in Safari 18.4; a clip she records on the PC must not
@@ -84,7 +84,7 @@ function pickMime(): string {
  * Record an audio clip, honestly labelled.
  *
  * The old version passed no mime to MediaRecorder and then wrapped the chunks
- * in `new Blob(…, { type: 'audio/webm' })` — so every clip her iPhone made was
+ * in `new Blob(…, { type: 'audio/webm' })` - so every clip her iPhone made was
  * AAC bytes wearing a WebM label, saved as `.webm`, served as `audio/webm`.
  * Nothing could play them. Here the container is negotiated up front and the
  * real type travels with the blob.
@@ -98,7 +98,7 @@ export function useAudioRecorder(): AudioRecorderState {
   const chunksRef = useRef<Blob[]>([]);
   const startedAtRef = useRef(0);
   const tickRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
-  // True between the tap and the moment the recorder actually exists — the
+  // True between the tap and the moment the recorder actually exists - the
   // permission prompt can sit in that gap for seconds.
   const startingRef = useRef(false);
 
@@ -139,7 +139,7 @@ export function useAudioRecorder(): AudioRecorderState {
       // One prompt per launch, not one per word. See audio-stream.ts.
       stream = await acquireMic();
     } catch {
-      // Used to reject into a bare `void start()` — unhandled, and the user saw
+      // Used to reject into a bare `void start()` - unhandled, and the user saw
       // nothing at all happen.
       setError('No microphone. Check the permission for this app.');
       startingRef.current = false;

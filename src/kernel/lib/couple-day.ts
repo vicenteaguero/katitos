@@ -1,18 +1,18 @@
 import { DateTime } from 'luxon';
 
 /**
- * The shared "couple day" — the EARLIER (MIN) of the two members' local civil
+ * The shared "couple day" - the EARLIER (MIN) of the two members' local civil
  * dates. Using MIN (not MAX) keeps both partners on the same day until it is
  * tomorrow for *both* of them, so neither is ever handed tomorrow's content
  * while still living today. The function is symmetric: both partners compute
  * the identical string from the same instant.
  *
- * This is a display/convenience helper only — server RPCs compute their own
+ * This is a display/convenience helper only - server RPCs compute their own
  * authoritative day (see the `*_ensure_today` / `water_tree` functions). Use
  * this to render "today" and to detect a midnight rollover (the string change
  * is the trigger to re-fetch the server day).
  *
- * A null/unknown zone falls back to UTC — never the host zone, which would make
+ * A null/unknown zone falls back to UTC - never the host zone, which would make
  * a server build (UTC) silently disagree with a phone.
  */
 export function coupleDay(

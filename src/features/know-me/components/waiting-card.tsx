@@ -4,7 +4,7 @@ import type { QuestionWithDay } from '../types';
 
 /**
  * Shown after I submit but the partner hasn't. Echoes my own picks (never the
- * partner's — they haven't answered) and waits. Flips to the reveal once
+ * partner's - they haven't answered) and waits. Flips to the reveal once
  * presence shows both submitted (the route re-renders on the live signal).
  */
 export function WaitingCard({
@@ -20,7 +20,7 @@ export function WaitingCard({
   const partnerName = partner?.display_name ?? 'your love';
   const emoji = partner?.emoji ?? '❤️';
   const labelOf = (id: string | null) =>
-    today.options.find((o) => o.id === id)?.label ?? '—';
+    today.options.find((o) => o.id === id)?.label ?? '-';
 
   return (
     <Card className="km-candle space-y-7 text-center">

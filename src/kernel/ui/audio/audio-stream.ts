@@ -1,5 +1,5 @@
 /**
- * One microphone stream for the whole app session — the camera's twin.
+ * One microphone stream for the whole app session - the camera's twin.
  *
  * Recording a word used to call `getUserMedia({ audio: true })` and then stop
  * the tracks the moment the clip ended. On an installed PWA that is a fresh
@@ -68,7 +68,7 @@ export async function acquireMic(): Promise<MediaStream> {
   try {
     stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   } catch (e) {
-    // Denied or unavailable — drop the hold we just took, or the count never
+    // Denied or unavailable - drop the hold we just took, or the count never
     // returns to zero and the stream is never released.
     holders = Math.max(0, holders - 1);
     throw e;

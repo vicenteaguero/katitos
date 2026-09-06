@@ -2,7 +2,7 @@ import { Check } from 'lucide-react';
 import { cn } from '../lib/cn';
 
 /**
- * A small, slightly-rounded check toggle — an empty ringed square that fills
+ * A small, slightly-rounded check toggle - an empty ringed square that fills
  * wine with a tick when on. Replaces bare ⬜/✅ emoji (which can't take rounded
  * corners) so the box reads as a real, gently-cornered checkmark.
  */

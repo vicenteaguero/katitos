@@ -1,10 +1,10 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — the album gets a photo library
+-- Katitos - the album gets a photo library
 --
 --   Until now a photo and its place on a page were the same row, so you could
 --   not have a photo without first deciding which page it went on. That is why
 --   adding twenty holiday pictures meant twenty trips through a sheet, and why
---   "remove" deleted the picture itself — there was nothing else it could mean.
+--   "remove" deleted the picture itself - there was nothing else it could mean.
 --
 --   From here: `album_photos` is the BOOK'S LIBRARY (a photo, once), and the
 --   new `album_placements` says where a photo sits on a page. Take a sticker

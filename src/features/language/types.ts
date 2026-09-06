@@ -18,7 +18,7 @@ export type Voice = Tables<'lang_voice'>;
 /** A lesson to read, homework to hand in, or an exam to sit. */
 export type LessonKind = 'lesson' | 'homework' | 'exam';
 export type LessonStatus = 'draft' | 'published';
-/** Where a lesson stands for one of us; `returned` is hers — "have another go". */
+/** Where a lesson stands for one of us; `returned` is hers - "have another go". */
 export type ProgressStatus =
   | 'not_started'
   | 'in_progress'
@@ -89,15 +89,15 @@ export interface UnitWithLessons extends Unit {
 
 export interface LessonFull extends Lesson {
   blocks: Block[];
-  /** Every question, in order — for counts, marking and hand-in. */
+  /** Every question, in order - for counts, marking and hand-in. */
   exercises: Exercise[];
   /** Questions that sit INSIDE the lesson, keyed by the block they follow. */
   exercisesByBlock: Record<string, Exercise[]>;
-  /** Questions with no block — the ones at the end, as before. */
+  /** Questions with no block - the ones at the end, as before. */
   looseExercises: Exercise[];
   /** The language this lesson teaches, from its course. */
   targetLang: Lang;
-  /** The course this lesson belongs to — two hops up, but everything needs it. */
+  /** The course this lesson belongs to - two hops up, but everything needs it. */
   courseId: string;
   /** Files and links attached to this lesson, by id. */
   media: Media[];
@@ -113,7 +113,7 @@ export interface MediaBlockData {
 /**
  * A declension or conjugation table.
  *
- * The cells are Russian forms — the thing being taught — so they are not
+ * The cells are Russian forms - the thing being taught - so they are not
  * translated. Only the column headings are, which is why they carry the same
  * three-language shape as everything else.
  */

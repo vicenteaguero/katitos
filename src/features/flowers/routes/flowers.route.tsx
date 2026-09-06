@@ -26,7 +26,7 @@ import { groupByYear, skeletonYears, type MonthSlot } from '../lib/months';
  * A bouquet for every month, three across, each on its own instant photo with
  * the month printed on the chin.
  *
- * Looking mode shows only the months that have one — a grid of empty frames is
+ * Looking mode shows only the months that have one - a grid of empty frames is
  * a list of things you didn't do. Edit mode opens every month from June 2025 to
  * the end of the currently open year so she can tap the one she likes.
  *
@@ -55,7 +55,7 @@ export function FlowersRoute() {
     [flowers, editing, canUpload]
   );
 
-  // Newest first — and this order matters far more than it looks. It is the
+  // Newest first - and this order matters far more than it looks. It is the
   // order the URLs are signed in, the order the browser is told to fetch, and
   // therefore the order the pictures appear in. Left in the query's own
   // ascending order, the page filled itself from June 2025 upwards while the
@@ -74,7 +74,7 @@ export function FlowersRoute() {
   );
   const { data: urls } = useSignedUrls(BUCKETS.flowers, paths);
   // Warm them newest-first. `useSignedUrls` sorts its paths for a stable cache
-  // key, so its Map is alphabetical — walking it directly would fetch June 2025
+  // key, so its Map is alphabetical - walking it directly would fetch June 2025
   // before this month, which is exactly the order we're trying to avoid.
   const warm = useMemo(
     () => paths.map((p) => urls?.get(p)).filter((u): u is string => !!u),
@@ -83,7 +83,7 @@ export function FlowersRoute() {
   usePrefetchImages(warm);
 
   // The originals are 7 MB between them and nothing on this page shows one.
-  // Sign them only once a photo is actually open — the lightbox has the proxy
+  // Sign them only once a photo is actually open - the lightbox has the proxy
   // to show in the meantime, so nobody waits for this.
   const { data: fullUrls } = useSignedUrls(BUCKETS.flowers, paths, {
     proxy: false,
@@ -260,7 +260,7 @@ function MonthPlate({
   onDelete?: () => void;
 }) {
   // A month that HAS a bouquet whose URL is still being signed shows a
-  // shimmering plate, not an empty one — otherwise the grid reads as a row of
+  // shimmering plate, not an empty one - otherwise the grid reads as a row of
   // months she never filled.
   const photo = url ? (
     <img
@@ -312,7 +312,7 @@ function MonthPlate({
             <span
               className={cn(
                 'absolute inset-0 flex items-center justify-center',
-                // An empty month is unexposed film — pale, not a dark hole. The
+                // An empty month is unexposed film - pale, not a dark hole. The
                 // tone has to be OPAQUE: the plate's window is brown underneath,
                 // so a translucent brown tint just reads as more brown.
                 slot.flower

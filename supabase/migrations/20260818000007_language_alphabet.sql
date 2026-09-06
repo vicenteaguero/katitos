@@ -1,12 +1,12 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — the Russian alphabet, all thirty-three of it
+-- Katitos - the Russian alphabet, all thirty-three of it
 --
 --   You cannot start Russian anywhere else. The letters are SEEDED HERE, in
 --   the migration, and not in seed.sql: seed.sql only ever runs on a local
 --   reset, so anything that lives there looks deleted on the real app.
 --
 --   Sounds are recorded in-app afterwards, one letter at a time, in her voice.
---   That is the point of it — a recording of a stranger saying Ы is worth much
+--   That is the point of it - a recording of a stranger saying Ы is worth much
 --   less than a recording of her saying it.
 -- ════════════════════════════════════════════════════════════════════════
 
@@ -49,7 +49,7 @@ values
   ('Л','л','el','ele','dark, like the "l" in full','una "l" gruesa, con la lengua atrás (como full en inglés)','луна','moon','luna',13),
   ('М','м','em','eme','like "m" in map','como la "m" de mano','море','sea','mar',14),
   ('Н','н','en','ene','like "n" in note','como la "n" de nube','ночь','night','noche',15),
-  ('О','о','o','o','like "o" in more — when it is stressed','como la "o" de sol, cuando lleva el acento','он','he','él',16),
+  ('О','о','o','o','like "o" in more - when it is stressed','como la "o" de sol, cuando lleva el acento','он','he','él',16),
   ('П','п','pe','pe','like "p" in pen','como la "p" de pan','папа','dad','papá',17),
   ('Р','р','er','erre','rolled, like Spanish "r"','la "r" vibrante de perro','рука','hand','mano',18),
   ('С','с','es','ese','like "s" in sun','como la "s" de sol','сад','garden','jardín',19),
@@ -61,9 +61,9 @@ values
   ('Ч','ч','che','che','like "ch" in chair','como la "ch" de coche','чай','tea','té',25),
   ('Ш','ш','sha','sha','like "sh" in shoe','como "sh" en show','шапка','hat','gorro',26),
   ('Щ','щ','shcha','shcha','a longer, softer "sh"','una "sh" más larga y suave','щенок','puppy','cachorro',27),
-  ('Ъ','ъ','hard sign','signo duro','silent — it separates','muda — separa','подъезд','the entrance of a building','el portal',28),
+  ('Ъ','ъ','hard sign','signo duro','silent - it separates','muda - separa','подъезд','the entrance of a building','el portal',28),
   ('Ы','ы','y','y','a deep "i", further back','una "i" más atrás, con la lengua retraída','ты','you','tú',29),
-  ('Ь','ь','soft sign','signo blando','silent — it softens','muda — suaviza','любовь','love','amor',30),
+  ('Ь','ь','soft sign','signo blando','silent - it softens','muda - suaviza','любовь','love','amor',30),
   ('Э','э','e','e','like "e" in met','como la "e" de mesa','этот','this','este',31),
   ('Ю','ю','yu','iu','like "u" in use','como "iu" en ciudad','юг','south','sur',32),
   ('Я','я','ya','ia','like "ya" in yard','como "ia" en piano','я','I','yo',33)

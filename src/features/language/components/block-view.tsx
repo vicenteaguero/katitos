@@ -26,7 +26,7 @@ export const BlockView = memo(function BlockView({
 }: {
   block: Block;
   support: Lang;
-  /** The language the lesson teaches — the line that goes on top. */
+  /** The language the lesson teaches - the line that goes on top. */
   target: Lang;
   /** Words this block points at, already looked up. */
   vocab?: Vocab[];
@@ -60,7 +60,7 @@ export const BlockView = memo(function BlockView({
 
     case 'text':
     default: {
-      // The language being taught above, the explanation below — the shape
+      // The language being taught above, the explanation below - the shape
       // of a page in any textbook. The headline was hardwired to Russian, so
       // a Spanish lesson read in Russian showed the explanation as the
       // headline and never showed the Spanish at all.
@@ -112,7 +112,7 @@ function Rich({
   );
 }
 
-/** Every word a button, set exactly like the text — a tap asks what it means. */
+/** Every word a button, set exactly like the text - a tap asks what it means. */
 function Words({
   text,
   onWord,
@@ -143,7 +143,7 @@ function Words({
 }
 
 /**
- * The explanation of a block, in the reader's language or the next best —
+ * The explanation of a block, in the reader's language or the next best -
  * never in the language being taught, which is the headline's job.
  */
 function glossOf(block: Block, support: Lang, target: Lang): string {
@@ -159,7 +159,7 @@ function glossOf(block: Block, support: Lang, target: Lang): string {
 /**
  * The endings, in a grid.
  *
- * Scrolls sideways inside itself rather than pushing the page wide — six cases
+ * Scrolls sideways inside itself rather than pushing the page wide - six cases
  * will not fit across a phone, and a lesson you have to pan horizontally to
  * read is worse than one you swipe a table in.
  */
@@ -176,7 +176,7 @@ function TableBlock({
   const rows = data.rows ?? [];
   if (!rows.length) return null;
 
-  // The reader's language first, then the next best — a display may fall
+  // The reader's language first, then the next best - a display may fall
   // back where an editor must not.
   const label = (h: { ru?: string; en?: string; es?: string }) =>
     h[support] || h.en || h.es || h.ru || '';

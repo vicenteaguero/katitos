@@ -45,7 +45,7 @@ async function findBook(
 const SEED_PAGES = 6;
 
 /**
- * Give a book its first pages — ONCE, when it has none at all.
+ * Give a book its first pages - ONCE, when it has none at all.
  *
  * This used to top every book back up to five on every single resolution, which
  * meant tearing a page out and reopening the album put it straight back, and a
@@ -53,7 +53,7 @@ const SEED_PAGES = 6;
  * sat on the critical path of the first paint.
  *
  * Only the empty case is healed now. Production ships no seed, so a book that
- * has just been created still needs this — but a book you have edited is yours.
+ * has just been created still needs this - but a book you have edited is yours.
  */
 async function seedFirstPages(bookId: string): Promise<void> {
   const { count, error } = await supabase
@@ -75,7 +75,7 @@ async function seedFirstPages(bookId: string): Promise<void> {
  * Resolve the book for a scope, creating it (and a first empty page) on first
  * open. `life` is a singleton; `trip` is keyed by `tripId`. Self-heals because
  * production ships no seed. Runs once per session (the id is stable, so the
- * query never needs to refetch — pages/photos live in their own live query).
+ * query never needs to refetch - pages/photos live in their own live query).
  */
 export function useBook(
   scope: BookScope,
@@ -102,7 +102,7 @@ export function useBook(
           .select('*')
           .single();
         if (error) {
-          // Lost the create race (unique life/trip index) — read the winner.
+          // Lost the create race (unique life/trip index) - read the winner.
           if (error.code === '23505') {
             book = await findBook(scope, tripId);
           } else {
@@ -111,7 +111,7 @@ export function useBook(
         } else {
           book = data;
           // A book that has just come into existence has to appear on the
-          // shelf without a reload — this is how Pololini comes back after the
+          // shelf without a reload - this is how Pololini comes back after the
           // albums were wiped, and how a trip's book shows up the first time
           // its tab is opened.
           void qc.invalidateQueries({ queryKey: qk.album.books() });
@@ -157,7 +157,7 @@ export function usePages(bookId: string | undefined) {
 export const LIBRARY_LIMIT = 300;
 
 /**
- * Every photo uploaded into this book, newest first — the strip under the book.
+ * Every photo uploaded into this book, newest first - the strip under the book.
  *
  * A photo lives here whether or not it is standing on a page, which is the
  * whole point: you empty your camera roll into the album first and decide
@@ -172,7 +172,7 @@ export function useLibrary(bookId: string | undefined) {
     staleTime: 30_000,
     queryFn: async (): Promise<AlbumPhoto[]> => {
       // Capped: PostgREST stops at 1000 rows anyway, and every path here is
-      // signed in one batched request whose query key is the path list — an
+      // signed in one batched request whose query key is the path list - an
       // unbounded book would hash a several-kilobyte key on every render.
       const { data, error } = await supabase
         .from('album_photos')
@@ -189,7 +189,7 @@ export function useLibrary(bookId: string | undefined) {
 /**
  * The shelf: every album we keep, in the order we arranged them.
  *
- * Includes the two originals (Pololini and the Summer Panini book) — they're
+ * Includes the two originals (Pololini and the Summer Panini book) - they're
  * just books like any other now, and nothing about how they resolve changed.
  */
 export function useAlbums(includeArchived = false) {
@@ -208,7 +208,7 @@ export function useAlbums(includeArchived = false) {
 }
 
 /**
- * One album by id — how every book except the two legacy ones is opened.
+ * One album by id - how every book except the two legacy ones is opened.
  *
  * `maybeSingle`, not `single`: a link to a book that has been deleted (by the
  * partner, or by us) is a perfectly ordinary thing to follow, and `single`
@@ -216,7 +216,7 @@ export function useAlbums(includeArchived = false) {
  * that never stopped. `null` means "gone", and the route says so and offers the
  * shelf.
  *
- * The id of a book never changes, so this is cached hard — it used to refetch,
+ * The id of a book never changes, so this is cached hard - it used to refetch,
  * AND re-run the page seeding, on every remount.
  */
 export function useBookById(id: string | undefined) {
@@ -240,7 +240,7 @@ export function useBookById(id: string | undefined) {
 }
 
 /**
- * How many photos each album holds — the shelf's "12 photos" line.
+ * How many photos each album holds - the shelf's "12 photos" line.
  *
  * Counted from the library, not from what happens to be placed on a page: a
  * photo you uploaded but haven't put anywhere is still in the album, and the
@@ -262,7 +262,7 @@ export function useAlbumPhotoCounts() {
   });
 }
 
-/** Existing daily polaroids, newest first — the "Add a Polaroid" picker source. */
+/** Existing daily polaroids, newest first - the "Add a Polaroid" picker source. */
 export function usePolaroidPicker(enabled: boolean) {
   return useQuery({
     queryKey: qk.polaroids.list(),

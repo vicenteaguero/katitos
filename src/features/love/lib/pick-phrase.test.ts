@@ -31,7 +31,7 @@ const POOL: LovePhrase[] = [
 ];
 
 describe('eligiblePhrases', () => {
-  it('never offers a feminine phrase for him — the bug this exists to fix', () => {
+  it('never offers a feminine phrase for him - the bug this exists to fix', () => {
     const forHim = eligiblePhrases(POOL, 'm').map((p) => p.text);
     expect(forHim).not.toContain('любимая 🤍');
     expect(forHim).not.toContain('Liubimonkeykaya 🥰');
@@ -68,7 +68,7 @@ describe('pickPhrase', () => {
     }
   });
 
-  it('respects weight — a heavier phrase comes up more often', () => {
+  it('respects weight - a heavier phrase comes up more often', () => {
     const weighted = [
       phrase({ text: 'rare', weight: 1 }),
       phrase({ text: 'common', weight: 9 }),

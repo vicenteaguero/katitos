@@ -16,11 +16,11 @@ type Axis = 'x' | 'y' | null;
 
 export interface ViewerPhoto {
   id: string;
-  /** Small and already cached — what shows the instant it opens. */
+  /** Small and already cached - what shows the instant it opens. */
   previewUrl?: string;
   /** Full resolution. Swapped in behind the preview once it lands. */
   fullUrl?: string;
-  /** Small caps above the caption — a date, a month. */
+  /** Small caps above the caption - a date, a month. */
   eyebrow?: ReactNode;
   caption?: ReactNode;
   /** Used for the downloaded file name. */
@@ -28,14 +28,14 @@ export interface ViewerPhoto {
 }
 
 /**
- * Full-screen lightbox — a photo held in the hand.
+ * Full-screen lightbox - a photo held in the hand.
  *
  * Swipe left/right to leaf through, pull down (or tap) to put it back, pinch to
  * look closer. Download saves to Photos; Share opens the system sheet with the
  * full-resolution file.
  *
  * Lives in the kernel because more than one feature shows photos, and a second
- * hand-rolled lightbox would drift from this one immediately — the flowers were
+ * hand-rolled lightbox would drift from this one immediately - the flowers were
  * opening in a bottom sheet with no zoom at all.
  *
  * Portaled to <body>: a route root carrying `.curtain-reveal` would otherwise
@@ -332,7 +332,7 @@ export function PhotoViewer({
         })}
       </div>
 
-      {/* Top chrome — close + position. */}
+      {/* Top chrome - close + position. */}
       <div className="pv-chrome-in pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between px-4 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <button
           type="button"
@@ -349,7 +349,7 @@ export function PhotoViewer({
         )}
       </div>
 
-      {/* Bottom chrome — save + share. */}
+      {/* Bottom chrome - save + share. */}
       <div className="pv-chrome-in pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center gap-3 px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
         <button
           type="button"

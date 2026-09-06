@@ -56,7 +56,7 @@ export function useTodayAll() {
 }
 
 /**
- * My OWN answer row only. Anti-peek: never reads the partner's row — explicit
+ * My OWN answer row only. Anti-peek: never reads the partner's row - explicit
  * columns, filtered to the current user.
  */
 export function useMyAnswer(dayId: string | undefined) {
@@ -78,14 +78,14 @@ export function useMyAnswer(dayId: string | undefined) {
 }
 
 /**
- * Whether the partner has submitted today — derived ONLY from presence (no
+ * Whether the partner has submitted today - derived ONLY from presence (no
  * choices ever travel over this signal).
  */
 export function usePartnerSubmitted(dayId: string | undefined, enabled = true) {
   const userId = useUserId();
   return useQuery({
     queryKey: [...qk.knowMe.reveal(dayId ?? 'none'), 'partner-submitted'],
-    // Only poll once I've answered — before that the partner's state is moot
+    // Only poll once I've answered - before that the partner's state is moot
     // and the DailyCard shows regardless.
     enabled: !!dayId && !!userId && enabled,
     queryFn: async (): Promise<boolean> => {
@@ -141,7 +141,7 @@ export interface HistoryEntry {
 }
 
 /**
- * Raw revealed rows (both-submitted days) — the single source shared by the
+ * Raw revealed rows (both-submitted days) - the single source shared by the
  * love-map AND the history archive, so they hit ONE fetch + cache entry instead
  * of two duplicate queries against the same view.
  */
@@ -176,7 +176,7 @@ function groupByDay(rows: RevealedRow[]): RevealedRow[][] {
 
 /**
  * History as `DayRecord[]` from the current user's perspective (drives the
- * love-map). Derived — memoized — from the shared revealed-rows query.
+ * love-map). Derived - memoized - from the shared revealed-rows query.
  */
 export function useHistory(): { data: DayRecord[] | undefined } {
   const userId = useUserId();
@@ -225,7 +225,7 @@ export function useHistoryEntries(): { data: HistoryEntry[] | undefined } {
       const q = mine?.day?.question ?? theirs?.day?.question ?? null;
       const opts = parseOptions(q?.options ?? []);
       const labelOf = (id: string | null) =>
-        opts.find((o) => o.id === id)?.label ?? '—';
+        opts.find((o) => o.id === id)?.label ?? '-';
       const { selfRight, partnerRight } = scoreDay({
         coupleDay: '',
         category: q?.category ?? 'general',

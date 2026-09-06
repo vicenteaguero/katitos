@@ -29,7 +29,7 @@ const EMPTY: ItemDraft = {
 };
 
 /**
- * Add or edit one wish. Name, eye, picture, link, then a note — the order you
+ * Add or edit one wish. Name, eye, picture, link, then a note - the order you
  * think of them in.
  *
  * No field labels: the placeholders already say what each one is, and a stack
@@ -77,7 +77,7 @@ export function ItemSheet({
     setDraft((d) => ({ ...d, [k]: v }));
 
   /**
-   * Links get pasted, never typed — you found the thing in a browser and came
+   * Links get pasted, never typed - you found the thing in a browser and came
    * here with it already on the clipboard. Falls back to a plain field if the
    * browser refuses clipboard access.
    */
@@ -134,7 +134,7 @@ export function ItemSheet({
             )}
           </span>
           <span className="min-w-0 flex-1 font-sans text-sm font-semibold text-fg">
-            {draft.visible ? 'Both of us can see it' : 'Hidden — only you'}
+            {draft.visible ? 'Both of us can see it' : 'Hidden - only you'}
           </span>
         </button>
 

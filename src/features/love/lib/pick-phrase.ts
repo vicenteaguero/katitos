@@ -10,7 +10,7 @@ export type Gender = 'm' | 'f';
  *
  * This is the fix for the bug that prompted the whole feature: the old pool was
  * a flat array with feminine-only lines in it ('Liubimonkeykaya', 'любиминки'),
- * picked at random for either of them — so she regularly sent him phrases in
+ * picked at random for either of them - so she regularly sent him phrases in
  * the feminine. Now each phrase declares who it can be sent TO, and a phrase
  * for the wrong gender is simply never eligible.
  */

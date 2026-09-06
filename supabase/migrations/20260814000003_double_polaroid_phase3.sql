@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — Double Polaroid, PHASE 3 (the switch)
+-- Katitos - Double Polaroid, PHASE 3 (the switch)
 --
 --   Drops the old one-photo-per-day constraint. After this, each of us has our
 --   own row for our own day and `polaroids_day_user_uniq` is the real rule.

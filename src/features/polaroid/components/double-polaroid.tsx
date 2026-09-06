@@ -11,7 +11,7 @@ import '../polaroid.css';
  * Two instant photos of the same day, one lying on the other.
  *
  * Tap the one behind to bring it forward; tap the one in front to open it full
- * screen. A missing half is never an error — it's a waiting plate with your
+ * screen. A missing half is never an error - it's a waiting plate with your
  * love's local time on it, because for eleven hours a day their tomorrow
  * hasn't happened yet.
  */
@@ -37,13 +37,13 @@ export function DoublePolaroid({
   onShoot?: () => void;
   /**
    * This day is still writable for me. True for my today, and ALSO for my
-   * love's today while we're on different dates — that day isn't gone, it just
+   * love's today while we're on different dates - that day isn't gone, it just
    * hasn't happened here yet.
    */
   stillOpen?: boolean;
-  /** This is my own today — the only day the camera can shoot for. */
+  /** This is my own today - the only day the camera can shoot for. */
   isToday?: boolean;
-  /** Controlled focus — today's card lifts it so it can edit that caption. */
+  /** Controlled focus - today's card lifts it so it can edit that caption. */
   focus?: Focus;
   onFocusChange?: (next: Focus) => void;
 }) {
@@ -83,7 +83,7 @@ export function DoublePolaroid({
               isToday
                 ? "Take today's"
                 : stillOpen
-                  ? 'still open — add one'
+                  ? 'still open - add one'
                   : 'you missed this one'
             }
             icon={isToday || stillOpen}
@@ -106,7 +106,7 @@ export function DoublePolaroid({
         }
       />
 
-      {/* Anything that fits neither side still gets shown — never lose a photo. */}
+      {/* Anything that fits neither side still gets shown - never lose a photo. */}
       {day.extras.length > 0 && (
         <div className="absolute -bottom-24 left-0 right-0 flex justify-center gap-2">
           {day.extras.map((p) => (
@@ -137,7 +137,7 @@ function waitingHint(day: string, zone: string | null | undefined): string {
   const theirNow = DateTime.now().setZone(zone ?? 'UTC');
   const theirToday = theirNow.toISODate();
   if (theirToday && day > theirToday) {
-    // Their day hasn't started yet — this is the eleven-hour gap, not a lapse.
+    // Their day hasn't started yet - this is the eleven-hour gap, not a lapse.
     return `not this day yet, it's ${theirNow.toFormat('HH:mm')} there`;
   }
   return 'still to come';

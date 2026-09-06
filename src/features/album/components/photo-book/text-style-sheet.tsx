@@ -10,7 +10,7 @@ const SIZES = [0.035, 0.048, 0.065, 0.09, 0.13];
  *
  * A Sheet rather than more toolbar because this needs the keyboard, and the
  * kernel Sheet is the one thing in the app that handles the iOS keyboard
- * properly. Three faces only — a real font picker is a different app.
+ * properly. Three faces only - a real font picker is a different app.
  */
 export function TextStyleSheet({
   open,
@@ -99,7 +99,7 @@ export function TextStyleSheet({
           {/* Words, not two nearly identical Aa's. At this size the only
               difference between them was a hair of stroke weight, and nobody
               could tell which one they were already on. */}
-          {/* Words, not two nearly identical Aa's — at that size the only
+          {/* Words, not two nearly identical Aa's - at that size the only
               difference was a hair of stroke weight and you could not tell
               which one you were already on. */}
           <Segmented

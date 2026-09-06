@@ -17,7 +17,7 @@ import type { NavEntry } from '@kernel/registry';
 /**
  * Ideas, listed but not built.
  *
- * The "Soon" rows in the More drawer are the visible sense of a long runway —
+ * The "Soon" rows in the More drawer are the visible sense of a long runway -
  * proof there is more coming. They used to be a side effect of a feature being
  * shipped-but-locked, which meant the only way to show an idea was to build it
  * first, and the only way to delete dead code was to lose the row.
@@ -26,7 +26,7 @@ import type { NavEntry } from '@kernel/registry';
  * it is an idea we want to see on the shelf. Add one freely. When it gets
  * built for real, delete its line here and let the feature registry take over.
  *
- * `to` is never navigated — a locked drawer row is inert (see nav.tsx) and the
+ * `to` is never navigated - a locked drawer row is inert (see nav.tsx) and the
  * router mounts nothing for these paths. It only has to be unique.
  */
 export const SOON: NavEntry[] = [

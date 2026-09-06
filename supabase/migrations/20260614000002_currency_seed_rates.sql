@@ -1,10 +1,10 @@
 -- ════════════════════════════════════════════════════════════════════════
--- Katitos — baseline currency rates (prod-safe seed)
+-- Katitos - baseline currency rates (prod-safe seed)
 --   seed.sql never runs on prod, the currency-rates edge function is not on a
---   schedule, and the app has no self-heal — so currency_rates was EMPTY on
---   prod and every conversion (and the Home widget) showed "—". This migration
+--   schedule, and the app has no self-heal - so currency_rates was EMPTY on
+--   prod and every conversion (and the Home widget) showed "-". This migration
 --   runs on prod (via `make db-push`) and gives the converter a working
---   baseline, including GEL — the Georgia-trip currency, which was missing
+--   baseline, including GEL - the Georgia-trip currency, which was missing
 --   everywhere, even on a fresh local DB.
 --   Full directed matrix for USD/CLP/RUB/GEL so every direct lookup hits
 --   without relying on USD triangulation. Rates are approximate; the
