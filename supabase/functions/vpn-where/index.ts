@@ -13,23 +13,26 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders, json } from '../_shared/cors.ts';
 
 /**
- * The address the request really came from.
+ * Every address in the chain, closest hop last.
  *
- * `x-forwarded-for` is a LIST, appended to by each hop, and the client can put
- * anything it likes in the first entries — but Supabase's edge appends the
- * true peer last, so the last entry is the one that cannot be forged. Reading
- * the first would let anyone claim to be on the tunnel by sending a header.
+ * `x-forwarded-for` is a list appended to by each proxy, and which end holds
+ * the true peer depends on the edge in front of us — a guess there would fail
+ * silently and forever, always answering "not on the tunnel". So we compare
+ * ALL of them and match on any.
+ *
+ * That would be forgeable if this were open: send the header, claim to be on
+ * the tunnel. It is not open — the caller must already be one of the two of
+ * them, and lying to yourself about your own VPN is not a threat model. An
+ * internal hop can never collide, because it would have to equal one of our
+ * servers' public addresses.
  */
-function callerIp(req: Request): string | null {
-  const xff = req.headers.get('x-forwarded-for');
-  if (xff) {
-    const parts = xff
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean);
-    if (parts.length) return parts[parts.length - 1];
-  }
-  return req.headers.get('x-real-ip');
+function callerIps(req: Request): string[] {
+  const xff = req.headers.get('x-forwarded-for') ?? '';
+  const real = req.headers.get('x-real-ip') ?? '';
+  return [...xff.split(','), real]
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 8);
 }
 
 Deno.serve(async (req) => {
@@ -50,8 +53,8 @@ Deno.serve(async (req) => {
   const { data: member } = await asUser.rpc('is_member');
   if (member !== true) return json({ error: 'nope' }, 403);
 
-  const ip = callerIp(req);
-  if (!ip) return json({ on_tunnel: false, reason: 'no-ip' });
+  const ips = callerIps(req);
+  if (ips.length === 0) return json({ on_tunnel: false, reason: 'no-ip' });
 
   const admin = createClient(
     Deno.env.get('SUPABASE_URL')!,
@@ -60,7 +63,7 @@ Deno.serve(async (req) => {
   const { data, error } = await admin
     .from('vpn_server_addresses')
     .select('server_id, vpn_servers(label, city, country)')
-    .eq('ip', ip)
+    .in('ip', ips)
     .maybeSingle();
 
   if (error) return json({ error: error.message }, 500);
