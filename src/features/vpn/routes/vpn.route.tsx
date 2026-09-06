@@ -93,8 +93,12 @@ function CodeSheet({
   );
 }
 
-/** His view: the numbers. Hers has none of this, on purpose. */
-function ServerRow({ s }: { s: VpnServer }) {
+/**
+ * One server. `detail` is the whole difference between the two readers: she
+ * gets "awake", he gets the uptime, the protocols and how long ago it spoke.
+ * A percentage means nothing to someone who cannot act on it.
+ */
+function ServerRow({ s, detail }: { s: VpnServer; detail: boolean }) {
   return (
     <li className="flex items-center gap-3 py-2">
       <span
@@ -105,18 +109,29 @@ function ServerRow({ s }: { s: VpnServer }) {
       <span className="min-w-0 flex-1">
         <span className="block truncate font-sans text-sm text-fg">
           {flag(s.country)} {s.label}
-          <span className="ml-2 text-xs text-muted">{ROLE_LABELS[s.role]}</span>
+          {detail && (
+            <span className="ml-2 text-xs text-muted">
+              {ROLE_LABELS[s.role]}
+            </span>
+          )}
         </span>
         <span className="block truncate font-sans text-xs text-muted">
-          {lastSeen(s.last_beat)}
-          {s.protocols.length > 0 &&
-            ` · ${s.protocols.map((p) => PROTOCOL_LABELS[p] ?? p).join(' · ')}`}
-          {s.clients != null && ` · ${s.clients} conn`}
+          {detail
+            ? `${lastSeen(s.last_beat)}${
+                s.protocols.length
+                  ? ` · ${s.protocols.map((p) => PROTOCOL_LABELS[p] ?? p).join(' · ')}`
+                  : ''
+              }${s.clients != null ? ` · ${s.clients} conn` : ''}`
+            : s.alive
+              ? 'Awake'
+              : 'Not answering'}
         </span>
       </span>
-      <span className="shrink-0 font-sans text-xs tabular-nums text-muted">
-        {uptimeText(s.uptime_24h)} / {uptimeText(s.uptime_7d)}
-      </span>
+      {detail && (
+        <span className="shrink-0 font-sans text-xs tabular-nums text-muted">
+          {uptimeText(s.uptime_24h)} / {uptimeText(s.uptime_7d)}
+        </span>
+      )}
     </li>
   );
 }
@@ -197,110 +212,18 @@ export function VpnRoute() {
         </button>
       </section>
 
-      {/*
-        Always here, never hidden behind "you already set it up". The version
-        that hid these the moment a profile existed was useless to the person
-        who most needs them: someone reinstalling, on a new phone, or simply
-        back a month later having forgotten every step.
-      */}
-      <ol className="mt-4 space-y-4">
-        <li className="flex items-start gap-3">
-          <span className="font-display text-2xl leading-none text-gold">
-            1
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block font-sans text-sm font-semibold text-fg">
-              Get the app
-            </span>
-            {/* Same app and the same profile everywhere — the one thing that
-                makes "how do I do this on my tablet?" a non-question. */}
-            <span className="block font-sans text-xs text-muted">
-              Free. Works on your phone, your tablet and your computer, and the
-              profile below is the same on all of them.
-            </span>
-            <span className="mt-1.5 flex items-center gap-3">
-              <AppStoreButton />
-              <OtherPlatformsLink />
-            </span>
-          </span>
-        </li>
-
-        <li className="flex items-start gap-3">
-          <span className="font-display text-2xl leading-none text-gold">
-            2
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block font-sans text-sm font-semibold text-fg">
-              Put your profile in it
-            </span>
-            {/* Copy first, scan second. On the phone she is reading this on,
-                a camera cannot photograph its own screen — clipboard is the
-                path that always works, and the QR is for the other case. */}
-            <span className="block font-sans text-xs text-muted">
-              Copy, then in Karing tap <span className="text-fg">+</span> →{' '}
-              <span className="text-fg">Import From Clipboard</span>. On another
-              phone, scan the code instead.
-            </span>
-            {me?.sub_url && (
-              <span className="mt-1 flex gap-2">
-                <Button onClick={copyLink}>
-                  {copied ? (
-                    <Check className="h-4 w-4" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
-                  {copied ? 'Copied' : 'Copy my profile'}
-                </Button>
-                <Button variant="ghost" onClick={() => setSheet('main')}>
-                  <QrCode className="h-4 w-4" /> QR
-                </Button>
-              </span>
-            )}
-          </span>
-        </li>
-
-        <li className="flex items-start gap-3">
-          <span className="font-display text-2xl leading-none text-gold">
-            3
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block font-sans text-sm font-semibold text-fg">
-              Switch it on
-            </span>
-            {/* The part nobody tells you: after the first time, the app is
-                optional. iOS holds the switch itself. */}
-            <span className="block font-sans text-xs text-muted">
-              Just this once in the app. After that it lives in your iPhone —
-              Settings → VPN, or the Control Centre — and you never have to open
-              Karing again.
-            </span>
-          </span>
-        </li>
-      </ol>
-
-      {/* Everything that used to be shouted at her lives in here, and only
-          gets read on the day it matters. */}
-      <button
-        type="button"
-        onClick={() => setHelp(true)}
-        className="mt-5 font-sans text-sm text-muted underline decoration-gold underline-offset-4"
-      >
-        Not working?
-      </button>
-
-      {/* His half. She never sees a percentage. */}
-      {self?.is_admin && servers && servers.length > 0 && (
-        <section className="mt-6">
-          <p className="font-sans text-xs uppercase tracking-wider text-muted">
-            Servers · 24h / 7d
-          </p>
-          <ul className="divide-y divide-line">
-            {servers.map((s) => (
-              <ServerRow key={s.id} s={s} />
-            ))}
-          </ul>
-        </section>
+      {/* Then the servers — for her, awake or not, and nothing else. */}
+      {servers && servers.length > 0 && (
+        <ul className="mt-5 divide-y divide-line">
+          {servers.map((sv) => (
+            <ServerRow key={sv.id} s={sv} detail={!!self?.is_admin} />
+          ))}
+        </ul>
       )}
+
+      <Button className="mt-5 w-full" onClick={() => setHelp(true)}>
+        Show tutorial
+      </Button>
 
       {me?.sub_url && (
         <CodeSheet
@@ -321,13 +244,99 @@ export function VpnRoute() {
         />
       )}
 
-      <Sheet open={help} onClose={() => setHelp(false)} title="Not working?">
-        <div className="space-y-4 font-sans text-sm text-fg">
+      {/* Everything she might need, in the order she needs it, and out of the
+          way until she asks. The steps are here rather than on the page because
+          after the first day the only question left is "is it on?" — and that
+          is already answered in the biggest type on the screen. */}
+      <Sheet open={help} onClose={() => setHelp(false)} title="How this works">
+        <ol className="space-y-4">
+          <li className="flex items-start gap-3">
+            <span className="font-display text-2xl leading-none text-gold">
+              1
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-sans text-sm font-semibold text-fg">
+                Get the app
+              </span>
+              <span className="block font-sans text-xs text-muted">
+                Free. Works on your phone, your tablet and your computer, and
+                the profile below is the same on all of them.
+              </span>
+              <span className="mt-1.5 flex items-center gap-3">
+                <AppStoreButton />
+                <OtherPlatformsLink />
+              </span>
+            </span>
+          </li>
+
+          <li className="flex items-start gap-3">
+            <span className="font-display text-2xl leading-none text-gold">
+              2
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-sans text-sm font-semibold text-fg">
+                Put your profile in it
+              </span>
+              {/* Copy first, scan second. On the phone she is reading this on,
+                  a camera cannot photograph its own screen. */}
+              <span className="block font-sans text-xs text-muted">
+                Copy, then in Karing tap <span className="text-fg">+</span> →{' '}
+                <span className="text-fg">Import From Clipboard</span>. On
+                another device, scan the code instead.
+              </span>
+              {me?.sub_url && (
+                <span className="mt-1.5 flex gap-2">
+                  <Button onClick={copyLink}>
+                    {copied ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                    {copied ? 'Copied' : 'Copy my profile'}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setHelp(false);
+                      setSheet('main');
+                    }}
+                  >
+                    <QrCode className="h-4 w-4" /> QR
+                  </Button>
+                </span>
+              )}
+            </span>
+          </li>
+
+          <li className="flex items-start gap-3">
+            <span className="font-display text-2xl leading-none text-gold">
+              3
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-sans text-sm font-semibold text-fg">
+                Switch it on, and leave the app open
+              </span>
+              {/* The correction that cost an evening: iOS reports "Connected"
+                  long after the app has been swiped away and the tunnel has
+                  stopped. Telling her the opposite would have her debugging a
+                  dead connection that says it is alive. */}
+              <span className="block font-sans text-xs text-muted">
+                Turn it on inside Karing. You can leave it in the background —
+                but don’t swipe it away, or everything stops while your phone
+                still says you’re connected.
+              </span>
+            </span>
+          </li>
+        </ol>
+
+        <div className="mt-5 space-y-4 font-sans text-sm text-fg">
+          <p className="font-display text-xl">If something breaks</p>
           <div>
             <p className="font-semibold">It won’t connect</p>
             <p className="mt-1 text-muted">
-              You have a second one. Add it the same way and use that instead —
-              it works differently, so it often works when the first doesn’t.
+              You have a second profile. Add it the same way and use that
+              instead — it works differently, so it often works when the first
+              one doesn’t.
             </p>
             {me?.alt_url && (
               <Button
@@ -338,13 +347,13 @@ export function VpnRoute() {
                   setSheet('spare');
                 }}
               >
-                Show the other code
+                Show my second profile
               </Button>
             )}
           </div>
           <div>
-            {/* The one failure that is not ours, said plainly and without the
-                word "whitelist", which would explain nothing to her. */}
+            {/* Said without the word "whitelist", which would explain nothing
+                to her, and without blaming a server that is fine. */}
             <p className="font-semibold">Nothing loads at all</p>
             <p className="mt-1 text-muted">
               If it’s on and still nothing opens, it’s usually your phone
@@ -355,7 +364,8 @@ export function VpnRoute() {
           <div>
             <p className="font-semibold">Still stuck</p>
             <p className="mt-1 text-muted">
-              Tell me and I’ll fix it. Don’t send these codes to anyone else.
+              Tell me and I’ll fix it. Don’t send these codes to anyone else —
+              they’re yours.
             </p>
           </div>
         </div>
