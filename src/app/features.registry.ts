@@ -73,8 +73,7 @@ const OPEN = new Set([
   'currency',
   'wishlists', // gift lists, each item with its own eye
   'flowers', // a bouquet a month, hers to fill
-  // 'vpn'      — "Internet": her exit servers and whether they are awake.
-  //              Stays shut until a server actually exists to report in.
+  'vpn', // "Internet" — Helsinki is up and reporting in
   // 'summer'   — Türkiye/Georgia is over. Locked, NOT deleted: the code, the
   //              tables and the photos all stay, so the next trip is one line.
   // 'know-me'  — the daily questions still need some love before she sees them.
