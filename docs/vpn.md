@@ -365,6 +365,21 @@ zero-cost rule there was written for a dev box, not for her internet.
 
 ---
 
+## Where everything lives, for the day I have forgotten
+
+Nothing secret is in this repository, and nothing secret ever should be: it is
+**public**. Addresses, keys, panel credentials and her profiles live only in
+`.env.vpn.local` and `secrets/`, both gitignored.
+
+| Thing                                          | Where                                                                                                      |
+| :--------------------------------------------- | :--------------------------------------------------------------------------------------------------------- |
+| The server                                     | **UpCloud**, my own account, zone `fi-hel1`, host `hel-01`. Billing is prepaid balance, not a subscription |
+| Its address, panel URL, panel login, API token | `.env.vpn.local`                                                                                           |
+| Her profiles and mine                          | `.env.vpn.local`, and in Supabase under `vpn_clients`, readable only by the user each row belongs to       |
+| AmneziaWG client configs                       | `secrets/`                                                                                                 |
+| The heartbeat secret                           | `.env.vpn.local`, and as `VPN_BEAT_SECRET` in Supabase function secrets                                    |
+| On the box itself                              | `/etc/katitos-vpn/panel.env` and `/etc/katitos-vpn/beat.env`, mode 600                                     |
+
 ## What exists, as of 6 September 2026
 
 | Piece                                             | State                                                                       |
