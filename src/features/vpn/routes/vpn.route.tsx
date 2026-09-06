@@ -260,7 +260,8 @@ export function VpnRoute() {
               </span>
               <span className="block font-sans text-xs text-muted">
                 Free. Works on your phone, your tablet and your computer, and
-                the profile below is the same on all of them.
+                the profile below is the same on all of them. On a Huawei there
+                is no Play Store, so use the second link.
               </span>
               <span className="mt-1.5 flex items-center gap-3">
                 <AppStoreButton />
@@ -328,6 +329,10 @@ export function VpnRoute() {
                 can turn it on and off from Settings, VPN. Leave Karing running
                 in the background, and don’t swipe it away, or everything stops
                 while your phone still says you’re connected.
+              </span>
+              <span className="mt-1 block font-sans text-xs text-muted">
+                <span className="text-fg">Android, and your tablet:</span> turn
+                it on in the app and leave it running.
               </span>
               <span className="mt-1 block font-sans text-xs text-muted">
                 <span className="text-fg">Computer:</span> keep Karing open. You
