@@ -2,6 +2,7 @@ import type { ComponentType } from 'react';
 import { NavLink } from 'react-router';
 import { Settings, Lock } from 'lucide-react';
 import { Sheet } from '@kernel/ui';
+import { useTunnelVisible } from './use-tunnel-visible';
 import { featureRegistry } from '../features.registry';
 import { SOON } from '../soon';
 
@@ -74,7 +75,13 @@ export function MoreDrawer({
   open: boolean;
   onClose: () => void;
 }) {
-  const entries = featureRegistry.navEntries;
+  // "Internet" is his tool until the release entry is unheld. Filtering here
+  // rather than in the registry keeps the route mounted, so he can reach it
+  // from a phone while testing.
+  const tunnel = useTunnelVisible();
+  const entries = featureRegistry.navEntries.filter(
+    (e) => tunnel || e.to !== '/vpn'
+  );
   return (
     <Sheet
       open={open}
