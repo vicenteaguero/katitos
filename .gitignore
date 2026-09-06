@@ -51,3 +51,6 @@ supabase/functions/.env
 # claude code — ignore local agent state, keep project rules
 .claude/*
 !.claude/CLAUDE.md
+
+# vpn client configs and links — her tunnel, never committed
+/secrets/
