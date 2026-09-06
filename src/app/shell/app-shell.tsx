@@ -19,6 +19,8 @@ import {
 } from '@kernel/ui';
 import { PresenceTracker, PartnerStatusDot } from '@features/presence';
 import { ExchangeIcon } from '@features/currency';
+import { TunnelButton } from '@features/vpn';
+import { useTunnelVisible } from './use-tunnel-visible';
 import { LoginScreen } from './login';
 import { DevUserSwitcher } from './dev-switcher';
 import { BottomNav } from './nav';
@@ -45,6 +47,7 @@ function TopBar() {
   const { pathname } = useLocation();
   // "Back" earns its place only off the home tab — on home it'd go nowhere.
   const atHome = pathname === '/';
+  const tunnel = useTunnelVisible();
   const title = sectionTitle(pathname);
   // A control the active route can inject (wall's edit pen, currency freshness…).
   const action = useTopBarSlot();
@@ -81,8 +84,12 @@ function TopBar() {
         <div className="flex items-center gap-1">
           {!atHome && action}
           <DevUserSwitcher />
-          {/* Home corner = the fast lane to the currency converter. Settings
-              lives only in the More drawer now. */}
+          {/* Home corner = the two things worth one tap: is her internet up,
+              and what is that in pesos. Settings lives only in the More
+              drawer now. The tunnel button is his until the release entry is
+              unheld — she should not meet a shield icon before she is told
+              what it is for. */}
+          {atHome && tunnel && <TunnelButton />}
           {atHome && (
             <Link
               to="/currency"
