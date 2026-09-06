@@ -3,7 +3,8 @@
 An exit server so she has working internet from Russia, plus a small Katitos
 feature to see its status.
 
-**Status: the Katitos half is built and gated shut. No server exists yet.**
+**Status: live since 6 September 2026.** One server in Helsinki, both
+transports working, Katitos shipped in v1.7.0.
 Last updated 2026-09-05.
 
 ---
@@ -364,11 +365,79 @@ zero-cost rule there was written for a dev box, not for her internet.
 
 ---
 
+## What exists, as of 6 September 2026
+
+| Piece                                             | State                                                                       |
+| :------------------------------------------------ | :-------------------------------------------------------------------------- |
+| Helsinki VPS, UpCloud Starter 1/1/10, $3.50/month | Live, hardened, BBR, unattended upgrades                                    |
+| VLESS + REALITY over gRPC, port 443               | Live, verified end to end with a **sing-box** client                        |
+| VLESS + REALITY + Vision over TCP, port 8443      | Live, same verification                                                     |
+| AmneziaWG, port 51820                             | Interface up, client configs issued, **never actually connected by anyone** |
+| 3x-ui panel                                       | HTTPS with a Let's Encrypt IP certificate, auto-renewing                    |
+| Heartbeat into Supabase, once a minute            | Live, survives reboot                                                       |
+| Katitos "Internet" page and VPN button            | Shipped, v1.7.0, announced                                                  |
+
+Cost so far: $3.50/month. No domain (see above).
+
+## Next, in order of what it actually buys
+
+1. **A second box, different provider, different country.** Stockholm (78 ms) or
+   Frankfurt (81 ms), another ~$4/month. This is the largest remaining
+   improvement by a distance and it fixes the one real weakness: today, if
+   Helsinki is blocked, she waits for me to notice. With two in her config the
+   client moves on its own, in seconds, fetching nothing.
+
+   Urgency is not theoretical. She is already on someone else's VPN, and her
+   own summary of the situation is that they "fall like flies, every day".
+
+2. **Alert me when a server stops reporting.** The beats already arrive every
+   minute and Katitos already knows how to push. Right now I find out because
+   she writes to me, which is the wrong direction.
+
+3. **A subscription URL**, served by the VPN infrastructure and never by
+   Katitos. Then adding a third server reaches her phone by itself instead of
+   costing a message and a re-import.
+
+4. **Actually connect AmneziaWG once.** It is the unrelated second technology,
+   which is the whole insurance policy against one detection advance taking
+   everything, and it has never carried a packet. Untested insurance is not
+   insurance.
+
+5. **Rotate the REALITY dest and carry several shortIds**, so one fixed pattern
+   does not sit there for months.
+
+What will NOT help much: a bigger plan. Her line in Novosibirsk is 50 to 100
+Mbps against the server's 500, and the 42 ms to Moscow is physics. The
+bottleneck is not the box.
+
+## What she found in the first minute
+
+**"You put the instructions in an app that needs the VPN."** She is right, and
+this document said so before she did: Katitos cannot be where the emergency
+instruction lives, because the day the tunnel is down is the day Katitos does
+not load.
+
+Mitigations now in place or agreed:
+
+- Her profile QR goes to her over Telegram, which works there without a tunnel,
+  and she keeps it in Saved Messages.
+- Katitos is a PWA with an offline cache, so `/vpn` and her code open with no
+  network **provided she has opened the page once and added the app to her home
+  screen**. Say that out loud to her; a cache only holds what was visited.
+
 ## Open questions
 
 - ~~Whether her ISPs in Novosibirsk and Krasnoyarsk route west or east.~~ West,
   through Moscow. Measured 5 September 2026; Krasnoyarsk is further east and can
   only be more so.
+- **Does `katitos.vercel.app` load from Russia with no tunnel at all?** Still
+  unknown. The one test we have was run while she was on a different VPN. The
+  answer changes what may live in Katitos and what may not, so it is worth five
+  minutes of hers with everything switched off.
+- Whether Karing survives the next App Store sweep, and whether Happ or
+  AmneziaVPN would be the easier daily app for her. Karing was chosen for
+  availability, not for its interface, and its interface is a network
+  engineer's.
 - Which VPS provider has clean address space and is not already filtered. Needs
   checking at purchase time, not from here.
 - ⚠️ Whether mobile international-traffic metering (a proposed 15 GB/month cap) ever
