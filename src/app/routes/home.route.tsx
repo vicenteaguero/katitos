@@ -20,8 +20,6 @@ import { toast, useTopBarAction } from '@kernel/ui';
 import { usePartnerPresence } from '@features/presence';
 import { LastPolaroidWidget } from '@features/polaroid';
 import { NextLessonWidget, TeachingWidget } from '@features/language';
-import { TunnelWidget } from '@features/vpn';
-import { useTunnelVisible } from '../shell/use-tunnel-visible';
 import { loveNoteFor, useLovePhrases } from '@features/love';
 import { sendLoveBurst } from '../shell/love-channel';
 
@@ -393,7 +391,6 @@ export function HomeRoute() {
   // on her home screen is the loudest way to tell her. It waits for the same
   // word the changelog waits for; he sees it now, since he is building on it.
   const classroom = !!self?.is_admin || isAnnounced('2026-08-19');
-  const tunnel = useTunnelVisible();
   return (
     <div
       className="curtain-reveal space-y-5"
@@ -404,9 +401,6 @@ export function HomeRoute() {
       <LastPolaroidWidget />
       {classroom && <NextLessonWidget />}
       {classroom && <TeachingWidget />}
-      {/* Hides itself while there is no fleet; `tunnel` is the other half —
-          his until the release entry is unheld, hers from then on. */}
-      {tunnel && <TunnelWidget />}
     </div>
   );
 }
