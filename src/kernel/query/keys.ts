@@ -14,6 +14,8 @@ export const qk = {
     status: () => ['vpn', 'status'] as const,
     /** My own subscription row. RLS means this is never the other's. */
     client: () => ['vpn', 'client'] as const,
+    /** Whether THIS device is coming out through one of them, right now. */
+    where: () => ['vpn', 'where'] as const,
   },
   polaroids: {
     all: () => ['polaroids'] as const,
