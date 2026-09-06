@@ -160,11 +160,38 @@ real Novosibirsk household rather than a rack.)_
 
 ### Protocols
 
-| Priority | Transport                | Why                                                    |
-| :------- | :----------------------- | :----------------------------------------------------- |
-| 1        | **VLESS + XHTTP + mux**  | What survived the February and June waves              |
-| 2        | VLESS + Reality over TCP | Still fine where the newer filter has not been applied |
-| 3        | **AmneziaWG 3.1**        | Unrelated technology, different detection surface      |
+| Priority | Transport                         | Why                                                                                                            |
+| :------- | :-------------------------------- | :------------------------------------------------------------------------------------------------------------- |
+| 1        | **VLESS + REALITY over gRPC**     | HTTP/2 multiplexes many streams over one TLS connection and one SNI — which is what the measured filter counts |
+| 2        | VLESS + REALITY over TCP + Vision | Still fine where the newer filter has not been applied                                                         |
+| 3        | **AmneziaWG 3.1**                 | Unrelated technology, different detection surface                                                              |
+
+### Why not XHTTP, which this document used to lead with
+
+**Her client cannot run it.** Karing — the one app still in the Russian App
+Store — ships the **sing-box core only**, and sing-box has no XHTTP transport;
+its author has said he does not plan one. XHTTP is an Xray-only transport.
+
+That is not a detail to design around later. It rules out the transport
+entirely for the person this is for, and it was found the way these things are
+always found: the server was verified end-to-end with an _Xray_ client, which
+proved a path she will never take. **Verify with the core she actually runs.**
+
+gRPC is the other half of what the community moved to after the February and
+June 2026 waves, and it gets the property that mattered: HTTP/2 carries many
+logical streams over a single TLS connection, so the connection-count filter
+measured on MTS Novosibirsk never sees a burst.
+
+### The Xray version is pinned, and must stay pinned
+
+**26.6.27.** Xray **26.7.x breaks REALITY against every sing-box client** —
+`reality verification failed`, on both transports, silently. Reproduced here on
+26.7.28 and fixed by downgrading; it matches the reports against 26.7.11, and
+the open Karing issue about 3x-ui servers.
+
+An automatic panel update of the Xray core would take her internet down with no
+message and no obvious cause. Treat a core upgrade as a change to test, never
+as maintenance.
 
 All three configured from the start. Switching is a profile change in her app, not
 a support call.
