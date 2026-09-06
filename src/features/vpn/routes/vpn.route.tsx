@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Copy, Check, RotateCw, QrCode, Download } from 'lucide-react';
+import { Copy, Check, RotateCw, QrCode } from 'lucide-react';
 import { usePartner } from '@kernel/auth';
 import { useQueryClient } from '@tanstack/react-query';
 import { qk } from '@kernel/query';
@@ -7,9 +7,10 @@ import { Button, Sheet, Spinner } from '@kernel/ui';
 import { useMyVpnClient, useVpnStatus, useWhereAmI } from '../api/vpn.queries';
 import { lastSeen, uptimeText } from '../lib/health';
 import { PROTOCOL_LABELS, ROLE_LABELS, type VpnServer } from '../types';
-
-/** Karing — still in the Russian App Store. Checked 5 September 2026. */
-const APP_URL = 'https://apps.apple.com/app/karing/id6472431552';
+import {
+  AppStoreButton,
+  OtherPlatformsLink,
+} from '../components/store-buttons';
 
 /** 🇫🇮 from "FI". Two regional-indicator letters, no flag asset to ship. */
 const flag = (cc: string | null | undefined) =>
@@ -211,14 +212,16 @@ export function VpnRoute() {
             <span className="block font-sans text-sm font-semibold text-fg">
               Get the app
             </span>
+            {/* Same app and the same profile everywhere — the one thing that
+                makes "how do I do this on my tablet?" a non-question. */}
             <span className="block font-sans text-xs text-muted">
-              It’s free, and it’s in the Russian App Store.
+              Free. Works on your phone, your tablet and your computer, and the
+              profile below is the same on all of them.
             </span>
-            <a href={APP_URL} target="_blank" rel="noreferrer">
-              <Button variant="ghost" className="mt-1">
-                <Download className="h-4 w-4" /> Karing
-              </Button>
-            </a>
+            <span className="mt-1.5 flex items-center gap-3">
+              <AppStoreButton />
+              <OtherPlatformsLink />
+            </span>
           </span>
         </li>
 
