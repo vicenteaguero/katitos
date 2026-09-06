@@ -47,3 +47,37 @@ export function useMyVpnClient() {
     },
   });
 }
+
+/** What `vpn-where` answers: a place, or a no. Never an address. */
+export interface Where {
+  on_tunnel: boolean;
+  label?: string | null;
+  city?: string | null;
+  country?: string | null;
+}
+
+/**
+ * Is this phone, right now, coming out through one of our servers?
+ *
+ * The comparison happens in the edge function, against a table no client can
+ * read. All that comes back is a name — which is the only part she needs and
+ * the only part safe to hand over.
+ *
+ * `retry: false` because the interesting failure (offline, or the tunnel just
+ * dropped) is not one a retry fixes, and the honest answer to "I can't tell"
+ * is to say so rather than spin.
+ */
+export function useWhereAmI() {
+  return useQuery({
+    queryKey: qk.vpn.where(),
+    queryFn: async (): Promise<Where> => {
+      const { data, error } =
+        await supabase.functions.invoke<Where>('vpn-where');
+      if (error) throw error;
+      return data ?? { on_tunnel: false };
+    },
+    retry: false,
+    refetchOnWindowFocus: true,
+    staleTime: 15_000,
+  });
+}
