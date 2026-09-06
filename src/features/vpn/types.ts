@@ -25,6 +25,8 @@ export interface VpnClient {
   user_id: string;
   label: string;
   sub_url: string | null;
+  /** The spare profile, unrelated transport. */
+  alt_url: string | null;
   issued_at: string;
   revoked_at: string | null;
 }
