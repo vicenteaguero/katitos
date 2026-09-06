@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, RotateCw, QrCode, Download } from 'lucide-react';
 import { usePartner } from '@kernel/auth';
+import { useQueryClient } from '@tanstack/react-query';
+import { qk } from '@kernel/query';
 import { Button, Sheet, Spinner } from '@kernel/ui';
 import { useMyVpnClient, useVpnStatus, useWhereAmI } from '../api/vpn.queries';
 import { lastSeen, uptimeText } from '../lib/health';
@@ -133,82 +135,145 @@ function ServerRow({ s }: { s: VpnServer }) {
  */
 export function VpnRoute() {
   const { self } = usePartner();
-  const { data: where, isLoading: whereLoading } = useWhereAmI();
+  const { data: where, isLoading: whereLoading, isFetching } = useWhereAmI();
   const { data: me } = useMyVpnClient();
   const { data: servers } = useVpnStatus();
+  const qc = useQueryClient();
   const [sheet, setSheet] = useState<'main' | 'spare' | null>(null);
   const [help, setHelp] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const on = where?.on_tunnel === true;
-  const setUp = !!me?.sub_url && !me.revoked_at;
+
+  // Switching the VPN on happens in ANOTHER app, so she comes back to a page
+  // that answered before anything changed. Without a way to ask again, the
+  // only fix is closing and reopening Katitos — which is how you teach someone
+  // that your status display cannot be trusted.
+  const recheck = () => qc.invalidateQueries({ queryKey: qk.vpn.all() });
+
+  const copyLink = async () => {
+    if (!me?.sub_url) return;
+    await navigator.clipboard.writeText(me.sub_url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
+  };
 
   return (
     <div>
       {/* One answer, big. Everything else on this page is smaller than this. */}
-      <section className="py-2">
-        {whereLoading ? (
-          <Spinner />
-        ) : on ? (
-          <>
-            <h1 className="font-display text-4xl leading-tight text-fg">
-              You’re protected
-            </h1>
-            <p className="mt-1 font-sans text-base text-muted">
-              Everything is going through {where?.city ?? where?.label}{' '}
-              {flag(where?.country)} — watch what you like.
-            </p>
-          </>
-        ) : (
-          <>
-            <h1 className="font-display text-4xl leading-tight text-muted">
-              Not on yet
-            </h1>
-            <p className="mt-1 font-sans text-base text-muted">
-              {setUp
-                ? 'Open Karing on your phone and switch it on.'
-                : 'Three taps and it’s done.'}
-            </p>
-          </>
-        )}
+      <section className="flex items-start gap-3 py-2">
+        <div className="min-w-0 flex-1">
+          {whereLoading ? (
+            <Spinner />
+          ) : on ? (
+            <>
+              <h1 className="font-display text-4xl leading-tight text-fg">
+                You’re protected
+              </h1>
+              <p className="mt-1 font-sans text-base text-muted">
+                Everything is going through {where?.city ?? where?.label}{' '}
+                {flag(where?.country)} — watch what you like.
+              </p>
+            </>
+          ) : (
+            <>
+              <h1 className="font-display text-4xl leading-tight text-muted">
+                Not on yet
+              </h1>
+              <p className="mt-1 font-sans text-base text-muted">
+                Switch the VPN on, then tap refresh.
+              </p>
+            </>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={recheck}
+          aria-label="Check again"
+          className="lift-press mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-2 text-muted"
+        >
+          <RotateCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+        </button>
       </section>
 
-      {/* The next thing to do, and only that. Never both branches at once. */}
-      {!on && setUp && (
-        <Button className="mt-2 w-full" onClick={() => setSheet('main')}>
-          Show my code
-        </Button>
-      )}
-
-      {!setUp && (
-        <ol className="mt-3 space-y-3">
-          <li className="flex items-center gap-3">
-            <span className="font-display text-2xl text-gold">1</span>
-            <span className="min-w-0 flex-1 font-sans text-sm text-fg">
+      {/*
+        Always here, never hidden behind "you already set it up". The version
+        that hid these the moment a profile existed was useless to the person
+        who most needs them: someone reinstalling, on a new phone, or simply
+        back a month later having forgotten every step.
+      */}
+      <ol className="mt-4 space-y-4">
+        <li className="flex items-start gap-3">
+          <span className="font-display text-2xl leading-none text-gold">
+            1
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-sans text-sm font-semibold text-fg">
               Get the app
             </span>
+            <span className="block font-sans text-xs text-muted">
+              It’s free, and it’s in the Russian App Store.
+            </span>
             <a href={APP_URL} target="_blank" rel="noreferrer">
-              <Button variant="ghost">Karing</Button>
+              <Button variant="ghost" className="mt-1">
+                <Download className="h-4 w-4" /> Karing
+              </Button>
             </a>
-          </li>
-          <li className="flex items-center gap-3">
-            <span className="font-display text-2xl text-gold">2</span>
-            <span className="min-w-0 flex-1 font-sans text-sm text-fg">
-              In the app, tap <span className="font-semibold">+</span> and scan
+          </span>
+        </li>
+
+        <li className="flex items-start gap-3">
+          <span className="font-display text-2xl leading-none text-gold">
+            2
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-sans text-sm font-semibold text-fg">
+              Put your profile in it
+            </span>
+            {/* Copy first, scan second. On the phone she is reading this on,
+                a camera cannot photograph its own screen — clipboard is the
+                path that always works, and the QR is for the other case. */}
+            <span className="block font-sans text-xs text-muted">
+              Copy, then in Karing tap <span className="text-fg">+</span> →{' '}
+              <span className="text-fg">Import From Clipboard</span>. On another
+              phone, scan the code instead.
             </span>
             {me?.sub_url && (
-              <Button variant="ghost" onClick={() => setSheet('main')}>
-                My code
-              </Button>
+              <span className="mt-1 flex gap-2">
+                <Button onClick={copyLink}>
+                  {copied ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                  {copied ? 'Copied' : 'Copy my profile'}
+                </Button>
+                <Button variant="ghost" onClick={() => setSheet('main')}>
+                  <QrCode className="h-4 w-4" /> QR
+                </Button>
+              </span>
             )}
-          </li>
-          <li className="flex items-center gap-3">
-            <span className="font-display text-2xl text-gold">3</span>
-            <span className="min-w-0 flex-1 font-sans text-sm text-fg">
-              Switch it on. That’s it.
+          </span>
+        </li>
+
+        <li className="flex items-start gap-3">
+          <span className="font-display text-2xl leading-none text-gold">
+            3
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-sans text-sm font-semibold text-fg">
+              Switch it on
             </span>
-          </li>
-        </ol>
-      )}
+            {/* The part nobody tells you: after the first time, the app is
+                optional. iOS holds the switch itself. */}
+            <span className="block font-sans text-xs text-muted">
+              Just this once in the app. After that it lives in your iPhone —
+              Settings → VPN, or the Control Centre — and you never have to open
+              Karing again.
+            </span>
+          </span>
+        </li>
+      </ol>
 
       {/* Everything that used to be shouted at her lives in here, and only
           gets read on the day it matters. */}
