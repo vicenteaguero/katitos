@@ -2409,6 +2409,7 @@ export type Database = {
       }
       vpn_clients: {
         Row: {
+          alt_url: string | null
           issued_at: string
           label: string
           revoked_at: string | null
@@ -2416,6 +2417,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          alt_url?: string | null
           issued_at?: string
           label?: string
           revoked_at?: string | null
@@ -2423,6 +2425,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          alt_url?: string | null
           issued_at?: string
           label?: string
           revoked_at?: string | null
