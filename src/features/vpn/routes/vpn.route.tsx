@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Check, Copy, QrCode } from 'lucide-react';
 import { Button, Empty, PageHeader, Sheet, Spinner } from '@kernel/ui';
-import { useMyVpnClient, useVpnStatus } from '../api/vpn.queries';
+import { useMyVpnClient, useVpnStatus, useWhereAmI } from '../api/vpn.queries';
 import { lastSeen, uptimeText } from '../lib/health';
 import { PROTOCOL_LABELS, ROLE_LABELS, type VpnServer } from '../types';
 
@@ -125,6 +125,7 @@ function Profile({
 export function VpnRoute() {
   const { data: servers, isLoading } = useVpnStatus();
   const { data: me } = useMyVpnClient();
+  const { data: where, isLoading: whereLoading } = useWhereAmI();
   const [qr, setQr] = useState<string | null>(null);
 
   const live = me && !me.revoked_at;
@@ -132,6 +133,32 @@ export function VpnRoute() {
   return (
     <div>
       <PageHeader subtitle="Where you come out, and whether it’s awake." />
+
+      {/*
+        The first thing on the page, because it is the only question she
+        actually has: not "is the server up" but "am I on it". The answer comes
+        from the address her request arrived from, compared server-side against
+        a table no browser can read — so this line knows a name and never an
+        address.
+      */}
+      {!whereLoading && where && (
+        <p
+          className={`mb-3 flex items-center gap-2 font-display text-xl ${
+            where.on_tunnel ? 'text-fg' : 'text-muted'
+          }`}
+        >
+          <span
+            className={`h-2.5 w-2.5 shrink-0 rounded-full ${
+              where.on_tunnel ? 'bg-emerald-500' : 'bg-surface-2'
+            }`}
+          />
+          {where.on_tunnel
+            ? `You’re coming out through ${where.label ?? 'the tunnel'}${
+                where.country ? ` ${flag(where.country)}` : ''
+              }`
+            : 'You’re not on the tunnel right now'}
+        </p>
+      )}
 
       {isLoading && <Spinner />}
 
