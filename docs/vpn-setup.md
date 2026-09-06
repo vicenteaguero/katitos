@@ -172,45 +172,47 @@ You want `TLSv1.3`, `ALPN protocol: h2`, and an X25519 key. Nordic corporate
 sites are the easy hunting ground. Avoid anything Russian, anything American and
 political, and anything already famous as a REALITY dest.
 
-### Inbound A — XHTTP + REALITY, port 443
+### Two inbounds, and one hard constraint
 
-This is the one that survived the February and June 2026 waves. Add Inbound:
+**Whatever you build, verify it with sing-box, not with Xray.** Karing runs the
+sing-box core only. An Xray client will happily connect to configurations her
+phone can never use — that mistake cost an evening here.
 
-| Field            | Value                                        |
-| :--------------- | :------------------------------------------- |
-| Protocol         | VLESS                                        |
-| Port             | 443                                          |
-| Transport        | **XHTTP**                                    |
-| Mode             | `auto`                                       |
-| Path             | something ordinary, e.g. `/assets`           |
-| Security         | **REALITY**                                  |
-| Dest / SNI       | your chosen site, `:443`                     |
-| uTLS fingerprint | **`firefox`** — see below                    |
-| Flow             | leave empty (Vision does not apply to XHTTP) |
+```bash
+# On the box, as the real client core:
+curl -sL "$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases/latest \
+  | grep -oE 'https://[^"]*sing-box-[0-9.]+-linux-amd64\.tar\.gz' | head -1)" -o sb.tar.gz
+tar xzf sb.tar.gz && ./sing-box-*/sing-box run -c client.json &
+curl -s --proxy socks5h://127.0.0.1:10810 https://api.ipify.org   # want: the server's IP
+```
+
+**Inbound A — gRPC + REALITY, port 443.** Transport `grpc`, service name
+something ordinary (`assets`), `multiMode` **off** — it is an Xray extension
+sing-box does not speak. Security REALITY, uTLS fingerprint **`firefox`**.
 
 > **Not Chrome, not Safari, not iOS.** The Xray-core issue tracking 2026 Russian
-> blocking lists those three fingerprints as _suspicious_ to the censor, while
-> Firefox, Edge and the Android clients pass on most operators. This one dropdown
-> is worth more than most of the rest of this page.
+> blocking lists those three as _suspicious_ to the censor; Firefox and the
+> Android clients pass on most operators.
 
-XHTTP multiplexes by default (XMUX) and **you must not also turn on mux.cool** —
-they fight. The multiplexing is the point: the measured MTS Novosibirsk filter
-trips on roughly twelve TLS connections to the same SNI in a short window, and
-XHTTP never gets near that.
+**Inbound B — TCP + REALITY + Vision, port 8443.** Same REALITY settings, flow
+`xtls-rprx-vision`. Its own port so the two fail independently.
 
-### Inbound B — TCP + REALITY + Vision, port 8443
+**Not XHTTP.** sing-box has no such transport, so it is unusable by her, however
+well it performs elsewhere. See vpn.md.
 
-The fallback profile, on its own port so the two fail independently.
+### Pin the Xray core at 26.6.27
 
-| Field            | Value              |
-| :--------------- | :----------------- |
-| Protocol         | VLESS              |
-| Port             | 8443               |
-| Transport        | TCP                |
-| Security         | REALITY            |
-| Dest / SNI       | same site is fine  |
-| uTLS fingerprint | `firefox`          |
-| Flow             | `xtls-rprx-vision` |
+26.7.x breaks REALITY for every sing-box client — `reality verification failed`,
+silently. If the panel ever updates the core, her internet stops with no
+explanation:
+
+```bash
+cp /usr/local/x-ui/bin/xray-linux-amd64 /root/xray-$(date +%F).bak
+curl -sL -o /tmp/xr.zip https://github.com/XTLS/Xray-core/releases/download/v26.6.27/Xray-linux-64.zip
+python3 -c 'import zipfile; zipfile.ZipFile("/tmp/xr.zip").extract("xray","/tmp/xr")'
+install -m755 /tmp/xr/xray /usr/local/x-ui/bin/xray-linux-amd64
+systemctl restart x-ui && /usr/local/x-ui/bin/xray-linux-amd64 version | head -1
+```
 
 ### Then, once, in panel settings
 
