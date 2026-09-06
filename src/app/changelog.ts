@@ -34,6 +34,19 @@ export interface ChangelogEntry {
 /** Every release ever written, newest first - held ones included. */
 export const ALL_ENTRIES: ChangelogEntry[] = [
   {
+    // Shipped 6 September 2026. Not held: the whole point is that she can use
+    // it the moment she reads this.
+    title: 'Your own way out',
+    date: '2026-09-06',
+    lines: [
+      'Your internet has a door of its own now. Everything you do goes out through a small machine in Helsinki, so the things that stop working where you are simply work.',
+      'The VPN button at the top of your home screen turns green when you are on it and stays quiet when you are not. One look, no wondering.',
+      'Tap it and it shows you the three steps: get the app, copy your code, switch it on. The code is yours alone, and nobody else can see it.',
+      'If it ever stops connecting, there is a second one waiting for you in there, and changing to it is one tap.',
+      'Your Russian sites and your bank stay outside the tunnel on purpose, so nothing you use every day breaks.',
+    ],
+  },
+  {
     // Written 31 August 2026. Held until he lifts it.
     title: 'The day, before it goes',
     date: '2026-08-31',
