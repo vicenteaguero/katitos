@@ -6,22 +6,27 @@ import '../streak.css';
 export interface HabitButtonProps {
   habit: Habit;
   done: boolean;
-  /** Can this person tick it right now? A closed day or her habit says no. */
+  /** Can this person tick it right now? A closed day, or someone else's habit. */
   interactive: boolean;
   onToggle?: () => void;
   /** For a weekly habit: how many of the target are in this week. */
   weekly?: { done: number; target: number };
-  size?: 'md' | 'sm';
+  size?: 'md' | 'sm' | 'xs';
+  /** The name under the circle. Off on Home, where the emoji is the label. */
+  labelled?: boolean;
 }
 
 /**
  * One habit, as a thing you press.
  *
- * The whole design brief for this was "the icon, and you literally press it and
- * it gets a tick". So it is a circle with the emoji in it and nothing else - no
- * checkbox, no row, no confirmation. Off it is a quiet outline; on it is filled
- * gilt with a seal in the corner, and the ring around a weekly one fills a third
- * at a time.
+ * The brief was "the icon, and you literally press it and it gets a tick", so
+ * it is a circle with the emoji in it and nothing else - no checkbox, no row,
+ * no confirmation.
+ *
+ * Note what is NOT here: no `overflow` anywhere on the way down to this button.
+ * The press grows the circle past its own box and the seal hangs off the
+ * corner, so any ancestor that clips - a scroller, a card with `overflow-hidden`
+ * - shears the animation in half. Whoever wraps this owes it room.
  */
 export function HabitButton({
   habit,
@@ -30,8 +35,9 @@ export function HabitButton({
   onToggle,
   weekly,
   size = 'md',
+  labelled = true,
 }: HabitButtonProps) {
-  const px = size === 'md' ? 58 : 46;
+  const px = size === 'md' ? 52 : size === 'sm' ? 38 : 34;
   const shared = habit.kind === 'shared';
 
   const press = () => {
@@ -41,7 +47,15 @@ export function HabitButton({
   };
 
   return (
-    <div className="flex w-[68px] shrink-0 flex-col items-center gap-1.5">
+    <div
+      className={cn(
+        'flex shrink-0 flex-col items-center gap-1',
+        // Lifted while it is on, so its glow lies over its neighbours instead
+        // of under them.
+        done && 'relative z-10',
+        labelled && 'w-[62px]'
+      )}
+    >
       <button
         type="button"
         onClick={press}
@@ -82,7 +96,7 @@ export function HabitButton({
             aria-hidden="true"
             className={cn(
               'leading-none',
-              size === 'md' ? 'text-[24px]' : 'text-[19px]'
+              size === 'md' ? 'text-[22px]' : 'text-[18px]'
             )}
             style={{
               filter: done ? 'none' : 'grayscale(.45)',
@@ -93,28 +107,38 @@ export function HabitButton({
           </span>
         </span>
 
-        {done && (
-          <span
-            aria-hidden="true"
-            className="hb-seal absolute -bottom-0.5 -right-0.5 grid h-[19px] w-[19px] place-items-center rounded-full bg-success text-accent-fg"
-            style={{ border: '1.5px solid var(--color-bg)' }}
-          >
-            <Check className="h-3 w-3" strokeWidth={3.4} />
-          </span>
-        )}
+        {done && <Seal />}
       </button>
 
-      <span
-        className="w-full overflow-hidden text-center font-sans text-[10px] font-medium leading-tight text-muted"
-        style={{
-          display: '-webkit-box',
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical',
-        }}
-      >
-        {weekly && !done ? `${weekly.done}/${weekly.target}` : habit.title}
-      </span>
+      {labelled && (
+        <span
+          className="w-full overflow-hidden text-center font-sans text-[10px] font-medium leading-tight text-muted"
+          style={{
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+          }}
+        >
+          {weekly && !done ? `${weekly.done}/${weekly.target}` : habit.title}
+        </span>
+      )}
     </div>
+  );
+}
+
+/** The little gilt seal that drops onto a finished habit. */
+export function Seal({ className }: { className?: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        'hb-seal absolute -bottom-0.5 -right-0.5 grid h-[17px] w-[17px] place-items-center rounded-full bg-success text-accent-fg',
+        className
+      )}
+      style={{ border: '1.5px solid var(--color-bg)' }}
+    >
+      <Check className="h-3 w-3" strokeWidth={3.4} />
+    </span>
   );
 }
 
