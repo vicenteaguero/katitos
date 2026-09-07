@@ -19,22 +19,40 @@ const base =
 const SELECT_CHEVRON =
   "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23c9a24b' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")";
 
+/**
+ * `ink`: the quieter field of the language screens - a fainter line, a
+ * 12px corner. `serif`: the field holds the language being learned, so it
+ * is set in the display face, a size up.
+ */
+type Look = { tone?: 'default' | 'ink'; serif?: boolean };
+const looks = ({ tone, serif }: Look) =>
+  cn(
+    tone === 'ink' && 'rounded border-fg/[0.12]',
+    serif && 'font-display text-[19px] placeholder:font-display'
+  );
+
 export const Input = forwardRef<
   HTMLInputElement,
-  InputHTMLAttributes<HTMLInputElement>
->(function Input({ className, ...props }, ref) {
-  return <input ref={ref} className={cn(base, className)} {...props} />;
+  InputHTMLAttributes<HTMLInputElement> & Look
+>(function Input({ className, tone, serif, ...props }, ref) {
+  return (
+    <input
+      ref={ref}
+      className={cn(base, looks({ tone, serif }), className)}
+      {...props}
+    />
+  );
 });
 
 export const Textarea = forwardRef<
   HTMLTextAreaElement,
-  TextareaHTMLAttributes<HTMLTextAreaElement>
->(function Textarea({ className, rows = 3, ...props }, ref) {
+  TextareaHTMLAttributes<HTMLTextAreaElement> & Look
+>(function Textarea({ className, rows = 3, tone, serif, ...props }, ref) {
   return (
     <textarea
       ref={ref}
       rows={rows}
-      className={cn(base, 'resize-none', className)}
+      className={cn(base, 'resize-none', looks({ tone, serif }), className)}
       {...props}
     />
   );
