@@ -76,6 +76,7 @@ functions-deploy: ## Deploy edge functions (--use-api = server-side bundle, no D
 	@supabase functions deploy push-notify --use-api
 	@supabase functions deploy currency-rates --use-api
 	@supabase functions deploy polaroid-reminder --use-api
+	@supabase functions deploy streak-reminder --use-api
 
 deploy: db-push functions-deploy ## Push schema + deploy functions
 
