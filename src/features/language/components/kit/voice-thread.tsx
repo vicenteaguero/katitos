@@ -72,19 +72,21 @@ export function VoiceThread({
   };
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       {shown.length > 0 && (
-        <ul className="space-y-1">
+        <ul className="space-y-1.5">
           {shown.map((r) => (
-            <li key={r.id} className="flex items-center gap-2">
+            <li key={r.id} className="flex min-h-[40px] items-center gap-2.5">
               <PlayButton
                 bucket={BUCKETS.languageAudio}
                 path={r.audio_path}
                 size="sm"
-                label={`${who(r)} - play`}
+                label={`${who(r)}, play`}
+                className="h-9 w-9"
               />
-              <span className="min-w-0 flex-1 truncate font-sans text-xs text-muted">
-                {who(r)} - {agoLabel(r.created_at)}
+              <span className="min-w-0 flex-1 truncate font-sans text-xs font-medium text-muted">
+                {who(r)}, {agoLabel(r.created_at)}
+                {r.user_id === userId ? ', your try' : ''}
               </span>
               {!compact && r.user_id === userId && (
                 <button
@@ -101,22 +103,22 @@ export function VoiceThread({
         </ul>
       )}
       {!open ? (
-        <Button size="xs" variant="secondary" onClick={() => setOpen(true)}>
-          <Mic size={13} /> {theirs ? 'Answer' : 'Say it'}
+        <Button size="xs" variant="outline" onClick={() => setOpen(true)}>
+          <Mic className="h-3.5 w-3.5" /> {theirs ? 'Answer' : 'Say it'}
         </Button>
       ) : (
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <AudioRecorder resetKey={key} onRecorded={setClip} />
-          <div className="flex gap-1.5">
+          <div className="grid grid-cols-2 gap-2">
+            <Button size="sm" variant="secondary" onClick={close}>
+              Cancel
+            </Button>
             <Button
-              size="xs"
+              size="sm"
               disabled={!clip || send.isPending}
               onClick={submit}
             >
-              <Send size={13} /> Send
-            </Button>
-            <Button size="xs" variant="secondary" onClick={close}>
-              Cancel
+              <Send className="h-4 w-4" /> Send
             </Button>
           </div>
         </div>
