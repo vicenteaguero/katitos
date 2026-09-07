@@ -398,7 +398,7 @@ function OrderView({
             disabled={disabled}
             onClick={() => onChange(chosen.filter((_, k) => k !== i))}
             className={cn(
-              'rounded-md px-2 py-1 font-sans text-sm',
+              'min-h-9 rounded-[10px] px-2.5 py-1 font-display text-base',
               grade?.detail?.[i] === true
                 ? 'bg-success/25 text-fg'
                 : grade?.detail?.[i] === false
@@ -417,7 +417,7 @@ function OrderView({
             type="button"
             disabled={disabled}
             onClick={() => onChange([...chosen, t])}
-            className="lift-press rounded-md bg-surface-2 px-2 py-1 font-sans text-sm text-fg"
+            className="lift-press min-h-9 rounded-[10px] border border-fg/[0.06] bg-surface-2 px-2.5 py-1 font-display text-base text-fg"
           >
             {t}
           </button>
