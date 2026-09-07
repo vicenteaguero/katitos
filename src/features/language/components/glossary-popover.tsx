@@ -54,30 +54,30 @@ export function GlossaryPopover({
       placement="auto"
       open={!!word}
       onClose={onClose}
-      title={word ?? ''}
+      label={word ?? 'A word'}
       size="sm"
     >
       {found ? (
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <p className="min-w-0 flex-1 font-display text-2xl text-fg">
+        <div className="space-y-1.5 pb-1">
+          <div className="flex items-center gap-3">
+            <p className="min-w-0 flex-1 font-display text-[28px] leading-tight text-fg">
               {found.stress || headword(found)}
             </p>
             {found.audio_path && (
               <PlayButton
                 bucket={BUCKETS.languageAudio}
                 path={found.audio_path}
-                size="sm"
+                size="md"
                 label="Hear her"
               />
             )}
           </div>
           {found.transliteration && (
-            <p className="font-display text-sm italic text-copper">
+            <p className="font-display text-base italic text-copper">
               {found.transliteration}
             </p>
           )}
-          <p className="font-sans text-base text-fg">
+          <p className="font-sans text-base font-medium text-fg">
             {meaningOf(found, support)}
           </p>
           {noteOf(found, support) && (
@@ -86,23 +86,27 @@ export function GlossaryPopover({
             </p>
           )}
           {found.part_of_speech && (
-            <p className="font-sans text-[0.68rem] uppercase tracking-[0.12em] text-muted">
+            <p className="font-sans text-[11px] font-bold uppercase tracking-[0.12em] text-muted">
               {found.part_of_speech}
             </p>
           )}
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3 pb-1">
+          <p className="font-display text-[28px] leading-tight text-fg">
+            {word}
+          </p>
           <p className="font-sans text-sm text-muted">
             Not in the dictionary yet.
           </p>
           <Button
-            size="xs"
-            variant="secondary"
+            full
+            variant="outline"
+            size="sm"
             disabled={asked === word}
             onClick={() => void ask()}
           >
-            <HelpCircle size={13} />{' '}
+            <HelpCircle className="h-4 w-4" />
             {asked === word ? 'Asked' : `Ask what «${word}» means`}
           </Button>
         </div>
