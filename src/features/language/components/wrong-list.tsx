@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router';
 import { Mic } from 'lucide-react';
 import { useMembers, useUserId } from '@kernel/auth';
-import { Kicker, ROW_TOOL } from '@kernel/ui';
+import { Card, CardRows, SectionLabel } from '@kernel/ui';
 import { useAllReviews, useAllVocab } from '../api/vocab';
 import { headword, meaningOf } from '../lib/pick';
 import { useLanguages } from '../lib/languages';
@@ -42,46 +43,68 @@ export function WrongList() {
   if (rows.length === 0) return null;
 
   return (
-    <section className="space-y-2 rounded-lg bg-surface px-4 py-3">
-      <p className="font-sans text-sm font-semibold text-fg">
-        What {partner?.display_name ?? 'your love'} keeps forgetting
-      </p>
-      <p className="font-sans text-xs text-muted">
-        Worth going over together - or say it for them now.
-      </p>
-      <ul className="space-y-1.5">
-        {rows.map(({ review, word }) => (
-          <li key={review.vocab_id} className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <span className="min-w-0 flex-1">
-                <span className="font-display text-base text-fg">
-                  {headword(word!)}
-                </span>
-                {meaningOf(word!, support) && (
-                  <span className="ml-2 font-sans text-xs text-muted">
-                    {meaningOf(word!, support)}
+    <section>
+      <SectionLabel note="drill these next class">Keeps missing</SectionLabel>
+      <Card tone="hairline" className="px-3.5 py-0">
+        <CardRows>
+          {rows.map(({ review, word }) => (
+            <div key={review.vocab_id} className="py-1.5">
+              <div className="flex min-h-[44px] items-center gap-2.5">
+                <span className="min-w-0 flex-1">
+                  <span className="font-display text-base text-fg">
+                    {headword(word!)}
                   </span>
-                )}
-              </span>
-              <Kicker tone="copper" className="shrink-0">
-                {review.lapses}×
-              </Kicker>
-              <button
-                type="button"
-                aria-label={`Say ${headword(word!)} for them`}
-                aria-pressed={openId === word!.id}
-                onClick={() => setOpenId(openId === word!.id ? null : word!.id)}
-                className={ROW_TOOL}
-              >
-                <Mic className="h-3.5 w-3.5" />
-              </button>
+                  {meaningOf(word!, support) && (
+                    <span className="ml-2 font-sans text-xs text-muted">
+                      {meaningOf(word!, support)}
+                    </span>
+                  )}
+                </span>
+                <span className="shrink-0 font-sans text-[11px] font-bold text-copper">
+                  {review.lapses}×
+                </span>
+                <button
+                  type="button"
+                  aria-label={`Say ${headword(word!)} for them`}
+                  aria-pressed={openId === word!.id}
+                  onClick={() =>
+                    setOpenId(openId === word!.id ? null : word!.id)
+                  }
+                  className="lift-press flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-surface-2 text-gold outline-none focus-visible:ring-2 focus-visible:ring-gold"
+                >
+                  <Mic className="h-[15px] w-[15px]" />
+                </button>
+              </div>
+              {openId === word!.id && (
+                <div className="pb-2">
+                  <VoiceThread word={word!} compact startOpen />
+                </div>
+              )}
             </div>
-            {openId === word!.id && (
-              <VoiceThread word={word!} compact startOpen />
-            )}
-          </li>
-        ))}
-      </ul>
+          ))}
+        </CardRows>
+      </Card>
     </section>
+  );
+}
+
+/**
+ * The learner's side of the same list: a way into a session of only the
+ * words that keep going wrong.
+ */
+export function LapsesLink() {
+  const userId = useUserId();
+  const { data: reviews } = useAllReviews();
+  const lapsed = (reviews ?? []).filter(
+    (r) => r.user_id === userId && r.lapses > 0
+  ).length;
+  if (lapsed === 0) return null;
+  return (
+    <Link
+      to="/language/study?scope=lapses"
+      className="font-sans text-[11px] font-bold text-gold"
+    >
+      Just the {Math.min(lapsed, 8)} you keep missing
+    </Link>
   );
 }
