@@ -93,7 +93,9 @@ export function StreakRoute() {
             <p className="m-0 font-sans text-[11px] text-muted">
               {view.longest > streak.days
                 ? `best so far ${view.longest}`
-                : 'this is our best yet'}
+                : streak.days > 0
+                  ? 'this is our best yet'
+                  : 'it starts with today'}
               {streak.atStake > 0 && (
                 <span className="text-copper">
                   {' '}
