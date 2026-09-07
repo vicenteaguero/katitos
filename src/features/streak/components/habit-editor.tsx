@@ -8,58 +8,33 @@ import {
   Sheet,
   confirmDialog,
 } from '@kernel/ui';
-import { cn } from '@kernel/lib';
 import {
   useArchiveHabit,
   useCreateHabit,
   useUpdateHabit,
 } from '../api/streak.mutations';
 import type { Habit } from '../types';
-
-/**
- * A small palette rather than a keyboard.
- *
- * An emoji picker on iOS means leaving the app in your head; twenty-four things
- * two people might actually promise each other is faster and looks tidier in a
- * row of circles.
- */
-const EMOJI = [
-  '💧',
-  '🏃',
-  '📖',
-  '🧘',
-  '💊',
-  '🥗',
-  '😴',
-  '🚶',
-  '🦷',
-  '🧴',
-  '✍️',
-  '🎧',
-  '🌿',
-  '🎸',
-  '🧹',
-  '💪',
-  '☀️',
-  '📷',
-  '🇷🇺',
-  '🇨🇱',
-  '🕯️',
-  '🎨',
-  '🧠',
-  '💌',
-];
+import { EmojiField } from './emoji-field';
 
 export interface HabitEditorProps {
   open: boolean;
   onClose: () => void;
   /** Editing an existing habit, or null to create a new one. */
   habit: Habit | null;
-  /** Today or tomorrow, decided by the caller - see the note on the field. */
+  /** Today or tomorrow, decided by the caller. */
   effectiveFrom: string;
   startsToday: boolean;
 }
 
+const PER_WEEK = ['1', '2', '3', '4', '5', '6', '7'] as const;
+
+/**
+ * A habit is three answers: what, which face, how many days a week.
+ *
+ * Seven days a week is not a weekly habit with a target of seven, it is a daily
+ * one - so picking 7 stores it as daily and it behaves like every other daily
+ * habit, no special case anywhere downstream.
+ */
 export function HabitEditor({
   open,
   onClose,
@@ -72,17 +47,20 @@ export function HabitEditor({
   const archive = useArchiveHabit();
 
   const [title, setTitle] = useState('');
-  const [emoji, setEmoji] = useState(EMOJI[0]);
-  const [schedule, setSchedule] = useState<'daily' | 'weekly'>('daily');
-  const [target, setTarget] = useState(3);
+  const [emoji, setEmoji] = useState('💧');
+  const [perWeek, setPerWeek] = useState(7);
 
   useEffect(() => {
     if (!open) return;
     setTitle(habit?.title ?? '');
-    setEmoji(habit?.emoji ?? EMOJI[0]);
-    setSchedule((habit?.schedule as 'daily' | 'weekly') ?? 'daily');
-    setTarget(habit?.target_per_week ?? 3);
+    setEmoji(habit?.emoji ?? '💧');
+    setPerWeek(
+      habit ? (habit.schedule === 'daily' ? 7 : habit.target_per_week) : 7
+    );
   }, [open, habit]);
+
+  const schedule = perWeek === 7 ? 'daily' : 'weekly';
+  const targetPerWeek = perWeek === 7 ? 1 : perWeek;
 
   const save = async () => {
     const clean = title.trim();
@@ -93,14 +71,14 @@ export function HabitEditor({
         title: clean,
         emoji,
         schedule,
-        targetPerWeek: target,
+        targetPerWeek,
       });
     } else {
       await create.mutateAsync({
         title: clean,
         emoji,
         schedule,
-        targetPerWeek: schedule === 'weekly' ? target : 1,
+        targetPerWeek,
         effectiveFrom,
       });
     }
@@ -111,7 +89,7 @@ export function HabitEditor({
     if (!habit) return;
     const yes = await confirmDialog({
       title: `Put away ${habit.title}?`,
-      body: 'The days you already lived keep it. The empty slot only comes back when the streak earns it again.',
+      body: 'The empty slot only comes back when the streak earns it again.',
       confirmLabel: 'Put it away',
       danger: true,
     });
@@ -127,88 +105,29 @@ export function HabitEditor({
       title={habit ? 'Edit habit' : 'New habit'}
       size="auto"
     >
-      <div className="space-y-4 pb-2">
-        <div>
-          <Kicker>What is it</Kicker>
-          <Input
-            className="mt-1.5"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Drink 2 litres"
-            maxLength={40}
-            autoFocus
-          />
-        </div>
+      <div className="space-y-3 pb-2">
+        <Input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Drink 2 litres"
+          maxLength={40}
+          autoFocus
+        />
+
+        <EmojiField value={emoji} onChange={setEmoji} />
 
         <div>
-          <Kicker>Its face</Kicker>
-          <div className="mt-1.5 grid grid-cols-8 gap-1.5">
-            {EMOJI.map((e) => (
-              <button
-                key={e}
-                type="button"
-                onClick={() => setEmoji(e)}
-                aria-label={e}
-                aria-pressed={emoji === e}
-                className={cn(
-                  'lift-press grid h-10 place-items-center rounded-lg text-[20px]',
-                  emoji === e ? 'bg-accent' : 'bg-surface-2'
-                )}
-                style={
-                  emoji === e
-                    ? { border: '1px solid rgba(228,195,106,.45)' }
-                    : undefined
-                }
-              >
-                <span aria-hidden="true">{e}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <Kicker>How often</Kicker>
+          <Kicker>Days per week</Kicker>
           <Segmented
             className="mt-1.5"
             full
-            label="How often"
-            value={schedule}
-            onChange={setSchedule}
-            options={[
-              { value: 'daily', label: 'Every day' },
-              { value: 'weekly', label: 'Some days' },
-            ]}
+            shape="bar"
+            label="Days per week"
+            value={String(perWeek)}
+            onChange={(v) => setPerWeek(Number(v))}
+            options={PER_WEEK.map((n) => ({ value: n, label: n }))}
           />
-          {schedule === 'weekly' && (
-            <>
-              <Segmented
-                className="mt-2"
-                full
-                shape="bar"
-                label="Times a week"
-                value={String(target)}
-                onChange={(v) => setTarget(Number(v))}
-                options={[2, 3, 4, 5].map((n) => ({
-                  value: String(n),
-                  label: `${n}×`,
-                }))}
-              />
-              <p className="mt-1.5 font-sans text-[11px] leading-relaxed text-muted">
-                A habit like this never breaks a single day. It breaks the week
-                that ends short, and until you reach {target} the days of that
-                week wait instead of counting.
-              </p>
-            </>
-          )}
         </div>
-
-        {!habit && (
-          <p className="font-sans text-[11px] leading-relaxed text-muted">
-            {startsToday
-              ? 'It counts from today, since it is your first one.'
-              : 'It starts counting tomorrow, so adding it tonight cannot cost the streak.'}
-          </p>
-        )}
 
         <div className="flex gap-2">
           <Button
@@ -216,7 +135,7 @@ export function HabitEditor({
             onClick={save}
             disabled={!title.trim() || create.isPending || update.isPending}
           >
-            {habit ? 'Save' : 'Add it'}
+            {habit ? 'Save' : startsToday ? 'Add it' : 'Add it, from tomorrow'}
           </Button>
           {habit && (
             <Button
