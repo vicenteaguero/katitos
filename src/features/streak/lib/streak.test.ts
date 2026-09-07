@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DateTime } from 'luxon';
 import {
   activeOn,
+  canAddHabit,
   computeStreak,
   dayStatus,
   daysToNextSlot,
@@ -224,6 +225,21 @@ describe('the slots', () => {
     expect(slotsAllowed(14)).toBe(3);
     expect(slotsAllowed(21)).toBe(4);
     expect(slotsAllowed(400)).toBe(4);
+  });
+
+  it('counts the habits you hold, not which slot is free', () => {
+    // Four earned, then the streak breaks. Nothing is taken away...
+    expect(canAddHabit(0, 4)).toBe(false);
+    // ...and putting one away does not buy a cheap one back: three held means
+    // the next is a fourth, and a fourth costs twenty-one days.
+    expect(canAddHabit(0, 3)).toBe(false);
+    expect(canAddHabit(14, 3)).toBe(false);
+    expect(canAddHabit(21, 3)).toBe(true);
+    // Down to one held, a second still costs seven.
+    expect(canAddHabit(0, 1)).toBe(false);
+    expect(canAddHabit(7, 1)).toBe(true);
+    // And your first is always free.
+    expect(canAddHabit(0, 0)).toBe(true);
   });
 
   it('says how far away the next one is', () => {
