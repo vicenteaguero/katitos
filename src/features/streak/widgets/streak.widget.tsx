@@ -147,6 +147,7 @@ export function StreakWidget() {
             done={view.isDone(shared.id, today)}
             interactive
             byName={callByName}
+            today
             onToggle={() =>
               toggle.mutate({
                 habitId: shared.id,
