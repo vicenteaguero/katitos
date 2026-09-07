@@ -149,7 +149,6 @@ export interface NewHabit {
   emoji: string;
   schedule: 'daily' | 'weekly';
   targetPerWeek: number;
-  slot: number;
   /**
    * A habit added at 23:50 must not cost tonight, so it starts tomorrow -
    * unless it is your first one, in which case waiting a day for the streak to
@@ -174,7 +173,6 @@ export function useCreateHabit() {
           emoji: h.emoji,
           schedule: h.schedule,
           target_per_week: h.targetPerWeek,
-          slot: h.slot,
           effective_from: h.effectiveFrom,
         })
         .select()
