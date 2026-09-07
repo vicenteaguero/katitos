@@ -1,36 +1,30 @@
 import { useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
-import {
-  CalendarClock,
-  ClipboardCheck,
-  FileText,
-  Pencil,
-  Plus,
-  Trash2,
-} from 'lucide-react';
+import { Link, useParams } from 'react-router';
+import { Check, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import { usePartner } from '@kernel/auth';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
 import { cn } from '@kernel/lib';
 import {
   Button,
+  Card,
   Desk,
   Dialog,
   DragHandle,
   Empty,
   Field,
-  Fieldset,
   InlineEdit,
   Input,
   ListSkeleton,
-  OptionButton,
-  ROW_TOOL,
-  Segmented,
+  ProgressBar,
+  ROW_TOOL_TOUCH,
+  SectionLabel,
   SortableList,
+  StickyFooter,
   toast,
-  TopBarButton,
+  TopBarPill,
   useDesk,
-  useTopBarAction,
+  useScreenChrome,
   type DragHandleProps,
 } from '@kernel/ui';
 import {
@@ -40,7 +34,6 @@ import {
   useUnits,
 } from '../api/courses.queries';
 import {
-  useCreateLesson,
   useCreateUnit,
   useDeleteLesson,
   useDeleteUnit,
@@ -49,31 +42,21 @@ import {
   useRestoreLesson,
   useUpdateUnit,
 } from '../api/lessons.mutations';
-import { defaultTemplateFor, LESSON_TEMPLATES } from '../lib/templates';
 import { isTeacherOf, useLanguages } from '../lib/languages';
+import { kindIcon, kindLabel } from '../lib/lesson-kinds';
 import { CoursesRail } from '../components/courses-rail';
+import { NewLessonSheet } from '../components/new-lesson-sheet';
 import { dueLabel } from '../lib/due';
 import { useToday } from '../lib/use-today';
-import type { Lesson, LessonKind } from '../types';
-
-const KIND_ICON = {
-  lesson: FileText,
-  homework: Pencil,
-  exam: ClipboardCheck,
-} as const;
-
-const KIND_LABEL: Record<LessonKind, string> = {
-  lesson: 'Lesson',
-  homework: 'Homework',
-  exam: 'Exam',
-};
+import { LANG_FLAGS, type Lang, type Lesson } from '../types';
 
 /**
- * One course: its units, and the lessons inside them.
+ * One course: where you are in it, its units, and the lessons inside them.
  *
  * A single scroll rather than a drill-down - a course is a shape you want to
  * see all of, and tapping through three screens to find last week's homework
- * is how a course stops being used.
+ * is how a course stops being used. The teacher's tools (drag, rename,
+ * delete) live behind Edit so his rows and hers read the same.
  */
 export function CourseRoute() {
   const { courseId } = useParams<{ courseId: string }>();
@@ -82,7 +65,6 @@ export function CourseRoute() {
   const { data: progress } = useMyProgress();
   const { data: everyone } = useProgress();
   const { partner } = usePartner();
-  const navigate = useNavigate();
 
   /** Lessons he has handed in and she has not marked yet. */
   const toMark = useMemo(
@@ -96,8 +78,17 @@ export function CourseRoute() {
       ),
     [everyone, partner?.user_id]
   );
+  /** What he has been marked on, for the teacher's count. */
+  const partnerDone = useMemo(
+    () =>
+      new Map(
+        (everyone ?? [])
+          .filter((p) => p.user_id === partner?.user_id)
+          .map((p) => [p.lesson_id, p.status] as const)
+      ),
+    [everyone, partner?.user_id]
+  );
   const createUnit = useCreateUnit();
-  const createLesson = useCreateLesson();
   const updateUnit = useUpdateUnit();
   const deleteUnit = useDeleteUnit();
   const reorderUnits = useReorderUnits();
@@ -109,39 +100,112 @@ export function CourseRoute() {
   useTableSync('lang_lessons', qk.lang.units(courseId ?? 'none'));
   useDesk();
 
+  const [editing, setEditing] = useState(false);
   const [unitOpen, setUnitOpen] = useState(false);
   const [unitTitle, setUnitTitle] = useState('');
+  /** `null` closed, `''` any unit, an id for that unit. */
   const [lessonFor, setLessonFor] = useState<string | null>(null);
-  const [lessonTitle, setLessonTitle] = useState('');
-  const [lessonKind, setLessonKind] = useState<LessonKind>('lesson');
-  const [template, setTemplate] = useState(defaultTemplateFor('lesson'));
 
   // Only the one who teaches this course builds it.
   const teacher = ready && isTeacherOf(course, native);
-  useTopBarAction(
-    teacher ? (
-      <TopBarButton label="New unit" onClick={() => setUnitOpen(true)}>
-        <Plus className="h-4 w-4" />
-      </TopBarButton>
-    ) : null,
-    [teacher]
+  useScreenChrome(
+    {
+      title: 'Course',
+      stage: 'house',
+      action: teacher ? (
+        <TopBarPill
+          label={editing ? 'Done editing' : 'Edit this course'}
+          tone={editing ? 'accent' : 'quiet'}
+          onClick={() => setEditing((v) => !v)}
+        >
+          {editing ? 'Done' : 'Edit'}
+        </TopBarPill>
+      ) : null,
+    },
+    [teacher, editing]
   );
 
   if (isLoading) return <ListSkeleton rows={4} />;
   if (!course) return <Empty icon="📕" title="No such course" />;
 
   const list = units ?? [];
+  const lessons = list.flatMap((u) => u.lessons);
+  const published = lessons.filter((l) => l.status === 'published');
+  const isDone = (l: Lesson) =>
+    teacher
+      ? partnerDone.get(l.id) === 'graded'
+      : progress?.get(l.id)?.status === 'graded';
+  const done = published.filter(isDone).length;
+
+  // Where to pick up: his next unfinished lesson; her next thing to mark,
+  // or the lesson she was writing.
+  const next = teacher
+    ? (published.find((l) => toMark.has(l.id)) ??
+      lessons.find((l) => l.status === 'draft') ??
+      lessons[lessons.length - 1])
+    : published.find((l) => {
+        const st = progress?.get(l.id)?.status;
+        return st !== 'graded' && st !== 'submitted';
+      });
+  const nextTo = next
+    ? teacher
+      ? toMark.has(next.id)
+        ? `/language/mark/${next.id}`
+        : `/language/build/${next.id}`
+      : `/language/lesson/${next.id}`
+    : null;
+  const nextVerb = next
+    ? teacher
+      ? toMark.has(next.id)
+        ? 'Mark'
+        : 'Open'
+      : 'Continue'
+    : null;
+
+  const heroLine = [
+    course.description,
+    `${published.length} ${published.length === 1 ? 'lesson' : 'lessons'}`,
+    done > 0 ? `${done} ${teacher ? 'marked' : 'done'}` : null,
+  ]
+    .filter(Boolean)
+    .join(', ');
 
   return (
     <Desk rail={<CoursesRail currentId={courseId} />} narrow>
-      <div className="curtain-reveal space-y-3">
-        <header className="min-w-0">
-          <p className="eyebrow">{course.description ?? 'A course of ours'}</p>
-          <h1 className="mt-0.5 truncate font-display text-2xl font-semibold text-fg">
-            <span className="mr-2">{course.emoji ?? '📘'}</span>
-            {course.title}
-          </h1>
-        </header>
+      <div className="curtain-reveal space-y-5 pb-2">
+        <Card tone="hero" className="space-y-3">
+          <div className="flex items-center gap-3">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-surface-2 text-2xl">
+              {course.emoji ?? LANG_FLAGS[course.target_lang as Lang] ?? '📘'}
+            </span>
+            <span className="min-w-0 flex-1">
+              <h1 className="truncate font-sans text-[19px] font-extrabold text-fg">
+                {course.title}
+              </h1>
+              <span className="block truncate font-sans text-xs font-medium text-muted">
+                {heroLine}
+              </span>
+            </span>
+          </div>
+          {published.length > 0 && (
+            <ProgressBar
+              value={done}
+              max={published.length}
+              label={teacher ? 'Marked' : 'Done'}
+            />
+          )}
+          {next && nextTo && (
+            <Link
+              to={nextTo}
+              className="lift-press flex h-11 items-center justify-center gap-1.5 rounded bg-accent font-sans text-[15px] font-bold text-accent-fg outline-none focus-visible:ring-2 focus-visible:ring-gold"
+            >
+              <span className="truncate">
+                {nextVerb}: {next.title}
+              </span>
+              <ChevronRight className="h-4 w-4 shrink-0" />
+            </Link>
+          )}
+        </Card>
 
         {list.length === 0 ? (
           <Empty
@@ -149,51 +213,58 @@ export function CourseRoute() {
             title="Nothing in here yet"
             hint="A unit holds the lessons that belong together."
             action={
-              <Button onClick={() => setUnitOpen(true)}>Add a unit</Button>
+              teacher ? (
+                <Button onClick={() => setUnitOpen(true)}>New unit</Button>
+              ) : undefined
             }
           />
         ) : (
           <SortableList
             items={list}
             keyOf={(u) => u.id}
-            disabled={!teacher || reorderUnits.isPending}
-            className="space-y-4"
+            disabled={!editing || reorderUnits.isPending}
+            className="space-y-5"
             onReorder={(next) =>
               courseId &&
               reorderUnits.mutate({ courseId, ids: next.map((u) => u.id) })
             }
           >
-            {(unit, _i, handle) => (
-              <section className="space-y-1.5">
-                <div className="flex items-center gap-1">
-                  {teacher && <DragHandle {...handle} />}
-                  <h2 className="min-w-0 flex-1 truncate font-display text-lg text-fg">
-                    {teacher ? (
-                      <InlineEdit
-                        value={unit.title}
-                        label="Unit"
-                        onSave={(title) =>
-                          courseId &&
-                          updateUnit.mutate({ id: unit.id, courseId, title })
-                        }
-                      />
-                    ) : (
-                      unit.title
-                    )}
-                  </h2>
-                  {teacher && (
-                    <>
+            {(unit, i, handle) => {
+              const unitPublished = unit.lessons.filter(
+                (l) => l.status === 'published'
+              );
+              const unitDone = unitPublished.filter(isDone).length;
+              const note =
+                unit.lessons.length === 0
+                  ? 'empty for now'
+                  : unitPublished.length > 0 && unitDone === 0
+                    ? 'starts here'
+                    : unitPublished.length > 0
+                      ? `${unitDone} of ${unitPublished.length} done`
+                      : 'drafts';
+              return (
+                <section>
+                  {editing ? (
+                    <div className="mb-1.5 flex min-h-[44px] items-center gap-1">
+                      <DragHandle {...handle} />
+                      <span className="min-w-0 flex-1 font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-gold">
+                        <InlineEdit
+                          value={unit.title}
+                          label="Unit"
+                          onSave={(title) =>
+                            courseId &&
+                            updateUnit.mutate({ id: unit.id, courseId, title })
+                          }
+                        />
+                      </span>
                       <button
                         type="button"
-                        onClick={() => {
-                          setLessonFor(unit.id);
-                          setLessonTitle('');
-                          setLessonKind('lesson');
-                          setTemplate(defaultTemplateFor('lesson'));
-                        }}
-                        className="shrink-0 rounded px-2 py-1 font-sans text-xs text-gold hover:bg-fg/5"
+                        aria-label="add"
+                        title="New lesson in this unit"
+                        onClick={() => setLessonFor(unit.id)}
+                        className={cn(ROW_TOOL_TOUCH, 'text-gold')}
                       >
-                        add
+                        <Plus className="h-4 w-4" />
                       </button>
                       {unit.lessons.length === 0 && (
                         <button
@@ -203,69 +274,91 @@ export function CourseRoute() {
                             courseId &&
                             deleteUnit.mutate({ id: unit.id, courseId })
                           }
-                          className={ROW_TOOL}
+                          className={ROW_TOOL_TOUCH}
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <Trash2 className="h-4 w-4" />
                         </button>
                       )}
-                    </>
+                    </div>
+                  ) : (
+                    <SectionLabel note={note}>
+                      Unit {i + 1}, {unit.title}
+                    </SectionLabel>
                   )}
-                </div>
 
-                {unit.lessons.length === 0 ? (
-                  <p className="font-sans text-xs text-muted">Empty for now.</p>
-                ) : (
-                  <SortableList
-                    items={unit.lessons}
-                    keyOf={(l) => l.id}
-                    disabled={!teacher || reorderLessons.isPending}
-                    className="space-y-1"
-                    onReorder={(next) =>
-                      courseId &&
-                      reorderLessons.mutate({
-                        courseId,
-                        ids: next.map((l) => l.id),
-                      })
-                    }
-                  >
-                    {(lesson, _k, lessonHandle) => (
-                      <LessonRow
-                        lesson={lesson}
-                        done={progress?.get(lesson.id)?.status === 'graded'}
-                        score={progress?.get(lesson.id)?.score ?? null}
-                        waiting={toMark.has(lesson.id)}
-                        today={today}
-                        handle={teacher ? lessonHandle : undefined}
-                        onDelete={
-                          teacher
-                            ? () =>
-                                courseId &&
-                                deleteLesson.mutate(
-                                  { id: lesson.id, courseId },
-                                  {
-                                    onSuccess: () =>
-                                      toast.success('Lesson put away', {
-                                        key: 'lesson-put-away',
-                                        action: {
-                                          label: 'Undo',
-                                          onClick: () =>
-                                            restoreLesson.mutate({
-                                              id: lesson.id,
-                                              courseId,
-                                            }),
-                                        },
-                                      }),
-                                  }
-                                )
-                            : undefined
+                  {unit.lessons.length > 0 && (
+                    <Card tone="hairline" className="p-0">
+                      <SortableList
+                        items={unit.lessons}
+                        keyOf={(l) => l.id}
+                        disabled={!editing || reorderLessons.isPending}
+                        className="space-y-0 divide-y divide-fg/5"
+                        onReorder={(next) =>
+                          courseId &&
+                          reorderLessons.mutate({
+                            courseId,
+                            ids: next.map((l) => l.id),
+                          })
                         }
-                      />
-                    )}
-                  </SortableList>
-                )}
-              </section>
-            )}
+                      >
+                        {(lesson, _k, lessonHandle) => (
+                          <LessonRow
+                            lesson={lesson}
+                            done={isDone(lesson)}
+                            score={
+                              teacher
+                                ? null
+                                : (progress?.get(lesson.id)?.score ?? null)
+                            }
+                            waiting={toMark.has(lesson.id)}
+                            today={today}
+                            handle={editing ? lessonHandle : undefined}
+                            onDelete={
+                              editing
+                                ? () =>
+                                    courseId &&
+                                    deleteLesson.mutate(
+                                      { id: lesson.id, courseId },
+                                      {
+                                        onSuccess: () =>
+                                          toast.success('Lesson put away', {
+                                            key: 'lesson-put-away',
+                                            action: {
+                                              label: 'Undo',
+                                              onClick: () =>
+                                                restoreLesson.mutate({
+                                                  id: lesson.id,
+                                                  courseId,
+                                                }),
+                                            },
+                                          }),
+                                      }
+                                    )
+                                : undefined
+                            }
+                          />
+                        )}
+                      </SortableList>
+                    </Card>
+                  )}
+                </section>
+              );
+            }}
           </SortableList>
+        )}
+
+        {editing && (
+          <Button variant="outline" size="xs" onClick={() => setUnitOpen(true)}>
+            <Plus className="h-3.5 w-3.5" /> New unit
+          </Button>
+        )}
+
+        {teacher && !editing && courseId && (
+          <StickyFooter>
+            <Button full onClick={() => setLessonFor('')}>
+              <Plus className="h-4 w-4" /> New lesson
+            </Button>
+          </StickyFooter>
         )}
 
         <Dialog
@@ -278,6 +371,7 @@ export function CourseRoute() {
           <div className="space-y-3">
             <Field label="Called">
               <Input
+                tone="ink"
                 value={unitTitle}
                 onChange={(e) => setUnitTitle(e.target.value)}
                 placeholder="Getting around"
@@ -305,86 +399,15 @@ export function CourseRoute() {
           </div>
         </Dialog>
 
-        <Dialog
-          placement="auto"
-          open={!!lessonFor}
-          onClose={() => setLessonFor(null)}
-          title="New lesson"
-          size="sm"
-        >
-          <div className="space-y-3">
-            <Segmented
-              full
-              value={lessonKind}
-              onChange={(v) => {
-                // Homework and exams start from their own sheet, not a lesson's.
-                setLessonKind(v as LessonKind);
-                setTemplate(defaultTemplateFor(v as LessonKind));
-              }}
-              options={[
-                { value: 'lesson', label: 'Lesson' },
-                { value: 'homework', label: 'Homework' },
-                { value: 'exam', label: 'Exam' },
-              ]}
-            />
-            <Field label="Called">
-              <Input
-                value={lessonTitle}
-                onChange={(e) => setLessonTitle(e.target.value)}
-                placeholder="Asking for the bill"
-                autoFocus
-              />
-            </Field>
-            <Fieldset
-              label="Start from"
-              hint="Empty blocks in the usual order - throw away what you do not need"
-            >
-              <div className="grid grid-cols-2 gap-1.5">
-                {LESSON_TEMPLATES.filter((t) => t.for.includes(lessonKind)).map(
-                  (t) => (
-                    <OptionButton
-                      key={t.id}
-                      state={template === t.id ? 'picked' : 'idle'}
-                      onClick={() => setTemplate(t.id)}
-                    >
-                      <span className="block font-semibold">{t.title}</span>
-                      <span className="block text-[0.68rem] opacity-80">
-                        {t.hint}
-                      </span>
-                    </OptionButton>
-                  )
-                )}
-              </div>
-            </Fieldset>
-            <Button
-              full
-              disabled={!lessonTitle.trim() || createLesson.isPending}
-              onClick={() => {
-                const unit = list.find((u) => u.id === lessonFor);
-                if (!unit || !courseId) return;
-                createLesson.mutate(
-                  {
-                    courseId,
-                    unitId: unit.id,
-                    title: lessonTitle,
-                    kind: lessonKind,
-                    position: unit.lessons.length,
-                    blocks: LESSON_TEMPLATES.find((t) => t.id === template)
-                      ?.blocks,
-                  },
-                  {
-                    onSuccess: (id) => {
-                      setLessonFor(null);
-                      navigate(`/language/build/${id}`);
-                    },
-                  }
-                );
-              }}
-            >
-              Add {KIND_LABEL[lessonKind].toLowerCase()}
-            </Button>
-          </div>
-        </Dialog>
+        {courseId && (
+          <NewLessonSheet
+            open={lessonFor !== null}
+            onClose={() => setLessonFor(null)}
+            courseId={courseId}
+            units={list}
+            unitId={lessonFor || null}
+          />
+        )}
       </div>
     </Desk>
   );
@@ -406,14 +429,35 @@ function LessonRow({
   waiting: boolean;
   /** The couple's day, for "due tomorrow". */
   today: string;
-  /** Drag to reorder - the teacher's, not his. */
+  /** Drag to reorder - the teacher's, in edit mode. */
   handle?: DragHandleProps;
   onDelete?: () => void;
 }) {
-  const Icon = KIND_ICON[lesson.kind as LessonKind] ?? FileText;
+  const Icon = kindIcon(lesson.kind);
   const draft = lesson.status === 'draft';
+  const editing = !!handle;
+  const meta = [
+    kindLabel(lesson.kind),
+    draft
+      ? 'draft: only you see it'
+      : done && score != null
+        ? `marked ${Math.round(score * 100)}%`
+        : done
+          ? 'marked'
+          : lesson.due_on
+            ? `due ${dueLabel(lesson.due_on, today)}`
+            : null,
+  ]
+    .filter(Boolean)
+    .join(', ');
   return (
-    <div className="flex items-center gap-1">
+    <div
+      className={cn(
+        'flex items-center gap-2 px-3.5',
+        editing ? 'py-1' : 'py-0',
+        draft && 'opacity-60'
+      )}
+    >
       {handle && <DragHandle {...handle} />}
       <Link
         to={
@@ -421,44 +465,43 @@ function LessonRow({
             ? `/language/mark/${lesson.id}`
             : `/language/lesson/${lesson.id}`
         }
-        className={cn(
-          'lift-press flex min-w-0 flex-1 items-center gap-2.5 rounded-lg bg-surface-2 px-3 py-2.5',
-          draft && 'opacity-60'
-        )}
+        className="lift-press flex min-h-[56px] min-w-0 flex-1 items-center gap-3 rounded outline-none focus-visible:ring-2 focus-visible:ring-gold"
       >
-        <Icon className="h-4 w-4 shrink-0 text-gold" />
+        <span
+          className={cn(
+            'flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px]',
+            done
+              ? 'bg-success/[0.16] text-[#a9b37e]'
+              : 'bg-surface-2 text-gold',
+            draft && 'text-muted'
+          )}
+        >
+          {done ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
+        </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate font-sans text-sm font-semibold text-fg">
+          <span className="line-clamp-2 font-sans text-[14.5px] font-bold text-fg">
             {lesson.title}
           </span>
-          <span className="flex items-center gap-1.5 font-sans text-[0.68rem] text-muted">
-            {draft && <span>draft</span>}
-            {lesson.due_on && (
-              <span className="inline-flex items-center gap-1">
-                <CalendarClock className="h-3 w-3" />
-                {dueLabel(lesson.due_on, today)}
-              </span>
-            )}
-            {done && score != null && (
-              <span className="text-gold">{Math.round(score * 100)}%</span>
-            )}
+          <span className="block font-sans text-xs font-medium text-muted">
+            {meta}
           </span>
         </span>
         {/* The one thing she is waiting for, said plainly. */}
-        {waiting && (
-          <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 font-sans text-[0.6rem] uppercase tracking-[0.1em] text-accent-fg">
-            to mark
+        {waiting && !editing && (
+          <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 font-sans text-[10px] font-bold uppercase tracking-[0.06em] text-accent-fg">
+            To mark
           </span>
         )}
+        {!editing && <ChevronRight className="h-4 w-4 shrink-0 text-muted" />}
       </Link>
       {onDelete && (
         <button
           type="button"
           aria-label="Put this lesson away"
           onClick={onDelete}
-          className={ROW_TOOL}
+          className={ROW_TOOL_TOUCH}
         >
-          <Trash2 className="h-3.5 w-3.5" />
+          <Trash2 className="h-4 w-4" />
         </button>
       )}
     </div>
