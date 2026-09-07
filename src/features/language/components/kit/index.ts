@@ -5,3 +5,8 @@ export { BlockPalette } from './block-palette';
 export { BlockCard } from './block-card';
 export { VoiceThread } from './voice-thread';
 export { ActionGrid, ActionTile } from './action-grid';
+export { ExerciseCard } from './exercise-card';
+export type { Verdict } from './exercise-card';
+export { FeedbackBanner } from './feedback-banner';
+export type { FeedbackTone } from './feedback-banner';
+export { MarginNote } from './margin-note';
