@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { nanoid } from 'nanoid';
-import { Mic } from 'lucide-react';
+import { Check, Mic } from 'lucide-react';
 import { cn } from '@kernel/lib';
 import { supabase } from '@kernel/supabase';
 import { BUCKETS, storagePaths, useUpload } from '@kernel/storage';
@@ -24,6 +24,7 @@ import {
 } from '../../lib/exercise-schema';
 import { pick } from '../../lib/pick';
 import { hash } from '../../lib/study';
+import { answerText } from '../../lib/answer-text';
 import { LetterKeys } from '../letter-keys';
 
 /** An option reads in the language you learn in, falling back like everything else. */
@@ -43,6 +44,8 @@ export interface ExerciseViewProps {
   /** Set once marked - the view then shows what was right. */
   grade?: Grade | null;
   disabled?: boolean;
+  /** In class: the right answer shown in gold, nothing marked. */
+  reveal?: boolean;
 }
 
 /**
@@ -72,6 +75,20 @@ function Body(props: ExerciseViewProps) {
       return <ChoiceView {...props} />;
     case 'multi':
       return <MultiView {...props} />;
+  }
+  if (props.reveal) {
+    return (
+      <div className="space-y-2">
+        <Plain {...props} />
+        <Revealed exercise={props.exercise} />
+      </div>
+    );
+  }
+  return <Plain {...props} />;
+}
+
+function Plain(props: ExerciseViewProps) {
+  switch (props.exercise.kind) {
     case 'type':
       return <TypeView {...props} />;
     case 'listen':
@@ -98,6 +115,18 @@ function stateOf(picked: boolean, right: boolean, wrong: boolean): OptionState {
   return right ? 'right' : wrong ? 'wrong' : picked ? 'picked' : 'idle';
 }
 
+/** The whole answer, revealed: for the kinds without options to light up. */
+function Revealed({ exercise }: { exercise: Exercise }) {
+  const text = answerText(exercise);
+  if (!text) return null;
+  return (
+    <span className="flex items-center gap-2.5 rounded border border-gold/35 bg-gold/[0.08] px-4 py-3 font-display text-[22px] font-semibold text-gold">
+      <Check className="h-[18px] w-[18px] shrink-0" />
+      {text}
+    </span>
+  );
+}
+
 function ChoiceView({
   exercise,
   support,
@@ -105,6 +134,7 @@ function ChoiceView({
   onChange,
   grade,
   disabled,
+  reveal,
 }: ExerciseViewProps) {
   const payload = exercise.payload as {
     options?: ExerciseOption[];
@@ -127,11 +157,15 @@ function ChoiceView({
         return (
           <OptionButton
             key={o.id}
-            state={stateOf(
-              picked,
-              marked && o.id === exercise.answer,
-              marked && picked && o.id !== exercise.answer
-            )}
+            state={
+              reveal && o.id === exercise.answer
+                ? 'revealed'
+                : stateOf(
+                    picked,
+                    marked && o.id === exercise.answer,
+                    marked && picked && o.id !== exercise.answer
+                  )
+            }
             disabled={disabled}
             onClick={() => onChange(o.id)}
             className="font-display text-[16.5px]"
@@ -151,6 +185,7 @@ function MultiView({
   onChange,
   grade,
   disabled,
+  reveal,
 }: ExerciseViewProps) {
   const options =
     (exercise.payload as { options?: ExerciseOption[] })?.options ?? [];
@@ -166,11 +201,15 @@ function MultiView({
         return (
           <OptionButton
             key={o.id}
-            state={stateOf(
-              picked,
-              marked && answer.includes(o.id),
-              marked && picked && !answer.includes(o.id)
-            )}
+            state={
+              reveal && answer.includes(o.id)
+                ? 'revealed'
+                : stateOf(
+                    picked,
+                    marked && answer.includes(o.id),
+                    marked && picked && !answer.includes(o.id)
+                  )
+            }
             disabled={disabled}
             onClick={() =>
               onChange(
