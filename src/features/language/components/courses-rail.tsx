@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router';
 import { cn } from '@kernel/lib';
+import { SectionLabel } from '@kernel/ui';
 import { useCourses } from '../api/courses.queries';
 import { LANG_FLAGS, type Lang } from '../types';
 
@@ -7,15 +8,17 @@ import { LANG_FLAGS, type Lang } from '../types';
 export function CoursesRail({ currentId }: { currentId?: string }) {
   const { data: courses } = useCourses();
   return (
-    <nav aria-label="Courses" className="space-y-1">
-      <p className="eyebrow px-2 pb-1">Courses</p>
+    <nav aria-label="Courses" className="space-y-0.5">
+      <SectionLabel as="p" className="px-2">
+        Courses
+      </SectionLabel>
       {(courses ?? []).map((c) => (
         <NavLink
           key={c.id}
           to={`/language/course/${c.id}`}
           className={({ isActive }) =>
             cn(
-              'flex items-center gap-2 rounded px-2 py-1.5 font-sans text-sm transition-colors hover:bg-fg/5',
+              'flex min-h-[40px] items-center gap-2 rounded px-2 py-1.5 font-sans text-[13px] font-semibold transition-colors hover:bg-fg/5',
               isActive || c.id === currentId
                 ? 'bg-surface-2 text-fg'
                 : 'text-muted'
