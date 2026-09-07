@@ -1,15 +1,16 @@
 import type { ReactNode } from 'react';
 import { cn } from '@kernel/lib';
-import { Kicker } from '@kernel/ui';
+import { Card } from '@kernel/ui';
 
 /**
- * The shell of one block in the builder: its kind in the corner, its
- * controls on the right, its body underneath. Every kind of block sits in
- * this, so they line up.
+ * The shell of one block in the builder: its kind in a small pill in the
+ * corner, its tools on the right (shown on hover under a mouse), its body
+ * underneath. Every kind of block sits in this, so they line up.
  */
 export function BlockCard({
   kind,
   missing = false,
+  tone = 'plain',
   toolbar,
   children,
   className,
@@ -17,27 +18,38 @@ export function BlockCard({
   kind: string;
   /** Still untranslated in the language being edited. */
   missing?: boolean;
+  /** A question's card reads wine. */
+  tone?: 'plain' | 'question';
   toolbar?: ReactNode;
   children?: ReactNode;
   className?: string;
 }) {
   return (
-    <div
-      className={cn('space-y-1.5 rounded-lg bg-surface px-3 py-2', className)}
+    <Card
+      tone="hairline"
+      className={cn('group space-y-2 px-4 py-3.5', className)}
     >
       <div className="flex items-center gap-2">
-        <Kicker className="flex-1">
+        <span
+          className={cn(
+            'inline-flex items-center gap-1.5 rounded-[7px] px-2 py-0.5 font-sans text-[10.5px] font-bold uppercase tracking-[0.08em]',
+            tone === 'question'
+              ? 'bg-accent/35 text-[#e0919b]'
+              : 'bg-surface-2 text-gold'
+          )}
+        >
           {kind}
           {missing && (
             <span
-              className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-copper align-middle"
+              className="inline-block h-1.5 w-1.5 rounded-full bg-copper"
               title="Not in this language yet"
             />
           )}
-        </Kicker>
+        </span>
+        <span className="flex-1" />
         {toolbar}
       </div>
       {children}
-    </div>
+    </Card>
   );
 }
