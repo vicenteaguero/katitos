@@ -102,7 +102,7 @@ export function LapsesLink() {
   return (
     <Link
       to="/language/study?scope=lapses"
-      className="font-sans text-[11px] font-bold text-gold"
+      className="inline-flex min-h-[44px] items-center font-sans text-[12px] font-bold text-gold"
     >
       Just the {Math.min(lapsed, 8)} you keep missing
     </Link>
