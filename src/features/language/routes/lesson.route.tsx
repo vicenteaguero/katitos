@@ -453,7 +453,7 @@ export function LessonRoute() {
                     !teacher ? (
                       <Link
                         to={`/language/study?lesson=${lesson.id}`}
-                        className="shrink-0 font-sans text-[11.5px] font-bold text-gold"
+                        className="-my-3 inline-flex min-h-[44px] shrink-0 items-center font-sans text-[11.5px] font-bold text-gold"
                       >
                         Practise these
                       </Link>
@@ -495,7 +495,7 @@ export function LessonRoute() {
               !teacher && hasWords ? (
                 <Link
                   to={`/language/study?lesson=${lesson.id}`}
-                  className="shrink-0 font-sans text-[13px] font-bold text-gold"
+                  className="-my-2 inline-flex min-h-[44px] shrink-0 items-center font-sans text-[13px] font-bold text-gold"
                 >
                   Practise the words
                 </Link>
@@ -527,7 +527,7 @@ export function LessonRoute() {
           <div className="flex justify-center md:hidden">
             <Link
               to={`/language/build/${lesson.id}`}
-              className="font-sans text-[13px] font-bold text-gold"
+              className="inline-flex min-h-[44px] items-center font-sans text-[13px] font-bold text-gold"
             >
               Edit this lesson
             </Link>
