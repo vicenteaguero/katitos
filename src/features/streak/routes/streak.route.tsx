@@ -68,6 +68,13 @@ export function StreakRoute() {
   const nextNeeds =
     mine.length < MAX_SLOTS ? SLOT_THRESHOLDS[mine.length] : null;
 
+  // A weekly habit that can no longer make its count has already ended the
+  // week, and the streak with it. Saying so now beats a surprise on Sunday.
+  const lostWeeks = [...mine, ...theirs]
+    .filter((h) => h.schedule === 'weekly')
+    .map((h) => view.weekly(h, h.user_id === userId ? today : partnerToday))
+    .filter((w) => !w.possible);
+
   const callBy = shared ? view.tickedBy(shared.id, today) : null;
   const callByName = !callBy ? null : callBy === userId ? 'you' : theirName;
 
@@ -115,8 +122,8 @@ export function StreakRoute() {
             />
             <p className="mt-1 font-sans text-[11px] text-muted">
               {canAdd
-                ? `A ${ordinal(mine.length + 1)} habit is yours to take.`
-                : `${nextNeeds - streak.days} more ${nextNeeds - streak.days === 1 ? 'day' : 'days'} and you can add a ${ordinal(mine.length + 1)}.`}
+                ? `A ${ordinal(mine.length + 1)} habit is yours to take`
+                : `A ${ordinal(mine.length + 1)} habit in ${nextNeeds - streak.days} ${nextNeeds - streak.days === 1 ? 'day' : 'days'}`}
             </p>
           </div>
         )}
@@ -149,9 +156,7 @@ export function StreakRoute() {
           Yours today
         </SectionLabel>
         {mine.length === 0 ? (
-          <p className="font-sans text-xs text-muted">
-            Nothing of your own yet. Pick one down there and it starts today.
-          </p>
+          <p className="font-sans text-xs text-muted">Nothing yours yet.</p>
         ) : (
           <div className="flex flex-wrap gap-2">
             {mine
@@ -175,6 +180,15 @@ export function StreakRoute() {
                 />
               ))}
           </div>
+        )}
+
+        {lostWeeks.length > 0 && (
+          <p className="mt-2 font-sans text-[11px] text-danger">
+            {lostWeeks
+              .map((w) => `${w.habit.title} ${w.done}/${w.target}`)
+              .join(', ')}{' '}
+            — this week is short, the streak ends with it
+          </p>
         )}
 
         {theirs.length > 0 && (
@@ -290,13 +304,6 @@ export function StreakRoute() {
             }
           )}
         </div>
-        <p className="mt-2 font-sans text-[11px] leading-relaxed text-muted">
-          What you earn is yours to keep, even after a broken streak. But the
-          gate counts how many you hold: put one away while the streak is down
-          and getting back to {mine.length} costs{' '}
-          {SLOT_THRESHOLDS[Math.max(0, Math.min(mine.length, MAX_SLOTS) - 1)]}{' '}
-          days again.
-        </p>
       </Card>
 
       <DaySheet day={sheetDay} view={view} onClose={() => setSheetDay(null)} />
