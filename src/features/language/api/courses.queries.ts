@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { DateTime } from 'luxon';
 import { supabase } from '@kernel/supabase';
@@ -10,6 +11,11 @@ import type {
   TargetLang,
   UnitWithLessons,
 } from '../types';
+import {
+  summariseCourses,
+  type CourseSummary,
+  type LessonLite,
+} from '../lib/course-summary';
 
 /** Stable reference: an inline arrow re-runs `select` on every render. */
 const progressByLesson = (rows: LessonProgress[]) => {
@@ -204,4 +210,49 @@ export function usePartnerProgress() {
       );
     },
   });
+}
+
+/**
+ * Every lesson in every course, light: enough to sum a course up for its
+ * card on the language home (how far along, what is next, what is waiting
+ * to be marked). One request for the whole screen.
+ */
+export function useLessonsLight() {
+  const userId = useUserId();
+  return useQuery({
+    queryKey: [
+      ...qk.lang.courses(),
+      'lessons-light',
+      userId ?? 'anon',
+    ] as const,
+    enabled: !!userId,
+    staleTime: 30_000,
+    queryFn: async (): Promise<LessonLite[]> => {
+      const { data, error } = await supabase
+        .from('lang_lessons')
+        .select(
+          'id, title, kind, status, position, created_by, unit:lang_units(id, course_id, position)'
+        )
+        .is('deleted_at', null);
+      if (error) throw error;
+      return ((data ?? []) as unknown as LessonLite[]).filter(
+        (l) => l.status === 'published' || l.created_by === userId
+      );
+    },
+  });
+}
+
+/** The summaries, keyed by course. Empty until both halves are here. */
+export function useCourseSummaries(): Map<string, CourseSummary> | undefined {
+  const userId = useUserId();
+  const { partner } = usePartner();
+  const { data: lessons } = useLessonsLight();
+  const { data: progress } = useProgress();
+  return useMemo(
+    () =>
+      lessons && progress
+        ? summariseCourses(lessons, progress, userId, partner?.user_id)
+        : undefined,
+    [lessons, progress, userId, partner?.user_id]
+  );
 }
