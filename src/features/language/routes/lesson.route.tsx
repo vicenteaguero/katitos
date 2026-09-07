@@ -1,28 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
-import {
-  Check,
-  GraduationCap,
-  Pencil,
-  Presentation,
-  RotateCcw,
-  Send,
-} from 'lucide-react';
+import { Presentation, RotateCcw, Send } from 'lucide-react';
 import { useTableSync } from '@kernel/realtime';
 import { BUCKETS, useSignedUrls } from '@kernel/storage';
 import { qk } from '@kernel/query';
-import { cn } from '@kernel/lib';
 import {
   Button,
   Desk,
   Empty,
-  Kicker,
   ListSkeleton,
-  PlayButton,
+  ProgressBar,
+  SectionLabel,
+  StickyFooter,
   toast,
-  TopBarButton,
+  TopBarPill,
   useDesk,
-  useTopBarAction,
+  useScreenChrome,
 } from '@kernel/ui';
 import { useMyProgress } from '../api/courses.queries';
 import { useLesson, useMyAttempts } from '../api/lessons.queries';
@@ -38,7 +31,10 @@ import { ExerciseView } from '../components/exercises/exercise-view';
 import { BlockView } from '../components/block-view';
 import { GlossaryPopover } from '../components/glossary-popover';
 import { LessonTree } from '../components/lesson-tree';
+import { ExerciseCard, FeedbackBanner, MarginNote } from '../components/kit';
 import { dueLabel } from '../lib/due';
+import { exerciseKindLabel } from '../lib/exercise-kinds';
+import { kindLabel } from '../lib/lesson-kinds';
 import { verdictOf, weightedScore } from '../lib/marking';
 import { useToday } from '../lib/use-today';
 import { useClassChannel, type SlideMessage } from '../lib/class-channel';
@@ -112,26 +108,34 @@ export function LessonRoute() {
   // app is guessing, and it guessed him.
   const teacher =
     ready && isTeacherOf({ target_lang: lesson?.targetLang }, support);
-  useTopBarAction(
-    lessonId && teacher ? (
-      <div className="flex items-center gap-1">
-        <TopBarButton
-          label="Teach it"
-          to={`/language/teach/${lessonId}`}
-          variant="quiet"
-        >
-          <Presentation className="h-4 w-4" />
-        </TopBarButton>
-        <TopBarButton
-          label="Edit this lesson"
-          to={`/language/build/${lessonId}`}
-          variant="quiet"
-        >
-          <Pencil className="h-4 w-4" />
-        </TopBarButton>
-      </div>
-    ) : null,
-    [lessonId, teacher]
+
+  // The header is the lesson: its name, what kind of thing it is and when
+  // it is due, and for her the way into class.
+  const subtitle = lesson
+    ? [
+        kindLabel(lesson.kind),
+        lesson.due_on ? `due ${dueLabel(lesson.due_on, today)}` : null,
+      ]
+        .filter(Boolean)
+        .join(', ')
+    : undefined;
+  useScreenChrome(
+    {
+      title: lesson?.title ?? 'Lesson',
+      subtitle,
+      stage: 'house',
+      action:
+        lessonId && teacher ? (
+          <TopBarPill
+            label="Teach it"
+            to={`/language/teach/${lessonId}`}
+            icon={<Presentation className="h-3.5 w-3.5" />}
+          >
+            Teach
+          </TopBarPill>
+        ) : null,
+    },
+    [lesson?.title, subtitle, lessonId, teacher]
   );
 
   // So she can see he has been here: a quiet row, once per visit.
@@ -190,7 +194,7 @@ export function LessonRoute() {
     });
   }, [attempts, lesson, retrying]);
 
-  if (isLoading) return <ListSkeleton rows={5} />;
+  if (isLoading) return <ListSkeleton rows={5} header={false} />;
   if (!lesson) return <Empty icon="📄" title="No such lesson" />;
 
   const isExam = lesson.kind === 'exam';
@@ -295,6 +299,7 @@ export function LessonRoute() {
   const answeredCount = Object.keys(grades).length;
   const allDone = exercises.length > 0 && answeredCount === exercises.length;
   const scored = Object.values(grades).filter((g) => g.correct).length;
+  const hasWords = Object.values(lesson.vocabByBlock).some((w) => w.length);
 
   /** One question, wherever it sits in the page. */
   const exerciseCard = (ex: Exercise) => {
@@ -306,17 +311,30 @@ export function LessonRoute() {
     const a = retrying ? undefined : latest.get(ex.id);
     const hers = a ? verdictOf(a) : null;
     const right = hers?.hers ? hers.correct : shown?.correct;
+    const verdict = right === true ? 'right' : right === false ? 'wrong' : null;
     return (
-      <div
+      <ExerciseCard
         key={ex.id}
-        className={cn(
-          'space-y-2 rounded-lg bg-surface px-3 py-2.5',
-          right && 'ring-1 ring-success'
-        )}
+        index={i + 1}
+        kind={exerciseKindLabel(ex)}
+        verdict={verdict}
+        aside={ex.points > 1 ? `${ex.points} pts` : undefined}
+        footer={
+          !isExam && !fresh.has(ex.id) ? (
+            <Button
+              full
+              variant="secondary"
+              size="sm"
+              onClick={() => markOne(ex)}
+              // Not until his earlier attempts are known - the attempt
+              // number would collide with one already written.
+              disabled={answers[ex.id] === undefined || attemptsLoading}
+            >
+              Check
+            </Button>
+          ) : undefined
+        }
       >
-        <Kicker as="p" tone="muted">
-          {i + 1} of {exercises.length}
-        </Kicker>
         <ExerciseView
           target={lesson.targetLang}
           exercise={ex}
@@ -336,37 +354,8 @@ export function LessonRoute() {
           grade={shown}
           disabled={isExam ? submitted : fresh.has(ex.id)}
         />
-        {a?.teacher_note && (
-          <p className="font-display text-sm italic text-fg">
-            - {a.teacher_note}
-          </p>
-        )}
-        {a?.teacher_audio_path && (
-          <div className="flex items-center gap-2">
-            <PlayButton
-              bucket={BUCKETS.languageAudio}
-              path={a.teacher_audio_path}
-              size="sm"
-              label="Her voice on this one"
-            />
-            <span className="font-sans text-xs text-muted">
-              a word from her, out loud
-            </span>
-          </div>
-        )}
-        {!isExam && !fresh.has(ex.id) && (
-          <Button
-            full
-            variant="secondary"
-            onClick={() => markOne(ex)}
-            // Not until his earlier attempts are known - the attempt
-            // number would collide with one already written.
-            disabled={answers[ex.id] === undefined || attemptsLoading}
-          >
-            Check
-          </Button>
-        )}
-      </div>
+        <MarginNote note={a?.teacher_note} audioPath={a?.teacher_audio_path} />
+      </ExerciseCard>
     );
   };
 
@@ -381,70 +370,55 @@ export function LessonRoute() {
       }
       narrow
     >
-      <div className="curtain-reveal space-y-3">
-        <header className="min-w-0">
-          <p className="eyebrow">
-            {lesson.kind === 'homework'
-              ? 'Homework'
-              : lesson.kind === 'exam'
-                ? 'Exam'
-                : 'Lesson'}
-            {lesson.due_on ? ` - due ${dueLabel(lesson.due_on, today)}` : ''}
-          </p>
-          <h1 className="mt-0.5 font-display text-2xl font-semibold text-fg">
-            {lesson.title}
-          </h1>
-          {lesson.subtitle && (
-            <p className="font-sans text-sm text-muted">{lesson.subtitle}</p>
-          )}
-          {/* The words of THIS lesson, drilled on their own - not the whole
-              schedule, which is what tonight's practice should be about. */}
-          {!teacher && Object.keys(lesson.vocabByBlock).length > 0 && (
-            <Link
-              to={`/language/study?lesson=${lesson.id}`}
-              className="mt-1 inline-flex items-center gap-1 font-sans text-xs text-gold hover:underline"
-            >
-              <GraduationCap className="h-3.5 w-3.5" /> Practise these words
-            </Link>
-          )}
-        </header>
+      <div className="curtain-reveal space-y-4 pb-2">
+        {exercises.length > 0 && (
+          <ProgressBar
+            value={answeredCount}
+            max={exercises.length}
+            label="Answered"
+            className="sticky top-0 z-10"
+          />
+        )}
+
+        {lesson.subtitle && (
+          <p className="font-sans text-sm text-muted">{lesson.subtitle}</p>
+        )}
 
         {/* What came back. The whole point of handing work in. */}
         {mine &&
           ['graded', 'returned', 'submitted'].includes(mine.status) &&
           !retrying && (
-            <section className="space-y-1 rounded-lg bg-surface-2 px-4 py-3">
-              <p className="eyebrow">
+            <div className="space-y-2">
+              <FeedbackBanner
+                tone={
+                  mine.status === 'graded'
+                    ? 'marked'
+                    : mine.status === 'returned'
+                      ? 'returned'
+                      : 'submitted'
+                }
+                action={
+                  mine.status === 'returned' ? (
+                    <Button size="xs" onClick={tryAgain}>
+                      <RotateCcw className="h-3.5 w-3.5" /> Try again
+                    </Button>
+                  ) : undefined
+                }
+              >
                 {mine.status === 'graded'
-                  ? `Marked${mine.score != null ? ` - ${Math.round(mine.score * 100)}%` : ''}`
+                  ? `Marked${mine.score != null ? `, ${Math.round(mine.score * 100)}%` : ''}`
                   : mine.status === 'returned'
-                    ? 'Sent back - have another go'
-                    : "Handed in - she'll see it"}
-              </p>
-              {mine.status !== 'submitted' && mine.teacher_note && (
-                <p className="font-display text-base italic leading-snug text-fg">
-                  {mine.teacher_note}
-                </p>
+                    ? 'Sent back, have another go'
+                    : "Handed in, she'll see it"}
+              </FeedbackBanner>
+              {mine.status !== 'submitted' && (
+                <MarginNote
+                  note={mine.teacher_note}
+                  audioPath={mine.teacher_audio_path}
+                  who="Her note on the whole thing"
+                />
               )}
-              {mine.status !== 'submitted' && mine.teacher_audio_path && (
-                <div className="flex items-center gap-2">
-                  <PlayButton
-                    bucket={BUCKETS.languageAudio}
-                    path={mine.teacher_audio_path}
-                    size="sm"
-                    label="A voice note from her"
-                  />
-                  <span className="font-sans text-xs text-muted">
-                    she left you a voice note
-                  </span>
-                </div>
-              )}
-              {mine.status === 'returned' && (
-                <Button size="xs" onClick={tryAgain}>
-                  <RotateCcw size={13} /> Try again
-                </Button>
-              )}
-            </section>
+            </div>
           )}
 
         {/* She is teaching this right now: a line that follows her. */}
@@ -456,30 +430,54 @@ export function LessonRoute() {
                 .getElementById(`block-${live.blockId}`)
                 ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
             }
-            className="lift-press sticky top-0 z-10 w-full rounded-full bg-accent px-3 py-1.5 font-sans text-xs text-accent-fg shadow-loge"
+            className="lift-press sticky top-2 z-10 flex min-h-[40px] w-full items-center justify-center gap-2 rounded-full border border-fg/[0.08] bg-surface-2 px-3 font-sans text-xs font-bold text-fg shadow-loge"
           >
-            She is on {live.index + 1} of {live.total} - follow along
+            <span className="h-1.5 w-1.5 rounded-full bg-[#a9b37e]" />
+            She is on {live.index + 1} of {live.total}, follow along
           </button>
         )}
 
         {/* Hers to select and copy - a lesson on a computer is a document. The
             questions sit where she put them: after the block they belong to. */}
-        {lesson.blocks.map((block) => (
-          <div key={block.id} id={`block-${block.id}`} className="space-y-3">
-            <div data-readable>
-              <BlockView
-                block={block}
-                support={support}
-                target={lesson.targetLang}
-                vocab={lesson.vocabByBlock[block.id]}
-                media={mediaFor(block)}
-                onWord={setLookup}
-                clips={clips}
-              />
+        {lesson.blocks.map((block) => {
+          const words = lesson.vocabByBlock[block.id] ?? [];
+          return (
+            <div key={block.id} id={`block-${block.id}`} className="space-y-3">
+              {block.kind === 'vocab' && words.length > 0 && (
+                <SectionLabel
+                  className="mb-0"
+                  action={
+                    /* The words of THIS lesson, drilled on their own - not the
+                       whole schedule, which is what tonight's practice should
+                       be about. */
+                    !teacher ? (
+                      <Link
+                        to={`/language/study?lesson=${lesson.id}`}
+                        className="shrink-0 font-sans text-[11.5px] font-bold text-gold"
+                      >
+                        Practise these
+                      </Link>
+                    ) : undefined
+                  }
+                >
+                  Words, {words.length}
+                </SectionLabel>
+              )}
+              <div data-readable>
+                <BlockView
+                  block={block}
+                  support={support}
+                  target={lesson.targetLang}
+                  vocab={words}
+                  media={mediaFor(block)}
+                  onWord={setLookup}
+                  clips={clips}
+                />
+              </div>
+              {(lesson.exercisesByBlock[block.id] ?? []).map(exerciseCard)}
             </div>
-            {(lesson.exercisesByBlock[block.id] ?? []).map(exerciseCard)}
-          </div>
-        ))}
+          );
+        })}
 
         {lesson.looseExercises.map(exerciseCard)}
 
@@ -490,27 +488,23 @@ export function LessonRoute() {
           onClose={() => setLookup(null)}
         />
 
-        {exercises.length > 0 && (
-          <section className="space-y-3">
-            {isExam && !submitted && (
-              <Button
-                full
-                onClick={() => void handIn()}
-                disabled={handingIn || attemptsLoading}
-              >
-                <Send size={15} /> Hand it in
-              </Button>
-            )}
-
-            {(submitted || (!isExam && allDone)) && (
-              <div className="flex items-center gap-2 rounded-lg bg-surface-2 px-4 py-3">
-                <Check className="h-5 w-5 shrink-0 text-gold" />
-                <p className="font-sans text-sm text-fg">
-                  {scored} of {exercises.length} right
-                </p>
-              </div>
-            )}
-          </section>
+        {(submitted || (!isExam && allDone)) && exercises.length > 0 && (
+          <FeedbackBanner
+            tone="done"
+            action={
+              !teacher && hasWords ? (
+                <Link
+                  to={`/language/study?lesson=${lesson.id}`}
+                  className="shrink-0 font-sans text-[13px] font-bold text-gold"
+                >
+                  Practise the words
+                </Link>
+              ) : undefined
+            }
+          >
+            {scored} of {exercises.length} right
+            {isExam || mine?.status === 'submitted' ? ", she'll see it" : ''}
+          </FeedbackBanner>
         )}
 
         {lesson.blocks.length === 0 && exercises.length === 0 && (
@@ -519,11 +513,37 @@ export function LessonRoute() {
             title="Nothing here yet"
             hint="This lesson is still being written."
             action={
-              <Link to={`/language/build/${lesson.id}`}>
-                <Button variant="secondary">Write it</Button>
-              </Link>
+              teacher ? (
+                <Link to={`/language/build/${lesson.id}`}>
+                  <Button variant="secondary">Write it</Button>
+                </Link>
+              ) : undefined
             }
           />
+        )}
+
+        {/* Her pencil, on a phone: the desk has the rail for it. */}
+        {teacher && (
+          <div className="flex justify-center md:hidden">
+            <Link
+              to={`/language/build/${lesson.id}`}
+              className="font-sans text-[13px] font-bold text-gold"
+            >
+              Edit this lesson
+            </Link>
+          </div>
+        )}
+
+        {isExam && !submitted && exercises.length > 0 && (
+          <StickyFooter>
+            <Button
+              full
+              onClick={() => void handIn()}
+              disabled={handingIn || attemptsLoading}
+            >
+              <Send className="h-4 w-4" /> Hand it in
+            </Button>
+          </StickyFooter>
         )}
       </div>
     </Desk>
