@@ -99,8 +99,8 @@ export function HabitButton({
               size === 'md' ? 'text-[22px]' : 'text-[18px]'
             )}
             style={{
-              filter: done ? 'none' : 'grayscale(.45)',
-              opacity: done ? 1 : 0.62,
+              filter: done ? 'none' : 'grayscale(.2)',
+              opacity: done ? 1 : 0.82,
             }}
           >
             {habit.emoji}
