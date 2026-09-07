@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { usePartner, useUserId } from '@kernel/auth';
 import { useNow } from '@kernel/hooks';
 import { useEntries, useHabits } from '../api/streak.queries';
+import { useIntents, withIntents } from './intents';
 import type { Habit } from '../types';
 import { addDays, furthestDay, isDayOpen, isSettled, localDay } from './days';
 import {
@@ -89,11 +90,24 @@ export function useStreak(): StreakView {
     !!habits
   );
 
+  const wanted = useIntents((s) => s.wanted);
+  const settle = useIntents((s) => s.settle);
+
+  const server = useMemo(
+    () => new Set((entries ?? []).map((e) => tickKey(e.habit_id, e.day))),
+    [entries]
+  );
+
+  // A wish lives only until the server agrees with it. Doing this in an effect
+  // rather than during the read keeps the store out of the render pass.
+  useEffect(() => {
+    settle(server);
+  }, [server, settle]);
+
   return useMemo(() => {
     const all = habits ?? [];
-    const done: DoneSet = new Set(
-      (entries ?? []).map((e) => tickKey(e.habit_id, e.day))
-    );
+    // What you asked for, over what the server last said.
+    const done: DoneSet = withIntents(server, wanted);
     const by = new Map(
       (entries ?? []).map((e) => [tickKey(e.habit_id, e.day), e.marked_by])
     );
@@ -172,6 +186,8 @@ export function useStreak(): StreakView {
     habits,
     earliest,
     entries,
+    server,
+    wanted,
     userId,
     self?.timezone,
     partner?.timezone,
