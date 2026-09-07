@@ -81,12 +81,6 @@ export function DaySheet({ day, view, onClose }: DaySheetProps) {
               interactive={false}
             />
           )}
-
-          {!open && (
-            <p className="font-sans text-xs leading-relaxed text-muted">
-              This day has ended for both of us, so it cannot change any more.
-            </p>
-          )}
         </div>
       )}
     </Sheet>
