@@ -115,10 +115,18 @@
 .cal-cell {
   position: relative;
 }
+/* Sized to the circle, not to the cell.
+   The cell is 44px and holds a 26px circle with a 3px dot under it; a ribbon
+   drawn to the cell's own edges pressed against the top of one circle and
+   crowded the dot below it. These numbers are that circle's band, plus a
+   millimetre of air on each side. */
 .cal-run::before {
   content: '';
   position: absolute;
-  inset: 5px -5px;
+  top: 5px;
+  bottom: 13px;
+  left: -5px;
+  right: -5px;
   z-index: 0;
   background: rgba(228, 195, 106, 0.13);
 }
