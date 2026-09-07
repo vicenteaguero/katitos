@@ -28,6 +28,7 @@ export function CallPill({
   interactive,
   onToggle,
   byName,
+  today = false,
 }: CallPillProps) {
   const press = () => {
     if (!interactive) return;
@@ -82,7 +83,7 @@ export function CallPill({
           done ? 'text-fg' : 'text-fg/80'
         )}
       >
-        {habit.title}
+        {today ? `${habit.title} today` : habit.title}
         {done && byName && (
           <span className="font-normal text-muted"> · {byName}</span>
         )}
