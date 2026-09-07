@@ -35,6 +35,12 @@ export const qk = {
   presence: {
     appOpens: () => ['presence', 'app-opens'] as const,
   },
+  streak: {
+    all: () => ['streak'] as const,
+    habits: () => ['streak', 'habits'] as const,
+    /** One window of ticks. Separate from `habits` so a month change can't evict it. */
+    entries: (from: string, to: string) => ['streak', 'entries', from, to] as const,
+  },
   chalkboard: {
     notes: () => ['chalkboard', 'notes'] as const,
   },
