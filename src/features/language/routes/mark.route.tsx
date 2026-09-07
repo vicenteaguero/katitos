@@ -378,63 +378,63 @@ function MarkLesson() {
   const right = verdicts.filter((v) => v?.correct).length;
 
   /** The big number, and a way to change it. */
-  const scoreCard = (
+  const scoreCard = desk ? (
     <button
       type="button"
       onClick={() => setScoreOpen(true)}
       aria-label="The mark, out of a hundred. Tap to change"
-      className={cn(
-        'lift-press w-full text-left outline-none focus-visible:ring-2 focus-visible:ring-gold',
-        desk ? 'rounded-card' : 'rounded-[14px]'
-      )}
+      className="lift-press w-full rounded-card text-left outline-none focus-visible:ring-2 focus-visible:ring-gold"
     >
-      {desk ? (
-        <Card tone="hero" className="space-y-1 text-center">
-          <span className="block font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-gold">
-            Mark
-          </span>
-          <span className="block font-sans text-[44px] font-extrabold leading-none tabular-nums text-gold">
-            {score || '-'}
-          </span>
-          <span className="block font-sans text-xs font-medium text-muted">
-            {scoreTouched
-              ? 'yours, tap to change'
-              : 'from your ticks, tap to change'}
-          </span>
-        </Card>
-      ) : (
-        <span className="flex min-h-[56px] items-center gap-3 rounded-[14px] border border-fg/[0.08] bg-surface px-3.5 py-2">
-          <span className="font-sans text-[22px] font-extrabold tabular-nums text-gold">
-            {score || '-'}
-          </span>
-          <span className="min-w-0 flex-1 font-sans text-[11.5px] font-medium leading-snug text-muted">
-            {scoreTouched
-              ? 'yours, tap to change.'
-              : 'from your ticks, tap to change.'}{' '}
-            A note or voice goes with it
-          </span>
-          <span
-            role="presentation"
-            onClick={(e) => {
-              e.stopPropagation();
-              setNoteSheet(true);
-            }}
-            className={cn(
-              'flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[11px]',
-              note.trim() || voice
-                ? 'bg-accent text-accent-fg'
-                : 'bg-surface-2 text-gold'
-            )}
-          >
-            {note.trim() && !voice ? (
-              <MessageSquare className="h-4 w-4" />
-            ) : (
-              <Mic className="h-4 w-4" />
-            )}
-          </span>
+      <Card tone="hero" className="space-y-1 text-center">
+        <span className="block font-sans text-[11px] font-bold uppercase tracking-[0.14em] text-gold">
+          Mark
         </span>
-      )}
+        <span className="block font-sans text-[44px] font-extrabold leading-none tabular-nums text-gold">
+          {score || '-'}
+        </span>
+        <span className="block font-sans text-xs font-medium text-muted">
+          {scoreTouched
+            ? 'yours, tap to change'
+            : 'from your ticks, tap to change'}
+        </span>
+      </Card>
     </button>
+  ) : (
+    <div className="flex min-h-[56px] items-center gap-3 rounded-[14px] border border-fg/[0.08] bg-surface px-3.5 py-2">
+      <button
+        type="button"
+        onClick={() => setScoreOpen(true)}
+        aria-label="The mark, out of a hundred. Tap to change"
+        className="flex min-h-[44px] min-w-0 flex-1 items-center gap-3 rounded text-left outline-none focus-visible:ring-2 focus-visible:ring-gold"
+      >
+        <span className="font-sans text-[22px] font-extrabold tabular-nums text-gold">
+          {score || '-'}
+        </span>
+        <span className="min-w-0 flex-1 font-sans text-[11.5px] font-medium leading-snug text-muted">
+          {scoreTouched
+            ? 'yours, tap to change.'
+            : 'from your ticks, tap to change.'}{' '}
+          A note or voice goes with it
+        </span>
+      </button>
+      <button
+        type="button"
+        aria-label="A note or your voice"
+        onClick={() => setNoteSheet(true)}
+        className={cn(
+          'lift-press flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[11px] outline-none focus-visible:ring-2 focus-visible:ring-gold',
+          note.trim() || voice
+            ? 'bg-accent text-accent-fg'
+            : 'bg-surface-2 text-gold'
+        )}
+      >
+        {note.trim() && !voice ? (
+          <MessageSquare className="h-4 w-4" />
+        ) : (
+          <Mic className="h-4 w-4" />
+        )}
+      </button>
+    </div>
   );
 
   /** Everything that goes back with the mark: the note, her voice, the buzz. */
@@ -447,6 +447,7 @@ function MarkLesson() {
           value={note}
           onChange={(e) => setNote(e.target.value)}
           rows={3}
+          aria-label="A note for him"
           placeholder="почти! watch the ending on the second one"
         />
       </div>
