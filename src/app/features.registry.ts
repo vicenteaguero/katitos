@@ -18,6 +18,7 @@ import { treeFeature } from '@features/tree';
 import { knowMeFeature } from '@features/know-me';
 import { albumFeature } from '@features/album';
 import { vpnFeature } from '@features/vpn';
+import { streakFeature } from '@features/streak';
 
 // ── Drawer categories ──────────────────────────────────────────────────────
 // Section each feature appears under in the "More" drawer (id → category).
@@ -33,6 +34,7 @@ const categories: Record<string, string> = {
   summer: 'Memories',
   flowers: 'Memories',
   // Pololos
+  streak: 'Pololos',
   tree: 'Pololos',
   presence: 'Pololos',
   // Utilities
@@ -44,6 +46,7 @@ const categories: Record<string, string> = {
 };
 
 const modules: FeatureModule[] = [
+  streakFeature,
   treeFeature,
   knowMeFeature,
   albumFeature,
@@ -74,6 +77,7 @@ const OPEN = new Set([
   'wishlists', // gift lists, each item with its own eye
   'flowers', // a bouquet a month, hers to fill
   'vpn', // "Internet" - Helsinki is up and reporting in
+  'streak', // one streak, kept by the two of us
   // 'summer'   - Türkiye/Georgia is over. Locked, NOT deleted: the code, the
   //              tables and the photos all stay, so the next trip is one line.
   // 'know-me'  - the daily questions still need some love before she sees them.
