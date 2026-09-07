@@ -29,6 +29,8 @@ export interface DialogProps {
   open: boolean;
   onClose: () => void;
   title?: string;
+  /** A muted line beside the title: "after the Words block". */
+  subtitle?: string;
   children: ReactNode;
   placement?: DialogPlacement;
   size?: DialogSize;
@@ -108,6 +110,7 @@ export function Dialog({
   open,
   onClose,
   title,
+  subtitle,
   children,
   placement = 'bottom',
   size = 'full',
@@ -362,9 +365,14 @@ export function Dialog({
             {shownTitle ? (
               <h2
                 id={titleId}
-                className="min-w-0 truncate font-display text-xl font-semibold tracking-tight text-fg"
+                className="min-w-0 truncate font-sans text-lg font-extrabold tracking-tight text-fg"
               >
                 {shownTitle}
+                {subtitle && (
+                  <span className="ml-1.5 font-sans text-xs font-semibold text-muted">
+                    {subtitle}
+                  </span>
+                )}
               </h2>
             ) : (
               <span />
