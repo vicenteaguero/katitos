@@ -34,6 +34,30 @@ export interface ChangelogEntry {
 /** Every release ever written, newest first - held ones included. */
 export const ALL_ENTRIES: ChangelogEntry[] = [
   {
+    // Shipped 6 September 2026. Not held: she asked to know, and every line
+    // is something she can do the moment she reads it.
+    title: 'Your classroom, tidied up',
+    date: '2026-09-06',
+    lines: [
+      'The Language screen now opens with one big card: Practise today. A ring shows how much of today you have already done, and the play button starts the rest.',
+      'Right under it, To mark: everything he handed in and you have not looked at yet, with when he sent it. Tap one and you are marking.',
+      'Each course shows a small gold bar, so you can see at a glance how far along it is.',
+      'Inside a course, the first thing you see is where to pick up: one button that says Mark, Open or Continue with the name of the lesson.',
+      'Tap Edit at the top of a course to move lessons around, rename a unit or put a lesson away. Tap Done and everything is calm again.',
+      'New lesson is one button at the bottom of the course. Choose Lesson, Homework or Exam, give it a name, pick how it should start, and you are writing.',
+      'Writing a lesson: between any two blocks there is a small Insert here. Tap it to add text, words, a question, a table, a file or a break exactly where you want it.',
+      'On the computer, the right side of the builder is one tidy panel: Give it to him with the due date and how long it takes, the six things you can insert, and your tools.',
+      'When you make a question, the ten kinds are tiles you tap. The right option gets a green tick, and points are a plus and a minus.',
+      'Marking on the phone: every answer has big Right and Wrong buttons, a note button and a microphone. The mark stays at the bottom while you scroll, and Give it back is right beside it.',
+      'Marking on the computer: J and K move between answers, Y and N tick and cross, C writes a note, V records your voice, and Cmd Enter gives it back.',
+      'Teaching live: the screen says he is following the moment he opens the lesson on his phone. A plus Word button at the top catches a word that came up and files it in the lesson and the dictionary in one tap.',
+      'The dictionary has a Select button. Tap it, tick the words you want, and one bar at the bottom tags them, records them one after another, or puts them away.',
+      'Every word row has one sound button: play it if your voice is on it, a dotted microphone if it is not. Tap the word itself for its card, with its notes, tags and every recording.',
+      'The alphabet is a neat grid of four letters a row. A gold dot means the letter has your voice. Tap any letter to hear it and to record yours.',
+      'Every screen has one title at the top and one button on the right, nothing more. Cards have a thin line around them so they do not melt into the background, and every button is big enough for a thumb.',
+    ],
+  },
+  {
     // Shipped 6 September 2026. Not held: the whole point is that she can use
     // it the moment she reads this.
     title: 'Your own way out',
