@@ -195,10 +195,13 @@ export function TeachRoute() {
     return lesson.media.find((m) => m.id === mediaId);
   };
 
+  // On a desk the count sits by the bar; the line only speaks when he does.
   const status =
     following !== null
       ? `he's following, slide ${following + 1}`
-      : `slide ${at + 1} of ${slides.length}`;
+      : desk
+        ? ''
+        : `slide ${at + 1} of ${slides.length}`;
   const live = following !== null;
   const hasQuestions = !!slide && slide.exercises.length > 0;
   const allShown = !!slide && slide.exercises.every((ex) => shown.has(ex.id));
