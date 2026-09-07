@@ -18,10 +18,12 @@
 --   it is a done habit nobody remembered to tick.
 --
 --   ── THE SLOTS ───────────────────────────────────────────────────────────
---   Habit n needs a streak of {1:0, 2:7, 3:14, 4:21} to be created. Nothing is
---   ever taken away: lose the streak and you keep all four, still required.
---   But a slot you empty stays empty until the streak earns it back - which is
---   the rule that makes "just delete the one you keep failing" cost something.
+--   A streak of {0, 7, 14, 21} days entitles you to {1, 2, 3, 4} habits, and
+--   what is checked when you add one is how many you already HOLD - not which
+--   slot number is free. Nothing is ever taken away: lose the streak and you
+--   keep all four, still required. But empty a slot while the streak is down
+--   and it stays empty until the streak earns it back, which is what stops
+--   "just delete the one I keep failing" from being free.
 --
 --   ── WHY THE STREAK IS COMPUTED TWICE ────────────────────────────────────
 --   `streak_days()` here counts DAILY habits only. The client
@@ -186,8 +188,9 @@ language plpgsql
 set search_path = public
 as $$
 declare
-  threshold integer;
-  live      integer;
+  live    integer;
+  allowed integer;
+  needed  integer;
 begin
   if tg_op = 'INSERT' then
     if new.kind = 'personal' then
@@ -197,19 +200,33 @@ begin
         new.user_id := auth.uid();
       end if;
 
-      threshold := case new.slot when 1 then 0 when 2 then 7 when 3 then 14 else 21 end;
-      if auth.uid() is not null and public.streak_days() < threshold then
-        raise exception 'slot % needs a streak of %', new.slot, threshold
+      select count(*) into live from public.habits h
+        where h.kind = 'personal' and h.user_id = new.user_id
+          and h.archived_at is null;
+
+      -- The gate counts HABITS, not slot numbers. Delete the second of four and
+      -- you still hold three, so the next one you add is a fourth and costs a
+      -- fourth's streak - otherwise emptying a slot would be a way of buying a
+      -- cheap one back.
+      allowed := least(4, 1 + public.streak_days() / 7);
+      if auth.uid() is not null and live + 1 > allowed then
+        needed := live * 7;
+        raise exception 'a % habit needs a streak of % days', live + 1, needed
           using errcode = 'P0001', hint = 'slot_locked';
       end if;
 
-      -- Slots are earned in order; there is no skipping to the fourth.
-      select count(*) into live from public.habits h
-        where h.kind = 'personal' and h.user_id = new.user_id
-          and h.archived_at is null and h.slot < new.slot;
-      if live <> new.slot - 1 then
-        raise exception 'fill slot % first', live + 1
-          using errcode = 'P0001', hint = 'slot_out_of_order';
+      -- The lowest free number, decided here so no client has to guess and two
+      -- taps at once cannot land on the same one.
+      select min(n) into new.slot
+        from generate_series(1, 4) as n
+       where n not in (
+         select h.slot from public.habits h
+          where h.kind = 'personal' and h.user_id = new.user_id
+            and h.archived_at is null
+       );
+      if new.slot is null then
+        raise exception 'four habits is the most anyone gets'
+          using errcode = 'P0001', hint = 'slot_locked';
       end if;
     end if;
     return new;
