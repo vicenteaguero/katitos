@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import { cn } from '@kernel/lib';
 
 /** A few to tap, for the ones people actually promise each other. */
@@ -21,8 +21,11 @@ function lastGrapheme(value: string): string {
 /**
  * Any emoji, not the eight I happened to think of.
  *
- * The big tile IS the input, so tapping it opens the keyboard and the emoji
- * key is one press away. The row underneath is only a shortcut.
+ * The big tile IS the input, so tapping it opens the keyboard and the emoji key
+ * is one press away. There is always exactly one emoji in it and the caret is
+ * always behind that emoji - type another and it takes over, press backspace
+ * and it goes, without anybody having to drag a caret to the end first. The row
+ * underneath is only a shortcut.
  */
 export function EmojiField({
   value,
@@ -32,15 +35,37 @@ export function EmojiField({
   onChange: (e: string) => void;
 }) {
   const ref = useRef<HTMLInputElement>(null);
+
+  // React puts the caret back where it found it after a controlled update, and
+  // where it found it is the start. Put it behind the emoji, every time.
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || document.activeElement !== el) return;
+    const end = el.value.length;
+    el.setSelectionRange(end, end);
+  }, [value]);
+
+  const toEnd = () => {
+    const el = ref.current;
+    if (!el) return;
+    const end = el.value.length;
+    el.setSelectionRange(end, end);
+  };
+
   return (
     <div className="flex items-center gap-2.5">
       <input
         ref={ref}
         value={value}
         onChange={(e) => onChange(lastGrapheme(e.target.value) || value)}
+        onFocus={toEnd}
+        onClick={toEnd}
         aria-label="Its face"
         inputMode="text"
         autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="none"
+        spellCheck={false}
         className="h-14 w-14 shrink-0 rounded-lg bg-[rgba(0,0,0,0.28)] text-center text-[28px] leading-none outline-none focus:ring-2 focus:ring-gold/40"
         style={{ border: '1px solid rgba(228,195,106,0.35)' }}
       />
