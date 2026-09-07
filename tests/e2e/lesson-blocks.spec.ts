@@ -19,17 +19,25 @@ async function newLesson(page: Page, label: string): Promise<void> {
     timeout: 10_000,
   });
 
-  await page.getByRole('button', { name: 'add' }).first().click();
+  // The sticky "New lesson" opens the sheet and lands straight in the builder.
+  await page.getByRole('button', { name: 'New lesson' }).click();
   await page.getByLabel('Called').fill(`${label} lesson`);
-  await page.getByRole('button', { name: /Add lesson/i }).click();
-  await page.getByText(`${label} lesson`).click();
-  await expect(
-    page.getByRole('heading', { name: `${label} lesson` })
-  ).toBeVisible({ timeout: 10_000 });
+  await page.getByRole('button', { name: /Create and write it/ }).click();
+  await expect(page.getByRole('button', { name: 'Insert' })).toBeVisible({
+    timeout: 10_000,
+  });
+}
 
-  // Into the builder.
-  await page.getByRole('link', { name: 'Edit this lesson' }).click();
-  await expect(page.getByRole('button', { name: /question/ })).toBeVisible({
+/** Open the insert menu and pick one of its tiles. */
+async function insert(page: Page, tile: string): Promise<void> {
+  await page.getByRole('button', { name: 'Insert' }).click();
+  await page.getByRole('button', { name: tile, exact: true }).click();
+}
+
+/** From the builder to the lesson as he reads it. */
+async function readIt(page: Page, label: string): Promise<void> {
+  await page.getByRole('link', { name: 'Preview as him' }).click();
+  await expect(page.getByText(`${label} lesson`).first()).toBeVisible({
     timeout: 10_000,
   });
 }
@@ -40,7 +48,7 @@ test('a words block can be filled from the dictionary and shows in the lesson', 
   const label = `w${Date.now() % 100000}`;
   await newLesson(page, label);
 
-  await page.getByRole('button', { name: /^\s*vocab/ }).click();
+  await insert(page, 'Words');
   await expect(page.getByText('No words yet')).toBeVisible({ timeout: 10_000 });
 
   await page.getByText('No words yet').click();
@@ -61,10 +69,7 @@ test('a words block can be filled from the dictionary and shows in the lesson', 
 
   // …and the lesson itself actually renders it, which is the part that was
   // silently empty before.
-  await page.goBack();
-  await expect(
-    page.getByRole('heading', { name: `${label} lesson` })
-  ).toBeVisible({ timeout: 10_000 });
+  await readIt(page, label);
   await expect(page.getByText(word).first()).toBeVisible({ timeout: 10_000 });
   await expect(page.getByText('a word').first()).toBeVisible();
 });
@@ -73,7 +78,7 @@ test('a video can be attached and plays only when tapped', async ({ page }) => {
   const label = `m${Date.now() % 100000}`;
   await newLesson(page, label);
 
-  await page.getByRole('button', { name: /^\s*media/ }).click();
+  await insert(page, 'Material');
   await expect(page.getByText('Nothing attached yet')).toBeVisible({
     timeout: 10_000,
   });
@@ -88,10 +93,7 @@ test('a video can be attached and plays only when tapped', async ({ page }) => {
     timeout: 10_000,
   });
 
-  await page.goBack();
-  await expect(
-    page.getByRole('heading', { name: `${label} lesson` })
-  ).toBeVisible({ timeout: 10_000 });
+  await readIt(page, label);
 
   // The poster is an image; the player is NOT mounted until it is tapped, so a
   // lesson full of videos still opens instantly.
@@ -109,7 +111,7 @@ test('a put-in-order question does not hand over the answer', async ({
   const label = `o${Date.now() % 100000}`;
   await newLesson(page, label);
 
-  await page.getByRole('button', { name: /question/ }).click();
+  await insert(page, 'Question');
   await page.getByRole('button', { name: 'Put in order' }).click();
   await page.getByLabel('Ask him').fill('Put it in order');
   await page
@@ -117,10 +119,7 @@ test('a put-in-order question does not hand over the answer', async ({
     .fill('я тебя очень люблю');
   await page.getByRole('button', { name: 'Add the question' }).click();
 
-  await page.goBack();
-  await expect(
-    page.getByRole('heading', { name: `${label} lesson` })
-  ).toBeVisible({ timeout: 10_000 });
+  await readIt(page, label);
 
   // The words he is offered must NOT already be in the answer's order,
   // otherwise the exercise is solved by tapping left to right.
@@ -137,20 +136,17 @@ test('a written question can accept more than one right answer', async ({
   const label = `t${Date.now() % 100000}`;
   await newLesson(page, label);
 
-  await page.getByRole('button', { name: /question/ }).click();
+  await insert(page, 'Question');
   await page.getByRole('button', { name: 'Type it' }).click();
   await page.getByLabel('Ask him').fill('How do you say thank you?');
   // Russian rarely has exactly one right answer.
   await page.getByLabel('The answer').fill('спасибо / благодарю');
   await page.getByRole('button', { name: 'Add the question' }).click();
 
-  await page.goBack();
-  await expect(
-    page.getByRole('heading', { name: `${label} lesson` })
-  ).toBeVisible({ timeout: 10_000 });
+  await readIt(page, label);
 
   // The second form is accepted just as the first one is.
-  await page.getByPlaceholder('Write it').fill('благодарю');
+  await page.getByLabel('Write it').fill('благодарю');
   await page.getByRole('button', { name: 'Check' }).click();
   await expect(page.getByText('1 of 1 right')).toBeVisible({ timeout: 10_000 });
 });
@@ -161,7 +157,7 @@ test('a declension table can be typed and reads as a table', async ({
   const label = `d${Date.now() % 100000}`;
   await newLesson(page, label);
 
-  await page.getByRole('button', { name: /^\s*table/ }).click();
+  await insert(page, 'Table');
   // Typed the way she would write it on paper: headings, then a row per case.
   await page
     .getByPlaceholder(', singular, plural')
@@ -170,10 +166,7 @@ test('a declension table can be typed and reads as a table', async ({
     );
   await page.getByPlaceholder('What the table is (optional)').click();
 
-  await page.goBack();
-  await expect(
-    page.getByRole('heading', { name: `${label} lesson` })
-  ).toBeVisible({ timeout: 10_000 });
+  await readIt(page, label);
 
   // It renders as a real table, so a screen reader and a human both read it
   // as a grid rather than as a run-on sentence.
@@ -190,19 +183,16 @@ test('she can read his answers and write him back', async ({ page }) => {
   await newLesson(page, label);
 
   // A question he can get wrong.
-  await page.getByRole('button', { name: /question/ }).click();
+  await insert(page, 'Question');
   await page.getByRole('button', { name: 'Type it' }).click();
   await page.getByLabel('Ask him').fill('Say thank you');
   await page.getByLabel('The answer').fill('спасибо');
   await page.getByRole('button', { name: 'Add the question' }).click();
 
-  await page.goBack();
-  await expect(
-    page.getByRole('heading', { name: `${label} lesson` })
-  ).toBeVisible({ timeout: 10_000 });
+  await readIt(page, label);
 
   // He answers it wrongly, which records an attempt and progress.
-  await page.getByPlaceholder('Write it').fill('пожалуйста');
+  await page.getByLabel('Write it').fill('пожалуйста');
   await page.getByRole('button', { name: 'Check' }).click();
   await expect(page.getByText('0 of 1 right')).toBeVisible({ timeout: 10_000 });
 
@@ -226,7 +216,9 @@ test('she can read his answers and write him back', async ({ page }) => {
 
   if (hasAnswers) {
     await expect(page.getByText('wanted: спасибо')).toBeVisible();
+    await page.getByRole('button', { name: 'A note or your voice' }).click();
     await page.getByLabel('A note for him').fill('почти!');
-    await page.getByRole('button', { name: 'Give it back to him' }).click();
+    await page.getByRole('button', { name: 'Done' }).click();
+    await page.getByRole('button', { name: 'Give it back' }).click();
   }
 });
