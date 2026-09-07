@@ -70,12 +70,12 @@ export const BlockView = memo(function BlockView({
       return (
         <div className="space-y-1">
           {head && (
-            <p className="font-display text-lg leading-snug text-fg">
+            <p className="font-display text-[22px] leading-[1.35] text-fg">
               <Rich text={head} onWord={onWord} />
             </p>
           )}
           {gloss && (
-            <p className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-fg/90">
+            <p className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-fg/80">
               <Rich text={gloss} />
             </p>
           )}
@@ -188,7 +188,7 @@ function TableBlock({
           {caption}
         </figcaption>
       )}
-      <div className="overflow-x-auto rounded-lg bg-surface">
+      <div className="overflow-x-auto rounded-card border border-fg/[0.06] bg-surface">
         <table className="w-full border-collapse text-left">
           {headings.length > 0 && (
             <thead>
@@ -241,7 +241,7 @@ function VocabBlock({
 }) {
   if (!words.length) return null;
   return (
-    <ul className="divide-y divide-fg/5 rounded-lg bg-surface px-3">
+    <ul className="divide-y divide-fg/5 rounded-card border border-fg/[0.06] bg-surface px-3.5">
       {words.map((w) => (
         <VocabRow
           key={w.id}
@@ -360,7 +360,7 @@ function FileCard({ media }: { media: Media }) {
       href={href}
       target="_blank"
       rel="noreferrer"
-      className="lift-press flex items-center gap-2.5 rounded-lg bg-surface-2 px-3 py-2.5"
+      className="lift-press flex min-h-[56px] items-center gap-2.5 rounded-card border border-fg/[0.06] bg-surface px-3.5 py-2.5"
     >
       <FileText className="h-4 w-4 shrink-0 text-gold" />
       <span className="min-w-0 flex-1 truncate font-sans text-sm text-fg">
