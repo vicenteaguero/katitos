@@ -15,6 +15,7 @@ export interface HabitLike {
   id: string;
   user_id: string | null;
   kind: string;
+  title: string;
   schedule: string;
   target_per_week: number;
   effective_from: string;
@@ -146,21 +147,34 @@ export interface WeeklyProgress {
   done: number;
   target: number;
   met: boolean;
+  /** Days of this week you could still tick it on. */
+  left: number;
+  /** False once the count can no longer be reached, however hard you try. */
+  possible: boolean;
 }
 
 /** How far along a weekly habit is in the week containing `day`. */
 export function weeklyProgress(
   h: HabitLike,
   day: string,
-  done: DoneSet
+  done: DoneSet,
+  selfZone?: string | null,
+  partnerZone?: string | null,
+  now?: DateTime
 ): WeeklyProgress {
   const days = weekDays(day).filter((d) => activeOn(h, d));
   const hit = days.filter((d) => done.has(tickKey(h.id, d))).length;
+  const left = days.filter(
+    (d) =>
+      !done.has(tickKey(h.id, d)) && !isSettled(d, selfZone, partnerZone, now)
+  ).length;
   return {
     habit: h,
     done: hit,
     target: h.target_per_week,
     met: hit >= h.target_per_week,
+    left,
+    possible: hit + left >= h.target_per_week,
   };
 }
 
@@ -168,9 +182,9 @@ export function weeklyProgress(
  * The week, as a whole.
  *
  * 'ok'      every weekly habit made its count.
- * 'failed'  the week is over and one of them did not - the streak stops here.
- * 'pending' the week is still running and one of them is short. Its days are
- *           real but not yet banked: they show as "at stake", never as a loss.
+ * 'failed'  one of them can no longer reach it - the streak stops here.
+ * 'pending' still reachable, still short. Its days are real but not yet
+ *           banked: they show as "at stake", never as a loss.
  */
 export function weekVerdict(
   day: string,
@@ -180,16 +194,27 @@ export function weekVerdict(
   partnerZone: string | null | undefined,
   now?: DateTime
 ): WeekVerdict {
-  const sunday = addDays(weekStart(day), 6);
-  const over = isSettled(sunday, selfZone, partnerZone, now);
+  const days = weekDays(day);
   let verdict: WeekVerdict = 'ok';
 
   for (const h of habits) {
     if (h.schedule !== 'weekly') continue;
-    // A week the habit did not span for its full length is not a fair test.
-    if (!weekDays(day).some((d) => activeOn(h, d))) continue;
-    if (weeklyProgress(h, day, done).met) continue;
-    if (over) return 'failed';
+
+    // The week you add a habit - or put it away - is a free week. Promise three
+    // gym days on a Saturday and only two days of that week exist: asking for
+    // three is asking for something nobody could have done, and a streak lost
+    // to arithmetic is the fastest way to stop believing the number.
+    if (!days.every((d) => activeOn(h, d))) continue;
+
+    const p = weeklyProgress(h, day, done, selfZone, partnerZone, now);
+    if (p.met) continue;
+
+    // Out of reach. This covers the week that closed short, because a closed
+    // week has no days left to win - and it covers the Saturday you notice you
+    // have done none of three, which is exactly as lost and should say so then
+    // rather than wait until Sunday night to break the news.
+    if (!p.possible) return 'failed';
+
     verdict = 'pending';
   }
   return verdict;
