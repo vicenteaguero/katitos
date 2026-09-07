@@ -3,7 +3,9 @@ import { Sheet, Kicker } from '@kernel/ui';
 import { usePartner } from '@kernel/auth';
 import { useToggleEntry } from '../api/streak.mutations';
 import { activeOn } from '../lib/streak';
+import { petName } from '../lib/names';
 import type { StreakView } from '../lib/use-streak';
+import { CallPill } from './call-pill';
 import { HabitButton } from './habit-button';
 
 export interface DaySheetProps {
@@ -45,29 +47,24 @@ export function DaySheet({ day, view, onClose }: DaySheetProps) {
       {day && (
         <div className="space-y-4 pb-2">
           {shared && (
-            <div>
-              <Kicker>Together</Kicker>
-              <div className="mt-1.5">
-                <HabitButton
-                  habit={shared}
-                  done={view.isDone(shared.id, day)}
-                  interactive={open}
-                  onToggle={() =>
-                    toggle.mutate({
-                      habitId: shared.id,
-                      day,
-                      on: !view.isDone(shared.id, day),
-                      shared: true,
-                      selfName: self?.display_name,
-                    })
-                  }
-                />
-              </div>
-            </div>
+            <CallPill
+              habit={shared}
+              done={view.isDone(shared.id, day)}
+              interactive={open}
+              onToggle={() =>
+                toggle.mutate({
+                  habitId: shared.id,
+                  day,
+                  on: !view.isDone(shared.id, day),
+                  shared: true,
+                  selfName: self?.display_name,
+                })
+              }
+            />
           )}
 
           <Side
-            label={self?.display_name ?? 'You'}
+            label="You"
             habits={mine}
             day={day}
             view={view}
@@ -77,7 +74,7 @@ export function DaySheet({ day, view, onClose }: DaySheetProps) {
 
           {theirs.length > 0 && (
             <Side
-              label={partner?.display_name ?? 'Them'}
+              label={partner?.display_name ?? petName(partner?.role)}
               habits={theirs}
               day={day}
               view={view}
