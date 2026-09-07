@@ -1,14 +1,12 @@
-import {
-  useMutation,
-  useQueryClient,
-  type QueryClient,
-} from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@kernel/supabase';
 import { qk } from '@kernel/query';
 import { useUserId } from '@kernel/auth';
 import { notifyPartner } from '@kernel/push';
 import { toast } from '@kernel/ui';
-import type { Habit, HabitEntry } from '../types';
+import { inOrder, useIntents } from '../lib/intents';
+import { tickKey } from '../lib/streak';
+import type { Habit } from '../types';
 
 /**
  * Ticking has to feel like flipping a switch, not like submitting a form. So
@@ -42,30 +40,6 @@ export function streakErrorMessage(err: unknown): string {
   }
 }
 
-/** Patch every cached window of ticks that covers this day. */
-function patchWindows(
-  qc: QueryClient,
-  day: string,
-  fn: (rows: HabitEntry[]) => HabitEntry[]
-) {
-  qc.setQueriesData<HabitEntry[]>(
-    {
-      predicate: (q) => {
-        const [root, scope, from, to] = q.queryKey as [
-          string,
-          string,
-          string,
-          string,
-        ];
-        return (
-          root === 'streak' && scope === 'entries' && from <= day && day <= to
-        );
-      },
-    },
-    (rows) => (rows ? fn(rows) : rows)
-  );
-}
-
 export interface ToggleVars {
   habitId: string;
   day: string;
@@ -85,51 +59,53 @@ export interface ToggleVars {
 export function useToggleEntry() {
   const qc = useQueryClient();
   const userId = useUserId();
+  const want = useIntents((s) => s.want);
+  const forget = useIntents((s) => s.forget);
 
   return useMutation({
-    mutationFn: async ({ habitId, day, on }: ToggleVars) => {
+    mutationFn: async ({ habitId, day }: ToggleVars) => {
       if (!userId) throw new Error('Not signed in');
-      if (on) {
-        const { error } = await supabase
-          .from('habit_entries')
-          .insert({ habit_id: habitId, day });
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('habit_entries')
-          .delete()
-          .eq('habit_id', habitId)
-          .eq('day', day);
-        if (error) throw error;
-      }
-    },
-    onMutate: async ({ habitId, day, on }) => {
-      await qc.cancelQueries({ queryKey: qk.streak.all() });
-      const snapshot = qc.getQueriesData<HabitEntry[]>({
-        queryKey: ['streak', 'entries'],
+      const key = tickKey(habitId, day);
+      return inOrder(key, async () => {
+        // Read the wish at the moment of writing rather than the moment of
+        // tapping. Three quick taps become three writes that all agree on what
+        // you last asked for, so they cannot land out of order and disagree.
+        const on = useIntents.getState().wanted[key];
+        if (on === undefined) return;
+        if (on) {
+          const { error } = await supabase
+            .from('habit_entries')
+            .insert({ habit_id: habitId, day });
+          // 23505 is the row already being there, which is what we wanted.
+          if (error && error.code !== '23505') throw error;
+        } else {
+          const { error } = await supabase
+            .from('habit_entries')
+            .delete()
+            .eq('habit_id', habitId)
+            .eq('day', day);
+          if (error) throw error;
+        }
       });
-      patchWindows(qc, day, (rows) =>
-        on
-          ? [
-              ...rows.filter((r) => !(r.habit_id === habitId && r.day === day)),
-              {
-                id: `optimistic:${habitId}:${day}`,
-                habit_id: habitId,
-                day,
-                marked_by: userId ?? '',
-                created_at: new Date().toISOString(),
-              },
-            ]
-          : rows.filter((r) => !(r.habit_id === habitId && r.day === day))
-      );
-      return { snapshot };
     },
-    onError: (err, _vars, ctx) => {
-      for (const [key, rows] of ctx?.snapshot ?? []) qc.setQueryData(key, rows);
+    onMutate: ({ habitId, day, on }) => {
+      const key = tickKey(habitId, day);
+      const wanted = useIntents.getState().wanted;
+      // `on` is what the button worked out from the last render, which is a
+      // beat behind a thumb. If a wish for this square is already standing, the
+      // truth is that wish - otherwise two taps inside one render cycle both
+      // read the same "before" and the second one does nothing.
+      const next = key in wanted ? !wanted[key] : on;
+      want(key, next);
+      return { next };
+    },
+    onError: (err, { habitId, day }) => {
+      // The one case where the server really does know better.
+      forget(tickKey(habitId, day));
       toast.error(streakErrorMessage(err));
     },
-    onSuccess: (_r, { on, shared, selfName }) => {
-      if (on && shared) {
+    onSuccess: (_r, { shared, selfName }, ctx) => {
+      if (ctx?.next && shared) {
         void notifyPartner({
           kind: 'streak',
           title: '📞 Katitos',
@@ -139,7 +115,9 @@ export function useToggleEntry() {
       }
     },
     onSettled: () => {
-      void qc.invalidateQueries({ queryKey: qk.streak.all() });
+      // Only the ticks. Refetching the habits on every tap was work nobody
+      // asked for, and one more response for a tap to race.
+      void qc.invalidateQueries({ queryKey: qk.streak.allEntries() });
     },
   });
 }
