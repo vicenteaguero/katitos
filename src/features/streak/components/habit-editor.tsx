@@ -53,9 +53,8 @@ const EMOJI = [
 export interface HabitEditorProps {
   open: boolean;
   onClose: () => void;
-  /** Editing an existing habit, or null to create one in `slot`. */
+  /** Editing an existing habit, or null to create a new one. */
   habit: Habit | null;
-  slot: number;
   /** Today or tomorrow, decided by the caller - see the note on the field. */
   effectiveFrom: string;
   startsToday: boolean;
@@ -65,7 +64,6 @@ export function HabitEditor({
   open,
   onClose,
   habit,
-  slot,
   effectiveFrom,
   startsToday,
 }: HabitEditorProps) {
@@ -103,7 +101,6 @@ export function HabitEditor({
         emoji,
         schedule,
         targetPerWeek: schedule === 'weekly' ? target : 1,
-        slot,
         effectiveFrom,
       });
     }
