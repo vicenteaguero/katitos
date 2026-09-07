@@ -2,7 +2,8 @@ export { KatitosMark } from './katitos-mark';
 export { Button } from './button';
 export type { ButtonProps } from './button';
 export { IconButton } from './icon-button';
-export { Card, CardTitle } from './card';
+export { Card, CardRows, CardTitle } from './card';
+export type { CardTone } from './card';
 export { Spinner, LoadingScreen } from './spinner';
 export { Skeleton } from './skeleton';
 export { Empty } from './empty';
@@ -19,12 +20,15 @@ export { ConfirmHost } from './confirm-host';
 export { SearchInput } from './search-input';
 export { OptionButton } from './option-button';
 export type { OptionState } from './option-button';
-export { RowToolbar, ROW_TOOL } from './row-toolbar';
+export { RowToolbar, ROW_TOOL, ROW_TOOL_TOUCH } from './row-toolbar';
 export { Kicker } from './kicker';
 export { Chip, ChipRow } from './chip';
 export { StatPill } from './stat-pill';
 export { Kbd } from './kbd';
-export { TopBarButton } from './top-bar-button';
+export { TopBarButton, TopBarPill } from './top-bar-button';
+export { SectionLabel } from './section-label';
+export { StickyFooter } from './sticky-footer';
+export { ProgressBar, Ring } from './progress';
 export { ListSkeleton } from './list-skeleton';
 export { SortableList, DragHandle } from './sortable-list';
 export type { DragHandleProps } from './sortable-list';
@@ -40,7 +44,10 @@ export {
   TopBarSlotProvider,
   useTopBarSlot,
   useTopBarAction,
+  useTopBarChrome,
+  useScreenChrome,
 } from './top-bar-slot';
+export type { ScreenChrome } from './top-bar-slot';
 export { TopBarAdd } from './top-bar-add';
 export { FilePickerButton } from './file-picker-button';
 export type { FilePickerButtonProps } from './file-picker-button';
