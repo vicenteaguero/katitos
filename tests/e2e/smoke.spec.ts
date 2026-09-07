@@ -5,6 +5,7 @@ import { cleanup, dismissChangelog } from './helpers';
 // authed shell with no uncaught exceptions.
 const ROUTES = [
   '/',
+  '/streak',
   '/tree',
   '/know-me',
   '/album',
