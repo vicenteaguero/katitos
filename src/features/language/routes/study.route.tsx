@@ -14,8 +14,11 @@ import {
   ListSkeleton,
   OptionButton,
   PlayButton,
+  ProgressBar,
+  Ring,
   useDesk,
   useIsDesk,
+  useScreenChrome,
 } from '@kernel/ui';
 import { useLesson } from '../api/lessons.queries';
 import { useAllVocab, useGradeVocab, useMyReviews } from '../api/vocab';
@@ -207,6 +210,35 @@ export function StudyRoute() {
     { enabled: !!card && !done }
   );
 
+  // The header is the session: an X out, the name of it, and where you are.
+  const total = queue?.length ?? 0;
+  const at = peek ?? i;
+  useScreenChrome(
+    {
+      title: TITLES[scope],
+      subtitle: peek !== null ? 'already answered' : undefined,
+      back: { icon: 'close', to: '/language' },
+      stage: 'house',
+      action:
+        queue && !done && card ? (
+          <span className="flex items-center gap-1 font-sans text-xs font-bold tabular-nums text-muted">
+            {peek === null && i > 0 && (
+              <button
+                type="button"
+                aria-label="The previous card"
+                onClick={() => setPeek(i - 1)}
+                className="flex h-10 w-10 items-center justify-center rounded text-muted outline-none hover:text-fg focus-visible:ring-2 focus-visible:ring-gold"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+            )}
+            {at + 1} / {total}
+          </span>
+        ) : null,
+    },
+    [scope, queue, done, card?.id, i, peek, total]
+  );
+
   if (isLoading || !ready || !queue)
     return <ListSkeleton rows={2} header={false} />;
 
@@ -232,28 +264,48 @@ export function StudyRoute() {
   }
 
   if (done) {
+    const title =
+      score.right === score.total
+        ? 'All of them!'
+        : score.right >= score.total * 0.6
+          ? 'Nearly there'
+          : 'They will come back';
     return (
-      <div className="curtain-reveal flex h-full flex-col items-center justify-center gap-4 text-center">
-        <p className="text-6xl">{score.right === score.total ? '🌟' : '💪'}</p>
+      <div className="curtain-reveal flex h-full flex-col items-center justify-center gap-4 pb-6 text-center">
+        <Ring
+          value={score.right}
+          max={Math.max(score.total, 1)}
+          size={96}
+          stroke={6}
+          label="Knew it"
+        >
+          <span className="text-[26px]">
+            {score.right}
+            <span className="text-[15px] text-muted">/{score.total}</span>
+          </span>
+        </Ring>
         <div>
-          <p className="font-display text-3xl text-fg">
-            {score.right} / {score.total}
-          </p>
-          <p className="mt-1 font-sans text-sm text-muted">
+          <p className="font-sans text-xl font-extrabold text-fg">{title}</p>
+          <p className="mt-0.5 font-sans text-[13px] font-medium text-muted">
             knew it straight away
           </p>
         </div>
-        <div className="flex flex-wrap justify-center gap-2">
+        <div className="flex w-full max-w-[280px] flex-col gap-2">
           {missed.length > 0 && (
             <Button onClick={() => start(missed)}>
-              <RotateCcw size={16} /> The {missed.length} you missed
+              <RotateCcw className="h-4 w-4" /> The {missed.length} you missed
             </Button>
           )}
-          <Button variant="secondary" onClick={() => start(build())}>
+          <Button
+            variant={missed.length > 0 ? 'secondary' : 'primary'}
+            onClick={() => start(build())}
+          >
             Again
           </Button>
-          <Link to="/language">
-            <Button variant="secondary">Done</Button>
+          <Link to="/language" className="flex">
+            <Button full variant="quiet">
+              Done
+            </Button>
           </Link>
         </div>
       </div>
@@ -267,19 +319,13 @@ export function StudyRoute() {
       return (
         <Desk narrow>
           <div className="curtain-reveal flex h-full flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setPeek(null)}
-                className="font-sans text-sm text-muted hover:text-fg"
-              >
-                ← Back to the card
-              </button>
-              <p className="font-sans text-xs tabular-nums text-muted">
-                {peek + 1} / {queue.length} - already answered
-              </p>
+            <ProgressBar segments={queue.length} value={peek} label="Cards" />
+            <div className="flex min-h-0 flex-1 flex-col justify-center gap-3">
+              <StudyCard card={back} support={support} revealed mode="recall" />
+              <Button variant="secondary" full onClick={() => setPeek(null)}>
+                Back to the card
+              </Button>
             </div>
-            <Card card={back} support={support} revealed mode="recall" />
           </div>
         </Desk>
       );
@@ -287,33 +333,20 @@ export function StudyRoute() {
   }
 
   const suggested = miss ? suggestGrade(miss) : null;
-  const gradeVariant = (g: Grade) =>
-    revealed && suggested === g ? 'primary' : 'secondary';
+  const gradeRing = (g: Grade) =>
+    revealed && suggested === g ? 'ring-2 ring-gold/40' : '';
 
   return (
     <Desk narrow>
-      <div className="curtain-reveal flex h-full flex-col">
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <Link to="/language" className="font-sans text-sm text-muted">
-            ✕ {TITLES[scope]}
-          </Link>
-          <p className="font-sans text-xs tabular-nums text-muted">
-            {i > 0 && (
-              <button
-                type="button"
-                aria-label="The previous card"
-                onClick={() => setPeek(i - 1)}
-                className="mr-2 text-muted hover:text-fg"
-              >
-                <ArrowLeft className="inline h-3.5 w-3.5" />
-              </button>
-            )}
-            {i + 1} / {queue.length}
-          </p>
-        </div>
+      <div className="curtain-reveal flex h-full flex-col gap-3">
+        <ProgressBar
+          segments={queue.length}
+          value={revealed ? i + 1 : i}
+          label="Cards"
+        />
 
-        <div className="flex min-h-0 flex-1 flex-col justify-center gap-3">
-          <Card
+        <div className="flex min-h-0 flex-1 flex-col justify-center gap-3 pb-2">
+          <StudyCard
             card={card}
             support={support}
             revealed={revealed}
@@ -344,7 +377,7 @@ export function StudyRoute() {
                       setPicked(c.id);
                       setRevealed(true);
                     }}
-                    className="px-4 py-3 font-display text-lg"
+                    className="font-display text-lg"
                   >
                     {headword(c)}
                   </OptionButton>
@@ -356,6 +389,8 @@ export function StudyRoute() {
           {!revealed && mode === 'type' && (
             <div className="space-y-2">
               <Input
+                tone="ink"
+                serif
                 value={typed}
                 onChange={(e) => setTyped(e.target.value)}
                 onKeyDown={(e) => {
@@ -366,8 +401,8 @@ export function StudyRoute() {
                 autoCorrect="off"
                 spellCheck={false}
                 autoFocus={desk}
-                placeholder={`type it in ${LANG_NATIVE_LABELS[termLangOf(card)]}…`}
-                className="text-center font-display text-xl"
+                placeholder={`Type it in ${LANG_NATIVE_LABELS[termLangOf(card)]}…`}
+                className="text-center text-xl"
               />
               <LetterKeys
                 lang={termLangOf(card)}
@@ -375,13 +410,13 @@ export function StudyRoute() {
                 onBackspace={() => setTyped((t) => t.slice(0, -1))}
               />
               <Button full onClick={() => setRevealed(true)} disabled={!typed}>
-                <Check size={16} /> Check
+                <Check className="h-4 w-4" /> Check
               </Button>
             </div>
           )}
 
           {!revealed && (mode === 'recall' || mode === 'listen') && (
-            <Button full variant="secondary" onClick={reveal}>
+            <Button full variant="secondary" size="lg" onClick={reveal}>
               Show me
             </Button>
           )}
@@ -389,11 +424,11 @@ export function StudyRoute() {
           {revealed && mode === 'type' && miss && (
             <p
               className={cn(
-                'text-center font-sans text-sm',
+                'text-center font-sans text-sm font-semibold',
                 miss === 'exact'
-                  ? 'text-success'
+                  ? 'text-[#a9b37e]'
                   : miss === 'wrong'
-                    ? 'text-danger'
+                    ? 'text-[#e0919b]'
                     : 'text-warning'
               )}
             >
@@ -406,14 +441,26 @@ export function StudyRoute() {
           {revealed && <VoiceThread word={card} compact />}
 
           {revealed && (
-            <div className="flex gap-2">
-              <Button full variant={gradeVariant(0)} onClick={() => answer(0)}>
+            <div className="grid grid-cols-3 gap-2">
+              <Button
+                variant="destructive"
+                className={cn('h-[52px]', gradeRing(0))}
+                onClick={() => answer(0)}
+              >
                 No idea
               </Button>
-              <Button full variant={gradeVariant(1)} onClick={() => answer(1)}>
+              <Button
+                variant="warn"
+                className={cn('h-[52px]', gradeRing(1))}
+                onClick={() => answer(1)}
+              >
                 Almost
               </Button>
-              <Button full variant={gradeVariant(2)} onClick={() => answer(2)}>
+              <Button
+                variant="affirm"
+                className={cn('h-[52px]', gradeRing(2))}
+                onClick={() => answer(2)}
+              >
                 Knew it
               </Button>
             </div>
@@ -421,8 +468,8 @@ export function StudyRoute() {
 
           {desk && (
             <p className="text-center font-sans text-xs leading-6 text-muted">
-              <Kbd>space</Kbd> show - <Kbd>1</Kbd> <Kbd>2</Kbd> <Kbd>3</Kbd>{' '}
-              grade - <Kbd>←</Kbd> the last card
+              <Kbd>space</Kbd> show, <Kbd>1</Kbd> <Kbd>2</Kbd> <Kbd>3</Kbd>{' '}
+              grade, <Kbd>←</Kbd> the last card
             </p>
           )}
         </div>
@@ -431,8 +478,15 @@ export function StudyRoute() {
   );
 }
 
+const MODE_LABEL = {
+  recall: 'Recall it',
+  choice: 'Which one?',
+  type: 'Type it',
+  listen: 'What did she say?',
+} as const;
+
 /** The card itself: the prompt, and the answer once it is turned over. */
-function Card({
+function StudyCard({
   card,
   support,
   revealed,
@@ -447,41 +501,42 @@ function Card({
   autoPlay?: boolean;
 }) {
   return (
-    <div className="marble gilt-hairline shadow-loge rounded-lg px-4 py-6 text-center">
+    <div className="marble gilt-hairline rounded-[20px] px-5 py-7 text-center shadow-loge">
+      <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-brown/60">
+        {MODE_LABEL[mode]}
+      </p>
       {mode === 'listen' ? (
-        <div className="space-y-3">
+        <div className="mt-3 space-y-3">
           <Volume2 className="mx-auto h-6 w-6 text-brown/60" />
           {card.audio_path ? (
             <PlayButton
               bucket={BUCKETS.languageAudio}
               path={card.audio_path}
-              className="h-9 w-full"
+              className="h-11 w-full"
+              label="Hear her"
             />
           ) : null}
-          <p className="font-sans text-xs uppercase tracking-[0.18em] text-brown/60">
-            what did she say?
-          </p>
         </div>
       ) : mode === 'recall' ? (
         <>
-          <p className="font-display text-4xl font-semibold leading-tight text-accent">
+          <p className="mt-2.5 font-display text-[44px] font-semibold leading-[1.15] text-accent">
             {headword(card)}
           </p>
           {card.transliteration && (
-            <p className="mt-2 font-display text-base italic text-copper">
+            <p className="mt-1 font-display text-base italic text-copper">
               {card.transliteration}
             </p>
           )}
         </>
       ) : (
-        <p className="font-display text-3xl font-semibold text-brown">
+        <p className="mt-2.5 font-display text-[30px] font-semibold leading-tight text-brown">
           {meaningOf(card, support) || headword(card)}
         </p>
       )}
 
       {revealed && (
-        <div className="km-reveal mt-3 space-y-1 border-t border-brown/15 pt-3">
-          <p className="font-display text-2xl text-brown">
+        <div className="km-reveal mt-4 space-y-1 border-t border-brown/15 pt-3.5">
+          <p className="font-display text-[26px] leading-tight text-brown">
             {mode === 'recall' ? meaningOf(card, support) : headword(card)}
           </p>
           {card.transliteration && mode !== 'recall' && (
@@ -490,18 +545,18 @@ function Card({
             </p>
           )}
           {noteOf(card, support) && (
-            <p className="font-sans text-xs italic text-brown/70">
+            <p className="font-sans text-[12.5px] italic text-brown/70">
               {noteOf(card, support)}
             </p>
           )}
           {/* Every reveal is a chance to hear it in her voice - not only the
               listening cards. Plays by itself; the button is there for again. */}
           {card.audio_path && mode !== 'listen' && (
-            <div className="flex justify-center pt-1">
+            <div className="flex justify-center pt-1.5">
               <PlayButton
                 bucket={BUCKETS.languageAudio}
                 path={card.audio_path}
-                size="sm"
+                size="md"
                 label="Hear her"
                 autoPlayKey={autoPlay ? card.id : undefined}
               />
