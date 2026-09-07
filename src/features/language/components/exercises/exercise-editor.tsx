@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Check, Minus, Plus, Trash2 } from 'lucide-react';
 import { nanoid } from 'nanoid';
+import { cn } from '@kernel/lib';
 import {
   Button,
   Dialog,
@@ -23,7 +24,12 @@ import {
   validateExercise,
   type ExerciseOption,
 } from '../../lib/exercise-schema';
-import type { Exercise, ExerciseKind, Lang } from '../../types';
+import {
+  LANG_NATIVE_LABELS,
+  type Exercise,
+  type ExerciseKind,
+  type Lang,
+} from '../../types';
 
 /**
  * Read a list of acceptable answers out of one field.
@@ -60,6 +66,7 @@ export function ExerciseEditor({
   exercise,
   target,
   blockId = null,
+  after,
   onClose,
 }: {
   open: boolean;
@@ -70,6 +77,8 @@ export function ExerciseEditor({
   target: Lang;
   /** The block this question follows - or none, for one at the end. */
   blockId?: string | null;
+  /** Where it sits, for the title: "after the Words block". */
+  after?: string;
   onClose: () => void;
 }) {
   const save = useSaveExercise();
@@ -341,10 +350,11 @@ export function ExerciseEditor({
       placement="auto"
       open={open}
       onClose={onClose}
-      title={exercise ? 'This question' : 'New question'}
-      size="md"
+      title="Question"
+      subtitle={after ?? (blockId ? undefined : 'at the end')}
+      size="lg"
     >
-      <div className="space-y-3">
+      <div className="space-y-3.5">
         <ExerciseKindGallery
           value={variant ?? kind}
           onChange={(v) => {
@@ -358,11 +368,12 @@ export function ExerciseEditor({
           }}
         />
 
-        <Field label="Ask him">
+        <Field label={`Ask him, in ${LANG_NATIVE_LABELS[support]}`}>
           <Input
+            tone="ink"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder="What does this mean?"
+            placeholder="How do you ask for the bill?"
           />
         </Field>
 
@@ -372,10 +383,12 @@ export function ExerciseEditor({
             hint="Type the accent on the stressed vowel - спаси́бо. He is offered every vowel."
           >
             <Input
+              tone="ink"
               value={answerText}
               onChange={(e) => setAnswerText(e.target.value)}
               placeholder="спаси́бо"
               className="font-display text-lg"
+              lang={target}
             />
           </Field>
         )}
@@ -387,10 +400,12 @@ export function ExerciseEditor({
               hint="Recorded below - he hears it and picks"
             >
               <Input
+                tone="ink"
                 value={answerText}
                 onChange={(e) => setAnswerText(e.target.value)}
                 placeholder="дом"
                 className="font-display text-lg"
+                lang={target}
               />
             </Field>
             <Field
@@ -398,6 +413,7 @@ export function ExerciseEditor({
               hint="One per line - the words it is easy to mistake it for"
             >
               <Textarea
+                tone="ink"
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 rows={2}
@@ -409,61 +425,82 @@ export function ExerciseEditor({
 
         {optionsKind && variant !== 'stress' && variant !== 'pair' && (
           <div className="space-y-1.5">
-            {options.map((o, i) => (
-              <div key={o.id} className="flex items-center gap-2">
-                <button
-                  type="button"
-                  aria-label="Mark as correct"
-                  onClick={() =>
-                    setCorrect((c) =>
-                      kind === 'choice'
-                        ? [o.id]
-                        : c.includes(o.id)
-                          ? c.filter((x) => x !== o.id)
-                          : [...c, o.id]
-                    )
-                  }
-                  className={
-                    correct.includes(o.id)
-                      ? 'h-6 w-6 shrink-0 rounded-full bg-accent'
-                      : 'h-6 w-6 shrink-0 rounded-full bg-surface-2'
-                  }
-                />
-                <Input
-                  // In the language being taught - a Spanish course's options
-                  // are Spanish, not Russian. Read with a fallback: every
-                  // option written before this was filed under `ru` whatever
-                  // the course, and opened as an empty box.
-                  value={o[target] ?? o.ru ?? o.en ?? o.es ?? ''}
-                  onChange={(e) =>
-                    setOptions((os) =>
-                      os.map((x, k) =>
-                        k === i ? { ...x, [target]: e.target.value } : x
-                      )
-                    )
-                  }
-                  placeholder={`Option ${i + 1}`}
-                />
-                <button
-                  type="button"
-                  aria-label="Remove option"
-                  onClick={() => {
-                    setOptions((os) => os.filter((_, k) => k !== i));
-                    // Or the question keeps a right answer nobody can pick.
-                    setCorrect((c) => c.filter((x) => x !== o.id));
-                  }}
-                  className="shrink-0 text-muted"
+            <p className="font-sans text-[11px] font-bold uppercase tracking-[0.12em] text-muted">
+              Options,{' '}
+              {kind === 'choice' ? 'tap the right one' : 'tap the right ones'}
+            </p>
+            {options.map((o, i) => {
+              const on = correct.includes(o.id);
+              return (
+                <div
+                  key={o.id}
+                  className={cn(
+                    'flex items-center gap-2.5 rounded border bg-surface px-3 py-1.5',
+                    on ? 'border-success/50' : 'border-fg/[0.07]'
+                  )}
                 >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
+                  <button
+                    type="button"
+                    aria-label="Mark as correct"
+                    aria-pressed={on}
+                    onClick={() =>
+                      setCorrect((c) =>
+                        kind === 'choice'
+                          ? [o.id]
+                          : c.includes(o.id)
+                            ? c.filter((x) => x !== o.id)
+                            : [...c, o.id]
+                      )
+                    }
+                    className={cn(
+                      'flex h-7 w-7 shrink-0 items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-gold',
+                      on
+                        ? 'bg-success text-accent-fg'
+                        : 'bg-surface-2 shadow-[inset_0_0_0_1.5px_rgba(201,162,75,0.5)]'
+                    )}
+                  >
+                    {on && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
+                  </button>
+                  <input
+                    // In the language being taught - a Spanish course's options
+                    // are Spanish, not Russian. Read with a fallback: every
+                    // option written before this was filed under `ru` whatever
+                    // the course, and opened as an empty box.
+                    value={o[target] ?? o.ru ?? o.en ?? o.es ?? ''}
+                    onChange={(e) =>
+                      setOptions((os) =>
+                        os.map((x, k) =>
+                          k === i ? { ...x, [target]: e.target.value } : x
+                        )
+                      )
+                    }
+                    lang={target}
+                    placeholder={`Option ${i + 1}`}
+                    aria-label={`Option ${i + 1}`}
+                    className="min-h-[36px] min-w-0 flex-1 bg-transparent font-display text-[17px] text-fg outline-none placeholder:font-sans placeholder:text-sm placeholder:text-muted/50"
+                  />
+                  <button
+                    type="button"
+                    aria-label="Remove option"
+                    onClick={() => {
+                      setOptions((os) => os.filter((_, k) => k !== i));
+                      // Or the question keeps a right answer nobody can pick.
+                      setCorrect((c) => c.filter((x) => x !== o.id));
+                    }}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded text-muted outline-none hover:text-fg focus-visible:ring-2 focus-visible:ring-gold"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              );
+            })}
             <Button
               size="xs"
-              variant="secondary"
+              variant="outline"
+              className="border-dashed"
               onClick={() => setOptions((os) => [...os, { id: nanoid(4) }])}
             >
-              <Plus size={13} /> Option
+              <Plus className="h-3.5 w-3.5" /> Option
             </Button>
           </div>
         )}
@@ -475,6 +512,7 @@ export function ExerciseEditor({
               hint="Put {{1}} and {{2}} where the gaps go"
             >
               <Textarea
+                tone="ink"
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 rows={2}
@@ -486,6 +524,7 @@ export function ExerciseEditor({
               hint={`One per gap with | - ${gapCount(text)} needed. Alternatives with /`}
             >
               <Input
+                tone="ink"
                 value={answerText}
                 onChange={(e) => setAnswerText(e.target.value)}
                 placeholder="живу / проживаю | Москве"
@@ -517,6 +556,7 @@ export function ExerciseEditor({
         {kind === 'order' && (
           <Field label="The sentence, in the right order">
             <Textarea
+              tone="ink"
               value={text}
               onChange={(e) => setText(e.target.value)}
               rows={2}
@@ -528,6 +568,7 @@ export function ExerciseEditor({
         {kind === 'match' && (
           <Field label="The pairs" hint="One per line: вода = water">
             <Textarea
+              tone="ink"
               value={text}
               onChange={(e) => setText(e.target.value)}
               rows={4}
@@ -553,6 +594,7 @@ export function ExerciseEditor({
             hint="More than one right way? Separate them with /"
           >
             <Input
+              tone="ink"
               value={answerText}
               onChange={(e) => setAnswerText(e.target.value)}
               placeholder="спасибо / благодарю"
@@ -560,26 +602,61 @@ export function ExerciseEditor({
           </Field>
         )}
 
-        <Field
-          label="Worth"
-          hint="Points out of the lesson - 1 unless it matters more"
-        >
-          <Input
-            value={points}
-            onChange={(e) => setPoints(e.target.value.replace(/[^\d]/g, ''))}
-            inputMode="numeric"
-            placeholder="1"
-            className="w-24"
-          />
-        </Field>
-
-        <Button
-          full
-          onClick={() => void submit()}
-          disabled={save.isPending || uploading}
-        >
-          {exercise ? 'Save' : 'Add the question'}
-        </Button>
+        <div className="flex items-center gap-2.5 pt-1">
+          <span className="font-sans text-[11px] font-bold uppercase tracking-[0.12em] text-muted">
+            Points
+          </span>
+          <span className="inline-flex items-center rounded-[10px] border border-fg/[0.08] bg-surface">
+            <button
+              type="button"
+              aria-label="Fewer points"
+              onClick={() =>
+                setPoints((p) => String(Math.max(1, (Number(p) || 1) - 1)))
+              }
+              className="flex h-9 w-9 items-center justify-center text-muted outline-none focus-visible:ring-2 focus-visible:ring-gold"
+            >
+              <Minus className="h-3.5 w-3.5" />
+            </button>
+            <span className="min-w-[1.5rem] text-center font-sans text-sm font-bold tabular-nums text-fg">
+              {points || '1'}
+            </span>
+            <button
+              type="button"
+              aria-label="More points"
+              onClick={() =>
+                setPoints((p) => String(Math.min(20, (Number(p) || 1) + 1)))
+              }
+              className="flex h-9 w-9 items-center justify-center text-gold outline-none focus-visible:ring-2 focus-visible:ring-gold"
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </button>
+          </span>
+          <span className="flex-1" />
+          <div className="hidden gap-2 md:flex">
+            <Button variant="secondary" size="sm" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => void submit()}
+              disabled={save.isPending || uploading}
+            >
+              {exercise ? 'Save question' : 'Add the question'}
+            </Button>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-2 md:hidden">
+          <Button variant="secondary" size="sm" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => void submit()}
+            disabled={save.isPending || uploading}
+          >
+            {exercise ? 'Save question' : 'Add the question'}
+          </Button>
+        </div>
       </div>
     </Dialog>
   );
