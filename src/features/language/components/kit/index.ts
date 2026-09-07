@@ -9,4 +9,5 @@ export { ExerciseCard } from './exercise-card';
 export type { Verdict } from './exercise-card';
 export { FeedbackBanner } from './feedback-banner';
 export type { FeedbackTone } from './feedback-banner';
-export { MarginNote } from './margin-note';
+export { MarginNote, MarginNoteEditor } from './margin-note';
+export { QuietNote } from './quiet-note';
