@@ -117,6 +117,7 @@ export default defineConfig({
     host: true,
     port: 5173,
     strictPort: true,
+    allowedHosts: ['workstation', 'workstation.tailb2b505.ts.net'],
   },
   preview: {
     host: true,
