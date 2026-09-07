@@ -398,8 +398,8 @@ export function HomeRoute() {
       style={{ '--i': 0 } as CSSProperties}
     >
       <Greeting />
-      <TogetherHero />
       <StreakWidget />
+      <TogetherHero />
       <LastPolaroidWidget />
       {classroom && <NextLessonWidget />}
       {classroom && <TeachingWidget />}
