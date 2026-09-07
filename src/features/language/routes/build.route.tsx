@@ -46,6 +46,8 @@ import {
 import { supportLangs, useLanguages } from '../lib/languages';
 import { homeworkFrom } from '../lib/homework';
 import { kindLabel } from '../lib/lesson-kinds';
+import { dueLabel } from '../lib/due';
+import { useToday } from '../lib/use-today';
 import { ExerciseEditor } from '../components/exercises/exercise-editor';
 import { MediaBlockEditor } from '../components/media-block-editor';
 import { LessonTree } from '../components/lesson-tree';
@@ -124,6 +126,7 @@ export function BuildRoute() {
   const duplicateLesson = useDuplicateLesson();
   const createHomework = useCreateHomework();
   const { native } = useLanguages();
+  const today = useToday();
 
   // The two languages this lesson can be EXPLAINED in - everything except the
   // one it teaches. A Russian lesson offers Español and English; a Spanish one
@@ -410,9 +413,9 @@ export function BuildRoute() {
           >
             {lesson.status === 'published' ? 'He has it' : 'Draft'}
           </button>
-          <span className="font-sans text-xs font-medium text-muted">
+          <span className="hidden font-sans text-xs font-medium text-muted md:inline">
             {kindLabel(lesson.kind)}
-            {lesson.due_on ? `, due ${lesson.due_on}` : ''}
+            {lesson.due_on ? `, due ${dueLabel(lesson.due_on, today)}` : ''}
           </span>
           <span className="flex-1" />
           {!desk && langs.length > 1 && (
