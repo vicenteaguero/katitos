@@ -356,10 +356,13 @@ begin
 end $$;
 
 -- ── the one habit that was always going to be here ─────────────────────────
+-- Titled in the past tense and without a day in it, because this line is read
+-- on a square from three weeks ago as often as it is read on today's card.
+-- "today" is added by whatever is showing today.
 -- Seeded in the migration and not only in seed.sql, because the cloud never
 -- runs the seed and a streak tracker with nothing to tick is not a feature.
 insert into public.habits (user_id, kind, title, emoji, schedule, slot, effective_from)
-select null, 'shared', 'We talked today', '📞', 'daily', 0, current_date
+select null, 'shared', 'We talked', '📞', 'daily', 0, current_date
 where not exists (
   select 1 from public.habits where kind = 'shared' and archived_at is null
 );
