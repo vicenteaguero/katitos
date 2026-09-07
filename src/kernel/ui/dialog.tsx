@@ -98,10 +98,13 @@ const focusables = (root: HTMLElement) =>
  * panel animates out instead of vanishing; and the on-screen keyboard is
  * handled without mistaking a pinch-zoom for one.
  *
- * Keyboard handling: the panel stays ANCHORED to the screen bottom (its
- * surface fills all the way down, behind the keyboard), and only the scrolling
- * BODY gets extra bottom padding equal to the keyboard height - so the content
- * lifts above the keyboard while the background still reaches the bottom edge.
+ * Keyboard handling: the whole panel is LIFTED to sit on top of the keyboard,
+ * so its bottom edge is the keyboard's top edge. It used to stay anchored to
+ * the screen bottom with only the scrolling body padded, and the panel's own
+ * surface running on behind the keyboard - which looks wrong the moment iOS
+ * shows a translucent one: the keyboard reads as having no background of its
+ * own and the sheet reads as cut off underneath it. Behind the keyboard now is
+ * the veil, which is the same thing that is behind everything else.
  *
  * Not the native <dialog>: `showModal()` fights exactly that keyboard
  * arithmetic on iOS, and its top layer cannot be told to sit under the toast.
@@ -306,6 +309,12 @@ export function Dialog({
         center && 'items-center p-4',
         auto && 'items-end md:items-center md:p-6'
       )}
+      // The keyboard's height comes off the bottom of the box the panel is laid
+      // out in, which is what puts the panel on top of it rather than under it.
+      style={{
+        paddingBottom: kb ? kb : undefined,
+        transition: 'padding-bottom 180ms ease',
+      }}
       // Anything beneath the top dialog is inert too.
       inert={!isTop && !closing}
       onKeyDown={trap}
@@ -331,6 +340,9 @@ export function Dialog({
           // Children animate too, and animationend bubbles.
           if (e.target === e.currentTarget) finishClosing();
         }}
+        // The class caps are written against the viewport; with the keyboard up
+        // the panel only owns what is left above it.
+        style={kb ? { maxHeight: `calc(94dvh - ${kb}px)` } : undefined}
         className={cn(
           'relative z-10 flex w-full flex-col overflow-x-hidden bg-surface-2 outline-none',
           closing ? 'curtain-exit' : 'curtain-reveal',
@@ -390,13 +402,13 @@ export function Dialog({
             </div>
           </div>
         </div>
-        {/* The body scrolls; its bottom padding grows with the keyboard so the
-            content clears it while the panel's surface still fills to the edge. */}
+        {/* The body scrolls. With the keyboard up the panel already ends above
+            it, so the home-indicator inset belongs to the keyboard, not here. */}
         <div
           className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-5 transition-[padding] duration-200"
           style={{
             paddingBottom: kb
-              ? `${kb + 20}px`
+              ? '1.25rem'
               : 'max(1.25rem, env(safe-area-inset-bottom))',
           }}
         >
