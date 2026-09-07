@@ -1,35 +1,31 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router';
-import { ClipboardPaste, Mic, Pencil, Plus, Tag, Trash2 } from 'lucide-react';
+import { useSearchParams } from 'react-router';
+import { ClipboardPaste, Mic, Plus, Tag, Trash2 } from 'lucide-react';
+import { cn } from '@kernel/lib';
 import { BUCKETS, useSignedUrls } from '@kernel/storage';
 import {
   Button,
+  Card,
   Checkbox,
-  Chip,
-  ChipRow,
   Desk,
   Dialog,
   Dropzone,
   Empty,
   Field,
-  FieldRow,
-  Fieldset,
   Input,
-  Kicker,
-  ROW_TOOL,
   SearchInput,
+  SectionLabel,
   Segmented,
-  Select,
   StatPill,
-  Textarea,
+  StickyFooter,
   toast,
-  TopBarButton,
+  TopBarPill,
   useDesk,
-  useTopBarAction,
-  type AudioClip,
+  useIsDesk,
+  useScreenChrome,
 } from '@kernel/ui';
 import {
-  useAddVocab,
+  useAllVocab,
   useDeleteVocab,
   useDeleteVocabMany,
   useRestoreVocab,
@@ -37,14 +33,14 @@ import {
   useTagVocabMany,
   useUpdateVocab,
   useVocab,
-  useWordUses,
 } from '../api/vocab';
-import { useLanguages, supportLangs } from '../lib/languages';
-import { AudioField, VocabRow, VoiceThread } from '../components/kit';
+import { useLanguages } from '../lib/languages';
+import { VocabRow } from '../components/kit';
 import { headword as headwordOf, termLangOf } from '../lib/pick';
 import { matchClips } from '../lib/match-clips';
 import { ImportWordsDialog } from '../components/import-words-dialog';
 import { RecordQueueDialog } from '../components/record-queue-dialog';
+import { WordEditor } from '../components/word-editor';
 import {
   LANG_LABELS,
   LANG_NATIVE_LABELS,
@@ -56,12 +52,13 @@ import {
  * Every word either of us has ever been taught, and a way to add the next one.
  *
  * Two dictionaries in one, because there are two languages being learned here.
- * The switch at the top says which one you are looking at - it used to say
- * EN / ES, which was not the language of the words at all but the language they
- * were explained in, and it left every Spanish word we own unreachable.
+ * The switch at the top says which one you are looking at. A row carries one
+ * control, her voice; everything else about a word is on its card. Select
+ * mode puts a box on every row and one bar at the bottom for the lot.
  */
 export function DictionaryRoute() {
   useDesk();
+  const desk = useIsDesk();
   const { native, learning } = useLanguages();
   // A push about a word lands on that word: `?word=<id>&lang=ru`.
   const [params] = useSearchParams();
@@ -82,24 +79,32 @@ export function DictionaryRoute() {
   }, [search]);
 
   const { data: words } = useVocab(lang, term);
+  // Both counts, for the switch.
+  const { data: learningAll } = useAllVocab(learning);
+  const { data: nativeAll } = useAllVocab(native);
 
   const [editing, setEditing] = useState<Vocab | 'new' | null>(null);
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  useTopBarAction(
-    <div className="flex items-center gap-1.5">
-      <Segmented
-        value={lang}
-        onChange={(v) => setLang(v as Lang)}
-        options={[
-          { value: learning, label: LANG_NATIVE_LABELS[learning] },
-          { value: native, label: LANG_NATIVE_LABELS[native] },
-        ]}
-      />
-      <TopBarButton label="New word" onClick={() => setEditing('new')}>
-        <Plus className="h-4 w-4" />
-      </TopBarButton>
-    </div>,
-    [lang, learning, native]
+  useScreenChrome(
+    {
+      title: 'Dictionary',
+      stage: 'house',
+      action: (
+        <TopBarPill
+          label={selecting ? 'Done selecting' : 'Select words'}
+          tone={selecting ? 'accent' : 'quiet'}
+          onClick={() => {
+            setSelecting((v) => !v);
+            setSelected(new Set());
+          }}
+        >
+          {selecting ? 'Done' : 'Select'}
+        </TopBarPill>
+      ),
+    },
+    [selecting]
   );
 
   const list = useMemo(() => words ?? [], [words]);
@@ -122,16 +127,20 @@ export function DictionaryRoute() {
 
   // Every tag on screen, as chips; tap one to narrow the list to it.
   const [tag, setTag] = useState<string | null>(null);
+  const [silentOnly, setSilentOnly] = useState(false);
   const tags = useMemo(() => {
     const count = new Map<string, number>();
     for (const w of list)
       for (const t of w.tags ?? []) count.set(t, (count.get(t) ?? 0) + 1);
     return [...count.entries()].sort((a, b) => b[1] - a[1]).map(([t]) => t);
   }, [list]);
-  const shown = tag ? list.filter((w) => (w.tags ?? []).includes(tag)) : list;
+  const silent = list.filter((w) => !w.audio_path).length;
+  const shown = list.filter(
+    (w) =>
+      (!tag || (w.tags ?? []).includes(tag)) && (!silentOnly || !w.audio_path)
+  );
 
   // Many at once: a box on every row, and one bar that acts on the lot.
-  const [selected, setSelected] = useState<Set<string>>(new Set());
   const toggleOne = (id: string) =>
     setSelected((s) => {
       const next = new Set(s);
@@ -141,9 +150,12 @@ export function DictionaryRoute() {
     });
   const chosen = shown.filter((w) => selected.has(w.id));
   const [bulkTag, setBulkTag] = useState('');
+  const [tagOpen, setTagOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
-  const [queueOpen, setQueueOpen] = useState(false);
-  const silent = list.filter((w) => !w.audio_path).length;
+  /** The words the recording queue should offer; null closed. */
+  const [queue, setQueue] = useState<Vocab[] | null>(null);
+  // Her voice belongs on the words of her language.
+  const canRecord = lang === native;
 
   // ONE signing request for every recording on the screen, rather than one per
   // word - this list can be five hundred long.
@@ -180,7 +192,7 @@ export function DictionaryRoute() {
     const missed = matches.length - hits.length;
     toast.success(
       `${hits.length} ${hits.length === 1 ? 'recording' : 'recordings'} attached${
-        missed ? ` - ${missed} not named after a word` : ''
+        missed ? `, ${missed} not named after a word` : ''
       }`
     );
   };
@@ -189,11 +201,13 @@ export function DictionaryRoute() {
   // recording and both people's review history with it, with no way back.
   const putAway = (w: Vocab) =>
     del.mutate(w, {
-      onSuccess: () =>
+      onSuccess: () => {
+        setEditing(null);
         toast.success('Word put away', {
           key: 'vocab-put-away',
           action: { label: 'Undo', onClick: () => restore.mutate(w.id) },
-        }),
+        });
+      },
     });
 
   const putAwayChosen = () => {
@@ -217,42 +231,54 @@ export function DictionaryRoute() {
     if (!add.length) return;
     tagMany.mutate(
       { words: chosen, tags: add },
-      { onSuccess: () => setBulkTag('') }
+      {
+        onSuccess: () => {
+          setBulkTag('');
+          setTagOpen(false);
+        },
+      }
     );
   };
 
   /** The desk's right pane: the ways in that are not one word at a time. */
   const inspector = (
-    <div className="space-y-3">
-      <div className="space-y-1.5">
-        <Kicker as="p">Many at once</Kicker>
+    <div className="space-y-4">
+      <Button full onClick={() => setEditing('new')}>
+        <Plus className="h-4 w-4" /> New word
+      </Button>
+      <div>
+        <SectionLabel as="p">Many at once</SectionLabel>
         <Button
-          size="xs"
+          full
+          size="sm"
           variant="secondary"
           onClick={() => setImportOpen(true)}
         >
-          <ClipboardPaste size={13} /> Paste a list
+          <ClipboardPaste className="h-4 w-4" /> Paste a list
         </Button>
-        <p className="font-sans text-xs text-muted">
+        <p className="mt-1.5 font-sans text-xs text-muted">
           One word a line, its meaning after a tab, dash or equals sign.
         </p>
       </div>
-      <div className="space-y-1.5">
-        <Kicker as="p">Your voice</Kicker>
-        <Button
-          size="xs"
-          variant="secondary"
-          disabled={!silent}
-          onClick={() => setQueueOpen(true)}
-        >
-          <Mic size={13} />{' '}
-          {silent ? `Record the ${silent} silent` : 'Every word has it'}
-        </Button>
-        <p className="font-sans text-xs text-muted">
-          Or drop sound files on the list - each goes to the word it is named
-          after.
-        </p>
-      </div>
+      {canRecord && (
+        <div>
+          <SectionLabel as="p">Your voice</SectionLabel>
+          <Button
+            full
+            size="sm"
+            variant="secondary"
+            disabled={!silent}
+            onClick={() => setQueue(list.filter((w) => !w.audio_path))}
+          >
+            <Mic className="h-4 w-4" />
+            {silent ? `Record the ${silent} silent` : 'Every word has it'}
+          </Button>
+          <p className="mt-1.5 font-sans text-xs text-muted">
+            Or drop sound files on the list: each goes to the word it is named
+            after.
+          </p>
+        </div>
+      )}
       <StatPill
         value={list.length}
         label={`in ${LANG_LABELS[lang]}`}
@@ -261,68 +287,74 @@ export function DictionaryRoute() {
     </div>
   );
 
+  const chip = (on: boolean) =>
+    cn(
+      'lift-press shrink-0 rounded-full px-3.5 py-1.5 font-sans text-[12.5px] font-semibold outline-none focus-visible:ring-2 focus-visible:ring-gold',
+      on
+        ? 'bg-accent text-accent-fg'
+        : 'border border-fg/[0.08] bg-surface text-muted'
+    );
+
   return (
     <Desk inspector={inspector}>
-      <div className="curtain-reveal space-y-2">
-        <div className="flex items-center gap-2">
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder="Look for a word"
-            className="min-w-0 flex-1"
-          />
-        </div>
+      <div className="curtain-reveal space-y-2.5 pb-2">
+        <Segmented
+          full
+          shape="bar"
+          label="Which dictionary"
+          value={lang}
+          onChange={(v) => setLang(v as Lang)}
+          options={[
+            {
+              value: learning,
+              label: `${LANG_NATIVE_LABELS[learning]}, ${learningAll?.length ?? 0}`,
+            },
+            {
+              value: native,
+              label: `${LANG_NATIVE_LABELS[native]}, ${nativeAll?.length ?? 0}`,
+            },
+          ]}
+        />
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Look for a word"
+        />
 
-        {tags.length > 0 && (
-          <ChipRow>
-            {tags.map((t) => (
-              <Chip
-                key={t}
-                selected={tag === t}
-                onClick={() => setTag(tag === t ? null : t)}
-              >
-                #{t}
-              </Chip>
-            ))}
-          </ChipRow>
-        )}
-
-        {chosen.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2 rounded-lg bg-surface-2 px-3 py-2">
-            <Kicker as="span">{chosen.length} chosen</Kicker>
-            <Input
-              value={bulkTag}
-              onChange={(e) => setBulkTag(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') tagChosen();
-              }}
-              placeholder="food, lesson 8"
-              aria-label="Tags to add"
-              className="h-8 w-40 text-sm"
-            />
-            <Button
-              size="xs"
-              variant="secondary"
-              disabled={!bulkTag.trim() || tagMany.isPending}
-              onClick={tagChosen}
-            >
-              <Tag size={13} /> Tag them
-            </Button>
-            <Button
-              size="xs"
-              variant="secondary"
-              disabled={delMany.isPending}
-              onClick={putAwayChosen}
-            >
-              <Trash2 size={13} /> Put them away
-            </Button>
+        {(tags.length > 0 || silent > 0) && (
+          <div className="-mx-[0.875rem] flex gap-1.5 overflow-x-auto px-[0.875rem] pb-0.5 [scrollbar-width:none]">
             <button
               type="button"
-              onClick={() => setSelected(new Set())}
-              className="ml-auto font-sans text-xs text-muted hover:text-fg"
+              aria-pressed={!tag && !silentOnly}
+              onClick={() => {
+                setTag(null);
+                setSilentOnly(false);
+              }}
+              className={chip(!tag && !silentOnly)}
             >
-              clear
+              All
             </button>
+            {tags.map((t) => (
+              <button
+                key={t}
+                type="button"
+                aria-pressed={tag === t}
+                onClick={() => setTag(tag === t ? null : t)}
+                className={chip(tag === t)}
+              >
+                #{t}
+              </button>
+            ))}
+            {silent > 0 && (
+              <button
+                type="button"
+                aria-pressed={silentOnly}
+                onClick={() => setSilentOnly((v) => !v)}
+                className={chip(silentOnly)}
+              >
+                no audio, {silent}
+              </button>
+            )}
           </div>
         )}
 
@@ -335,6 +367,11 @@ export function DictionaryRoute() {
                 ? undefined
                 : `Add the first word in ${LANG_LABELS[lang]}.`
             }
+            action={
+              term || tag ? undefined : (
+                <Button onClick={() => setEditing('new')}>New word</Button>
+              )
+            }
           />
         ) : (
           <Dropzone
@@ -344,51 +381,125 @@ export function DictionaryRoute() {
             disabled={update.isPending}
             onFiles={(files) => void dropClips(files)}
           >
-            <ul className="divide-y divide-fg/5 rounded-lg bg-surface px-3 md:columns-2 md:gap-4 md:[&>li]:break-inside-avoid">
-              {shown.map((w) => (
-                <VocabRow
-                  key={w.id}
-                  word={w}
-                  support={native}
-                  url={w.audio_path ? clips?.get(w.audio_path) : undefined}
-                  trailing={
-                    <>
-                      <Checkbox
-                        checked={selected.has(w.id)}
-                        onChange={() => toggleOne(w.id)}
-                        label={`Choose ${headwordOf(w)}`}
-                      />
-                      <button
-                        type="button"
-                        aria-label="Edit"
-                        onClick={() => setEditing(w)}
-                        className={ROW_TOOL}
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        aria-label="Put away"
-                        onClick={() => putAway(w)}
-                        className={ROW_TOOL}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </>
-                  }
-                />
-              ))}
-            </ul>
+            <Card tone="hairline" className="px-3.5 py-0">
+              <ul className="divide-y divide-fg/5">
+                {shown.map((w) => (
+                  <VocabRow
+                    key={w.id}
+                    word={w}
+                    support={native}
+                    url={w.audio_path ? clips?.get(w.audio_path) : undefined}
+                    onClick={
+                      selecting ? () => toggleOne(w.id) : () => setEditing(w)
+                    }
+                    onOpen={selecting ? undefined : () => setEditing(w)}
+                    onRecord={canRecord ? () => setQueue([w]) : undefined}
+                    leading={
+                      selecting ? (
+                        <Checkbox
+                          size="md"
+                          checked={selected.has(w.id)}
+                          onChange={() => toggleOne(w.id)}
+                          label={`Choose ${headwordOf(w)}`}
+                        />
+                      ) : undefined
+                    }
+                  />
+                ))}
+              </ul>
+            </Card>
           </Dropzone>
+        )}
+        {shown.length > 0 && (
+          <p className="px-1 font-sans text-[11.5px] font-medium text-muted/70">
+            Tap a word for its card: notes, tags, voice thread and edits live
+            there.
+          </p>
+        )}
+
+        {selecting && chosen.length > 0 ? (
+          <StickyFooter>
+            <div
+              className={cn(
+                'grid gap-2',
+                canRecord ? 'grid-cols-3' : 'grid-cols-2'
+              )}
+            >
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => setTagOpen(true)}
+              >
+                <Tag className="h-4 w-4" /> Tag {chosen.length}
+              </Button>
+              {canRecord && (
+                <Button
+                  variant="secondary"
+                  size="md"
+                  onClick={() => setQueue(chosen)}
+                >
+                  <Mic className="h-4 w-4" /> Record
+                </Button>
+              )}
+              <Button
+                variant="destructive"
+                size="md"
+                disabled={delMany.isPending}
+                onClick={putAwayChosen}
+              >
+                <Trash2 className="h-4 w-4" /> Put away
+              </Button>
+            </div>
+          </StickyFooter>
+        ) : (
+          !selecting &&
+          !desk && (
+            <StickyFooter>
+              <Button full onClick={() => setEditing('new')}>
+                <Plus className="h-4 w-4" /> New word
+              </Button>
+            </StickyFooter>
+          )
         )}
 
         {editing && (
-          <WordSheet
+          <WordEditor
             word={editing === 'new' ? null : editing}
             lang={editing === 'new' ? lang : termLangOf(editing)}
             onClose={() => setEditing(null)}
+            onPutAway={editing === 'new' ? undefined : () => putAway(editing)}
           />
         )}
+
+        <Dialog
+          placement="auto"
+          open={tagOpen}
+          onClose={() => setTagOpen(false)}
+          title={`Tag ${chosen.length} ${chosen.length === 1 ? 'word' : 'words'}`}
+          size="sm"
+        >
+          <div className="space-y-3">
+            <Field label="Tags" hint="Separate with commas">
+              <Input
+                tone="ink"
+                value={bulkTag}
+                onChange={(e) => setBulkTag(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') tagChosen();
+                }}
+                placeholder="food, lesson 8"
+                autoFocus
+              />
+            </Field>
+            <Button
+              full
+              disabled={!bulkTag.trim() || tagMany.isPending}
+              onClick={tagChosen}
+            >
+              Tag them
+            </Button>
+          </div>
+        </Dialog>
 
         <ImportWordsDialog
           open={importOpen}
@@ -398,235 +509,32 @@ export function DictionaryRoute() {
           existing={list}
         />
         <RecordQueueDialog
-          open={queueOpen}
-          onClose={() => setQueueOpen(false)}
-          words={list}
+          open={queue !== null}
+          onClose={() => setQueue(null)}
+          words={queue ?? []}
           support={native}
         />
+        {!desk && (
+          <div className="flex justify-center gap-4">
+            <button
+              type="button"
+              onClick={() => setImportOpen(true)}
+              className="inline-flex min-h-[44px] items-center gap-1.5 font-sans text-[12.5px] font-bold text-gold"
+            >
+              <ClipboardPaste className="h-3.5 w-3.5" /> Paste a list
+            </button>
+            {canRecord && silent > 0 && (
+              <button
+                type="button"
+                onClick={() => setQueue(list.filter((w) => !w.audio_path))}
+                className="inline-flex min-h-[44px] items-center gap-1.5 font-sans text-[12.5px] font-bold text-gold"
+              >
+                <Mic className="h-3.5 w-3.5" /> Record the {silent} silent
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </Desk>
-  );
-}
-
-function WordSheet({
-  word,
-  lang,
-  onClose,
-}: {
-  word: Vocab | null;
-  /** The language the headword is written in. */
-  lang: Lang;
-  onClose: () => void;
-}) {
-  const { native } = useLanguages();
-  const add = useAddVocab();
-  const update = useUpdateVocab();
-  const { data: uses } = useWordUses(word?.id);
-
-  // The three columns, always all three - which one is the word and which two
-  // are its translations is decided by `lang`, not by the column's name.
-  const [text, setText] = useState<Record<Lang, string>>({
-    ru: word?.ru ?? '',
-    en: word?.en ?? '',
-    es: word?.es ?? '',
-  });
-  const [translit, setTranslit] = useState(word?.transliteration ?? '');
-  const [stress, setStress] = useState(word?.stress ?? '');
-  const [tags, setTags] = useState((word?.tags ?? []).join(', '));
-  const [pos, setPos] = useState(word?.part_of_speech ?? '');
-  const [audio, setAudio] = useState<AudioClip | null>(null);
-
-  // A note is written FOR the person learning, so it is offered in the two
-  // languages that are not the word itself - for a Spanish word that includes
-  // Russian, which the old screen had no column for at all.
-  const noteLangs = useMemo(() => supportLangs(lang, native), [lang, native]);
-  const [noteLang, setNoteLang] = useState<Lang>(noteLangs[0]);
-  const [notes, setNotes] = useState<Record<Lang, string>>({
-    ru: word?.notes_ru ?? '',
-    en: word?.notes_en ?? '',
-    es: word?.notes_es ?? '',
-  });
-
-  const set = (l: Lang, v: string) => setText((t) => ({ ...t, [l]: v }));
-  const setNote = (l: Lang, v: string) => setNotes((n) => ({ ...n, [l]: v }));
-
-  const tagList = tags
-    .split(',')
-    .map((t) => t.trim())
-    .filter(Boolean);
-
-  const submit = () => {
-    if (!text[lang].trim()) return;
-    const shared = {
-      ru: text.ru || null,
-      en: text.en || null,
-      es: text.es || null,
-      transliteration: translit || null,
-      stress: lang === 'ru' ? stress || null : null,
-      tags: tagList,
-    };
-    if (word) {
-      update.mutate(
-        {
-          id: word.id,
-          patch: {
-            ...shared,
-            part_of_speech: pos || null,
-            notes_ru: notes.ru || null,
-            notes_en: notes.en || null,
-            notes_es: notes.es || null,
-          },
-          audio,
-          previousAudioPath: word.audio_path,
-        },
-        { onSuccess: onClose }
-      );
-    } else {
-      add.mutate(
-        {
-          termLang: lang,
-          ...shared,
-          partOfSpeech: pos || null,
-          notesRu: notes.ru,
-          notesEn: notes.en,
-          notesEs: notes.es,
-          audio,
-        },
-        { onSuccess: onClose }
-      );
-    }
-  };
-
-  return (
-    <Dialog
-      placement="auto"
-      open
-      onClose={onClose}
-      title={word ? 'This word' : `A new word in ${LANG_LABELS[lang]}`}
-      size="md"
-    >
-      <div className="space-y-3">
-        <Field label={`In ${LANG_LABELS[lang]}`}>
-          <Input
-            value={text[lang]}
-            onChange={(e) => set(lang, e.target.value)}
-            className="font-display text-lg"
-            autoFocus
-          />
-        </Field>
-        <FieldRow>
-          {noteLangs.map((l) => (
-            <Field key={l} label={LANG_NATIVE_LABELS[l]}>
-              <Input value={text[l]} onChange={(e) => set(l, e.target.value)} />
-            </Field>
-          ))}
-        </FieldRow>
-        {/* Russian stress is phonemic and unwritten; Spanish writes its own. */}
-        {lang === 'ru' && (
-          <FieldRow>
-            <Field label="Sounds like">
-              <Input
-                value={translit}
-                onChange={(e) => setTranslit(e.target.value)}
-                placeholder="spasibo"
-              />
-            </Field>
-            <Field
-              label="With the stress"
-              hint="Hold a vowel on the keys below"
-            >
-              <Input
-                value={stress}
-                onChange={(e) => setStress(e.target.value)}
-                className="font-display text-lg"
-                placeholder="спаси́бо"
-              />
-            </Field>
-          </FieldRow>
-        )}
-
-        {uses && uses.length > 0 && (
-          <p className="font-sans text-xs text-muted">
-            Taught in{' '}
-            {uses.map((u, i) => (
-              <span key={u.id}>
-                {i > 0 && ', '}
-                <Link
-                  to={`/language/lesson/${u.id}`}
-                  className="text-gold hover:underline"
-                >
-                  {u.title}
-                </Link>
-              </span>
-            ))}
-          </p>
-        )}
-        {/* The escape hatch for a word with no clean one-word translation -
-            успеть, тоска, давай, or "bacán". Written in whichever language the
-            person reading it actually thinks in. */}
-        <Field
-          label="What kind of word"
-          hint="Optional - it makes the drills smarter later"
-        >
-          <Select value={pos} onChange={(e) => setPos(e.target.value)}>
-            <option value="">-</option>
-            <option value="noun">noun</option>
-            <option value="verb">verb</option>
-            <option value="adjective">adjective</option>
-            <option value="adverb">adverb</option>
-            <option value="pronoun">pronoun</option>
-            <option value="preposition">preposition</option>
-            <option value="phrase">phrase</option>
-            <option value="other">other</option>
-          </Select>
-        </Field>
-        <Fieldset label="A note">
-          <div className="space-y-1.5">
-            <Segmented
-              value={noteLang}
-              onChange={(v) => setNoteLang(v as Lang)}
-              options={noteLangs.map((l) => ({
-                value: l,
-                label: LANG_NATIVE_LABELS[l],
-              }))}
-            />
-            <Textarea
-              value={notes[noteLang]}
-              onChange={(e) => setNote(noteLang, e.target.value)}
-              rows={2}
-              placeholder="used when you finally manage to…"
-            />
-          </div>
-        </Fieldset>
-
-        <Field label="Tags" hint="Separate with commas - food, verbs, lesson 8">
-          <Input value={tags} onChange={(e) => setTags(e.target.value)} />
-        </Field>
-
-        {/* Recording can be added or replaced at ANY time now - it used to be
-            only at creation, so fixing a bad clip meant deleting the word and
-            every review of it. */}
-        <AudioField
-          label="Say it"
-          currentPath={word?.audio_path}
-          onClip={setAudio}
-        />
-        {word && (
-          <Fieldset
-            label="Said aloud"
-            hint="Every recording of this word - tries and answers"
-          >
-            <VoiceThread word={word} />
-          </Fieldset>
-        )}
-        <Button
-          full
-          onClick={submit}
-          disabled={!text[lang].trim() || add.isPending || update.isPending}
-        >
-          {word ? 'Save' : 'Add to the dictionary'}
-        </Button>
-      </div>
-    </Dialog>
   );
 }
