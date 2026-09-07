@@ -33,8 +33,8 @@ import '../streak.css';
  * everything above them every day.
  */
 export function StreakRoute() {
-  useTableSync('habits', qk.streak.all());
-  useTableSync('habit_entries', qk.streak.all());
+  useTableSync('habits', qk.streak.habits());
+  useTableSync('habit_entries', qk.streak.allEntries());
 
   const userId = useUserId();
   const { self, partner } = usePartner();
@@ -137,6 +137,7 @@ export function StreakRoute() {
             done={view.isDone(shared.id, today)}
             interactive
             byName={callByName}
+            today
             onToggle={() =>
               toggle.mutate({
                 habitId: shared.id,
@@ -260,7 +261,7 @@ export function StreakRoute() {
               </span>
               <span className="shrink-0 font-sans text-[11px] text-muted">
                 {h.schedule === 'weekly'
-                  ? `${h.target_per_week}× a week`
+                  ? `${h.target_per_week} per week`
                   : 'every day'}
               </span>
               <Pencil
