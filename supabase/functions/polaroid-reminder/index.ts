@@ -22,7 +22,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
 import { corsHeaders, json } from '../_shared/cors.ts';
-import { endOfDay, localDay } from './zone.ts';
+import { endOfDay, localDay } from '../_shared/zone.ts';
 
 /** Fire the end-of-day nudge with this much of the day left. */
 const DAY_END_MS = 3 * 60 * 60 * 1000;
