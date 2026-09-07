@@ -10,6 +10,8 @@ export interface CallPillProps {
   onToggle?: () => void;
   /** Who ticked it, when it was the other one. */
   byName?: string | null;
+  /** Today's bar says "today"; a square in the calendar says no such thing. */
+  today?: boolean;
 }
 
 /**
@@ -41,7 +43,7 @@ export function CallPill({
       aria-pressed={done}
       aria-label={habit.title}
       className={cn(
-        'call-pill relative flex w-full items-center gap-2 rounded-full p-1 pr-3 text-left',
+        'call-pill relative flex w-full items-center gap-2.5 rounded-full p-1.5 pr-3.5 text-left',
         interactive ? 'lift-press' : 'cursor-default',
         done && 'call-pill--on'
       )}
@@ -59,7 +61,7 @@ export function CallPill({
       }
     >
       <span
-        className="grid h-7 w-7 shrink-0 place-items-center rounded-full"
+        className="grid h-9 w-9 shrink-0 place-items-center rounded-full"
         style={
           done
             ? { background: 'linear-gradient(150deg, #e4c36a, #9c7a2e)' }
@@ -67,8 +69,8 @@ export function CallPill({
         }
       >
         <Phone
-          className={cn('h-[14px] w-[14px]', done ? 'text-bg' : 'text-gold/70')}
-          strokeWidth={2.2}
+          className={cn('h-[18px] w-[18px]', done ? 'text-bg' : 'text-gold/80')}
+          strokeWidth={2.1}
         />
       </span>
 
@@ -76,8 +78,8 @@ export function CallPill({
           whole card jump, and this is the tap you make every day. */}
       <span
         className={cn(
-          'min-w-0 flex-1 truncate font-sans text-[13px] font-semibold',
-          done ? 'text-fg' : 'text-fg/70'
+          'min-w-0 flex-1 truncate font-sans text-[14.5px] font-semibold',
+          done ? 'text-fg' : 'text-fg/80'
         )}
       >
         {habit.title}
@@ -88,14 +90,14 @@ export function CallPill({
 
       <span
         className={cn(
-          'grid h-5 w-5 shrink-0 place-items-center rounded-full',
+          'grid h-6 w-6 shrink-0 place-items-center rounded-full',
           done ? 'hb-seal bg-success text-accent-fg' : 'text-transparent'
         )}
         style={
           done ? undefined : { border: '1.5px solid rgba(228,195,106,.3)' }
         }
       >
-        <Check className="h-3 w-3" strokeWidth={3.4} />
+        <Check className="h-3.5 w-3.5" strokeWidth={3.2} />
       </span>
     </button>
   );
