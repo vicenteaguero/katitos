@@ -6,7 +6,7 @@ import {
   useNavigate,
   useNavigationType,
 } from 'react-router';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, X } from 'lucide-react';
 import { useAuth } from '@kernel/auth';
 import { useEnsurePushSubscription } from '@kernel/push';
 import { cn } from '@kernel/lib';
@@ -15,7 +15,7 @@ import {
   KatitosMark,
   TopBarSlotProvider,
   useIsDesk,
-  useTopBarSlot,
+  useTopBarChrome,
 } from '@kernel/ui';
 import { PresenceTracker, PartnerStatusDot } from '@features/presence';
 import { ExchangeIcon } from '@features/currency';
@@ -48,15 +48,27 @@ function TopBar() {
   // "Back" earns its place only off the home tab - on home it'd go nowhere.
   const atHome = pathname === '/';
   const tunnel = useTunnelVisible();
-  const title = sectionTitle(pathname);
-  // A control the active route can inject (wall's edit pen, currency freshness…).
-  const action = useTopBarSlot();
+  // What the screen asked for: its own title and subtitle, a control on the
+  // right (wall's edit pen, currency freshness), an X instead of the arrow.
+  const chrome = useTopBarChrome();
+  const title = chrome.title ?? sectionTitle(pathname);
+  const action = chrome.action ?? null;
+  const close = chrome.back?.icon === 'close';
+  const goBack = () => {
+    if (chrome.back?.to) return navigate(chrome.back.to);
+    return window.history.length > 1 ? navigate(-1) : navigate('/');
+  };
 
   return (
-    <header className="z-20 shrink-0 bg-surface pt-[max(0.5rem,env(safe-area-inset-top))]">
+    <header
+      className={cn(
+        'z-20 shrink-0 pt-[max(0.5rem,env(safe-area-inset-top))]',
+        chrome.stage === 'house' ? 'bg-bg' : 'bg-surface'
+      )}
+    >
       {/* Minimal marquee: (back) - small mark + quiet section name - settings. */}
       <div className="flex items-center justify-between gap-2 px-[1.5rem] py-2">
-        <div className="flex min-w-0 items-center gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           {atHome ? (
             <Link to="/" aria-label="Home" className="flex items-center gap-2">
               <KatitosMark size={24} />
@@ -65,16 +77,25 @@ function TopBar() {
           ) : (
             <>
               <IconButton
-                label="Back"
-                className="h-9 w-9"
-                onClick={() =>
-                  window.history.length > 1 ? navigate(-1) : navigate('/')
-                }
+                label={close ? 'Close' : 'Back'}
+                className="h-10 w-10 shrink-0 rounded-[12px] border border-fg/[0.07] bg-surface"
+                onClick={goBack}
               >
-                <ArrowLeft className="h-5 w-5" />
+                {close ? (
+                  <X className="h-[18px] w-[18px]" />
+                ) : (
+                  <ArrowLeft className="h-[18px] w-[18px]" />
+                )}
               </IconButton>
-              <span className="truncate font-sans text-base font-semibold tracking-tight text-fg">
-                {title}
+              <span className="flex min-w-0 flex-col">
+                <span className="truncate font-sans text-base font-semibold tracking-tight text-fg">
+                  {title}
+                </span>
+                {chrome.subtitle && (
+                  <span className="truncate font-sans text-[11px] font-semibold leading-tight text-muted">
+                    {chrome.subtitle}
+                  </span>
+                )}
               </span>
             </>
           )}
@@ -137,6 +158,63 @@ function ScrollToTop() {
   return null;
 }
 
+/**
+ * The column the screen sits in: its ground and its tab bar, both of which a
+ * screen can ask to change. Split out so the chrome is read INSIDE the
+ * provider (AppShell renders the provider itself).
+ */
+function ShellColumn({ desk }: { desk: boolean }) {
+  const chrome = useTopBarChrome();
+  const immersive = !!chrome.hideNav;
+  const house = chrome.stage === 'house';
+  // Full-screen: nothing under the screen can be reached, and the CSS knows.
+  useEffect(() => {
+    document.documentElement.toggleAttribute('data-immersive', immersive);
+    return () => {
+      document.documentElement.removeAttribute('data-immersive');
+    };
+  }, [immersive]);
+
+  return (
+    <div
+      className={cn(
+        'mx-auto flex h-full max-w-shell overflow-hidden',
+        house ? 'bg-bg' : 'bg-surface',
+        desk ? 'flex-row' : 'flex-col'
+      )}
+    >
+      <PresenceTracker />
+      <ScrollToTop />
+      <CacheWarmer />
+      {desk && <SideRail />}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <TopBar />
+        <PendingPill />
+        <main
+          className={cn(
+            'min-h-0 flex-1 overflow-x-hidden [-webkit-overflow-scrolling:touch]',
+            desk
+              ? 'overflow-hidden'
+              : 'overflow-y-auto px-[0.875rem] pt-[0.44rem]',
+            // The tab bar owns the home-indicator inset; without it the
+            // screen has to.
+            !desk &&
+              (immersive
+                ? 'pb-[max(1rem,env(safe-area-inset-bottom))]'
+                : 'pb-4')
+          )}
+        >
+          <Outlet />
+        </main>
+      </div>
+      {!desk && !immersive && <BottomNav />}
+      <LoveBurst />
+      <NotificationPrompt />
+      <ChangelogModal />
+    </div>
+  );
+}
+
 export function AppShell() {
   const { status } = useAuth();
   // A desk route on a screen with room: the shell drops its cap, the tab bar
@@ -160,35 +238,7 @@ export function AppShell() {
       {status === 'anon' && <LoginScreen />}
       {status === 'authed' && (
         <TopBarSlotProvider>
-          <div
-            className={cn(
-              'mx-auto flex h-full max-w-shell overflow-hidden bg-surface',
-              desk ? 'flex-row' : 'flex-col'
-            )}
-          >
-            <PresenceTracker />
-            <ScrollToTop />
-            <CacheWarmer />
-            {desk && <SideRail />}
-            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-              <TopBar />
-              <PendingPill />
-              <main
-                className={cn(
-                  'min-h-0 flex-1 overflow-x-hidden [-webkit-overflow-scrolling:touch]',
-                  desk
-                    ? 'overflow-hidden'
-                    : 'overflow-y-auto px-[0.875rem] pb-4 pt-[0.44rem]'
-                )}
-              >
-                <Outlet />
-              </main>
-            </div>
-            {!desk && <BottomNav />}
-            <LoveBurst />
-            <NotificationPrompt />
-            <ChangelogModal />
-          </div>
+          <ShellColumn desk={desk} />
         </TopBarSlotProvider>
       )}
       <SplashScreen active={loading} />
