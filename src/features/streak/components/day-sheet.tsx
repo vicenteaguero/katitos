@@ -51,6 +51,7 @@ export function DaySheet({ day, view, onClose }: DaySheetProps) {
               habit={shared}
               done={view.isDone(shared.id, day)}
               interactive={open}
+              today={day === view.today}
               onToggle={() =>
                 toggle.mutate({
                   habitId: shared.id,
