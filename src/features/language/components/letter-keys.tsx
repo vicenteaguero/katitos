@@ -23,7 +23,7 @@ const ROWS: Partial<Record<Lang, readonly string[]>> = {
 };
 
 const KEY =
-  'lift-press h-9 min-w-0 flex-1 rounded-md bg-surface-2 font-sans text-sm text-fg active:bg-accent active:text-accent-fg';
+  'lift-press h-10 min-w-0 flex-1 rounded-[10px] border border-fg/[0.06] bg-surface-2 font-display text-base text-fg outline-none focus-visible:ring-2 focus-visible:ring-gold active:bg-accent active:text-accent-fg';
 
 export function LetterKeys({
   lang,
@@ -50,7 +50,7 @@ export function LetterKeys({
       {...roving.containerProps}
     >
       {rows.map((row, i) => (
-        <div key={i} className="flex justify-center gap-[3px]">
+        <div key={i} className="flex justify-center gap-1">
           {[...row].map((ch) => (
             <button
               key={ch}
@@ -64,12 +64,12 @@ export function LetterKeys({
           ))}
         </div>
       ))}
-      <div className="flex justify-center gap-[3px]">
+      <div className="flex justify-center gap-1">
         <button
           type="button"
           onClick={() => onKey(' ')}
           aria-label="Space"
-          className={`${KEY} flex-[4] text-muted`}
+          className={`${KEY} flex-[4] font-sans text-muted`}
           {...roving.itemProps(index++)}
         >
           ␣
