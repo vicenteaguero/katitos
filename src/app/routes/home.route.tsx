@@ -19,6 +19,7 @@ import { notifyPartner } from '@kernel/push';
 import { toast, useTopBarAction } from '@kernel/ui';
 import { usePartnerPresence } from '@features/presence';
 import { LastPolaroidWidget } from '@features/polaroid';
+import { StreakWidget } from '@features/streak';
 import { NextLessonWidget, TeachingWidget } from '@features/language';
 import { loveNoteFor, useLovePhrases } from '@features/love';
 import { sendLoveBurst } from '../shell/love-channel';
@@ -398,6 +399,7 @@ export function HomeRoute() {
     >
       <Greeting />
       <TogetherHero />
+      <StreakWidget />
       <LastPolaroidWidget />
       {classroom && <NextLessonWidget />}
       {classroom && <TeachingWidget />}
