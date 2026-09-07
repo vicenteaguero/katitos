@@ -37,6 +37,18 @@ export function slotsAllowed(streak: number): number {
   return SLOT_THRESHOLDS.filter((t) => streak >= t).length;
 }
 
+/**
+ * May you take another one on?
+ *
+ * What a streak buys is a NUMBER of habits, not a particular slot. Put the
+ * second of four away while the streak is down and you still hold three, so the
+ * next one you add is a fourth and costs a fourth's streak - otherwise emptying
+ * a slot would be a way of buying a cheap one back.
+ */
+export function canAddHabit(streak: number, live: number): boolean {
+  return live < slotsAllowed(streak);
+}
+
 /** Days of streak still to go before the next empty slot opens, or null at the top. */
 export function daysToNextSlot(
   streak: number,
@@ -184,7 +196,7 @@ export function weekVerdict(
 }
 
 export interface StreakResult {
-  /** Days banked. This is the number she reads. */
+  /** Days banked. This is the number on the card. */
   days: number;
   /** Days lived but held back by a week whose weekly habit is still short. */
   atStake: number;
