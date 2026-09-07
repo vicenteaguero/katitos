@@ -46,6 +46,8 @@ export default {
         // chips/inputs, lg (20px) = cards/toasts, xl (28px) = sheet tops.
         none: '0',
         DEFAULT: 'var(--radius)',
+        // The hairline card (16px): between a control and the old 20px card.
+        card: '16px',
         lg: 'var(--radius-lg)',
         xl: 'var(--radius-xl)',
       },
