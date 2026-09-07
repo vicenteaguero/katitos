@@ -74,7 +74,7 @@ export function VocabRow({
           type="button"
           onClick={onClick}
           aria-pressed={selected}
-          className="min-w-0 flex-1 rounded text-left outline-none focus-visible:ring-2 focus-visible:ring-gold"
+          className="min-h-[44px] min-w-0 flex-1 rounded text-left outline-none focus-visible:ring-2 focus-visible:ring-gold"
         >
           {text}
         </button>
