@@ -43,7 +43,7 @@ import { usePartnerProgress } from '../api/courses.queries';
 import { useAttemptsForMarking, useLesson } from '../api/lessons.queries';
 import { useMarkAttempt, useSaveProgress } from '../api/lessons.mutations';
 import { useLanguages } from '../lib/languages';
-import { speakAnswer } from '../lib/exercise-schema';
+import { speakAnswer, type ExerciseOption } from '../lib/exercise-schema';
 import { answerText } from '../lib/answer-text';
 import { exerciseKindLabel } from '../lib/exercise-kinds';
 import { verdictOf, weightedScore } from '../lib/marking';
@@ -55,11 +55,22 @@ import {
   MarginNoteEditor,
   QuietNote,
 } from '../components/kit';
-import type { Attempt, Exercise } from '../types';
+import type { Attempt, Exercise, Lang } from '../types';
 
 /** What he actually typed or picked, in a form worth reading. */
-function shown(answer: unknown): string {
+function shown(ex: Exercise, answer: unknown, target: Lang): string {
   if (answer === null || answer === undefined) return '-';
+  // A picked option is an id; say the option.
+  const options = (ex.payload as { options?: ExerciseOption[] } | null)
+    ?.options;
+  if (options && (ex.kind === 'choice' || ex.kind === 'multi')) {
+    const ids = Array.isArray(answer) ? (answer as string[]) : [answer];
+    const label = (id: unknown) => {
+      const o = options.find((x) => x.id === id);
+      return o ? o[target] || o.ru || o.es || o.en || String(id) : String(id);
+    };
+    return ids.map(label).join(', ');
+  }
   if (typeof answer === 'boolean') return answer ? 'said it' : 'not yet';
   if (Array.isArray(answer)) return answer.join(' ');
   if (typeof answer === 'object') {
@@ -477,7 +488,7 @@ function MarkLesson() {
           size="md"
           disabled={saveProgress.isPending || !partner}
           onClick={() => void giveBack('returned')}
-          className="rounded-[14px]"
+          className="whitespace-nowrap rounded-[14px] px-3 text-sm"
         >
           <RotateCcw className="h-4 w-4" /> Send back
         </Button>
@@ -486,7 +497,7 @@ function MarkLesson() {
         size="md"
         disabled={saveProgress.isPending || !partner}
         onClick={() => void giveBack('graded')}
-        className="rounded-[14px] border border-gold/25"
+        className="whitespace-nowrap rounded-[14px] border border-gold/25 px-3 text-sm"
       >
         {desk ? (
           <>
@@ -530,7 +541,9 @@ function MarkLesson() {
 
   return (
     <Desk inspector={inspector} inspectorOnPhone="hidden" narrow>
-      <div className="curtain-reveal space-y-2.5 pb-2">
+      <div
+        className={cn('curtain-reveal space-y-2.5', desk ? 'pb-2' : 'pb-24')}
+      >
         {desk && (
           <p className="font-sans text-xs font-medium text-muted">
             {right} of {answered.length} right so far
@@ -636,44 +649,48 @@ function MarkLesson() {
                     <span className="text-[#e0919b]">✗ auto</span>
                   )
                 }
-                className={cn(desk && 'flex gap-3 [&>*:first-child]:w-full')}
               >
-                <p className="font-sans text-sm font-semibold text-muted">
-                  {pick(ex, 'prompt', support) || 'Untitled question'}
-                </p>
-                {spoken ? (
-                  <div className="flex items-center gap-2.5">
-                    {spoken.audio && (
-                      <PlayButton
-                        bucket={BUCKETS.languageAudio}
-                        path={spoken.audio}
-                        size="sm"
-                        label="Hear him"
-                      />
+                <div className={cn(desk && 'flex items-center gap-3')}>
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <p className="font-sans text-sm font-semibold text-muted">
+                      {pick(ex, 'prompt', support) || 'Untitled question'}
+                    </p>
+                    {spoken ? (
+                      <div className="flex items-center gap-2.5">
+                        {spoken.audio && (
+                          <PlayButton
+                            bucket={BUCKETS.languageAudio}
+                            path={spoken.audio}
+                            size="sm"
+                            label="Hear him"
+                          />
+                        )}
+                        <span className="font-sans text-[13px] font-medium text-muted">
+                          {spoken.audio ? 'his recording, ' : ''}
+                          {spoken.ok === true
+                            ? 'he says he got it'
+                            : spoken.ok === false
+                              ? 'he says not yet'
+                              : 'he did not mark himself'}
+                        </span>
+                      </div>
+                    ) : (
+                      <p className="font-display text-[18px] leading-snug text-fg">
+                        {shown(ex, a.answer, lesson.targetLang)}
+                      </p>
                     )}
-                    <span className="font-sans text-[13px] font-medium text-muted">
-                      {spoken.audio ? 'his recording, ' : ''}
-                      {spoken.ok === true
-                        ? 'he says he got it'
-                        : spoken.ok === false
-                          ? 'he says not yet'
-                          : 'he did not mark himself'}
-                    </span>
+                    {!v.correct && ex.kind !== 'speak' && wanted && (
+                      <p className="font-sans text-xs font-medium text-muted">
+                        wanted:{' '}
+                        <span className="font-display text-[15px] text-fg">
+                          {wanted}
+                        </span>
+                      </p>
+                    )}
                   </div>
-                ) : (
-                  <p className="font-display text-[18px] leading-snug text-fg">
-                    {shown(a.answer)}
-                  </p>
-                )}
-                {!v.correct && ex.kind !== 'speak' && wanted && (
-                  <p className="font-sans text-xs font-medium text-muted">
-                    wanted:{' '}
-                    <span className="font-display text-[15px] text-fg">
-                      {wanted}
-                    </span>
-                  </p>
-                )}
-                {tools}
+                  {desk && tools}
+                </div>
+                {!desk && tools}
                 {noteFor === a.id ? (
                   <MarginNoteEditor
                     value={noteText}
