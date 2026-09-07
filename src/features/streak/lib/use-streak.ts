@@ -53,6 +53,8 @@ export interface StreakView {
   isOpen: (day: string) => boolean;
   isSettled: (day: string) => boolean;
   isDone: (habitId: string, day: string) => boolean;
+  /** Who put the tick there, for the shared habit where it could be either. */
+  tickedBy: (habitId: string, day: string) => string | null;
   statusOf: (day: string) => DayStatus;
   weekly: (habit: Habit, day: string) => WeeklyProgress;
   /** Days I can still tick and have not finished. Drives the amber nudge. */
@@ -91,6 +93,9 @@ export function useStreak(): StreakView {
     const all = habits ?? [];
     const done: DoneSet = new Set(
       (entries ?? []).map((e) => tickKey(e.habit_id, e.day))
+    );
+    const by = new Map(
+      (entries ?? []).map((e) => [tickKey(e.habit_id, e.day), e.marked_by])
     );
     const live = all.filter((h) => h.archived_at === null);
     const shared = live.find((h) => h.kind === 'shared') ?? null;
@@ -148,6 +153,8 @@ export function useStreak(): StreakView {
       isSettled: (day: string) =>
         isSettled(day, self?.timezone, partner?.timezone, now),
       isDone: (habitId: string, day: string) => done.has(tickKey(habitId, day)),
+      tickedBy: (habitId: string, day: string) =>
+        by.get(tickKey(habitId, day)) ?? null,
       statusOf,
       weekly: (habit: Habit, day: string) => weeklyProgress(habit, day, done),
       unfinished: open.filter((d) => !statusOf(d).complete),
