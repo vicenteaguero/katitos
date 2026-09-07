@@ -40,6 +40,8 @@ export const qk = {
     habits: () => ['streak', 'habits'] as const,
     /** One window of ticks. Separate from `habits` so a month change can't evict it. */
     entries: (from: string, to: string) => ['streak', 'entries', from, to] as const,
+    /** Every window at once - what a tick invalidates, and nothing else. */
+    allEntries: () => ['streak', 'entries'] as const,
   },
   chalkboard: {
     notes: () => ['chalkboard', 'notes'] as const,
