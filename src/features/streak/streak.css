@@ -1,0 +1,128 @@
+/**
+ * The streak, in motion.
+ *
+ * Two things earn animation here and nothing else does: the moment a habit is
+ * ticked, and the moment a day is finished by both of us. Everything else is
+ * still, because a screen you look at every single morning has to be calm.
+ *
+ * Transform and opacity only, and all of it stops under reduced motion.
+ */
+
+/* ── the tick ────────────────────────────────────────────────────────────── */
+.hb-dot {
+  transition:
+    transform 160ms var(--ease-settle),
+    background-color 200ms ease,
+    border-color 200ms ease,
+    box-shadow 220ms ease;
+}
+.hb-dot--on {
+  animation: hb-pop 420ms cubic-bezier(0.2, 1.35, 0.35, 1);
+}
+@keyframes hb-pop {
+  0% {
+    transform: scale(1);
+  }
+  38% {
+    transform: scale(1.16);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* The little gilt seal that drops onto a finished habit. */
+.hb-seal {
+  animation: hb-seal 320ms cubic-bezier(0.2, 1.4, 0.35, 1) both;
+}
+@keyframes hb-seal {
+  from {
+    opacity: 0;
+    transform: scale(0.2) rotate(-25deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+/* ── the day both of us finished ─────────────────────────────────────────── */
+/* One cream sweep across the card. It happens once, when the last tick lands. */
+.streak-foil::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(
+    105deg,
+    transparent 38%,
+    rgba(255, 241, 201, 0.34) 50%,
+    transparent 62%
+  );
+  background-size: 300% 100%;
+  mix-blend-mode: screen;
+  animation: streak-foil 1100ms ease-in-out both;
+}
+@keyframes streak-foil {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -150% 0;
+  }
+}
+
+/* The flame breathes only while the streak is alive. */
+.streak-flame {
+  animation: streak-flame 3.4s ease-in-out infinite;
+  transform-origin: 50% 85%;
+}
+@keyframes streak-flame {
+  0%,
+  100% {
+    transform: scale(1) rotate(-1.5deg);
+    opacity: 0.92;
+  }
+  50% {
+    transform: scale(1.06) rotate(1.5deg);
+    opacity: 1;
+  }
+}
+
+/* ── the calendar ────────────────────────────────────────────────────────── */
+/* The ribbon behind a run of days. Without it the month reads as confetti; with
+   it you can see the shape of the thing you are keeping. */
+.cal-cell {
+  position: relative;
+}
+.cal-run::before {
+  content: '';
+  position: absolute;
+  inset: 5px -5px;
+  z-index: 0;
+  background: rgba(228, 195, 106, 0.13);
+}
+.cal-run--start::before {
+  left: 2px;
+  border-top-left-radius: 999px;
+  border-bottom-left-radius: 999px;
+}
+.cal-run--end::before {
+  right: 2px;
+  border-top-right-radius: 999px;
+  border-bottom-right-radius: 999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hb-dot--on,
+  .hb-seal,
+  .streak-flame,
+  .streak-foil::after {
+    animation: none !important;
+  }
+  .streak-foil::after {
+    display: none;
+  }
+}
