@@ -20,51 +20,79 @@ export type GalleryValue = ExerciseKind | 'stress' | 'pair';
 
 const KINDS: {
   value: GalleryValue;
+  /** The word on the tile. */
+  short: string;
+  /** The full name, for a screen reader and the tooltip. */
   label: string;
   hint: string;
   icon: LucideIcon;
 }[] = [
   {
     value: 'choice',
+    short: 'Choose',
     label: 'Choose',
     hint: 'One right answer',
     icon: CircleDot,
   },
   {
     value: 'multi',
+    short: 'Several',
     label: 'Choose several',
     hint: 'All that apply',
     icon: CheckSquare,
   },
-  { value: 'type', label: 'Type it', hint: 'He writes it out', icon: PenLine },
+  {
+    value: 'type',
+    short: 'Type',
+    label: 'Type it',
+    hint: 'He writes it out',
+    icon: PenLine,
+  },
   {
     value: 'complete',
+    short: 'Gaps',
     label: 'Fill the gaps',
     hint: 'A sentence with holes',
     icon: TextCursorInput,
   },
   {
     value: 'order',
+    short: 'Order',
     label: 'Put in order',
     hint: 'Words to arrange',
     icon: ArrowDownUp,
   },
-  { value: 'match', label: 'Match', hint: 'Pairs to join', icon: Link2 },
+  {
+    value: 'match',
+    short: 'Match',
+    label: 'Match',
+    hint: 'Pairs to join',
+    icon: Link2,
+  },
   {
     value: 'listen',
+    short: 'Listen',
     label: 'Listen',
     hint: 'Your voice, his ear',
     icon: Headphones,
   },
-  { value: 'speak', label: 'Say it', hint: 'Out loud', icon: Mic },
+  {
+    value: 'speak',
+    short: 'Say it',
+    label: 'Say it',
+    hint: 'Out loud',
+    icon: Mic,
+  },
   {
     value: 'stress',
+    short: 'Stress',
     label: "Where's the stress?",
     hint: 'One word, every vowel',
     icon: Sparkles,
   },
   {
     value: 'pair',
+    short: 'Heard?',
     label: 'Which did you hear?',
     hint: 'Two lookalikes, your voice',
     icon: Ear,
@@ -72,11 +100,10 @@ const KINDS: {
 ];
 
 /**
- * The eight kinds of question, as a gallery - a picture and a line each,
- * instead of eight words split across two rows of a pill.
- *
- * An editorial wrap, not a grid of equal squares; one tab stop, arrows to
- * move, `aria-checked` on the one that is on.
+ * The ten shapes of a question, as a fixed grid of tiles: an icon over a
+ * word each, five to a row on a desk and three on a phone, so nothing wraps
+ * into a ragged row. One tab stop, arrows to move, `aria-checked` on the
+ * one that is on.
  */
 export function ExerciseKindGallery({
   value,
@@ -92,7 +119,7 @@ export function ExerciseKindGallery({
     <div
       role="radiogroup"
       aria-label="Kind of question"
-      className={cn('flex flex-wrap gap-1.5', className)}
+      className={cn('grid grid-cols-3 gap-1.5 md:grid-cols-5', className)}
       {...roving.containerProps}
     >
       {KINDS.map((k, i) => {
@@ -103,34 +130,19 @@ export function ExerciseKindGallery({
             type="button"
             role="radio"
             aria-checked={on}
+            aria-label={k.label}
+            title={`${k.label}: ${k.hint}`}
             onClick={() => onChange(k.value)}
             className={cn(
-              'lift-press flex min-w-[8.5rem] flex-1 items-center gap-2 rounded-lg px-3 py-2 text-left transition',
+              'lift-press flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-[11px] border px-1 py-2 font-sans text-[10.5px] font-semibold outline-none transition focus-visible:ring-2 focus-visible:ring-gold',
               on
-                ? 'bg-accent text-accent-fg'
-                : 'bg-surface-2 text-fg hover:brightness-110'
+                ? 'border-accent bg-accent text-accent-fg'
+                : 'border-fg/[0.07] bg-surface text-muted hover:text-fg'
             )}
             {...roving.itemProps(i)}
           >
-            <k.icon
-              className={cn(
-                'h-4 w-4 shrink-0',
-                on ? 'text-accent-fg' : 'text-gold'
-              )}
-            />
-            <span className="min-w-0">
-              <span className="block font-sans text-sm font-semibold">
-                {k.label}
-              </span>
-              <span
-                className={cn(
-                  'block text-[0.68rem]',
-                  on ? 'text-accent-fg/80' : 'text-muted'
-                )}
-              >
-                {k.hint}
-              </span>
-            </span>
+            <k.icon className="h-[15px] w-[15px]" />
+            {k.short}
           </button>
         );
       })}
