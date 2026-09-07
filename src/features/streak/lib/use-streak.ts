@@ -156,7 +156,15 @@ export function useStreak(): StreakView {
       tickedBy: (habitId: string, day: string) =>
         by.get(tickKey(habitId, day)) ?? null,
       statusOf,
-      weekly: (habit: Habit, day: string) => weeklyProgress(habit, day, done),
+      weekly: (habit: Habit, day: string) =>
+        weeklyProgress(
+          habit,
+          day,
+          done,
+          self?.timezone,
+          partner?.timezone,
+          now
+        ),
       unfinished: open.filter((d) => !statusOf(d).complete),
       since: earliest,
     };
