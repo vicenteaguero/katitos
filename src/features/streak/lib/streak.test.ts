@@ -4,6 +4,7 @@ import {
   activeOn,
   canAddHabit,
   computeStreak,
+  weekVerdict,
   dayStatus,
   daysToNextSlot,
   longestStreak,
@@ -24,6 +25,7 @@ function habit(over: Partial<HabitLike> & { id: string }): HabitLike {
   return {
     user_id: null,
     kind: 'personal',
+    title: over.id,
     schedule: 'daily',
     target_per_week: 1,
     effective_from: '2026-08-01',
@@ -173,6 +175,58 @@ describe('a habit done three times a week', () => {
       target: 3,
       met: false,
     });
+  });
+
+  it('is a free week when the habit did not span it', () => {
+    // Promised on a Saturday: only two days of that week ever existed, so
+    // asking for three would be asking for the impossible.
+    const saturday = habit({
+      id: 'gym',
+      user_id: V,
+      schedule: 'weekly',
+      target_per_week: 3,
+      effective_from: '2026-09-12',
+    });
+    const done = ticks(range('2026-09-01', '2026-09-08'));
+    const r = computeStreak({ ...base, habits: [...DAILY, saturday], done });
+    expect(r.days).toBe(8);
+    expect(r.atStake).toBe(0);
+  });
+
+  it('says the week is lost the moment it cannot be reached', () => {
+    // Saturday evening, none of three done, and only Saturday and Sunday left.
+    const SAT = DateTime.fromISO('2026-09-12T20:00:00Z');
+    const done = ticks(range('2026-09-01', '2026-09-11'));
+    expect(
+      weeklyProgress(GYM, '2026-09-12', done, SCL, NSK, SAT)
+    ).toMatchObject({
+      done: 0,
+      left: 2,
+      possible: false,
+    });
+    expect(weekVerdict('2026-09-12', habits, done, SCL, NSK, SAT)).toBe(
+      'failed'
+    );
+    expect(
+      computeStreak({ ...base, habits, done, furthest: '2026-09-13', now: SAT })
+        .days
+    ).toBe(0);
+  });
+
+  it('is still alive while the count is still reachable', () => {
+    // Friday, one of three done, three days left: short, not lost.
+    const FRI = DateTime.fromISO('2026-09-11T20:00:00Z');
+    const done = ticks(range('2026-09-01', '2026-09-10'));
+    done.add(tickKey('gym', '2026-09-09'));
+    expect(
+      weeklyProgress(GYM, '2026-09-11', done, SCL, NSK, FRI)
+    ).toMatchObject({
+      done: 1,
+      possible: true,
+    });
+    expect(weekVerdict('2026-09-11', habits, done, SCL, NSK, FRI)).toBe(
+      'pending'
+    );
   });
 
   it('never breaks a single day', () => {
