@@ -54,25 +54,35 @@ export function AudioField({
   return (
     <Fieldset label={label} hint={hint}>
       <div className="space-y-2">
-        {currentPath && (
-          <PlayButton
-            bucket={BUCKETS.languageAudio}
-            path={currentPath}
-            size="sm"
-            label="What is on it now"
+        <div className="flex items-center gap-2.5">
+          <AudioRecorder
+            label="Say it"
+            onRecorded={(clip) => {
+              setPicked(null);
+              onClip(clip);
+            }}
+            resetKey={resetKey}
+            className="min-w-0 flex-1"
           />
-        )}
-        <AudioRecorder
-          onRecorded={(clip) => {
-            setPicked(null);
-            onClip(clip);
-          }}
-          resetKey={resetKey}
-        />
+          {currentPath && (
+            <>
+              <PlayButton
+                bucket={BUCKETS.languageAudio}
+                path={currentPath}
+                size="sm"
+                label="What is on it now"
+                className="h-9 w-9"
+              />
+              <span className="hidden font-sans text-[11.5px] font-medium text-muted sm:inline">
+                current recording, replace any time
+              </span>
+            </>
+          )}
+        </div>
         <Dropzone
           accept="audio/*,.m4a,.mp3,.ogg,.webm,.wav"
           onFiles={fromFile}
-          className="flex items-center gap-2 rounded-lg bg-surface-2 px-3 py-2 font-sans text-xs text-muted"
+          className="flex min-h-[36px] items-center gap-2 rounded border border-dashed border-fg/[0.12] px-3 py-1.5 font-sans text-xs text-muted"
         >
           <Upload className="h-3.5 w-3.5 shrink-0" />
           <span className="min-w-0 truncate">
