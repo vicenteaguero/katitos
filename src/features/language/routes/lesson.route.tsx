@@ -74,7 +74,11 @@ export function LessonRoute() {
   const [lookup, setLookup] = useState<string | null>(null);
   /** Where she is in the lesson, when she is teaching it live. */
   const [live, setLive] = useState<SlideMessage | null>(null);
-  useClassChannel(lessonId ?? undefined, setLive);
+  const { ack } = useClassChannel(lessonId ?? undefined, setLive);
+  // So she can see he is with her: every slide that lands is answered.
+  useEffect(() => {
+    if (live) ack({ index: live.index });
+  }, [live, ack]);
 
   // ONE signing request for every recording on the page.
   const { data: clips } = useSignedUrls(
