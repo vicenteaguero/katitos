@@ -9,6 +9,8 @@
  */
 
 /* ── the tick ────────────────────────────────────────────────────────────── */
+/* The press overshoots its own box and the seal hangs off the corner, so the
+   circle has to sit above whatever is beside it while it is lit. */
 .hb-dot {
   transition:
     transform 160ms var(--ease-settle),
@@ -18,6 +20,22 @@
 }
 .hb-dot--on {
   animation: hb-pop 420ms cubic-bezier(0.2, 1.35, 0.35, 1);
+}
+
+/* The call bar, when we talked. Same pop, wider body. */
+.call-pill--on {
+  animation: call-pop 420ms cubic-bezier(0.2, 1.25, 0.35, 1);
+}
+@keyframes call-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.022);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 @keyframes hb-pop {
   0% {
@@ -116,6 +134,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .call-pill--on,
   .hb-dot--on,
   .hb-seal,
   .streak-flame,
