@@ -18,9 +18,9 @@ export function ListSkeleton({
 }) {
   return (
     <div className={cn('space-y-2', className)} aria-busy="true">
-      {header && <Skeleton className="h-7 w-2/3" rounded="md" />}
+      {header && <Skeleton className="h-4 w-1/3" rounded="md" />}
       {Array.from({ length: rows }, (_, i) => (
-        <Skeleton key={i} className="h-12 w-full" rounded="lg" />
+        <Skeleton key={i} className="h-16 w-full" rounded="lg" />
       ))}
     </div>
   );
