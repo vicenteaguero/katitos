@@ -556,10 +556,12 @@ function StudyCard({
               <PlayButton
                 bucket={BUCKETS.languageAudio}
                 path={card.audio_path}
-                size="md"
+                variant="pill"
                 label="Hear her"
                 autoPlayKey={autoPlay ? card.id : undefined}
-              />
+              >
+                Hear her
+              </PlayButton>
             </div>
           )}
         </div>
