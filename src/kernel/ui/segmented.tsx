@@ -22,6 +22,7 @@ export function Segmented<T extends string>({
   className,
   full = false,
   label,
+  shape = 'pill',
 }: {
   options: SegmentOption<T>[];
   value: T;
@@ -31,7 +32,10 @@ export function Segmented<T extends string>({
   full?: boolean;
   /** What the group is, for a screen reader. */
   label?: string;
+  /** A rounded pill, or the squarer bar that sits in a page. */
+  shape?: 'pill' | 'bar';
 }) {
+  const bar = shape === 'bar';
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
   const index = Math.max(
     0,
@@ -72,7 +76,9 @@ export function Segmented<T extends string>({
       aria-label={label}
       onKeyDown={onKeyDown}
       className={cn(
-        'rounded-full bg-surface-2 p-1',
+        bar
+          ? 'rounded border border-fg/[0.07] bg-surface p-[3px]'
+          : 'rounded-full bg-surface-2 p-1',
         full ? 'flex w-full' : 'inline-flex',
         className
       )}
@@ -89,7 +95,8 @@ export function Segmented<T extends string>({
           tabIndex={i === index ? 0 : -1}
           onClick={() => onChange(o.value)}
           className={cn(
-            'rounded-full py-2 font-sans text-sm font-semibold tracking-[0.02em] outline-none transition lift-press focus-visible:ring-2 focus-visible:ring-gold',
+            'py-2 font-sans text-sm font-semibold tracking-[0.02em] outline-none transition lift-press focus-visible:ring-2 focus-visible:ring-gold',
+            bar ? 'rounded-[9px]' : 'rounded-full',
             full ? 'flex-1 px-2 text-center' : 'px-5',
             o.value === value
               ? 'bg-accent text-accent-fg'
