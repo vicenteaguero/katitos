@@ -59,7 +59,7 @@ export function ExerciseView(props: ExerciseViewProps) {
   return (
     <div className="space-y-2">
       {prompt && (
-        <p className="font-sans text-sm font-semibold text-fg">{prompt}</p>
+        <p className="font-sans text-[15px] font-semibold text-fg">{prompt}</p>
       )}
       <Body {...props} />
     </div>
@@ -134,6 +134,7 @@ function ChoiceView({
             )}
             disabled={disabled}
             onClick={() => onChange(o.id)}
+            className="font-display text-[16.5px]"
           >
             {optionLabel(o, support)}
           </OptionButton>
@@ -176,6 +177,7 @@ function MultiView({
                 picked ? chosen.filter((id) => id !== o.id) : [...chosen, o.id]
               )
             }
+            className="font-display text-[16.5px]"
           >
             {optionLabel(o, support)}
           </OptionButton>
@@ -184,6 +186,13 @@ function MultiView({
     </div>
   );
 }
+
+/** "Write it", in the language of the answer. */
+const TYPE_PLACEHOLDER: Record<Lang, string> = {
+  ru: 'Пиши по-русски…',
+  es: 'Escribe en español…',
+  en: 'Write it in English…',
+};
 
 /** Typing Russian on a Latin keyboard is impossible, so the keys come along. */
 function TypeView({
@@ -196,18 +205,30 @@ function TypeView({
 }: ExerciseViewProps) {
   const text = typeof value === 'string' ? value : '';
   // `||`, not `??`: an empty stored placeholder should still show the hint.
+  // The hint is in the language he types in, so the field says which
+  // keyboard it wants before he has typed a letter.
   const placeholder =
-    (exercise.payload as { placeholder?: string })?.placeholder || 'Write it';
+    (exercise.payload as { placeholder?: string })?.placeholder ||
+    TYPE_PLACEHOLDER[target];
+  const marked = !!grade;
   return (
     <div className="space-y-2">
       <Input
+        tone="ink"
+        serif
         value={text}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
+        aria-label="Write it"
         disabled={disabled}
         autoComplete="off"
         autoCapitalize="off"
         spellCheck={false}
+        lang={target}
+        className={cn(
+          marked && grade.correct && 'border-success/55',
+          marked && !grade.correct && 'border-danger/50'
+        )}
       />
       {!disabled && (
         <LetterKeys
@@ -217,14 +238,14 @@ function TypeView({
         />
       )}
       {grade && !grade.correct && (
-        <p className="font-sans text-xs text-muted">
+        <p className="font-sans text-xs font-medium text-muted">
           {/* There may be several right forms; showing `[object Object]` or a
               comma-mangled array would be worse than showing nothing. */}
           {acceptedForms(exercise.answer).length > 1
             ? 'It could be '
             : 'The answer was '}
-          <span className="text-fg">
-            {acceptedForms(exercise.answer).join(' - ')}
+          <span className="font-display text-[15px] text-fg">
+            {acceptedForms(exercise.answer).join(', ')}
           </span>
         </p>
       )}
