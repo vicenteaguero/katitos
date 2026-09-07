@@ -296,7 +296,7 @@ export function DictionaryRoute() {
     );
 
   return (
-    <Desk inspector={inspector}>
+    <Desk inspector={inspector} inspectorOnPhone="hidden">
       <div className="curtain-reveal space-y-2.5 pb-2">
         <Segmented
           full
