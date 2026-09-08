@@ -48,11 +48,12 @@ password `katitos123`).
 Run by hand, not wired to a script - each documents its own invocation at the
 top of the file:
 
-| Tool                    | What                                                   |
-| ----------------------- | ------------------------------------------------------ |
-| `scripts/seed-demo.mjs` | Fill a local stack with demo rows                      |
-| `scripts/gen-icons.mjs` | Regenerate the PWA icon set in `public/icons/`         |
-| `scripts/gen-vapid.mjs` | Mint a VAPID keypair for web push (see `.env.example`) |
+| Tool                     | What                                                            |
+| ------------------------ | --------------------------------------------------------------- |
+| `scripts/seed-demo.mjs`  | Fill a local stack with demo rows                               |
+| `scripts/gen-icons.mjs`  | Regenerate the PWA icon set in `public/icons/`                  |
+| `scripts/gen-splash.mjs` | Regenerate the iOS launch images from the app's own boot screen |
+| `scripts/gen-vapid.mjs`  | Mint a VAPID keypair for web push (see `.env.example`)          |
 
 ## Docs
 
