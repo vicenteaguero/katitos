@@ -34,23 +34,23 @@ export interface ChangelogEntry {
 /** Every release ever written, newest first - held ones included. */
 export const ALL_ENTRIES: ChangelogEntry[] = [
   {
-    // Held while he tests it from his phone. Deleting the `held` line is the
-    // whole announcement.
-    held: true,
+    // Shipped 7 September 2026, and announced the same day: every line is
+    // something she can do the moment she reads it.
     title: 'One streak, the two of us',
     date: '2026-09-07',
     lines: [
       'Your home screen has a flame on it now, and a number: how many days in a row the two of us have kept everything we promised.',
       'Under it there are round buttons, one for each thing you said you would do today. Press one and it fills with gold and takes a tick. Press it again if it was a mistake.',
-      'The first button is ours: did we talk today. Either of us can press it, and the other one gets a little note that you did.',
+      'Across the top there is one wide bar that is ours: did we talk today. Either of us can mark it, and the other one gets a little note that you did.',
       'You choose your own habits and he chooses his, but the streak is one thing. If either of us misses a day, we both start again from nothing.',
       'You begin with one habit. Seven days in a row and you can add a second, fourteen and a third, twenty-one and a fourth.',
       'Forgetting to press a button is not the same as not doing the thing, so yesterday stays open. While it is still Sunday for him you can go back and tick your Saturday.',
       'When yesterday is still waiting for you, a small amber line appears on your home screen so it cannot slip past.',
       'Tap the flame for the whole picture: today, the month laid out as a calendar, and how far you are from your next habit.',
-      'In the calendar a full gold circle is a day both of us finished, a half circle is a day only one of us did, and the days of one run are joined by a soft gold ribbon.',
+      'In the calendar a full gold circle is a day both of us finished, a circle lit down one side is a day only one of us did, and the days of one run are joined by a soft gold ribbon.',
       'Tap any square to see what happened that day, and to put it right if it is still open.',
       'A habit does not have to be every day. Ask for it three times a week and it counts up, one, two, three, without putting anything at risk in the middle of the week.',
+      'Every habit gets a face: pick one of the small ones offered, or tap the big square and type any emoji you like.',
       'A habit you add starts counting tomorrow, so adding one late at night can never cost us the streak.',
       'When your day is nearly over and something of yours is still not ticked, your phone will tell you while there is still time.',
     ],
