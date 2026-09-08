@@ -111,15 +111,17 @@ export function HabitButton({
       </button>
 
       {labelled && (
-        <span
-          className="w-full overflow-hidden text-center font-sans text-[10px] font-medium leading-tight text-muted"
-          style={{
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-          }}
-        >
-          {weekly && !done ? `${weekly.done}/${weekly.target}` : habit.title}
+        <span className="w-full text-center leading-tight">
+          <span className="block truncate font-sans text-[10px] font-medium text-muted">
+            {habit.title}
+          </span>
+          {/* The count goes under the name, not instead of it: a row of
+              fractions tells you nothing about what you promised. */}
+          {weekly && (
+            <span className="block font-sans text-[9px] font-semibold tabular-nums text-gold/80">
+              {weekly.done}/{weekly.target}
+            </span>
+          )}
         </span>
       )}
     </div>
