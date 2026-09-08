@@ -176,8 +176,6 @@ function DayDot({
 }) {
   const n = Number(day.slice(8));
   const half = state === 'partial';
-  // Split circle: his side and hers, so a broken day says whose it was without
-  // anybody having to open it.
   const mineIn =
     status.mine.required > 0 && status.mine.done === status.mine.required;
   const theirsIn =
@@ -187,26 +185,25 @@ function DayDot({
     <span className="relative z-[1] flex flex-col items-center">
       <span
         className={cn(
-          'grid h-[26px] w-[26px] place-items-center rounded-full font-sans text-[11px] tabular-nums',
+          'relative grid h-[26px] w-[26px] place-items-center rounded-full font-sans text-[11px] tabular-nums',
           state === 'complete' && 'font-bold text-bg',
-          state !== 'complete' && (inMonth ? 'text-fg/70' : 'text-fg/25')
+          state === 'before' && 'text-fg/20',
+          state !== 'complete' &&
+            state !== 'before' &&
+            (inMonth ? 'text-fg/80' : 'text-fg/25')
         )}
         style={
           state === 'complete'
             ? { background: 'linear-gradient(150deg, #e4c36a, #b8912f)' }
-            : half
-              ? {
-                  background: `linear-gradient(90deg, ${mineIn ? MINE : 'transparent'} 50%, ${theirsIn ? THEIRS : 'transparent'} 50%)`,
-                  border: '1px solid rgba(228,195,106,.2)',
-                }
-              : state === 'open'
-                ? { border: '1.5px dashed rgba(228,195,106,.55)' }
-                : state === 'missed'
-                  ? { border: '1px solid rgba(251,245,240,.09)' }
-                  : undefined
+            : state === 'open'
+              ? { border: '1.5px dashed rgba(228,195,106,.55)' }
+              : state === 'missed'
+                ? { border: '1px solid rgba(251,245,240,.09)' }
+                : undefined
         }
       >
-        {n}
+        {half && <SplitRing mine={mineIn} theirs={theirsIn} />}
+        <span className="relative">{n}</span>
       </span>
       <span
         aria-hidden="true"
@@ -216,5 +213,41 @@ function DayDot({
         )}
       />
     </span>
+  );
+}
+
+/**
+ * A day one of us finished and the other did not.
+ *
+ * Drawn as two half arcs around the number rather than as two solid halves
+ * behind it: filling the disc put warm snow on top of gilt, and the date was
+ * the one thing on the square you could not read.
+ */
+function SplitRing({ mine, theirs }: { mine: boolean; theirs: boolean }) {
+  const TRACK = 'rgba(251,245,240,.1)';
+  return (
+    <svg
+      width="26"
+      height="26"
+      viewBox="0 0 26 26"
+      className="absolute inset-0"
+      aria-hidden="true"
+    >
+      {/* Left is his side, right is hers - the same order as everywhere else. */}
+      <path
+        d="M 13 1.25 A 11.75 11.75 0 0 0 13 24.75"
+        fill="none"
+        stroke={mine ? MINE : TRACK}
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M 13 1.25 A 11.75 11.75 0 0 1 13 24.75"
+        fill="none"
+        stroke={theirs ? THEIRS : TRACK}
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
