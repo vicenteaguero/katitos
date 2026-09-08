@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { DateTime } from 'luxon';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@kernel/lib';
@@ -162,6 +163,38 @@ function MonthArrow({
 const MINE = '#e4c36a';
 const THEIRS = '#b5633a';
 
+/** How every state is painted, in one place. The legend reads from here too. */
+function dotStyle(state: DayState): CSSProperties | undefined {
+  switch (state) {
+    case 'complete':
+      return { background: 'linear-gradient(150deg, #e4c36a, #b8912f)' };
+    case 'open':
+      return { border: '1.5px dashed rgba(228,195,106,.55)' };
+    case 'missed':
+      return { border: '1px solid rgba(251,245,240,.09)' };
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * The same circle the calendar draws, small, for the key underneath it.
+ *
+ * It renders through `dotStyle` and `SplitRing` rather than approximating them,
+ * because a hand-drawn legend is a legend that quietly stops being true.
+ */
+export function StateSwatch({ state }: { state: DayState }) {
+  return (
+    <span
+      className="relative grid h-[15px] w-[15px] shrink-0 place-items-center rounded-full"
+      style={dotStyle(state)}
+      aria-hidden="true"
+    >
+      {state === 'partial' && <SplitRing mine theirs={false} size={15} />}
+    </span>
+  );
+}
+
 /** One square. The number is always readable; the fill carries the meaning. */
 function DayDot({
   day,
@@ -175,7 +208,6 @@ function DayDot({
   status: DayStatus;
 }) {
   const n = Number(day.slice(8));
-  const half = state === 'partial';
   const mineIn =
     status.mine.required > 0 && status.mine.done === status.mine.required;
   const theirsIn =
@@ -192,17 +224,9 @@ function DayDot({
             state !== 'before' &&
             (inMonth ? 'text-fg/80' : 'text-fg/25')
         )}
-        style={
-          state === 'complete'
-            ? { background: 'linear-gradient(150deg, #e4c36a, #b8912f)' }
-            : state === 'open'
-              ? { border: '1.5px dashed rgba(228,195,106,.55)' }
-              : state === 'missed'
-                ? { border: '1px solid rgba(251,245,240,.09)' }
-                : undefined
-        }
+        style={dotStyle(state)}
       >
-        {half && <SplitRing mine={mineIn} theirs={theirsIn} />}
+        {state === 'partial' && <SplitRing mine={mineIn} theirs={theirsIn} />}
         <span className="relative">{n}</span>
       </span>
       <span
@@ -223,12 +247,20 @@ function DayDot({
  * behind it: filling the disc put warm snow on top of gilt, and the date was
  * the one thing on the square you could not read.
  */
-function SplitRing({ mine, theirs }: { mine: boolean; theirs: boolean }) {
+function SplitRing({
+  mine,
+  theirs,
+  size = 26,
+}: {
+  mine: boolean;
+  theirs: boolean;
+  size?: number;
+}) {
   const TRACK = 'rgba(251,245,240,.1)';
   return (
     <svg
-      width="26"
-      height="26"
+      width={size}
+      height={size}
       viewBox="0 0 26 26"
       className="absolute inset-0"
       aria-hidden="true"
