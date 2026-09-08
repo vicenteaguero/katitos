@@ -41,7 +41,8 @@ function bootSource() {
 const page = (inset) => `<!doctype html>
 <meta charset="utf-8" />
 <style>
-  html, body { margin: 0; height: 100%; background: #000; }
+  /* The band the status bar owns: whatever html/body paint on the phone. */
+  html, body { margin: 0; height: 100%; background: #100408; }
   /* The band the status bar owns, and the box the web view actually gets. */
   #view { position: fixed; left: 0; right: 0; top: ${inset}px; bottom: 0; overflow: hidden; }
   #view #boot { position: absolute; }
