@@ -10,6 +10,9 @@
 
 SHELL := bash
 
+# The CLI, however it is installed here. It is on the PATH on the Mac and not
+# on workstation, where `npx supabase` resolves it: SUPABASE="npx supabase" make ...
+SUPABASE    ?= supabase
 ENV_FILE    := .env.supabase.local
 POOLER_HOST ?= aws-1-eu-central-1.pooler.supabase.com
 POOLER_PORT ?= 5432
@@ -32,19 +35,19 @@ help: ## List targets
 
 link: ## Link repo to the cloud project
 	@set -a; source $(ENV_FILE); set +a; \
-	supabase link --project-ref $$SUPABASE_PROJECT_REF -p "$$SUPABASE_DB_PASSWORD"
+	$(SUPABASE) link --project-ref $$SUPABASE_PROJECT_REF -p "$$SUPABASE_DB_PASSWORD"
 
 db-push: ## Apply migrations to cloud (IPv4 pooler)
 	@$(dburl) \
-	printf 'y\n' | supabase db push --db-url "$$DBURL"
+	printf 'y\n' | $(SUPABASE) db push --db-url "$$DBURL"
 
 db-diff: ## Show schema drift (want: empty)
 	@$(dburl) \
-	supabase db diff --db-url "$$DBURL"
+	$(SUPABASE) db diff --db-url "$$DBURL"
 
 db-pull: ## Pull remote schema into a new migration
 	@$(dburl) \
-	supabase db pull --db-url "$$DBURL"
+	$(SUPABASE) db pull --db-url "$$DBURL"
 
 # `npm run db:types` reads the LOCAL stack, which means a full `supabase start`
 # just to learn about a column we already pushed. This reads the cloud schema
@@ -52,7 +55,7 @@ db-pull: ## Pull remote schema into a new migration
 # (Still needs Docker running — the CLI runs the generator in a container.)
 db-types: ## Regenerate database.types.ts from the CLOUD schema
 	@$(dburl) \
-	supabase gen types typescript --db-url "$$DBURL" > src/kernel/supabase/database.types.ts
+	$(SUPABASE) gen types typescript --db-url "$$DBURL" > src/kernel/supabase/database.types.ts
 	@echo "wrote src/kernel/supabase/database.types.ts"
 
 # The polaroid phase-3 migration drops the one-photo-per-day constraint, which
@@ -73,10 +76,10 @@ db-gate: ## Who is running the newest bundle (used before a breaking migration)
 	  group by m.display_name, m.role order by m.role;"
 
 functions-deploy: ## Deploy edge functions (--use-api = server-side bundle, no Docker)
-	@supabase functions deploy push-notify --use-api
-	@supabase functions deploy currency-rates --use-api
-	@supabase functions deploy polaroid-reminder --use-api
-	@supabase functions deploy streak-reminder --use-api
+	@$(SUPABASE) functions deploy push-notify --use-api
+	@$(SUPABASE) functions deploy currency-rates --use-api
+	@$(SUPABASE) functions deploy polaroid-reminder --use-api
+	@$(SUPABASE) functions deploy streak-reminder --use-api
 
 deploy: db-push functions-deploy ## Push schema + deploy functions
 
