@@ -20,7 +20,11 @@ import { HabitButton } from '../components/habit-button';
 import { CallPill } from '../components/call-pill';
 import { HabitEditor } from '../components/habit-editor';
 import { DaySheet } from '../components/day-sheet';
-import { MonthGrid } from '../components/month-grid';
+import {
+  MonthGrid,
+  StateSwatch,
+  type DayState,
+} from '../components/month-grid';
 import type { Habit } from '../types';
 import '../streak.css';
 
@@ -227,16 +231,10 @@ export function StreakRoute() {
           onPick={setSheetDay}
         />
         <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1">
-          <Legend swatch="linear-gradient(150deg,#e4c36a,#b8912f)">
-            both of us
-          </Legend>
-          <Legend border="2px solid rgba(251,245,240,.12)" leftEdge="#e4c36a">
-            one of us
-          </Legend>
-          <Legend border="1.5px dashed rgba(228,195,106,.55)">
-            still open
-          </Legend>
-          <Legend border="1px solid rgba(251,245,240,.09)">missed</Legend>
+          <Legend state="complete">both of us</Legend>
+          <Legend state="partial">one of us</Legend>
+          <Legend state="open">still open</Legend>
+          <Legend state="missed">missed</Legend>
         </div>
       </Card>
 
@@ -321,25 +319,10 @@ export function StreakRoute() {
   );
 }
 
-function Legend({
-  swatch,
-  border,
-  leftEdge,
-  children,
-}: {
-  swatch?: string;
-  border?: string;
-  /** A gilt left arc: the half-done day, in twelve pixels. */
-  leftEdge?: string;
-  children: string;
-}) {
+function Legend({ state, children }: { state: DayState; children: string }) {
   return (
     <span className="inline-flex items-center gap-1.5">
-      <span
-        aria-hidden="true"
-        className="h-3 w-3 rounded-full"
-        style={{ background: swatch, border, borderLeftColor: leftEdge }}
-      />
+      <StateSwatch state={state} />
       <span className="font-sans text-[10px] text-muted">{children}</span>
     </span>
   );
