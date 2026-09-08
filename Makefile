@@ -75,11 +75,22 @@ db-gate: ## Who is running the newest bundle (used before a breaking migration)
 	  left join public.app_opens o on o.user_id = m.user_id and o.opened_at > '$(SINCE)' \
 	  group by m.display_name, m.role order by m.role;"
 
+# Deploying goes through the management API, which wants a personal access token
+# rather than the database password. The CLI keeps that token in
+# ~/.supabase/access-token and finds it on its own; this also sources the creds
+# file so a SUPABASE_ACCESS_TOKEN put there wins. Mint one at
+# https://supabase.com/dashboard/account/tokens
+#
+# On workstation, do NOT run `supabase login` - it blocks on the headless
+# keyring and never returns, with or without --token, the same way poetry does.
+# Write the token straight into ~/.supabase/access-token (mode 600) instead.
+# The token is account-wide, so it belongs there and not in any repo.
 functions-deploy: ## Deploy edge functions (--use-api = server-side bundle, no Docker)
-	@$(SUPABASE) functions deploy push-notify --use-api
-	@$(SUPABASE) functions deploy currency-rates --use-api
-	@$(SUPABASE) functions deploy polaroid-reminder --use-api
-	@$(SUPABASE) functions deploy streak-reminder --use-api
+	@set -a; [ -f $(ENV_FILE) ] && . $(ENV_FILE); set +a; \
+	$(SUPABASE) functions deploy push-notify --use-api && \
+	$(SUPABASE) functions deploy currency-rates --use-api && \
+	$(SUPABASE) functions deploy polaroid-reminder --use-api && \
+	$(SUPABASE) functions deploy streak-reminder --use-api
 
 deploy: db-push functions-deploy ## Push schema + deploy functions
 
