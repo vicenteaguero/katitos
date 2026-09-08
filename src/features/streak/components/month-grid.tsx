@@ -102,7 +102,7 @@ export function MonthGrid({
       </div>
 
       <div className="grid grid-cols-7 gap-x-2 gap-y-1">
-        {days.map((day) => {
+        {days.map((day, i) => {
           const state = states.get(day)!;
           const run = isRun(day);
           const st = statusOf(day);
@@ -118,8 +118,15 @@ export function MonthGrid({
               className={cn(
                 'cal-cell flex h-11 flex-col items-center justify-center',
                 run && 'cal-run',
-                run && !isRun(addDays(day, -1)) && 'cal-run--start',
-                run && !isRun(addDays(day, 1)) && 'cal-run--end',
+                // A run that carries on into the next row still needs a
+                // rounded end at the edge of this one, or it trails a square
+                // stub into the margin.
+                run &&
+                  (i % 7 === 0 || !isRun(addDays(day, -1))) &&
+                  'cal-run--start',
+                run &&
+                  (i % 7 === 6 || !isRun(addDays(day, 1))) &&
+                  'cal-run--end',
                 state !== 'future' && state !== 'before' && 'lift-press'
               )}
             >
