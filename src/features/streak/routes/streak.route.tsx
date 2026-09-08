@@ -230,7 +230,7 @@ export function StreakRoute() {
           <Legend swatch="linear-gradient(150deg,#e4c36a,#b8912f)">
             both of us
           </Legend>
-          <Legend swatch="linear-gradient(90deg,#e4c36a 50%,transparent 50%)">
+          <Legend border="2px solid rgba(251,245,240,.12)" leftEdge="#e4c36a">
             one of us
           </Legend>
           <Legend border="1.5px dashed rgba(228,195,106,.55)">
@@ -324,10 +324,13 @@ export function StreakRoute() {
 function Legend({
   swatch,
   border,
+  leftEdge,
   children,
 }: {
   swatch?: string;
   border?: string;
+  /** A gilt left arc: the half-done day, in twelve pixels. */
+  leftEdge?: string;
   children: string;
 }) {
   return (
@@ -335,7 +338,7 @@ function Legend({
       <span
         aria-hidden="true"
         className="h-3 w-3 rounded-full"
-        style={{ background: swatch, border }}
+        style={{ background: swatch, border, borderLeftColor: leftEdge }}
       />
       <span className="font-sans text-[10px] text-muted">{children}</span>
     </span>
