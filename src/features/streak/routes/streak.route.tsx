@@ -226,6 +226,7 @@ export function StreakRoute() {
           month={month}
           onMonth={setMonth}
           furthest={view.furthest}
+          isSettled={view.isSettled}
           statusOf={view.statusOf}
           since={view.since}
           onPick={setSheetDay}
