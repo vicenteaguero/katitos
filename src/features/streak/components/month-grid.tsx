@@ -21,6 +21,8 @@ export interface MonthGridProps {
   onMonth: (month: string) => void;
   /** The furthest-ahead clock: nothing past this has happened yet. */
   furthest: string;
+  /** A settled day can never change again, for either of us. */
+  isSettled: (day: string) => boolean;
   statusOf: (day: string) => DayStatus;
   /** The first day anything was due; before it there was nothing to miss. */
   since: string | null;
@@ -38,6 +40,7 @@ export function MonthGrid({
   month,
   onMonth,
   furthest,
+  isSettled,
   statusOf,
   since,
   onPick,
@@ -57,9 +60,9 @@ export function MonthGrid({
     if (since && day < since) return 'before';
     const st = statusOf(day);
     if (st.complete) return 'complete';
-    // Still in play for one of us: the window closes only once the LATER clock
-    // has passed the day after it, so her today is open even when mine is not.
-    if (addDays(day, 1) >= furthest) return 'open';
+    // Still in play for one of us: the window closes only once the clock behind
+    // has passed the day after it, so her Saturday is open during his Sunday.
+    if (!isSettled(day)) return 'open';
     return st.empty ? 'missed' : 'partial';
   };
 
