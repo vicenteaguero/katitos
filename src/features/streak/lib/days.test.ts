@@ -23,9 +23,21 @@ describe('the window', () => {
     expect(isDayOpen('2026-09-07', SCL, NSK, NOW)).toBe(true);
   });
 
-  it('closes a day once the day after it has ended on the later clock', () => {
-    expect(isDayOpen('2026-09-06', SCL, NSK, NOW)).toBe(false);
-    expect(isDayOpen('2026-09-06', NSK, SCL, NOW)).toBe(false);
+  it('closes a day once the day after it has ended on the clock behind', () => {
+    expect(isDayOpen('2026-09-05', SCL, NSK, NOW)).toBe(false);
+    expect(isDayOpen('2026-09-05', NSK, SCL, NOW)).toBe(false);
+    expect(isDayOpen('2026-09-06', SCL, NSK, NOW)).toBe(true);
+    expect(isDayOpen('2026-09-06', NSK, SCL, NOW)).toBe(true);
+  });
+
+  it('keeps her day before yesterday open until midnight in Curicó', () => {
+    // 22:59 Friday 18th in Curicó, 08:59 Saturday 19th in Novosibirsk.
+    const late = DateTime.fromISO('2026-09-19T01:59:00Z');
+    expect(isDayOpen('2026-09-17', NSK, SCL, late)).toBe(true);
+    expect(isDayOpen('2026-09-17', SCL, NSK, late)).toBe(true);
+    const past = DateTime.fromISO('2026-09-19T03:00:00Z');
+    expect(isDayOpen('2026-09-17', NSK, SCL, past)).toBe(false);
+    expect(isSettled('2026-09-17', SCL, NSK, past)).toBe(true);
   });
 
   it('never opens the future, even when your love is already in it', () => {
@@ -45,8 +57,8 @@ describe('the window', () => {
   });
 
   it('settles only what neither of us can touch again', () => {
-    expect(isSettled('2026-09-06', SCL, NSK, NOW)).toBe(true);
-    expect(isSettled('2026-09-07', SCL, NSK, NOW)).toBe(false);
+    expect(isSettled('2026-09-05', SCL, NSK, NOW)).toBe(true);
+    expect(isSettled('2026-09-06', SCL, NSK, NOW)).toBe(false);
   });
 
   it('falls back to UTC rather than the host zone', () => {
