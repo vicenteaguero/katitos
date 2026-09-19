@@ -34,6 +34,15 @@ export interface ChangelogEntry {
 /** Every release ever written, newest first - held ones included. */
 export const ALL_ENTRIES: ChangelogEntry[] = [
   {
+    // Shipped 18 September 2026.
+    title: 'More time to fix yesterday',
+    date: '2026-09-18',
+    lines: [
+      'A day now stays open until midnight in Curicó at the end of the next day, for both of us. On your side that is the morning after, so if you forgot to tick your Thursday you still have Friday and Saturday morning to do it.',
+      'The last-chance reminder now comes one hour before that, so it really is the last chance.',
+    ],
+  },
+  {
     // Shipped 7 September 2026, and announced the same day: every line is
     // something she can do the moment she reads it.
     title: 'One streak, the two of us',
