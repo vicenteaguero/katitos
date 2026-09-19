@@ -9,10 +9,10 @@
 //
 //   day_end    3h before midnight where YOU are, if anything of yours for
 //              today is still unticked.
-//   last_call  1h before yesterday stops being fixable. The window closes when
-//              the LATER of our two clocks passes the end of the day after it,
-//              which for him is early afternoon and for her is the middle of
-//              the night - so this one is genuinely the last chance.
+//   last_call  1h before a past day stops being fixable. The window closes
+//              when the clock BEHIND passes the end of the day after it, which
+//              is 23:00 for him and mid-morning for her - so this one is
+//              genuinely the last chance.
 //
 // Only the shared habit and the person's own daily habits count. A weekly one
 // is not urgent on any particular evening, and buzzing a phone about something
@@ -154,7 +154,8 @@ Deno.serve(async (req) => {
   if (daily.length === 0) return json({ sent: 0, due: 0 });
 
   // Every date either of us could still be ticking: our two current dates, and
-  // the day before each of them, which the grace window keeps open.
+  // the day before each of them, which the grace window keeps open. The oldest
+  // of those is the only one that can be about to close.
   const yesterdayOf = (day: string) =>
     new Date(Date.parse(`${day}T00:00:00Z`) - 86_400_000)
       .toISOString()
@@ -185,12 +186,11 @@ Deno.serve(async (req) => {
   /**
    * The instant a day stops being fixable by anyone.
    *
-   * A day is open while the later of our clocks has not passed the end of the
-   * day after it - so it closes the moment the FIRST of us reaches that point,
-   * which is always whoever is ahead.
+   * A day is open while the clock behind has not passed the end of the day
+   * after it - so it closes the moment the LAST of us reaches that point.
    */
   const closesAt = (day: string) =>
-    Math.min(
+    Math.max(
       ...(members as Member[]).map((m) =>
         startOfDay(zoneOf(m), nextDay(nextDay(day))).getTime()
       )
@@ -223,16 +223,20 @@ Deno.serve(async (req) => {
     }
 
     // ── one hour of the grace window left ─────────────────────────────────
-    const yesterday = yesterdayOf(today);
-    const late = owed(member, yesterday);
+    // For him that is yesterday; for her, a day ahead, it is the day before.
+    const closing = lookup[0];
+    const late = owed(member, closing);
     if (late.length > 0) {
-      const left = closesAt(yesterday) - now.getTime();
+      const left = closesAt(closing) - now.getTime();
       if (left > 0 && left <= LAST_CALL_MS) {
         due.push({
           member,
           kind: 'last_call',
-          day: yesterday,
-          title: `🌙 Last chance for yesterday`,
+          day: closing,
+          title:
+            closing === yesterdayOf(today)
+              ? `🌙 Last chance for yesterday`
+              : `🌙 Last chance for ${new Date(`${closing}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' })}`,
           body: `${timeLeft(left)} to tick ${late.join(', ')} before it closes for ${theirName} too.${run}`,
         });
       }
