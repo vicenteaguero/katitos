@@ -45,7 +45,7 @@ export interface StreakView {
   partnerToday: string;
   /** The later of our two clocks - the day that closes the windows. */
   furthest: string;
-  /** Today, and yesterday when it is still open. Newest first. */
+  /** Today, and the days before it that are still open. Newest first. */
   openDays: string[];
   streak: StreakResult;
   longest: number;
@@ -131,9 +131,9 @@ export function useStreak(): StreakView {
       now,
     });
 
-    // Today, and yesterday while it is still open. Never more than two: the
-    // window is exactly one day of slack, and offering a third would be a lie.
-    const open = [today, addDays(today, -1)].filter((d) =>
+    // Today, and whatever the clock behind still keeps open. For him that is
+    // yesterday; for her, whose clock is ahead, it can reach the day before.
+    const open = [today, addDays(today, -1), addDays(today, -2)].filter((d) =>
       isDayOpen(d, self?.timezone, partner?.timezone, now)
     );
 
