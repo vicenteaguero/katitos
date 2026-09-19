@@ -194,8 +194,9 @@ describe('a habit done three times a week', () => {
   });
 
   it('says the week is lost the moment it cannot be reached', () => {
-    // Saturday evening, none of three done, and only Saturday and Sunday left.
-    const SAT = DateTime.fromISO('2026-09-12T20:00:00Z');
+    // Just past Saturday midnight in Curicó: Friday is closed, none of three
+    // done, and only Saturday and Sunday left.
+    const SAT = DateTime.fromISO('2026-09-13T04:00:00Z');
     const done = ticks(range('2026-09-01', '2026-09-11'));
     expect(
       weeklyProgress(GYM, '2026-09-12', done, SCL, NSK, SAT)
