@@ -34,7 +34,7 @@ export function daysBetween(a: string, b: string): number {
   );
 }
 
-/** The later of our two wall clocks - the one that closes a day for good. */
+/** The clock ahead: nothing past this date has happened for either of us. */
 export function furthestDay(
   selfZone: string | null | undefined,
   partnerZone: string | null | undefined,
@@ -45,11 +45,22 @@ export function furthestDay(
   return a > b ? a : b;
 }
 
+/** The clock behind - the one that closes a day for good. */
+export function nearestDay(
+  selfZone: string | null | undefined,
+  partnerZone: string | null | undefined,
+  now: DateTime = DateTime.now()
+): string {
+  const a = localDay(selfZone, now);
+  const b = localDay(partnerZone, now);
+  return a < b ? a : b;
+}
+
 /**
  * Can I still tick this day?
  *
- * Never the future, and never once the day AFTER it has ended on the later of
- * our two clocks. She can still fill her Saturday while it is Sunday in Curicó,
+ * Never the future, and never once the day AFTER it has ended on the clock
+ * behind. She can still fill her Saturday while it is Sunday in Curicó,
  * and that is the whole point: what kills a streak is not a missed habit, it is
  * a habit you did and forgot to tick.
  */
@@ -61,7 +72,7 @@ export function isDayOpen(
 ): boolean {
   return (
     day <= localDay(selfZone, now) &&
-    addDays(day, 1) >= furthestDay(selfZone, partnerZone, now)
+    addDays(day, 1) >= nearestDay(selfZone, partnerZone, now)
   );
 }
 
@@ -75,7 +86,7 @@ export function isSettled(
   partnerZone: string | null | undefined,
   now: DateTime = DateTime.now()
 ): boolean {
-  return addDays(day, 1) < furthestDay(selfZone, partnerZone, now);
+  return addDays(day, 1) < nearestDay(selfZone, partnerZone, now);
 }
 
 /** The Monday of the week a day belongs to. Weeks run Monday to Sunday. */
