@@ -14,6 +14,15 @@ export interface HabitButtonProps {
   size?: 'md' | 'sm' | 'xs';
   /** The name under the circle. Off on Home, where the emoji is the label. */
   labelled?: boolean;
+  /**
+   * Take the width of whatever cell you are put in, rather than a fixed 62px.
+   *
+   * Five of these at 62px plus their gaps are wider than an iPhone 13, so the
+   * fifth habit dropped onto a line of its own and her day read 4 + 1. In a grid
+   * the row cannot wrap, so the habits share what there is and the circle stays
+   * the size it is.
+   */
+  fluid?: boolean;
 }
 
 /**
@@ -36,6 +45,7 @@ export function HabitButton({
   weekly,
   size = 'md',
   labelled = true,
+  fluid = false,
 }: HabitButtonProps) {
   const px = size === 'md' ? 52 : size === 'sm' ? 38 : 34;
   const shared = habit.kind === 'shared';
@@ -53,7 +63,7 @@ export function HabitButton({
         // Lifted while it is on, so its glow lies over its neighbours instead
         // of under them.
         done && 'relative z-10',
-        labelled && 'w-[62px]'
+        fluid ? 'w-full min-w-0' : labelled && 'w-[62px]'
       )}
     >
       <button
