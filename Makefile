@@ -90,8 +90,7 @@ functions-deploy: ## Deploy edge functions (--use-api = server-side bundle, no D
 	$(SUPABASE) functions deploy push-notify --use-api && \
 	$(SUPABASE) functions deploy currency-rates --use-api && \
 	$(SUPABASE) functions deploy polaroid-reminder --use-api && \
-	$(SUPABASE) functions deploy streak-reminder --use-api && \
-	$(SUPABASE) functions deploy five --use-api
+	$(SUPABASE) functions deploy habits-tick --use-api
 
 deploy: db-push functions-deploy ## Push schema + deploy functions
 
