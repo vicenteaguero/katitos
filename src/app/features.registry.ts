@@ -18,6 +18,7 @@ import { treeFeature } from '@features/tree';
 import { knowMeFeature } from '@features/know-me';
 import { albumFeature } from '@features/album';
 import { vpnFeature } from '@features/vpn';
+import { fiveFeature } from '@features/five';
 import { streakFeature } from '@features/streak';
 
 // ── Drawer categories ──────────────────────────────────────────────────────
@@ -62,6 +63,7 @@ const modules: FeatureModule[] = [
   currencyFeature,
   flowersFeature,
   vpnFeature,
+  fiveFeature,
 ];
 
 // ── Demo gate ──────────────────────────────────────────────────────────────
@@ -77,6 +79,10 @@ const OPEN = new Set([
   'wishlists', // gift lists, each item with its own eye
   'flowers', // a bouquet a month, hers to fill
   'vpn', // "Internet" - Helsinki is up and reporting in
+  // 'five' is unlocked here on purpose and hidden a different way: see
+  // shell/use-five-visible.ts. A locked row would still show her a padlock,
+  // which is the one thing this feature cannot afford yet.
+  'five',
   'streak', // one streak, kept by the two of us
   // 'summer'   - Türkiye/Georgia is over. Locked, NOT deleted: the code, the
   //              tables and the photos all stay, so the next trip is one line.
