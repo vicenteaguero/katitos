@@ -47,7 +47,11 @@ async function reconcile(
 /** What the database says when it will not take a mark. */
 function refusal(err: unknown): string {
   const code = (err as { code?: string } | null)?.code;
+  const hint = (err as { hint?: string } | null)?.hint;
   if (code === 'P0002') return 'That day is closed. Ask your Katito.';
+  if (hint === 'day_closed') return 'That day is closed. Ask your Katito.';
+  if (hint === 'day_future') return 'That day has not started yet.';
+  if (hint === 'not_owner') return 'Only your Katito can take a tick back.';
   if (code === 'P0001') return 'That day has not happened yet.';
   if (code === 'P0003')
     return 'One hard day a week, and this week has had its.';
@@ -58,32 +62,33 @@ interface MarkVars {
   userId: string;
   day: string;
   goalId: GoalId;
+  /** The habit this goal is, in the streak. One row, three screens. */
+  habitId: string;
 }
 
 /**
  * She held a goal.
  *
- * An upsert, not an insert, so a goal he revoked can be given back without a
- * second row, and so a double tap on a slow connection is not an error. The
- * optimistic write is what makes the tap feel like a switch rather than a form.
+ * Writes `habit_entries`, because that is the only place a tick lives: the same
+ * row the streak's calendar draws and the home card toggles. An upsert rather
+ * than an insert, so a goal he revoked can be given back without a second row
+ * and a double tap on a slow connection is not an error.
  */
 export function useMarkGoal() {
   const qc = useQueryClient();
   const selfId = useUserId();
   const { self } = usePartner();
   return useMutation({
-    mutationFn: async ({ userId, day, goalId }: MarkVars) => {
-      const { error } = await supabase.from('five_marks').upsert(
+    mutationFn: async ({ habitId, day }: MarkVars) => {
+      const { error } = await supabase.from('habit_entries').upsert(
         {
-          user_id: userId,
+          habit_id: habitId,
           day,
-          goal_id: goalId,
-          done_at: new Date().toISOString(),
-          marked_by: selfId,
+          marked_by: selfId ?? undefined,
           revoked_at: null,
           revoked_by: null,
         },
-        { onConflict: 'user_id,day,goal_id' }
+        { onConflict: 'habit_id,day' }
       );
       if (error) throw error;
     },
@@ -93,43 +98,46 @@ export function useMarkGoal() {
     },
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: qk.five.all() });
+      // The streak draws these same rows.
+      void qc.invalidateQueries({ queryKey: qk.streak.all() });
     },
   });
 }
 
 /**
- * A tap comes off.
+ * A tick comes off.
  *
- * Her own, inside her window, is a mistap: the row goes, because a mark she
- * never meant is not history. His is a correction: the row stays, stamped, and
- * the day is reconciled so the three dollars move where they belong.
+ * Hers, inside the window, is a mistap: the row goes, because a tick she never
+ * meant is not history. His is a correction: the row stays, stamped, and the
+ * day is reconciled so the three dollars move where they belong. The database
+ * allows the stamp to him alone.
  */
 export function useUnmarkGoal() {
   const qc = useQueryClient();
   const selfId = useUserId();
   return useMutation({
     mutationFn: async ({
-      userId,
+      habitId,
       day,
-      goalId,
       asKeeper,
     }: MarkVars & { asKeeper: boolean }) => {
       if (asKeeper) {
         const { error } = await supabase
-          .from('five_marks')
-          .update({ revoked_at: new Date().toISOString(), revoked_by: selfId })
-          .eq('user_id', userId)
-          .eq('day', day)
-          .eq('goal_id', goalId);
+          .from('habit_entries')
+          .update({
+            revoked_at: new Date().toISOString(),
+            revoked_by: selfId ?? null,
+          })
+          .eq('habit_id', habitId)
+          .eq('day', day);
         if (error) throw error;
         return;
       }
       const { error } = await supabase
-        .from('five_marks')
+        .from('habit_entries')
         .delete()
-        .eq('user_id', userId)
-        .eq('day', day)
-        .eq('goal_id', goalId);
+        .eq('habit_id', habitId)
+        .eq('day', day);
       if (error) throw error;
     },
     onError: (err) => toast.error(refusal(err)),
@@ -138,6 +146,34 @@ export function useUnmarkGoal() {
     },
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: qk.five.all() });
+      void qc.invalidateQueries({ queryKey: qk.streak.all() });
+    },
+  });
+}
+
+/**
+ * The day he tells her.
+ *
+ * Gives her the five as habits, idempotently, and puts away the one she already
+ * kept that the Five now covers. Called from the screen on his device once
+ * `FIVE_OPEN` is true, so there is no step to remember and nothing appears in
+ * her streak a day early.
+ */
+export function useAdoptGoalHabits() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      const { data, error } = await supabase.rpc('five_adopt_habits', {
+        p_user: userId,
+      });
+      if (error) throw error;
+      return (data as number) ?? 0;
+    },
+    onSuccess: (made) => {
+      if (made > 0) {
+        void qc.invalidateQueries({ queryKey: qk.five.all() });
+        void qc.invalidateQueries({ queryKey: qk.streak.all() });
+      }
     },
   });
 }
