@@ -140,27 +140,40 @@ export function useUnmarkGoal() {
 export function useHardDay() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ userId, day }: { userId: string; day: string }) => {
+    mutationFn: async ({
+      userId,
+      day,
+      note,
+    }: {
+      userId: string;
+      day: string;
+      /** Optional, and the whole point: a hard day with a line in it is a
+       *  message to him rather than a hole in the data. */
+      note?: string | null;
+    }) => {
       const { error } = await supabase.from('five_days').upsert(
         {
           user_id: userId,
           day,
           hard_day: true,
           hard_day_at: new Date().toISOString(),
+          note: note?.trim() || null,
         },
         { onConflict: 'user_id,day' }
       );
       if (error) throw error;
     },
     onError: (err) => toast.error(refusal(err)),
-    onSuccess: (_d, { userId, day }) => {
+    onSuccess: (_d, { userId, day, note }) => {
       void reconcile(userId, day);
-      toast.info('Today is free. Nothing moves 🤍');
+      toast.info('Nothing more is asked of today 🤍');
       if (FIVE_OPEN) {
         void notifyPartner({
           kind: 'five',
           title: '🤍 A hard day',
-          body: 'She called today a hard one. Nothing moves - maybe ring her.',
+          body: note?.trim()
+            ? `She called today a hard one: "${note.trim()}"`
+            : 'She called today a hard one. Nothing is owed. Maybe ring her.',
           url: '/five',
           tag: 'five-hard-day',
         });
