@@ -770,6 +770,197 @@ export type Database = {
         }
         Relationships: []
       }
+      five_bets: {
+        Row: {
+          day: string
+          id: string
+          note: string | null
+          odds: number | null
+          payout_cents: number | null
+          pick: string
+          placed_at: string
+          settled_at: string | null
+          sport: string | null
+          stake_cents: number
+          status: string
+        }
+        Insert: {
+          day: string
+          id?: string
+          note?: string | null
+          odds?: number | null
+          payout_cents?: number | null
+          pick: string
+          placed_at?: string
+          settled_at?: string | null
+          sport?: string | null
+          stake_cents: number
+          status?: string
+        }
+        Update: {
+          day?: string
+          id?: string
+          note?: string | null
+          odds?: number | null
+          payout_cents?: number | null
+          pick?: string
+          placed_at?: string
+          settled_at?: string | null
+          sport?: string | null
+          stake_cents?: number
+          status?: string
+        }
+        Relationships: []
+      }
+      five_days: {
+        Row: {
+          day: string
+          hard_day: boolean
+          hard_day_at: string | null
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          day: string
+          hard_day?: boolean
+          hard_day_at?: string | null
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          day?: string
+          hard_day?: boolean
+          hard_day_at?: string | null
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      five_ledger: {
+        Row: {
+          amount_cents: number
+          bet_id: string | null
+          created_at: string
+          day: string
+          direction: string
+          goal_id: string | null
+          id: string
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          bet_id?: string | null
+          created_at?: string
+          day: string
+          direction: string
+          goal_id?: string | null
+          id?: string
+          reason: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          bet_id?: string | null
+          created_at?: string
+          day?: string
+          direction?: string
+          goal_id?: string | null
+          id?: string
+          reason?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "five_ledger_bet_id_fkey"
+            columns: ["bet_id"]
+            isOneToOne: false
+            referencedRelation: "five_bets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      five_marks: {
+        Row: {
+          day: string
+          done_at: string
+          goal_id: string
+          marked_by: string | null
+          revoked_at: string | null
+          revoked_by: string | null
+          user_id: string
+        }
+        Insert: {
+          day: string
+          done_at?: string
+          goal_id: string
+          marked_by?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          user_id: string
+        }
+        Update: {
+          day?: string
+          done_at?: string
+          goal_id?: string
+          marked_by?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      five_reminders: {
+        Row: {
+          day: string
+          goal_id: string
+          sent_at: string | null
+          slot_at: string
+          user_id: string
+        }
+        Insert: {
+          day: string
+          goal_id: string
+          sent_at?: string | null
+          slot_at: string
+          user_id: string
+        }
+        Update: {
+          day?: string
+          goal_id?: string
+          sent_at?: string | null
+          slot_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      five_settings: {
+        Row: {
+          active: boolean
+          bet_cents: number
+          gift_cents: number
+          started_on: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          bet_cents?: number
+          gift_cents?: number
+          started_on?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          bet_cents?: number
+          gift_cents?: number
+          started_on?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       flowers: {
         Row: {
           created_at: string
@@ -2804,6 +2995,11 @@ export type Database = {
         }[]
       }
       can_upload_flowers: { Args: never; Returns: boolean }
+      five_pots: { Args: { p_user: string }; Returns: Json }
+      five_reconcile_day: {
+        Args: { p_day: string; p_user: string }
+        Returns: number
+      }
       habit_day_open: { Args: { d: string; u: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
       is_member: { Args: never; Returns: boolean }
@@ -2849,6 +3045,7 @@ export type Database = {
         Returns: undefined
       }
       streak_days: { Args: never; Returns: number }
+      tick_five: { Args: never; Returns: undefined }
       tick_polaroid_reminders: { Args: never; Returns: undefined }
       tick_streak_reminders: { Args: never; Returns: undefined }
       vpn_status: {
@@ -2911,12 +3108,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2940,11 +3137,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2965,11 +3162,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2990,11 +3187,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3007,11 +3204,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never) = never,
+    : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
