@@ -52,8 +52,9 @@ export const qk = {
     /** The stretches the money was switched off. */
     pauses: (userId: string, from: string) =>
       ['habits', 'pauses', userId, from] as const,
-    /** The two pots, summed by the database. */
-    pots: (userId: string) => ['habits', 'pots', userId] as const,
+    /** The two pots and their periods, summed by the database, for her day. */
+    pots: (userId: string, day: string) =>
+      ['habits', 'pots', userId, day] as const,
     bets: () => ['habits', 'bets'] as const,
   },
   chalkboard: {
