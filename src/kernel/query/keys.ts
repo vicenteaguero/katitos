@@ -39,9 +39,21 @@ export const qk = {
     all: () => ['streak'] as const,
     habits: () => ['streak', 'habits'] as const,
     /** One window of ticks. Separate from `habits` so a month change can't evict it. */
-    entries: (from: string, to: string) => ['streak', 'entries', from, to] as const,
+    entries: (from: string, to: string) =>
+      ['streak', 'entries', from, to] as const,
     /** Every window at once - what a tick invalidates, and nothing else. */
     allEntries: () => ['streak', 'entries'] as const,
+  },
+  five: {
+    all: () => ['five'] as const,
+    settings: (userId: string) => ['five', 'settings', userId] as const,
+    marks: (userId: string, from: string) =>
+      ['five', 'marks', userId, from] as const,
+    days: (userId: string, from: string) =>
+      ['five', 'days', userId, from] as const,
+    /** The two pots, summed by the database. */
+    pots: (userId: string) => ['five', 'pots', userId] as const,
+    bets: () => ['five', 'bets'] as const,
   },
   chalkboard: {
     notes: () => ['chalkboard', 'notes'] as const,
