@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@kernel/supabase';
-import { useUserId } from '@kernel/auth';
+import { usePartner, useUserId } from '@kernel/auth';
 import { notifyPartner } from '@kernel/push';
 import { qk } from '@kernel/query';
 import { toast } from '@kernel/ui';
@@ -21,8 +21,20 @@ import { FIVE_OPEN, goalById, type GoalId } from '../lib/goals';
  * undo the whole point of keeping it hidden.
  */
 
-/** Put right a day whose money has already been written. Harmless on an open day. */
-async function reconcile(userId: string, day: string): Promise<void> {
+/**
+ * Put right a day whose money has already been written.
+ *
+ * His tool, and only his: the RPC refuses anyone else, because rewriting a
+ * closed day's money belongs to the person paying for it. She never needs it -
+ * a day she can still change has not been settled, since settling is exactly
+ * what closes her window - so this is skipped rather than failed for her.
+ */
+async function reconcile(
+  userId: string,
+  day: string,
+  asKeeper: boolean
+): Promise<void> {
+  if (!asKeeper) return;
   const { error } = await supabase.rpc('five_reconcile_day', {
     p_user: userId,
     p_day: day,
@@ -58,6 +70,7 @@ interface MarkVars {
 export function useMarkGoal() {
   const qc = useQueryClient();
   const selfId = useUserId();
+  const { self } = usePartner();
   return useMutation({
     mutationFn: async ({ userId, day, goalId }: MarkVars) => {
       const { error } = await supabase.from('five_marks').upsert(
@@ -76,7 +89,7 @@ export function useMarkGoal() {
     },
     onError: (err) => toast.error(refusal(err)),
     onSuccess: (_d, { userId, day }) => {
-      void reconcile(userId, day);
+      void reconcile(userId, day, !!self?.is_admin);
     },
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: qk.five.all() });
@@ -120,8 +133,8 @@ export function useUnmarkGoal() {
       if (error) throw error;
     },
     onError: (err) => toast.error(refusal(err)),
-    onSuccess: (_d, { userId, day }) => {
-      void reconcile(userId, day);
+    onSuccess: (_d, { userId, day, asKeeper }) => {
+      void reconcile(userId, day, asKeeper);
     },
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: qk.five.all() });
@@ -139,6 +152,7 @@ export function useUnmarkGoal() {
  */
 export function useHardDay() {
   const qc = useQueryClient();
+  const { self } = usePartner();
   return useMutation({
     mutationFn: async ({
       userId,
@@ -165,7 +179,7 @@ export function useHardDay() {
     },
     onError: (err) => toast.error(refusal(err)),
     onSuccess: (_d, { userId, day, note }) => {
-      void reconcile(userId, day);
+      void reconcile(userId, day, !!self?.is_admin);
       toast.info('Nothing more is asked of today 🤍');
       if (FIVE_OPEN) {
         void notifyPartner({
@@ -188,6 +202,7 @@ export function useHardDay() {
 /** Take a hard day back - it was tapped by accident, or the day turned around. */
 export function useUndoHardDay() {
   const qc = useQueryClient();
+  const { self } = usePartner();
   return useMutation({
     mutationFn: async ({ userId, day }: { userId: string; day: string }) => {
       const { error } = await supabase
@@ -198,7 +213,8 @@ export function useUndoHardDay() {
       if (error) throw error;
     },
     onError: (err) => toast.error(refusal(err)),
-    onSuccess: (_d, { userId, day }) => void reconcile(userId, day),
+    onSuccess: (_d, { userId, day }) =>
+      void reconcile(userId, day, !!self?.is_admin),
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: qk.five.all() });
     },
@@ -300,6 +316,16 @@ export function useSettleBet() {
         })
         .eq('id', bet.id);
       if (error) throw error;
+
+      // Take back whatever this bet paid before paying it again. Settling is
+      // not a one-way door: he corrects a win to a loss, or fixes a payout he
+      // mistyped, and without this her pot keeps money from a bet that lost -
+      // the unique index on `bet_id` makes it impossible to put right any other
+      // way.
+      const { error: undoErr } = await supabase.rpc('five_unpay_bet', {
+        p_bet: bet.id,
+      });
+      if (undoErr) throw undoErr;
 
       if (status !== 'won' || !payoutCents) return;
       const { error: payErr } = await supabase.from('five_ledger').insert({
