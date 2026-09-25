@@ -1,4 +1,4 @@
-import { Card, Kicker } from '@kernel/ui';
+import { Card, Kicker, StatPill } from '@kernel/ui';
 import { money, unplaced, type Pots as PotsShape } from '../lib/money';
 
 /**
@@ -24,23 +24,22 @@ export function Pots({ pots }: { pots: PotsShape }) {
   ].filter(Boolean);
 
   return (
-    <Card tone="hero" className="flex flex-col gap-3">
+    <Card tone="hero" className="flex flex-col gap-1.5 rounded-lg">
       <div className="flex items-end justify-between gap-4">
         <div className="min-w-0">
           <Kicker tone="gold">Your gift</Kicker>
-          <p className="font-display text-[2.75rem] font-semibold leading-none tracking-tight text-gold tabular-nums">
+          <p className="gilt-text gilt-figures font-display text-[2.75rem] font-semibold leading-none tracking-tight">
             {money(pots.giftCents)}
           </p>
         </div>
-        <div className="min-w-0 text-right">
-          <Kicker tone="muted">To the bookmaker</Kicker>
-          <p className="font-display text-2xl font-semibold leading-none tracking-tight text-muted tabular-nums">
-            {money(pots.betCents)}
-          </p>
-        </div>
+        <StatPill
+          value={money(pots.betCents)}
+          label="to the bookmaker"
+          tone="fg"
+        />
       </div>
       {notes.length > 0 && (
-        <p className="font-sans text-xs leading-relaxed text-muted">
+        <p className="font-sans text-xs leading-relaxed tabular-nums text-muted">
           {notes.join(', ')}
         </p>
       )}
