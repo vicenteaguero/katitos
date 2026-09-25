@@ -30,7 +30,9 @@ const TONE: Record<
 > = {
   open: { label: 'riding', tone: 'warning' },
   lost: { label: 'lost', tone: 'danger' },
-  won: { label: 'came back', tone: 'success' },
+  // 'won', not 'came back': the gold +$28.80 beside it already says where the
+  // money went, and a wide badge eats the name of the thing he backed.
+  won: { label: 'won', tone: 'success' },
   void: { label: 'void', tone: 'neutral' },
 };
 
@@ -96,11 +98,7 @@ export function BetList({
                       {bet.pick}
                     </span>
                     <span className="block truncate font-sans text-xs text-muted">
-                      {[
-                        when(bet),
-                        bet.sport,
-                        bet.odds ? `at ${bet.odds}` : null,
-                      ]
+                      {[when(bet), bet.odds ? `at ${bet.odds}` : null]
                         .filter(Boolean)
                         .join(', ')}
                     </span>
