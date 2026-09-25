@@ -3,6 +3,7 @@ import { NavLink } from 'react-router';
 import { Settings, Lock } from 'lucide-react';
 import { Sheet } from '@kernel/ui';
 import { useTunnelVisible } from './use-tunnel-visible';
+import { useFiveVisible } from './use-five-visible';
 import { featureRegistry } from '../features.registry';
 import { SOON } from '../soon';
 
@@ -79,8 +80,11 @@ export function MoreDrawer({
   // rather than in the registry keeps the route mounted, so he can reach it
   // from a phone while testing.
   const tunnel = useTunnelVisible();
+  // The Five is his alone until he tells her about it, and a padlocked row would
+  // tell her first. See use-five-visible.ts.
+  const five = useFiveVisible();
   const entries = featureRegistry.navEntries.filter(
-    (e) => tunnel || e.to !== '/vpn'
+    (e) => (tunnel || e.to !== '/vpn') && (five || e.to !== '/five')
   );
   return (
     <Sheet
