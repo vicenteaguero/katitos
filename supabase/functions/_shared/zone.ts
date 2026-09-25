@@ -103,3 +103,49 @@ export function nextDay(isoDay: string): string {
 export function endOfDay(zone: string, isoDay: string): Date {
   return startOfDay(zone, nextDay(isoDay));
 }
+
+/**
+ * The instant it is `hour` o'clock on `isoDay`, on that zone's wall clock.
+ *
+ * Not `startOfDay + hour hours`. The Five closes a day at 3AM her time, and on
+ * the night a zone moves its clocks those two are an hour apart: Chile skips
+ * midnight, so adding 27 hours to the start of 5 September lands at 04:00 and
+ * not 03:00. The database and the app both ask the wall-clock question, so this
+ * is the one that has to agree with them - an hour of disagreement here is an
+ * hour in which one side says a day is still hers and the other has already
+ * charged her for it.
+ *
+ * Found the same way `startOfDay` finds midnight, by bisection on a question
+ * that is always well defined, so no rule anyone writes later can break it. If
+ * the hour does not exist at all in that zone, the first instant after it is
+ * returned, which errs long - in her favour.
+ */
+export function atLocalHour(zone: string, isoDay: string, hour: number): Date {
+  const target = String(hour).padStart(2, '0');
+  let before = startOfDay(zone, isoDay).getTime() - 3_600_000;
+  let after = startOfDay(zone, nextDay(isoDay)).getTime() + 3 * 3_600_000;
+
+  const reached = (at: number) => {
+    const d = new Date(at);
+    if (localDay(zone, d) > isoDay) return true;
+    if (localDay(zone, d) < isoDay) return false;
+    return hourIn(zone, d) >= Number(target);
+  };
+
+  while (after - before > 1) {
+    const mid = before + Math.floor((after - before) / 2);
+    if (reached(mid)) after = mid;
+    else before = mid;
+  }
+  return new Date(after);
+}
+
+/** The hour on that zone's clock, 0 to 23. */
+function hourIn(zone: string, at: Date): number {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: zone,
+    hour: '2-digit',
+    hour12: false,
+  }).formatToParts(at);
+  return Number(parts.find((p) => p.type === 'hour')?.value ?? '0') % 24;
+}
