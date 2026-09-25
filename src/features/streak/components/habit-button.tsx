@@ -1,5 +1,5 @@
 import { Check } from 'lucide-react';
-import { cn } from '@kernel/lib';
+import { cn, tap } from '@kernel/lib';
 import type { Habit } from '../types';
 import '../streak.css';
 
@@ -42,7 +42,7 @@ export function HabitButton({
 
   const press = () => {
     if (!interactive) return;
-    navigator.vibrate?.(done ? [0, 12] : [0, 26]);
+    tap(done ? 'off' : 'on');
     onToggle?.();
   };
 
