@@ -573,14 +573,24 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Not a word to her until he has told her himself. Every nudge names her
+  // habits, so the first she hears of them would be a lock screen at eleven at
+  // night. Dropped here rather than at the send, so a dry run says exactly what
+  // a real tick would do.
+  const muted = NUDGES_ON
+    ? []
+    : due.filter((d) => !d.member.is_admin).map((d) => d.kind);
+  const toSend = NUDGES_ON ? due : due.filter((d) => d.member.is_admin);
+
   if (dryRun) {
     return json({
       dryRun: true,
+      muted,
       streak: runningDays,
       settled,
       quieted,
       planned,
-      due: due.map((d) => ({
+      due: toSend.map((d) => ({
         who: d.member.role,
         kind: d.kind,
         day: d.day,
@@ -591,7 +601,7 @@ Deno.serve(async (req) => {
   }
 
   let sent = 0;
-  for (const item of due) {
+  for (const item of toSend) {
     const { data: subs } = await admin
       .from('push_subscriptions')
       .select('id, endpoint, p256dh, auth')
@@ -652,5 +662,10 @@ Deno.serve(async (req) => {
     .delete()
     .lt('sent_at', cutoff.toISOString());
 
-  return json({ due: due.length, sent, streak: runningDays });
+  return json({
+    due: toSend.length,
+    muted: muted.length,
+    sent,
+    streak: runningDays,
+  });
 });
