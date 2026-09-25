@@ -7,12 +7,17 @@
  */
 
 /**
- * Are her habit nudges switched on?
+ * Is the clock allowed to buzz HER phone?
  *
- * Five random reminders a day is a lot to hand someone without warning, so this
- * stays false until he has told her they are coming. Everything else the clock
- * does - the streak's two nudges, settling the day, noticing a silent stretch -
- * runs either way; this flag only gates the new ones.
+ * False until he has told her about any of this, and it gates every push to
+ * her, not just the new random ones. That is the whole point: the streak's
+ * "still to tick" nudge lists her habits by name, so tonight it would have
+ * handed her five new ones at eleven o'clock, from a phone on her bedside
+ * table, before he had said a word.
+ *
+ * Everything else runs exactly as it should: the day settles, the money moves,
+ * a silent stretch switches it off, and HE is told all of it. Flip this on the
+ * day he shows her.
  */
 export const NUDGES_ON = false;
 
