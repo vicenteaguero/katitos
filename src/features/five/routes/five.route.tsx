@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Navigate } from 'react-router';
 import { Settings2 } from 'lucide-react';
 import { useNow } from '@kernel/hooks';
@@ -31,11 +31,13 @@ import {
   localDay,
   recentDays,
 } from '../lib/five-days';
+import { FIVE_OPEN } from '../lib/goals';
 import {
   stripStart,
   useFiveBets,
   useFiveDays,
-  useFiveMarks,
+  useGoalHabits,
+  useGoalTicks,
   useFivePauses,
   useFivePots,
   useFiveSettings,
@@ -44,6 +46,7 @@ import {
 } from '../api/five.queries';
 import {
   useAddBet,
+  useAdoptGoalHabits,
   useHardDay,
   useMarkGoal,
   useSaveFiveSettings,
@@ -82,14 +85,15 @@ export function FiveRoute() {
   // on the wrong day - and after 3AM the server refused a card that said Today.
   // The tree under here is five rows and a bar chart; a minute costs nothing.
   const now = useNow(60_000);
-  const { subject, zone, isKeeper, isLoading } = useFiveWho();
+  const { subject, zone, partnerZone, isKeeper, isLoading } = useFiveWho();
   // Hidden means hidden, including from a typed URL. See lib/visible.ts.
   const visible = useFiveVisible();
   const subjectId = subject?.user_id ?? null;
 
   const from = useMemo(() => stripStart(zone, STRIP_DAYS), [zone]);
   const { stakes, active, startedOn } = useFiveSettings(subjectId);
-  const { data: marks } = useFiveMarks(subjectId, from);
+  const { data: ticks } = useGoalTicks(subjectId, from);
+  const { data: goalHabits } = useGoalHabits(subjectId);
   const { data: dayRows } = useFiveDays(subjectId, from);
   const { pots } = useFivePots(subjectId);
   const { data: bets } = useFiveBets();
@@ -99,7 +103,8 @@ export function FiveRoute() {
   // mark, then five ledger deletes and five inserts - and pointed at `five.all`
   // every one of them refetched all seven queries on the screen, pots RPC
   // included. The ledger only ever changes the pots; the bets only the list.
-  useTableSync('five_marks', qk.five.all());
+  // One table of ticks, so this is the streak's table too.
+  useTableSync('habit_entries', qk.five.all());
   useTableSync('five_days', qk.five.all());
   useTableSync('five_ledger', qk.five.pots(subjectId ?? 'none'));
   useTableSync('five_bets', qk.five.bets());
@@ -110,8 +115,25 @@ export function FiveRoute() {
   const hardDay = useHardDay();
   const undoHardDay = useUndoHardDay();
   const saveSettings = useSaveFiveSettings();
+  const adopt = useAdoptGoalHabits();
   const addBet = useAddBet();
   const settleBet = useSettleBet();
+
+  /**
+   * The day he tells her, her five become habits in the streak.
+   *
+   * Done here rather than by hand, on his device only, and idempotent, so
+   * opening the Five is still the one constant and nothing appears in her
+   * streak a day early.
+   */
+  useEffect(() => {
+    if (!FIVE_OPEN || !isKeeper || !subjectId) return;
+    if (goalHabits === undefined) return;
+    if (goalHabits.length >= GOALS.length) return;
+    adopt.mutate(subjectId);
+    // `adopt` is a stable mutation object; the guard above is what stops a loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isKeeper, subjectId, goalHabits?.length]);
 
   const [dials, setDials] = useState(false);
   const [placing, setPlacing] = useState(false);
@@ -161,12 +183,12 @@ export function FiveRoute() {
   }
 
   const today = localDay(zone, now);
-  const live = liveDays(zone, now);
+  const live = liveDays(zone, partnerZone, now);
   // A day he opened from the strip goes FIRST: he tapped it, so it is the thing
   // he came to change, and appending it under today hid it below the fold.
   const cards = opened && !live.includes(opened) ? [opened, ...live] : live;
 
-  const allMarks = marks ?? [];
+  const allTicks = ticks ?? [];
   const allDays = dayRows ?? [];
   const hardDays = allDays.filter((d) => d.hard_day).map((d) => d.day);
   // One a rolling week, counted from the day in question and not from today -
@@ -175,12 +197,31 @@ export function FiveRoute() {
   const hardDaySpentFor = (day: string) =>
     hardDays.some((d) => d !== day && d > addDays(day, -7));
 
+  /**
+   * The habit a goal is.
+   *
+   * Empty until he has opened the Five to her, and that is not an error state:
+   * the screen is his to look at first, and there is simply nothing to tick on
+   * it until her five exist as habits.
+   */
+  const habitOf = (goalId: GoalId) =>
+    (goalHabits ?? []).find((h) => h.five_goal_id === goalId);
+  const adopted = (goalHabits ?? []).length > 0;
+
   const toggle = (day: string, goalId: GoalId, done: boolean) => {
+    const habit = habitOf(goalId);
+    if (!habit) return;
     if (!done) {
-      mark.mutate({ userId: subjectId, day, goalId });
+      mark.mutate({ userId: subjectId, day, goalId, habitId: habit.id });
       return;
     }
-    unmark.mutate({ userId: subjectId, day, goalId, asKeeper: isKeeper });
+    unmark.mutate({
+      userId: subjectId,
+      day,
+      goalId,
+      habitId: habit.id,
+      asKeeper: isKeeper,
+    });
   };
 
   return (
@@ -214,17 +255,30 @@ export function FiveRoute() {
           </div>
         )}
 
+        {!adopted && (
+          <Card tone="flat">
+            <p className="font-sans text-sm leading-relaxed text-muted">
+              Her five are not habits yet. They appear in her streak, and become
+              tappable here, the day you open the Five to her.
+            </p>
+          </Card>
+        )}
+
         {cards.map((day) => (
           <DayCard
             key={day}
             day={day}
             zone={zone}
-            marks={allMarks}
+            ticks={allTicks}
             hardDay={hardDays.includes(day)}
             hardDayNote={allDays.find((d) => d.day === day)?.note ?? null}
             paused={pausedOn(pauses ?? [], day)}
             stakes={stakes}
-            canMark={active && canMarkDay(day, zone, isKeeper, now)}
+            canMark={
+              active &&
+              adopted &&
+              canMarkDay(day, zone, partnerZone, isKeeper, now)
+            }
             isToday={day === today}
             isKeeper={isKeeper}
             onToggle={(goalId, done) => toggle(day, goalId, done)}
@@ -253,7 +307,7 @@ export function FiveRoute() {
               // not draw them as five empty segments.
               (d) => !startedOn || d >= startedOn
             )}
-            marks={allMarks}
+            ticks={allTicks}
             dayRows={allDays}
             zone={zone}
             now={now}
