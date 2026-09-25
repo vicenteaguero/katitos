@@ -35,31 +35,26 @@ export const qk = {
   presence: {
     appOpens: () => ['presence', 'app-opens'] as const,
   },
-  streak: {
-    all: () => ['streak'] as const,
-    habits: () => ['streak', 'habits'] as const,
-    /** One window of ticks. Separate from `habits` so a month change can't evict it. */
+  habits: {
+    all: () => ['habits'] as const,
+    /** The habits themselves. Named `list` because `habits.habits` reads badly. */
+    list: () => ['habits', 'list'] as const,
+    /** One window of ticks. Separate from `list` so a month change cannot evict it. */
     entries: (from: string, to: string) =>
-      ['streak', 'entries', from, to] as const,
+      ['habits', 'entries', from, to] as const,
     /** Every window at once - what a tick invalidates, and nothing else. */
-    allEntries: () => ['streak', 'entries'] as const,
-  },
-  five: {
-    all: () => ['five'] as const,
-    settings: (userId: string) => ['five', 'settings', userId] as const,
-    /** Her five, as habits in the streak. */
-    habits: (userId: string) => ['five', 'habits', userId] as const,
-    /** Her ticks, read out of `habit_entries` through those habits. */
-    ticks: (userId: string, from: string) =>
-      ['five', 'ticks', userId, from] as const,
-    days: (userId: string, from: string) =>
-      ['five', 'days', userId, from] as const,
-    /** The stretches she had it switched off. */
+    allEntries: () => ['habits', 'entries'] as const,
+    /** Her stakes and her pause switch. */
+    settings: (userId: string) => ['habits', 'settings', userId] as const,
+    /** The days she called hard. */
+    hardDays: (userId: string, from: string) =>
+      ['habits', 'hard-days', userId, from] as const,
+    /** The stretches the money was switched off. */
     pauses: (userId: string, from: string) =>
-      ['five', 'pauses', userId, from] as const,
+      ['habits', 'pauses', userId, from] as const,
     /** The two pots, summed by the database. */
-    pots: (userId: string) => ['five', 'pots', userId] as const,
-    bets: () => ['five', 'bets'] as const,
+    pots: (userId: string) => ['habits', 'pots', userId] as const,
+    bets: () => ['habits', 'bets'] as const,
   },
   chalkboard: {
     notes: () => ['chalkboard', 'notes'] as const,
