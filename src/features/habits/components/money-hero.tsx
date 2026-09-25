@@ -1,8 +1,8 @@
 import { Card, Kicker, StatPill } from '@kernel/ui';
-import { money, unplaced, type Pots as PotsShape } from '../lib/money';
+import { money, unplaced, type Pots } from '../lib/money';
 
 /**
- * The two numbers the screen opens on.
+ * The two numbers the page opens on.
  *
  * Her gift is the big one, in gold on the wine wash, because that is the number
  * the whole thing is for. The bookmaker's is beside it and deliberately smaller:
@@ -14,7 +14,7 @@ import { money, unplaced, type Pots as PotsShape } from '../lib/money';
  * two into one figure would be the single most tempting lie on this screen, so
  * the gap is printed.
  */
-export function Pots({ pots }: { pots: PotsShape }) {
+export function MoneyHero({ pots }: { pots: Pots }) {
   const waiting = unplaced(pots);
   const notes = [
     waiting > 0 ? `${money(waiting)} still to place` : null,
