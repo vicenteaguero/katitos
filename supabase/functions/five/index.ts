@@ -26,18 +26,13 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
 import { corsHeaders, json } from '../_shared/cors.ts';
+import { endOfDay, localDay, nextDay, startOfDay } from '../_shared/zone.ts';
 import {
-  atLocalHour,
-  endOfDay,
-  localDay,
-  nextDay,
-  startOfDay,
-} from '../_shared/zone.ts';
-import {
+  DAY_FROM,
+  DAY_TO,
   FIVE_GOALS,
   FIVE_GOAL_IDS,
   FIVE_OPEN,
-  GRACE_HOUR,
 } from '../_shared/five-goals.ts';
 
 /** Warn this long before her midnight. */
@@ -128,15 +123,18 @@ function prevDay(isoDay: string): string {
 }
 
 /**
- * When `day` stops being correctable for her: 3AM the morning after, read off
- * her wall clock - the same instant `five_guard_window` and `closesAt()` in
- * src/features/five/lib/five-days.ts compute. Adding three hours to the end of
- * the day instead is an hour wrong on a night the clocks move, and that hour is
- * the difference between a day she can still fix and one she has been charged
- * for.
+ * Is `day` finished for BOTH of them?
+ *
+ * The streak's rule, which is now the only rule: a day stays open until the day
+ * after it has ended on the clock behind. She can still tick a Monday while it
+ * is Monday in Curicó, and the money waits for her - settling a day one of them
+ * is still living would charge her for hours she had not had yet.
+ *
+ * `nearest` is that clock behind: the earliest civil date across the two of
+ * them. The same question `isSettled()` answers in src/kernel/lib/habit-days.ts.
  */
-function closesAt(zone: string, isoDay: string): Date {
-  return atLocalHour(zone, nextDay(isoDay), GRACE_HOUR);
+function isDayFinal(nearest: string, isoDay: string): boolean {
+  return nextDay(isoDay) < nearest;
 }
 
 /** Dollars, the way a notification should say them: $9, never $9.00. */
@@ -207,6 +205,10 @@ Deno.serve(async (req) => {
   try {
     const all = members as Member[];
     const keeper = all.find((m) => m.is_admin) ?? all[0];
+    /** The clock behind: the earliest date either of them is living right now. */
+    const nearest = all
+      .map((m) => localDay(zoneOf(m), now))
+      .reduce((a, b) => (a < b ? a : b));
 
     /** Whose five these are. Not his: he is the one who pays for them. */
     const subjects = all.filter((m) => !m.is_admin);
@@ -296,11 +298,34 @@ Deno.serve(async (req) => {
         return d;
       })();
 
-      const { data: marks } = await admin
-        .from('five_marks')
-        .select('day, goal_id, revoked_at')
+      // Her five, as habits in the streak: the tick she taps anywhere is the
+      // row this reads. Until he has opened the Five to her there are none, and
+      // everything below simply finds nothing held.
+      const { data: goalHabits } = await admin
+        .from('habits')
+        .select('id, five_goal_id')
         .eq('user_id', subject.user_id)
-        .gte('day', from);
+        .not('five_goal_id', 'is', null)
+        .is('archived_at', null);
+      const habitGoal = new Map<string, string>(
+        (goalHabits ?? []).map((h) => [
+          h.id as string,
+          h.five_goal_id as string,
+        ])
+      );
+      const { data: entries } = habitGoal.size
+        ? await admin
+            .from('habit_entries')
+            .select('habit_id, day, revoked_at')
+            .in('habit_id', [...habitGoal.keys()])
+            .gte('day', from)
+        : {
+            data: [] as {
+              habit_id: string;
+              day: string;
+              revoked_at: string | null;
+            }[],
+          };
       const { data: days } = await admin
         .from('five_days')
         .select('day, hard_day')
@@ -326,8 +351,11 @@ Deno.serve(async (req) => {
         .or(`to_day.is.null,to_day.gte.${from}`);
 
       const isLive = (day: string, goalId: string) =>
-        (marks ?? []).some(
-          (m) => m.day === day && m.goal_id === goalId && !m.revoked_at
+        (entries ?? []).some(
+          (e) =>
+            e.day === day &&
+            habitGoal.get(e.habit_id as string) === goalId &&
+            !e.revoked_at
         );
       const isHard = (day: string) =>
         (days ?? []).some((d) => d.day === day && d.hard_day);
@@ -342,12 +370,28 @@ Deno.serve(async (req) => {
         (reminders ?? []).find((r) => r.day === day && r.goal_id === goalId);
 
       // ── plan today's five moments ─────────────────────────────────────────
+      //
+      // Five random hours between seven in the morning and midnight, her time.
+      // Random, but not five independent draws: those clump, and three nudges
+      // inside ten minutes is not a day with reminders in it, it is a phone
+      // going off. So the window is cut into five equal stretches, each goal
+      // gets one at random, and the moment is drawn inside it. The hour is
+      // genuinely unpredictable and the spacing is guaranteed.
       if (!isHard(today)) {
         const dayStart = startOfDay(zone, today).getTime();
-        for (const goal of FIVE_GOALS) {
+        // Which goal takes which stretch changes every day, so nothing settles
+        // into "the walk one always comes after lunch".
+        const order = [...FIVE_GOALS];
+        for (let i = order.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [order[i], order[j]] = [order[j], order[i]];
+        }
+        const band = (DAY_TO - DAY_FROM) / order.length;
+
+        for (const [stretch, goal] of order.entries()) {
           if (reminder(today, goal.id)) continue;
-          const [from_, to] = goal.window;
-          const spread = Math.max(0, to - from_);
+          const from_ = DAY_FROM + stretch * band;
+          const spread = band;
           const at = dayStart + (from_ + Math.random() * spread) * 3_600_000;
           // The window is already behind us - the first tick of this day came
           // late (a deploy, an outage). Say nothing rather than firing a
@@ -417,7 +461,7 @@ Deno.serve(async (req) => {
           // the bookmaker" offers two moves: tap three things she did not do, or
           // close the app - and it is the only place that ever mentions the valve.
           title: '🕚 Still time',
-          body: 'Anything you did today counts until 3. And the hard-day button is there 🤍',
+          body: 'Anything you did today still counts tomorrow. And the hard-day button is there 🤍',
           url: '/five',
           vibrate: [0, 60, 90, 60],
           claim: {
@@ -437,7 +481,7 @@ Deno.serve(async (req) => {
       // to stop the meter and tell HIM - not to make the number louder.
       const closedDays: string[] = [];
       for (let d = prevDay(today), i = 0; i < QUIET_DAYS; i++, d = prevDay(d)) {
-        if (closesAt(zone, d).getTime() > now.getTime()) break;
+        if (!isDayFinal(nearest, d)) break;
         if (d <= settings.started_on) break;
         closedDays.push(d);
       }
@@ -500,7 +544,8 @@ Deno.serve(async (req) => {
         // strange way to begin.
         if (d <= settings.started_on) break;
         if (isSettled(d)) continue;
-        if (closesAt(zone, d).getTime() > now.getTime()) continue;
+        // Not while either of them is still living it.
+        if (!isDayFinal(nearest, d)) continue;
 
         // A day she had it switched off is not a day she missed. Skipping it here
         // is what makes coming back after a week free instead of a $105 bill.
