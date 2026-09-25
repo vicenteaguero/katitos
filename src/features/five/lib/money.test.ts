@@ -23,18 +23,21 @@ describe('a day, to each pot', () => {
     expect(s.betCents).toBe(1500);
   });
 
-  it('moves nothing at all on a hard day, however much she did', () => {
+  it('keeps what she held on a hard day, and burns none of the rest', () => {
+    // The valve must not have a price on it: on the day she can least afford
+    // it, pressing it used to cost her the two dollars she had already earned.
     const s = splitDay({ done: ['sleep', 'work'], hardDay: true });
-    expect(s.free).toBe(true);
-    expect(s.giftCents).toBe(0);
+    expect(s.forgiven).toBe(true);
+    expect(s.giftCents).toBe(200);
     expect(s.betCents).toBe(0);
-    // The day still happened, and still says what she held.
     expect(s.done).toEqual(['sleep', 'work']);
   });
 
-  it('moves nothing while she has it paused', () => {
-    const s = splitDay({ done: [], paused: true });
+  it('moves nothing at all while she has it switched off', () => {
+    const s = splitDay({ done: ['sleep'], paused: true });
     expect(s.free).toBe(true);
+    expect(s.forgiven).toBe(true);
+    expect(s.giftCents).toBe(0);
     expect(s.betCents).toBe(0);
   });
 
