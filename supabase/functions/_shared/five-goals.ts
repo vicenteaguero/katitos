@@ -47,10 +47,12 @@ export const FIVE_GOALS: FiveGoal[] = [
     id: 'sleep',
     label: 'Sleep',
     emoji: '🌙',
-    window: [9, 11.5],
+    // Late enough that it does not go off while she is still asleep: a nudge
+    // sent at 09:20 to a sleeping phone is stamped as said and never repeats.
+    window: [10, 13],
     nudges: [
       'Seven or eight hours last night? Tap it if you got them 🤍',
-      'How was the night? If you slept properly, this one is already done.',
+      'If the night gave you seven, this one is already done.',
       'Morning. One tap if the night was a real one 🌙',
     ],
   },
@@ -62,7 +64,7 @@ export const FIVE_GOALS: FiveGoal[] = [
     nudges: [
       'Work in? Tap it when the day is done 💼',
       'Whatever you got through today counts. Tap it.',
-      'One tap for work, and it stops asking.',
+      'Any work at all today? It counts 💼',
     ],
   },
   {
@@ -73,7 +75,7 @@ export const FIVE_GOALS: FiveGoal[] = [
     nudges: [
       'Any studying today? Even a short one counts 📚',
       'Open the book for a bit and this one is yours.',
-      'Studying is the easiest of the five to get back. Go on.',
+      'Ten minutes of the book counts as a yes 📚',
     ],
   },
   {
@@ -82,8 +84,8 @@ export const FIVE_GOALS: FiveGoal[] = [
     emoji: '🍲',
     window: [13, 15.5],
     nudges: [
-      'Have you eaten something real today? 🍲',
-      'A proper plate, not a snack standing up. Tap when it happens.',
+      'When you eat something proper today, this one is yours 🍲',
+      'A plate and a chair, whenever it fits.',
       'Lunch, then tap. That order 🤍',
     ],
   },
@@ -94,7 +96,7 @@ export const FIVE_GOALS: FiveGoal[] = [
     window: [16, 20.5],
     nudges: [
       'Out for a walk? Twenty minutes is a walk 🏃',
-      'Shoes on. This is the one that fixes the other four.',
+      'Twenty minutes outside, if the day allows it 🏃',
       'Walk or train, either one, then tap 🤍',
     ],
   },
