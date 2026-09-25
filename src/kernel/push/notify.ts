@@ -18,6 +18,7 @@ export type NotifyKind =
   | 'lesson' // a new lesson or homework is waiting
   | 'tree' // the tree was watered
   | 'streak' // a habit was ticked, or the day is about to run out
+  | 'five' // one of her five, or a day that closed with money on it
   | 'presence'; // your love opened the app
 
 /**
@@ -40,6 +41,7 @@ const DELIVERED: ReadonlySet<NotifyKind> = new Set<NotifyKind>([
   'tree',
   'lesson',
   'streak',
+  'five',
 ]);
 
 /** Per-kind presentation, so a lock screen says what kind of thing arrived. */
@@ -56,6 +58,7 @@ const PRESENTATION: Record<NotifyKind, { tag: string; vibrate?: number[] }> = {
   tree: { tag: 'tree' },
   lesson: { tag: 'lesson', vibrate: [0, 30] },
   streak: { tag: 'streak', vibrate: [0, 30, 40, 30] },
+  five: { tag: 'five', vibrate: [0, 30] },
   presence: { tag: 'presence' },
 };
 
