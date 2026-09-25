@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { type DateTime } from 'luxon';
-import { Button, Card, Kicker } from '@kernel/ui';
+import type { DateTime } from 'luxon';
+import { Button, Card, StatPill } from '@kernel/ui';
 import { GOALS, type GoalId } from '../lib/goals';
 import { money, splitDay, type Stakes } from '../lib/money';
 import { closesAt, dayName } from '../lib/five-days';
@@ -8,23 +8,32 @@ import { GoalRow } from './goal-row';
 import type { FiveMark } from '../types';
 
 /**
- * A day, with its five rows and what it is about to cost.
+ * A day, with its five rows.
  *
  * Today and, while the grace window is open, yesterday - both as full cards, so
  * fixing last night is the same gesture as ticking this morning rather than a
  * trip into a history screen. A closed day he opens from the strip uses the same
- * card, which is why the heading takes its words from `dayName` and not from
- * "Today".
+ * card, which is why the heading takes its words from `dayName`.
+ *
+ * The money on this card appears in the evening and not before. A day that has
+ * barely started has nothing at stake yet in any useful sense, and printing
+ * "$15 at stake" over an untouched morning is a bill for a day she has not lived.
  */
+
+/** From this hour on her clock, the day is short enough to name the number. */
+const EVENING_HOUR = 18;
+
 export function DayCard({
   day,
   zone,
   marks,
   hardDay,
+  hardDayNote,
   paused,
   stakes,
   canMark,
   isToday,
+  isKeeper,
   onToggle,
   onHardDay,
   onUndoHardDay,
@@ -35,15 +44,19 @@ export function DayCard({
   zone: string | null;
   marks: FiveMark[];
   hardDay: boolean;
+  /** What she said about it, if she said anything. */
+  hardDayNote?: string | null;
   paused: boolean;
   stakes: Stakes;
   canMark: boolean;
   /** Today needs no closing time; yesterday's is the whole reason it is here. */
   isToday: boolean;
+  /** He sees that a tap was taken back. She hears it from him, not from a row. */
+  isKeeper: boolean;
   onToggle: (goalId: GoalId, done: boolean) => void;
   onHardDay?: () => void;
   onUndoHardDay?: () => void;
-  /** She has already used this week's hard day, so the button says so. */
+  /** She has already used this week's hard day. */
   hardDaySpent: boolean;
   now: DateTime;
 }) {
@@ -63,29 +76,33 @@ export function DayCard({
           .toFormat('H:mm')
       : null;
 
+  const evening =
+    !isToday || (now.setZone(zone ?? 'UTC').hour ?? 0) >= EVENING_HOUR;
+  const note = split.forgiven
+    ? 'nothing to lose today'
+    : split.betCents > 0
+      ? evening
+        ? `${money(split.betCents)} still open`
+        : 'the day is young'
+      : 'all of it yours';
+
   return (
-    <Card tone="hairline" className="flex flex-col gap-2.5">
+    <Card tone="flat" className="flex flex-col gap-2.5">
       <div className="flex items-baseline justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="truncate font-display text-xl font-semibold tracking-tight text-fg">
+          <h2 className="truncate font-display text-2xl font-semibold tracking-tight text-fg">
             {heading}
           </h2>
           {closing && (
-            <Kicker tone="muted">open until {closing} this morning</Kicker>
+            <p className="font-sans text-[11px] text-muted">
+              open until {closing} this morning
+            </p>
           )}
         </div>
-        <span className="shrink-0 text-right">
-          <span className="block font-display text-lg font-semibold text-gold tabular-nums">
-            {split.done.length} of {GOALS.length}
-          </span>
-          <Kicker tone="muted">
-            {split.free
-              ? 'nothing moves'
-              : split.betCents > 0
-                ? `${money(split.betCents)} at stake`
-                : 'all of it yours'}
-          </Kicker>
-        </span>
+        <StatPill
+          value={`${split.done.length} of ${GOALS.length}`}
+          label={note}
+        />
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -97,11 +114,9 @@ export function DayCard({
               key={goal.id}
               goal={goal}
               done={done}
-              revoked={!!mark?.revoked_at}
-              free={split.free}
-              interactive={canMark && !hardDay}
+              revoked={isKeeper && !!mark?.revoked_at}
+              interactive={canMark}
               giftCents={stakes.giftCents}
-              betCents={stakes.betCents}
               onToggle={() => onToggle(goal.id, done)}
             />
           );
@@ -111,7 +126,11 @@ export function DayCard({
       {hardDay ? (
         <div className="flex items-center justify-between gap-3">
           <p className="min-w-0 font-sans text-xs leading-relaxed text-muted">
-            You called this one a hard day. Nothing moved, and nothing was owed.
+            {hardDayNote ? (
+              <span className="text-fg">&ldquo;{hardDayNote}&rdquo;</span>
+            ) : (
+              'You called this one a hard day. It cost nothing, and nothing was asked.'
+            )}
           </p>
           {onUndoHardDay && (
             <Button variant="quiet" size="xs" onClick={onUndoHardDay}>
@@ -121,17 +140,18 @@ export function DayCard({
         </div>
       ) : (
         onHardDay &&
-        canMark && (
+        canMark &&
+        // Spent, and so not offered. A disabled button saying she has already
+        // used it is a line about a thing she cannot do, sitting on the screen
+        // all week; the valve is meant to be quiet when it is closed.
+        !hardDaySpent && (
           <Button
             variant="ghost"
             size="xs"
             className="self-start"
-            disabled={hardDaySpent}
             onClick={onHardDay}
           >
-            {hardDaySpent
-              ? 'Hard day already used this week'
-              : 'Today was hard'}
+            Today was hard
           </Button>
         )
       )}
