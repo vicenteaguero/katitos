@@ -40,8 +40,10 @@ const PRUNE_DAYS = 30;
 const CLOSE_LOOKBACK_DAYS = 7;
 /** This many silent closed days in a row and the money switches itself off. */
 const QUIET_DAYS = 3;
-/** Owed to the bookmaker and not yet placed, before he is reminded. */
-const UNPLACED_CENTS = 3000;
+/** Condemned and not yet put on a match, before he is chased about it. */
+const UNPLACED_CENTS = 100;
+/** A match is over, and the result askable, this long after it starts. */
+const PLAYED_MS = 2 * 60 * 60 * 1000;
 /** A nudge planned more than this long ago is stale; the day moved on. */
 const STALE_MS = 4 * 60 * 60 * 1000;
 
@@ -141,7 +143,7 @@ function activeOn(h: Habit, day: string): boolean {
   return true;
 }
 
-Deno.serve(async (req) => {
+async function tick(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -203,6 +205,7 @@ Deno.serve(async (req) => {
   const { data: entries } = await admin
     .from('habit_entries')
     .select('habit_id, day')
+    .is('revoked_at', null)
     .in('day', lookup);
   const ticked = new Set((entries ?? []).map((e) => `${e.habit_id}:${e.day}`));
 
@@ -490,7 +493,7 @@ Deno.serve(async (req) => {
                 : `Habits: ${done.length} of ${hers.length}`,
               body: hard
                 ? `She called it a hard day, and it cost nothing. ${dollars(gift)} to her gift. Ring her.`
-                : `${dollars(gift)} to her gift, ${dollars(bet)} to burn.`,
+                : `${dollars(gift)} to her gift, ${dollars(bet)} to the betting money.`,
             });
           }
         }
@@ -554,21 +557,48 @@ Deno.serve(async (req) => {
     // ── money he condemned and has not placed ───────────────────────────
     //
     // "$X still to place" is the most honest line on the page, and nothing ever
-    // acted on it. Let it drift to a couple of hundred and the bet pot stops
-    // meaning anything, and then the only thing left is the guilt.
+    // acted on it. The betting money is a week now: whatever her misses burned
+    // between Monday and Sunday is a bet he owes, so once a week, on his Monday,
+    // he is told the figure. Once only - the ledger below claims it by that
+    // Monday's date.
     const { data: potsRow } = await admin.rpc('money_pots', {
       p_user: subject.user_id,
     });
     const pots = (potsRow ?? {}) as Record<string, number>;
     const owedNow = (pots.bet_cents ?? 0) - (pots.staked_cents ?? 0);
     const monday = mondayOf(localDay(zoneOf(keeper), now));
-    if (owedNow >= UNPLACED_CENTS && !nudgesSeen(monday, '_unplaced')) {
+    if (owedNow >= UNPLACED_CENTS) {
       due.push({
         member: keeper,
         kind: 'unplaced',
         day: monday,
         title: `🎟️ ${dollars(owedNow)} still to place`,
-        body: 'Her missed habits have been paid for and not bet yet. The pot only means something if you place them.',
+        body: 'Her missed habits have been paid for and not bet yet. The money only means something if you put it on something.',
+      });
+    }
+
+    // ── a match that has been played and never settled ──────────────────
+    //
+    // He logs one on Monday for a match on Thursday morning, and the result only
+    // ever got filled in if he happened to open the page and remember. A log
+    // with holes in it is the one thing this log cannot be, so two hours after
+    // kickoff it asks him, and asks again tomorrow until it is settled or void.
+    const { data: riding } = await admin
+      .from('bets')
+      .select('id, pick, stake_cents, odds, kickoff, status')
+      .eq('status', 'open')
+      .not('kickoff', 'is', null)
+      .lt('kickoff', new Date(now.getTime() - PLAYED_MS).toISOString());
+    for (const bet of riding ?? []) {
+      const back = bet.odds
+        ? ` ${dollars(Math.round(bet.stake_cents * Number(bet.odds)))} if it came in.`
+        : '';
+      due.push({
+        member: keeper,
+        kind: `bet:${bet.id}`,
+        day: localDay(zoneOf(keeper), now),
+        title: '🎟️ How did it go?',
+        body: `${bet.pick}, ${dollars(bet.stake_cents)}.${back} Put the result in - a win goes straight to her gift.`,
       });
     }
   }
@@ -668,4 +698,29 @@ Deno.serve(async (req) => {
     sent,
     streak: runningDays,
   });
+}
+
+/**
+ * One envelope around the lot.
+ *
+ * pg_cron calls this every ten minutes and reads nothing back, so a throw in
+ * here is a clock that silently stopped: no day settles, no money moves, nobody
+ * is told anything, and the only symptom is an app that looks fine. It has
+ * happened once already, from a function name that was deleted and still called.
+ * Now it answers with the reason, which a dry run and the function logs both
+ * show.
+ */
+Deno.serve(async (req) => {
+  try {
+    return await tick(req);
+  } catch (err) {
+    console.error('habits-tick failed', err);
+    return json(
+      {
+        error: 'tick failed',
+        detail: err instanceof Error ? err.message : String(err),
+      },
+      500
+    );
+  }
 });
