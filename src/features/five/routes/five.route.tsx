@@ -36,9 +36,11 @@ import {
   useFiveBets,
   useFiveDays,
   useFiveMarks,
+  useFivePauses,
   useFivePots,
   useFiveSettings,
   useFiveWho,
+  pausedOn,
 } from '../api/five.queries';
 import {
   useAddBet,
@@ -87,6 +89,7 @@ export function FiveRoute() {
   const { data: dayRows } = useFiveDays(subjectId, from);
   const { pots } = useFivePots(subjectId);
   const { data: bets } = useFiveBets();
+  const { data: pauses } = useFivePauses(subjectId, from);
 
   useTableSync('five_marks', qk.five.all());
   useTableSync('five_days', qk.five.all());
@@ -211,7 +214,7 @@ export function FiveRoute() {
             marks={allMarks}
             hardDay={hardDays.includes(day)}
             hardDayNote={allDays.find((d) => d.day === day)?.note ?? null}
-            paused={!active}
+            paused={pausedOn(pauses ?? [], day)}
             stakes={stakes}
             canMark={active && canMarkDay(day, zone, isKeeper, now)}
             isToday={day === today}
