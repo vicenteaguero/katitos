@@ -21,7 +21,9 @@ import {
  * where the money is explained.
  */
 export function FiveWidget() {
-  const now = useNow(60 * 60 * 1000);
+  // Home sits open for days too, and this card names today. See the note in
+  // five.route.tsx.
+  const now = useNow(60_000);
   const { subject, zone } = useFiveWho();
   const subjectId = subject?.user_id ?? null;
   const today = localDay(zone, now);
