@@ -17,7 +17,7 @@ import { money } from '../lib/money';
 import type { Bet, BetStatus } from '../types';
 
 /**
- * Every bet her missed goals paid for, kept forever.
+ * Every bet her missed habits paid for, kept forever.
  *
  * This list is the memory of the whole feature. A pot that goes down is abstract;
  * "Sunday, Bayern to win, $9, lost" is not, and it is still here in March. So
@@ -34,6 +34,15 @@ const TONE: Record<
   void: { label: 'void', tone: 'neutral' },
 };
 
+/** A bet that has been played and never settled. The clock chases him for these. */
+function needsResult(bet: Bet): boolean {
+  return (
+    (bet.status ?? 'open') === 'open' &&
+    !!bet.kickoff &&
+    DateTime.fromISO(bet.kickoff) < DateTime.now()
+  );
+}
+
 export function BetList({
   bets,
   isKeeper,
@@ -45,10 +54,17 @@ export function BetList({
   onSettle: (bet: Bet) => void;
   onAdd?: () => void;
 }) {
+  const waiting = bets.filter(needsResult).length;
   return (
     <section>
       <SectionLabel
-        note={bets.length > 0 ? `${bets.length} so far` : undefined}
+        note={
+          waiting > 0
+            ? `${waiting} waiting on a result`
+            : bets.length > 0
+              ? `${bets.length} so far`
+              : undefined
+        }
         action={
           isKeeper && onAdd ? (
             <Button variant="quiet" size="xs" onClick={onAdd}>
@@ -63,13 +79,16 @@ export function BetList({
         <Empty
           icon="🎟️"
           title="No bets yet"
-          hint="If a day goes past, whatever he backs with it shows up here."
+          hint="Each week's betting money goes on a match, and every one of them stays here."
         />
       ) : (
         <Card tone="flat" className="p-0">
           <CardRows>
             {bets.map((bet) => {
-              const look = TONE[(bet.status as BetStatus) ?? 'open'];
+              const played = needsResult(bet);
+              const look = played
+                ? { label: 'result?', tone: 'warning' as const }
+                : TONE[(bet.status as BetStatus) ?? 'open'];
               const body = (
                 <>
                   <span className="min-w-0 flex-1">
@@ -78,9 +97,7 @@ export function BetList({
                     </span>
                     <span className="block truncate font-sans text-xs text-muted">
                       {[
-                        DateTime.fromISO(bet.day, { zone: 'utc' }).toFormat(
-                          'd LLL'
-                        ),
+                        when(bet),
                         bet.sport,
                         bet.odds ? `at ${bet.odds}` : null,
                       ]
@@ -131,18 +148,35 @@ export function BetList({
   );
 }
 
+/**
+ * When it plays, or when it was placed.
+ *
+ * The kickoff is the more useful of the two dates every time it exists: it is
+ * the one that tells you whether this is tonight's match or one nobody has
+ * settled since Thursday.
+ */
+function when(bet: Bet): string {
+  if (bet.kickoff) {
+    return DateTime.fromISO(bet.kickoff).toFormat('ccc d LLL, HH:mm');
+  }
+  return DateTime.fromISO(bet.day, { zone: 'utc' }).toFormat('d LLL');
+}
+
 /** He places one. Dollars in the field, cents in the database. */
 export function BetForm({
   open,
   day,
   owed,
+  zone,
   onClose,
   onSave,
 }: {
   open: boolean;
   day: string;
-  /** What the pot says he owes the bookmaker, so the stake starts there. */
+  /** What the week's pot says he owes, so the stake starts there. */
   owed: number;
+  /** His clock, so "Thursday 09:00" means nine in the morning where he is. */
+  zone?: string | null;
   onClose: () => void;
   onSave: (draft: {
     day: string;
@@ -150,6 +184,7 @@ export function BetForm({
     pick: string;
     stakeCents: number;
     odds: number | null;
+    kickoff: string | null;
     note: string | null;
   }) => void;
 }) {
@@ -159,6 +194,7 @@ export function BetForm({
     owed > 0 ? String(owed / 100) : ''
   );
   const [odds, setOdds] = useState('');
+  const [kickoff, setKickoff] = useState('');
 
   const cents = Math.round(Number(stake.replace(',', '.')) * 100);
   const valid = pick.trim().length > 0 && Number.isFinite(cents) && cents > 0;
@@ -193,15 +229,22 @@ export function BetForm({
         </FieldRow>
         <Field
           label="Stake"
-          hint={
-            owed > 0 ? `${money(owed)} still owed to the bookmaker` : undefined
-          }
+          hint={owed > 0 ? `${money(owed)} still to place` : undefined}
         >
           <Input
             value={stake}
             onChange={(e) => setStake(e.target.value)}
             inputMode="decimal"
             placeholder="9"
+          />
+        </Field>
+        {/* The whole reason the result ever gets filled in: two hours after this
+            the clock asks him for it, and keeps asking. */}
+        <Field label="When it plays" hint="Your time. Optional">
+          <Input
+            type="datetime-local"
+            value={kickoff}
+            onChange={(e) => setKickoff(e.target.value)}
           />
         </Field>
         <Button
@@ -215,11 +258,13 @@ export function BetForm({
               pick: pick.trim(),
               stakeCents: cents,
               odds: odds ? Number(odds.replace(',', '.')) : null,
+              kickoff: toInstant(kickoff, zone),
               note: null,
             });
             setPick('');
             setSport('');
             setOdds('');
+            setKickoff('');
           }}
         >
           Place it
@@ -227,6 +272,19 @@ export function BetForm({
       </div>
     </Dialog>
   );
+}
+
+/**
+ * A wall-clock time in HIS zone, as an instant.
+ *
+ * "Thursday at 9" is nine in Santiago, not nine wherever the browser thinks it
+ * is - and this app is opened from two countries. Luxon reads the local string
+ * in the zone we name, so the stored instant is the same one either phone typed.
+ */
+function toInstant(local: string, zone?: string | null): string | null {
+  if (!local) return null;
+  const dt = DateTime.fromISO(local, zone ? { zone } : undefined);
+  return dt.isValid ? dt.toUTC().toISO() : null;
 }
 
 /** It came in, or it did not. A win pays her, so the payout is asked for. */
@@ -255,9 +313,8 @@ export function SettleBet({
     <Dialog open onClose={onClose} title={bet.pick}>
       <div className="flex flex-col gap-3">
         <p className="font-sans text-sm leading-relaxed text-muted">
-          {money(bet.stake_cents)} on{' '}
-          {DateTime.fromISO(bet.day).toFormat('d LLL')}. A win goes straight
-          into her gift pot, not back to you.
+          {money(bet.stake_cents)}, {when(bet)}. A win goes straight into her
+          gift, not back to you.
         </p>
         <Field label="If it came in, what it paid">
           <Input
