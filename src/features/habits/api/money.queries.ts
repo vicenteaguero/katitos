@@ -118,24 +118,47 @@ export function pausedOn(pauses: MoneyPause[], day: string): boolean {
   );
 }
 
-/** The two pots, summed by the database - one round trip, six integers. */
-export function useMoneyPots(userId: string | null | undefined) {
+/**
+ * The two pots, summed by the database - one round trip, and it comes back
+ * knowing which week and which month it is talking about.
+ *
+ * `day` is HER day, because the periods are hers: at 2am in Chile she is already
+ * a day into the week he is still finishing, and the pot that empties on Sunday
+ * empties on her Sunday.
+ */
+export function useMoneyPots(userId: string | null | undefined, day: string) {
   const query = useQuery({
-    queryKey: qk.habits.pots(userId ?? 'none'),
-    enabled: !!userId,
+    queryKey: qk.habits.pots(userId ?? 'none', day),
+    enabled: !!userId && !!day,
     queryFn: async (): Promise<Pots> => {
-      const { data, error } = await supabase.rpc('money_pots', {
+      const { data, error } = await supabase.rpc('money_pots_periods', {
         p_user: userId!,
+        p_day: day,
       });
       if (error) throw error;
-      const row = (data ?? {}) as Record<string, number>;
+      const row = (data ?? {}) as Record<string, number | string | null>;
+      const n = (k: string) => {
+        const v = row[k];
+        return typeof v === 'number' ? v : 0;
+      };
+      const d = (k: string) => {
+        const v = row[k];
+        return typeof v === 'string' ? v : null;
+      };
       return {
-        giftCents: row.gift_cents ?? 0,
-        betCents: row.bet_cents ?? 0,
-        stakedCents: row.staked_cents ?? 0,
-        lostCents: row.lost_cents ?? 0,
-        wonCents: row.won_cents ?? 0,
-        openCents: row.open_cents ?? 0,
+        giftCents: n('gift_cents'),
+        betCents: n('bet_cents'),
+        stakedCents: n('staked_cents'),
+        lostCents: n('lost_cents'),
+        wonCents: n('won_cents'),
+        openCents: n('open_cents'),
+        giftPeriodCents: n('gift_period_cents'),
+        betPeriodCents: n('bet_period_cents'),
+        betPeriodStakedCents: n('bet_period_staked_cents'),
+        giftFrom: d('gift_from'),
+        giftTo: d('gift_to'),
+        betFrom: d('bet_from'),
+        betTo: d('bet_to'),
       };
     },
   });
