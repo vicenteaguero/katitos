@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router';
+import { createBrowserRouter, Navigate } from 'react-router';
 import { AppShell } from './shell/app-shell';
 import { RouteErrorBoundary } from './shell/error-boundary';
 import { HomeRoute } from './routes/home.route';
@@ -16,6 +16,10 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <HomeRoute /> },
       { path: 'settings', element: <SettingsRoute /> },
+      // The streak became Habits, and a year of push notifications deep-link to
+      // the old path. A dead link on a lock screen is a small betrayal.
+      { path: 'streak', element: <Navigate to="/habits" replace /> },
+      { path: 'five', element: <Navigate to="/habits" replace /> },
       ...featureRegistry.routes,
       { path: '*', element: <NotFoundRoute /> },
     ],
