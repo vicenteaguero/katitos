@@ -247,6 +247,9 @@ export function SettleBet({
   const cents = payout
     ? Math.round(Number(payout.replace(',', '.')) * 100)
     : suggested;
+  // A half-typed figure is not a payout. Without this, "12,5o" marks the bet won
+  // with nothing written to her pot and nothing said about it.
+  const payable = Number.isFinite(cents) && cents > 0;
 
   return (
     <Dialog open onClose={onClose} title={bet.pick}>
@@ -265,7 +268,11 @@ export function SettleBet({
           />
         </Field>
         <div className="flex flex-col gap-2">
-          <Button variant="affirm" onClick={() => onSettle('won', cents)}>
+          <Button
+            variant="affirm"
+            disabled={!payable}
+            onClick={() => payable && onSettle('won', cents)}
+          >
             It came in
           </Button>
           <Button variant="destructive" onClick={() => onSettle('lost')}>
