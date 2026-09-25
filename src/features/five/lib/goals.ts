@@ -23,8 +23,15 @@
  */
 export const FIVE_OPEN = false;
 
-/** Her day stays markable until 3AM the next morning, and not a minute later. */
-export const GRACE_HOUR = 3;
+/**
+ * There is no window of the Five's own any more.
+ *
+ * A goal IS a habit in the streak, and a tick is one row in `habit_entries`, so
+ * "may I still change this day" has exactly one answer and it is the streak's:
+ * until the day after it has ended on the clock behind. See
+ * `src/kernel/lib/habit-days.ts`, and `lib/five-days.ts` for the two questions
+ * only this screen asks.
+ */
 
 export interface Goal {
   id: GoalId;
