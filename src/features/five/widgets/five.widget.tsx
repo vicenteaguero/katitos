@@ -2,14 +2,13 @@ import { Link } from 'react-router';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@kernel/lib';
 import { useNow } from '@kernel/hooks';
-import { Card, Kicker } from '@kernel/ui';
+import { Card } from '@kernel/ui';
 import { GOALS } from '../lib/goals';
-import { money, splitDay } from '../lib/money';
+import { splitDay } from '../lib/money';
 import { localDay } from '../lib/five-days';
 import {
   useFiveDays,
   useFiveMarks,
-  useFivePots,
   useFiveSettings,
   useFiveWho,
 } from '../api/five.queries';
@@ -29,7 +28,6 @@ export function FiveWidget() {
   const { stakes, active } = useFiveSettings(subjectId);
   const { data: marks } = useFiveMarks(subjectId, today);
   const { data: dayRows } = useFiveDays(subjectId, today);
-  const { pots } = useFivePots(subjectId);
 
   if (!subjectId) return null;
 
@@ -62,13 +60,18 @@ export function FiveWidget() {
           <span className="block font-sans text-sm font-semibold text-fg">
             {split.done.length} of {GOALS.length} today
           </span>
-          <Kicker as="span" tone="muted" className="block">
+          {/* No money on Home. The figure belongs on the screen that can
+              explain it; here it would be a price on her morning, in the first
+              thing she sees after opening the app. */}
+          <span className="block font-sans text-[11px] text-muted">
             {split.free
-              ? 'nothing moves today'
-              : split.betCents > 0
-                ? `${money(split.betCents)} at stake, ${money(pots.giftCents)} yours`
-                : `all of it yours, ${money(pots.giftCents)} so far`}
-          </Kicker>
+              ? 'paused'
+              : split.forgiven
+                ? 'a hard day, and that is allowed'
+                : split.missed.length === 0
+                  ? 'all five, every one of them'
+                  : 'tap what you have already done'}
+          </span>
         </span>
         <ChevronRight className="h-4 w-4 shrink-0 text-muted" />
       </Card>
