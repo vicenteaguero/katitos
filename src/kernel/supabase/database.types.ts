@@ -311,6 +311,7 @@ export type Database = {
         Row: {
           day: string
           id: string
+          kickoff: string | null
           note: string | null
           odds: number | null
           payout_cents: number | null
@@ -324,6 +325,7 @@ export type Database = {
         Insert: {
           day: string
           id?: string
+          kickoff?: string | null
           note?: string | null
           odds?: number | null
           payout_cents?: number | null
@@ -337,6 +339,7 @@ export type Database = {
         Update: {
           day?: string
           id?: string
+          kickoff?: string | null
           note?: string | null
           odds?: number | null
           payout_cents?: number | null
@@ -883,21 +886,21 @@ export type Database = {
       habit_nudges: {
         Row: {
           day: string
-          goal_id: string
+          kind: string
           sent_at: string | null
           slot_at: string
           user_id: string
         }
         Insert: {
           day: string
-          goal_id: string
+          kind: string
           sent_at?: string | null
           slot_at: string
           user_id: string
         }
         Update: {
           day?: string
-          goal_id?: string
+          kind?: string
           sent_at?: string | null
           slot_at?: string
           user_id?: string
@@ -3054,11 +3057,24 @@ export type Database = {
         }[]
       }
       money_pots: { Args: { p_user: string }; Returns: Json }
+      money_pots_periods: {
+        Args: { p_day?: string; p_user: string }
+        Returns: Json
+      }
       money_reconcile_day: {
         Args: { p_day: string; p_user: string }
         Returns: number
       }
       money_unpay_bet: { Args: { p_bet: string }; Returns: number }
+      money_windows: {
+        Args: { p_day: string; p_user: string }
+        Returns: {
+          bet_from: string
+          bet_to: string
+          gift_from: string
+          gift_to: string
+        }[]
+      }
       partner_id: { Args: never; Returns: string }
       polaroid_day_open: { Args: { d: string }; Returns: boolean }
       safe_tz: { Args: { tz: string }; Returns: string }
