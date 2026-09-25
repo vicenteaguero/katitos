@@ -880,36 +880,6 @@ export type Database = {
           },
         ]
       }
-      five_marks: {
-        Row: {
-          day: string
-          done_at: string
-          goal_id: string
-          marked_by: string | null
-          revoked_at: string | null
-          revoked_by: string | null
-          user_id: string
-        }
-        Insert: {
-          day: string
-          done_at?: string
-          goal_id: string
-          marked_by?: string | null
-          revoked_at?: string | null
-          revoked_by?: string | null
-          user_id: string
-        }
-        Update: {
-          day?: string
-          done_at?: string
-          goal_id?: string
-          marked_by?: string | null
-          revoked_at?: string | null
-          revoked_by?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       five_pauses: {
         Row: {
           created_at: string
@@ -1025,6 +995,8 @@ export type Database = {
           habit_id: string
           id: string
           marked_by: string
+          revoked_at: string | null
+          revoked_by: string | null
         }
         Insert: {
           created_at?: string
@@ -1032,6 +1004,8 @@ export type Database = {
           habit_id: string
           id?: string
           marked_by?: string
+          revoked_at?: string | null
+          revoked_by?: string | null
         }
         Update: {
           created_at?: string
@@ -1039,6 +1013,8 @@ export type Database = {
           habit_id?: string
           id?: string
           marked_by?: string
+          revoked_at?: string | null
+          revoked_by?: string | null
         }
         Relationships: [
           {
@@ -1077,6 +1053,7 @@ export type Database = {
           created_at: string
           effective_from: string
           emoji: string
+          five_goal_id: string | null
           id: string
           kind: string
           schedule: string
@@ -1091,6 +1068,7 @@ export type Database = {
           created_at?: string
           effective_from?: string
           emoji?: string
+          five_goal_id?: string | null
           id?: string
           kind?: string
           schedule?: string
@@ -1105,6 +1083,7 @@ export type Database = {
           created_at?: string
           effective_from?: string
           emoji?: string
+          five_goal_id?: string | null
           id?: string
           kind?: string
           schedule?: string
@@ -3022,10 +3001,16 @@ export type Database = {
         }[]
       }
       can_upload_flowers: { Args: never; Returns: boolean }
+      five_adopt_habits: { Args: { p_user: string }; Returns: number }
       five_day_paused: {
         Args: { p_day: string; p_user: string }
         Returns: boolean
       }
+      five_held: {
+        Args: { p_day: string; p_goal: string; p_user: string }
+        Returns: boolean
+      }
+      five_mirroring: { Args: never; Returns: boolean }
       five_pots: { Args: { p_user: string }; Returns: Json }
       five_reconcile_day: {
         Args: { p_day: string; p_user: string }
