@@ -74,10 +74,14 @@ const STRIP_DAYS = 21;
  * trigger in the database.
  */
 export function FiveRoute() {
-  // Every hour is enough: the grace window shuts at 3AM, and nothing on this
-  // screen counts down. A minute ticker here would re-render five cards for
-  // nothing.
-  const now = useNow(60 * 60 * 1000);
+  // A minute, not an hour.
+  //
+  // `useNow` does not refresh on focus, and this is a PWA that lives open on a
+  // phone for days: on an hourly tick, for up to an hour after her midnight the
+  // card headed "Today" still carried yesterday's date, so a tap put the dollar
+  // on the wrong day - and after 3AM the server refused a card that said Today.
+  // The tree under here is five rows and a bar chart; a minute costs nothing.
+  const now = useNow(60_000);
   const { subject, zone, isKeeper, isLoading } = useFiveWho();
   // Hidden means hidden, including from a typed URL. See lib/visible.ts.
   const visible = useFiveVisible();
@@ -272,6 +276,9 @@ export function FiveRoute() {
       />
 
       <BetForm
+        // Keyed to what he owes, so the stake field is never still showing the
+        // zero it was mounted with before the pots arrived.
+        key={pots.betCents - pots.stakedCents}
         open={placing}
         day={today}
         owed={Math.max(0, pots.betCents - pots.stakedCents)}
