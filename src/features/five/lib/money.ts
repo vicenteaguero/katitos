@@ -9,11 +9,19 @@ import { GOAL_IDS, type GoalId } from './goals';
  * not the prize - which is the only reason a tracker like this works on someone
  * who is already tired of being scored.
  *
- * Two things stop the money entirely, and they are the reason this file exists
- * separately from the screen: a hard day, and a paused Five. Neither is a zero
- * day. Nothing moves at all - no gift, no burn, no row in the ledger - because a
- * day she called hard is not a day she failed, and a switch she turned off is not
- * consent she withdrew from halfway.
+ * Two things change the arithmetic, and they are the reason this file exists
+ * separately from the screen.
+ *
+ * A HARD DAY stops the burn and nothing else. It used to stop both, and that was
+ * the worst bug in the feature: on a day she managed two of the five and was
+ * drowning, pressing the one button meant for her worst days took away the two
+ * dollars she had already earned and greyed out the rows, so the valve had a
+ * price on it and she would learn not to press it. Now a hard day keeps every
+ * dollar she held and forgives every one she did not.
+ *
+ * A PAUSED Five stops everything, because a switch she turned off is not consent
+ * she withdrew from halfway. The scheduler also never settles a day she was
+ * paused through, so coming back is never a bill.
  *
  * The scheduler (`supabase/functions/five/index.ts`) and `five_reconcile_day()`
  * write the ledger from exactly this rule. This is the copy the screen projects
@@ -42,7 +50,9 @@ export interface DaySplit {
   missed: GoalId[];
   giftCents: number;
   betCents: number;
-  /** True when this day is deliberately outside the money. */
+  /** Nothing she missed costs anything today. */
+  forgiven: boolean;
+  /** Nothing moves at all, in either direction: she has it switched off. */
   free: boolean;
 }
 
@@ -51,20 +61,22 @@ export function splitDay(input: DayInput): DaySplit {
   const held = new Set(input.done);
   const done = GOAL_IDS.filter((id) => held.has(id));
   const missed = GOAL_IDS.filter((id) => !held.has(id));
-  const free = !!input.hardDay || !!input.paused;
+  const paused = !!input.paused;
+  const forgiven = paused || !!input.hardDay;
   const stakes = input.stakes ?? DEFAULT_STAKES;
   return {
     done,
     missed,
-    giftCents: free ? 0 : done.length * stakes.giftCents,
-    betCents: free ? 0 : missed.length * stakes.betCents,
-    free,
+    giftCents: paused ? 0 : done.length * stakes.giftCents,
+    betCents: forgiven ? 0 : missed.length * stakes.betCents,
+    forgiven,
+    free: paused,
   };
 }
 
 /** What the goals still open are about to cost him, if the day ends like this. */
 export function atStake(split: DaySplit): number {
-  return split.free ? 0 : split.betCents;
+  return split.forgiven ? 0 : split.betCents;
 }
 
 /**
