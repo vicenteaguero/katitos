@@ -5,6 +5,7 @@ import {
   Badge,
   Button,
   Card,
+  CardRows,
   Dialog,
   Empty,
   Field,
@@ -61,32 +62,25 @@ export function BetList({
       {bets.length === 0 ? (
         <Empty
           icon="🎟️"
-          title="Nothing burned yet"
-          hint="Every bet a missed goal pays for lands here, and stays here."
+          title="No bets yet"
+          hint="If a day goes past, whatever he backs with it shows up here."
         />
       ) : (
         <Card tone="flat" className="p-0">
-          <div className="divide-y divide-fg/5">
+          <CardRows>
             {bets.map((bet) => {
               const look = TONE[(bet.status as BetStatus) ?? 'open'];
-              return (
-                <button
-                  key={bet.id}
-                  type="button"
-                  disabled={!isKeeper}
-                  onClick={() => onSettle(bet)}
-                  className={cn(
-                    'flex w-full items-center gap-3 px-3.5 py-3 text-left',
-                    isKeeper && 'lift-press active:bg-fg/5'
-                  )}
-                >
+              const body = (
+                <>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-sans text-sm font-semibold text-fg">
                       {bet.pick}
                     </span>
                     <span className="block truncate font-sans text-xs text-muted">
                       {[
-                        DateTime.fromISO(bet.day).toFormat('d LLL'),
+                        DateTime.fromISO(bet.day, { zone: 'utc' }).toFormat(
+                          'd LLL'
+                        ),
                         bet.sport,
                         bet.odds ? `at ${bet.odds}` : null,
                       ]
@@ -107,10 +101,30 @@ export function BetList({
                   <Badge tone={look.tone} className="shrink-0">
                     {look.label}
                   </Badge>
+                </>
+              );
+              const shape =
+                'flex w-full items-center gap-3 px-3.5 py-3 text-left';
+
+              // Hers to read, his to settle. A disabled <button> would take the
+              // whole list out of her tab order and out of a screen reader's
+              // reach, and this list is written for her.
+              return isKeeper ? (
+                <button
+                  key={bet.id}
+                  type="button"
+                  onClick={() => onSettle(bet)}
+                  className={cn(shape, 'lift-press active:bg-fg/5')}
+                >
+                  {body}
                 </button>
+              ) : (
+                <span key={bet.id} className={shape}>
+                  {body}
+                </span>
               );
             })}
-          </div>
+          </CardRows>
         </Card>
       )}
     </section>
