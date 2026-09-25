@@ -3,14 +3,20 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@kernel/supabase';
 import { useMembers, useUserId } from '@kernel/auth';
 import { qk } from '@kernel/query';
+import { addDays, localDay } from '@kernel/lib';
 import {
   DEFAULT_STAKES,
   EMPTY_POTS,
   type Pots,
   type Stakes,
 } from '../lib/money';
-import { addDays, localDay } from '../lib/five-days';
-import type { FiveBet, FiveDayRow, FiveMark, FivePause } from '../types';
+import type {
+  FiveBet,
+  FiveDayRow,
+  FivePause,
+  GoalHabit,
+  GoalTick,
+} from '../types';
 
 /**
  * Whose five these are, and who is reading them.
@@ -33,11 +39,37 @@ export function useFiveWho() {
       subject,
       keeper,
       zone: subject?.timezone ?? null,
+      partnerZone: keeper?.timezone ?? null,
       isKeeper: !!userId && keeper?.user_id === userId,
       isSubject: !!userId && subject?.user_id === userId,
       isLoading,
     };
   }, [members, userId, isLoading]);
+}
+
+/**
+ * Her five, as habits.
+ *
+ * A goal of the Five IS a habit in the streak - same row, same tick, same
+ * calendar - and `five_goal_id` is what says which goal a habit stands for.
+ * Until he opens the Five to her these do not exist, and every screen here
+ * copes with an empty list.
+ */
+export function useGoalHabits(userId: string | null | undefined) {
+  return useQuery({
+    queryKey: qk.five.habits(userId ?? 'none'),
+    enabled: !!userId,
+    queryFn: async (): Promise<GoalHabit[]> => {
+      const { data, error } = await supabase
+        .from('habits')
+        .select('*')
+        .eq('user_id', userId!)
+        .not('five_goal_id', 'is', null)
+        .is('archived_at', null);
+      if (error) throw error;
+      return (data ?? []) as GoalHabit[];
+    },
+  });
 }
 
 /** Her stakes and her pause switch, with the defaults the database also uses. */
@@ -70,26 +102,53 @@ export function useFiveSettings(userId: string | null | undefined) {
   };
 }
 
+/** A row of `habit_entries`, read through the goal it belongs to. */
+interface EntryRow {
+  day: string;
+  marked_by: string | null;
+  revoked_at: string | null;
+  habits: { five_goal_id: string | null } | null;
+}
+
+const toTicks = (rows: EntryRow[]): GoalTick[] =>
+  rows
+    .filter((r) => r.habits?.five_goal_id)
+    .map((r) => ({
+      day: r.day,
+      goalId: r.habits!.five_goal_id!,
+      markedBy: r.marked_by,
+      revokedAt: r.revoked_at,
+    }));
+
 /**
- * Every tap in a window, live ones and revoked ones both.
+ * Every tick of hers in a window, the revoked ones included.
  *
- * The revoked rows are not noise: the strip dims a day he corrected, and the
- * history is the only record that she said yes and he took it back.
+ * Read from `habit_entries` through the habit, because that is where a tick
+ * lives now: the streak's calendar, the home card and this screen are three
+ * views of the same rows. The revoked ones are not noise - the strip dims a day
+ * he corrected, and they are the only record that she said yes and he took it
+ * back.
  */
-export function useFiveMarks(userId: string | null | undefined, from: string) {
+export function useGoalTicks(userId: string | null | undefined, from: string) {
   return useQuery({
-    queryKey: qk.five.marks(userId ?? 'none', from),
+    queryKey: qk.five.ticks(userId ?? 'none', from),
     enabled: !!userId,
-    queryFn: async (): Promise<FiveMark[]> => {
+    queryFn: async (): Promise<EntryRow[]> => {
       const { data, error } = await supabase
-        .from('five_marks')
-        .select('*')
-        .eq('user_id', userId!)
+        .from('habit_entries')
+        .select(
+          'day, marked_by, revoked_at, habits!inner(five_goal_id, user_id)'
+        )
+        .eq('habits.user_id', userId!)
+        .not('habits.five_goal_id', 'is', null)
         .gte('day', from)
         .order('day', { ascending: false });
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as unknown as EntryRow[];
     },
+    // Built in `select`, never in the queryFn: the cache is dehydrated to
+    // localStorage, and anything richer than JSON comes back broken.
+    select: toTicks,
   });
 }
 
