@@ -18,8 +18,7 @@ import { treeFeature } from '@features/tree';
 import { knowMeFeature } from '@features/know-me';
 import { albumFeature } from '@features/album';
 import { vpnFeature } from '@features/vpn';
-import { fiveFeature } from '@features/five';
-import { streakFeature } from '@features/streak';
+import { habitsFeature } from '@features/habits';
 
 // ── Drawer categories ──────────────────────────────────────────────────────
 // Section each feature appears under in the "More" drawer (id → category).
@@ -35,7 +34,7 @@ const categories: Record<string, string> = {
   summer: 'Memories',
   flowers: 'Memories',
   // Pololos
-  streak: 'Pololos',
+  habits: 'Pololos',
   tree: 'Pololos',
   presence: 'Pololos',
   // Utilities
@@ -47,7 +46,7 @@ const categories: Record<string, string> = {
 };
 
 const modules: FeatureModule[] = [
-  streakFeature,
+  habitsFeature,
   treeFeature,
   knowMeFeature,
   albumFeature,
@@ -63,7 +62,6 @@ const modules: FeatureModule[] = [
   currencyFeature,
   flowersFeature,
   vpnFeature,
-  fiveFeature,
 ];
 
 // ── Demo gate ──────────────────────────────────────────────────────────────
@@ -79,11 +77,7 @@ const OPEN = new Set([
   'wishlists', // gift lists, each item with its own eye
   'flowers', // a bouquet a month, hers to fill
   'vpn', // "Internet" - Helsinki is up and reporting in
-  // 'five' is unlocked here on purpose and hidden a different way: see
-  // shell/use-five-visible.ts. A locked row would still show her a padlock,
-  // which is the one thing this feature cannot afford yet.
-  'five',
-  'streak', // one streak, kept by the two of us
+  'habits', // the run, the habits, and the money riding on hers
   // 'summer'   - Türkiye/Georgia is over. Locked, NOT deleted: the code, the
   //              tables and the photos all stay, so the next trip is one line.
   // 'know-me'  - the daily questions still need some love before she sees them.
