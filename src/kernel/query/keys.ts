@@ -51,6 +51,9 @@ export const qk = {
       ['five', 'marks', userId, from] as const,
     days: (userId: string, from: string) =>
       ['five', 'days', userId, from] as const,
+    /** The stretches she had it switched off. */
+    pauses: (userId: string, from: string) =>
+      ['five', 'pauses', userId, from] as const,
     /** The two pots, summed by the database. */
     pots: (userId: string) => ['five', 'pots', userId] as const,
     bets: () => ['five', 'bets'] as const,
