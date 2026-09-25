@@ -44,13 +44,13 @@ export interface Goal {
 export type GoalId = 'sleep' | 'study' | 'work' | 'eat' | 'move';
 
 /**
- * The order is the order of her day, not a priority: the night first, then the
- * hours she works and studies, then the plate, then the walk. Reading down the
- * screen should feel like reading down a day.
+ * The order is the order of HER day, not a priority and not mine to guess: the
+ * night first, then studying, then work, then the plate, then the walk. Reading
+ * down the screen should feel like reading down her day, and it did not until
+ * she said so.
  */
 export const GOALS: Goal[] = [
   { id: 'sleep', label: 'Sleep', hint: 'Seven or eight hours', emoji: '🌙' },
-  { id: 'work', label: 'Work', hint: 'Whatever the day asked', emoji: '💼' },
   { id: 'study', label: 'Study', hint: 'Even a short one counts', emoji: '📚' },
   {
     id: 'eat',
@@ -58,6 +58,7 @@ export const GOALS: Goal[] = [
     hint: 'A real plate, sitting down',
     emoji: '🍲',
   },
+  { id: 'work', label: 'Work', hint: 'Whatever the day asked', emoji: '💼' },
   {
     id: 'move',
     label: 'Walk or train',
