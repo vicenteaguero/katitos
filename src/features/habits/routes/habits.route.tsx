@@ -1,0 +1,751 @@
+import { useState } from 'react';
+import { Flame, Lock, Pencil, Plus, Settings2 } from 'lucide-react';
+import { usePartner, useUserId } from '@kernel/auth';
+import { useTableSync } from '@kernel/realtime';
+import { qk } from '@kernel/query';
+import {
+  Button,
+  Card,
+  Dialog,
+  Field,
+  Input,
+  Kicker,
+  ProgressBar,
+  SectionLabel,
+  Skeleton,
+  Switch,
+  Textarea,
+  TopBarButton,
+  useScreenChrome,
+} from '@kernel/ui';
+import { cn } from '@kernel/lib';
+import { useToggleEntry } from '../api/habits.mutations';
+import {
+  pausedOn,
+  useBets,
+  useHardDays,
+  useMoneyPauses,
+  useMoneyPots,
+  useMoneySettings,
+  useMoneyWho,
+} from '../api/money.queries';
+import {
+  useAddBet,
+  useHardDay,
+  useSaveMoneySettings,
+  useSeedHerHabits,
+  useSettleBet,
+  useUndoHardDay,
+} from '../api/money.mutations';
+import { money, splitDay } from '../lib/money';
+import { MoneyHero } from '../components/money-hero';
+import { BetForm, BetList, SettleBet } from '../components/bets';
+import { addDays, monthOf } from '../lib/days';
+import {
+  MAX_SLOTS,
+  SLOT_THRESHOLDS,
+  activeOn,
+  canAddHabit,
+  slotsAllowed,
+} from '../lib/streak';
+import { petName } from '../lib/names';
+import { useStreak } from '../lib/use-streak';
+import { HabitButton } from '../components/habit-button';
+import { CallPill } from '../components/call-pill';
+import { HabitEditor } from '../components/habit-editor';
+import { DaySheet } from '../components/day-sheet';
+import {
+  MonthGrid,
+  StateSwatch,
+  type DayState,
+} from '../components/month-grid';
+import type { Bet, Habit } from '../types';
+import '../habits.css';
+
+/**
+ * Our streak.
+ *
+ * Top to bottom it answers the three questions in the order they get asked:
+ * how are we doing, what is left today, and how has it actually been going.
+ * The habits you own come last - you change them once a month and look at
+ * everything above them every day.
+ */
+export function HabitsRoute() {
+  useTableSync('habits', qk.habits.list());
+  useTableSync('habit_entries', qk.habits.allEntries());
+  // The ledger only ever moves the pots; the bets only the list.
+  useTableSync('money_ledger', qk.habits.all());
+  useTableSync('bets', qk.habits.bets());
+
+  const userId = useUserId();
+  const { self, partner } = usePartner();
+  const view = useStreak();
+  const toggle = useToggleEntry();
+
+  const { subject, isKeeper } = useMoneyWho();
+  const subjectId = subject?.user_id ?? null;
+  const { stakes, active } = useMoneySettings(subjectId);
+  const { pots } = useMoneyPots(subjectId);
+  const { data: bets } = useBets();
+  // Far enough back to cover the calendar's month and the week the hard-day
+  // rule counts over.
+  const moneyFrom = addDays(new Date().toISOString().slice(0, 10), -45);
+  const { data: hardDays } = useHardDays(subjectId, moneyFrom);
+  const { data: pauses } = useMoneyPauses(subjectId, moneyFrom);
+  const seed = useSeedHerHabits();
+  const hardDay = useHardDay();
+  const undoHardDay = useUndoHardDay();
+  const saveSettings = useSaveMoneySettings();
+  const addBet = useAddBet();
+  const settleBet = useSettleBet();
+
+  const [month, setMonth] = useState(() =>
+    monthOf(new Date().toISOString().slice(0, 10))
+  );
+  const [dials, setDials] = useState(false);
+  const [placing, setPlacing] = useState(false);
+  const [settling, setSettling] = useState<Bet | null>(null);
+  const [callingHard, setCallingHard] = useState(false);
+
+  useScreenChrome(
+    {
+      title: 'Habits',
+      action: (
+        <TopBarButton label="The money" onClick={() => setDials(true)}>
+          <Settings2 className="h-[18px] w-[18px]" />
+        </TopBarButton>
+      ),
+    },
+    []
+  );
+  const [sheetDay, setSheetDay] = useState<string | null>(null);
+  const [editing, setEditing] = useState<{
+    habit: Habit | null;
+    /** A new one he is asking of her rather than taking on himself. */
+    forHer?: boolean;
+  } | null>(null);
+
+  if (view.isLoading) {
+    return (
+      <div className="space-y-3">
+        <Skeleton className="h-24 w-full" rounded="lg" />
+        <Skeleton className="h-32 w-full" rounded="lg" />
+        <Skeleton className="h-64 w-full" rounded="lg" />
+      </div>
+    );
+  }
+
+  const { today, partnerToday, shared, mine, theirs, streak } = view;
+  /** Her day, whichever of us is holding the phone. The money is hers. */
+  const herDay = isKeeper ? partnerToday : today;
+  const theirName =
+    partner?.display_name?.split(' ')[0] ?? petName(partner?.role);
+
+  // The gate counts habits, not slot numbers: what a streak buys you is a
+  // NUMBER of habits, and emptying one does not make the next one cheaper.
+  const allowed = slotsAllowed(streak.days);
+  const canAdd = canAddHabit(streak.days, mine.length);
+  const nextNeeds =
+    mine.length < MAX_SLOTS ? SLOT_THRESHOLDS[mine.length] : null;
+
+  // A weekly habit that can no longer make its count has already ended the
+  // week, and the streak with it. Saying so now beats a surprise on Sunday.
+  const lostWeeks = [...mine, ...theirs]
+    .filter((h) => h.schedule === 'weekly')
+    .map((h) => view.weekly(h, h.user_id === userId ? today : partnerToday))
+    .filter((w) => !w.possible);
+
+  const hardToday = (hardDays ?? []).some(
+    (d) => d.day === herDay && d.hard_day
+  );
+  const hardNote = (hardDays ?? []).find((d) => d.day === herDay)?.note ?? null;
+  // One a rolling week, counted the way the database counts it.
+  const hardSpent = (hardDays ?? []).some(
+    (d) => d.hard_day && d.day !== herDay && d.day > addDays(herDay, -7)
+  );
+
+  // Her habits are what the money rides on. Daily ones only: a weekly habit
+  // cannot be missed on any particular day, so putting three dollars on a
+  // Tuesday it was never owed would be inventing a debt.
+  const hers = (isKeeper ? theirs : mine).filter(
+    (h) => h.schedule === 'daily' && activeOn(h, herDay)
+  );
+  const herSplit = splitDay({
+    habits: hers.map((h) => ({
+      habitId: h.id,
+      held: view.isDone(h.id, herDay),
+    })),
+    hardDay: hardToday,
+    paused: !active || pausedOn(pauses ?? [], herDay),
+    stakes,
+  });
+
+  const callBy = shared ? view.tickedBy(shared.id, today) : null;
+  const callByName = !callBy ? null : callBy === userId ? 'you' : theirName;
+
+  return (
+    <div className="curtain-reveal space-y-3">
+      {/* ── what her days are worth ──────────────────────────────────────── */}
+      <MoneyHero pots={pots} />
+
+      {/* ── how are we doing ─────────────────────────────────────────────── */}
+      {/* Flat, not a hero: the money above it is the one lit card on this page
+          now, and two gilt edges in a row is the law's whole complaint. */}
+      <Card tone="flat" className="relative">
+        <div className="flex items-center gap-2.5">
+          <Flame
+            className={cn(
+              'h-8 w-8 shrink-0 text-gold',
+              streak.days > 0 && 'streak-flame'
+            )}
+            strokeWidth={1.5}
+          />
+          <p className="gilt-text gilt-figures m-0 font-display text-[2.9rem] font-semibold leading-none">
+            {streak.days}
+          </p>
+          <div className="min-w-0">
+            <Kicker tone="muted" as="p">
+              {streak.days === 1 ? 'day' : 'days'} in a row
+            </Kicker>
+            <p className="m-0 font-sans text-[11px] text-muted">
+              {view.longest > streak.days
+                ? `best so far ${view.longest}`
+                : streak.days > 0
+                  ? 'this is our best yet'
+                  : 'it starts with today'}
+              {streak.atStake > 0 && (
+                <span className="text-copper">
+                  {' '}
+                  , +{streak.atStake} waiting on this week
+                </span>
+              )}
+            </p>
+          </div>
+        </div>
+
+        {nextNeeds !== null && nextNeeds > 0 && (
+          <div className="mt-2.5">
+            <ProgressBar
+              value={Math.min(streak.days, nextNeeds)}
+              max={nextNeeds}
+              label="To the next habit"
+            />
+            <p className="mt-1 font-sans text-[11px] text-muted">
+              {canAdd
+                ? `A ${ordinal(mine.length + 1)} habit is yours to take`
+                : `A ${ordinal(mine.length + 1)} habit in ${nextNeeds - streak.days} ${nextNeeds - streak.days === 1 ? 'day' : 'days'}`}
+            </p>
+          </div>
+        )}
+      </Card>
+
+      {/* ── what is left today ───────────────────────────────────────────── */}
+      <Card tone="hairline">
+        {shared && activeOn(shared, today) && (
+          <CallPill
+            habit={shared}
+            done={view.isDone(shared.id, today)}
+            interactive
+            byName={callByName}
+            today
+            onToggle={() =>
+              toggle.mutate({
+                habitId: shared.id,
+                day: today,
+                on: !view.isDone(shared.id, today),
+                shared: true,
+                selfName: self?.display_name,
+              })
+            }
+          />
+        )}
+
+        <SectionLabel
+          className="mt-3"
+          note={view.statusOf(today).complete ? 'all in 🤍' : undefined}
+        >
+          Yours today
+        </SectionLabel>
+        {mine.length === 0 ? (
+          <p className="font-sans text-xs text-muted">Nothing yours yet.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {mine
+              .filter((h) => activeOn(h, today))
+              .map((h) => (
+                <HabitButton
+                  key={h.id}
+                  habit={h}
+                  done={view.isDone(h.id, today)}
+                  interactive
+                  weekly={
+                    h.schedule === 'weekly' ? view.weekly(h, today) : undefined
+                  }
+                  onToggle={() =>
+                    toggle.mutate({
+                      habitId: h.id,
+                      day: today,
+                      on: !view.isDone(h.id, today),
+                    })
+                  }
+                />
+              ))}
+          </div>
+        )}
+
+        {lostWeeks.length > 0 && (
+          <p className="mt-2 font-sans text-[11px] text-danger">
+            {lostWeeks
+              .map((w) => `${w.habit.title} ${w.done}/${w.target}`)
+              .join(', ')}{' '}
+            , this week is short and the streak ends with it
+          </p>
+        )}
+
+        {/* What today is worth, said only when it is good news.
+            The price of an unfinished day belongs in the pot at the top, not
+            under her morning: five copies of what she is about to cost him is
+            the one thing a person who is already tired of being measured does
+            not need before breakfast. */}
+        {herSplit.missed.length === 0 && herSplit.giftCents > 0 && (
+          <p className="mt-2 font-sans text-[11px] tabular-nums text-gold">
+            {money(herSplit.giftCents)} yours today 🤍
+          </p>
+        )}
+
+        {/* The valve. Only on a day that is going badly - three or more of
+            hers still missing - and only if the week's one is unused, so it is
+            quiet the rest of the time instead of being a line about a thing she
+            cannot do. */}
+        {hardToday ? (
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <p className="min-w-0 font-sans text-xs leading-relaxed text-muted">
+              {hardNote ? (
+                <span className="text-fg">&ldquo;{hardNote}&rdquo;</span>
+              ) : (
+                'A hard day. It cost nothing, and nothing was asked.'
+              )}
+            </p>
+            {isKeeper && subjectId && (
+              <Button
+                variant="quiet"
+                size="xs"
+                onClick={() =>
+                  undoHardDay.mutate({ userId: subjectId, day: herDay })
+                }
+              >
+                Undo
+              </Button>
+            )}
+          </div>
+        ) : (
+          !isKeeper &&
+          subjectId &&
+          !hardSpent &&
+          herSplit.missed.length >= 3 && (
+            <Button
+              variant="ghost"
+              size="xs"
+              className="mt-2.5 self-start"
+              onClick={() => setCallingHard(true)}
+            >
+              Today was hard
+            </Button>
+          )
+        )}
+
+        {theirs.length > 0 && (
+          <>
+            <SectionLabel className="mt-3">{theirName}</SectionLabel>
+            <div className="flex flex-wrap gap-2">
+              {theirs
+                .filter((h) => activeOn(h, partnerToday))
+                .map((h) => (
+                  <HabitButton
+                    key={h.id}
+                    habit={h}
+                    done={view.isDone(h.id, partnerToday)}
+                    interactive={false}
+                    weekly={
+                      h.schedule === 'weekly'
+                        ? view.weekly(h, partnerToday)
+                        : undefined
+                    }
+                  />
+                ))}
+            </div>
+          </>
+        )}
+      </Card>
+
+      {/* ── how it has been going ────────────────────────────────────────── */}
+      <Card tone="hairline">
+        <MonthGrid
+          month={month}
+          onMonth={setMonth}
+          furthest={view.furthest}
+          isSettled={view.isSettled}
+          statusOf={view.statusOf}
+          since={view.since}
+          onPick={setSheetDay}
+        />
+        <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1">
+          <Legend state="complete">both of us</Legend>
+          <Legend state="partial">one of us</Legend>
+          <Legend state="open">still open</Legend>
+          <Legend state="missed">missed</Legend>
+        </div>
+      </Card>
+
+      {/* ── the habits you own ───────────────────────────────────────────── */}
+      <Card tone="hairline">
+        <SectionLabel note={`${mine.length} of ${MAX_SLOTS}`}>
+          My habits
+        </SectionLabel>
+        <div className="space-y-1.5">
+          {mine.map((h) => (
+            <button
+              key={h.id}
+              type="button"
+              onClick={() => setEditing({ habit: h })}
+              className="lift-press flex w-full items-center gap-2.5 rounded bg-surface-2 px-3 py-2 text-left"
+            >
+              <span aria-hidden="true" className="text-[18px] leading-none">
+                {h.emoji}
+              </span>
+              <span className="min-w-0 flex-1 truncate font-sans text-sm text-fg">
+                {h.title}
+              </span>
+              <span className="shrink-0 font-sans text-[11px] text-muted">
+                {h.schedule === 'weekly'
+                  ? `${h.target_per_week} per week`
+                  : 'every day'}
+              </span>
+              <Pencil
+                className="h-3.5 w-3.5 shrink-0 text-gold/60"
+                strokeWidth={2}
+              />
+            </button>
+          ))}
+
+          {canAdd && (
+            <button
+              type="button"
+              onClick={() => setEditing({ habit: null })}
+              className="lift-press flex w-full items-center gap-2.5 rounded px-3 py-2 text-left text-gold"
+              style={{ border: '1px dashed rgba(228,195,106,.4)' }}
+            >
+              <Plus className="h-4 w-4 shrink-0" strokeWidth={2.2} />
+              <span className="font-sans text-sm">Add a habit</span>
+            </button>
+          )}
+
+          {Array.from(
+            { length: MAX_SLOTS - Math.max(mine.length, allowed) },
+            (_, i) => {
+              const nth = Math.max(mine.length, allowed) + 1 + i;
+              return (
+                <div
+                  key={nth}
+                  className="flex w-full items-center gap-2.5 rounded px-3 py-2 opacity-40"
+                  style={{ border: '1px dashed rgba(251,245,240,.12)' }}
+                >
+                  <Lock
+                    className="h-3.5 w-3.5 shrink-0 text-muted"
+                    strokeWidth={2}
+                  />
+                  <span className="font-sans text-[13px] text-muted">
+                    A {ordinal(nth)} habit, at {SLOT_THRESHOLDS[nth - 1]} days
+                  </span>
+                </div>
+              );
+            }
+          )}
+        </div>
+      </Card>
+
+      {/* ── the habits he is asking of her ───────────────────────────────── */}
+      {isKeeper && (
+        <Card tone="hairline">
+          <SectionLabel
+            note={`${theirs.length} of hers`}
+            action={
+              theirs.length === 0 && subjectId ? (
+                <Button
+                  variant="quiet"
+                  size="xs"
+                  onClick={() => seed.mutate(subjectId)}
+                >
+                  Give her the five
+                </Button>
+              ) : undefined
+            }
+          >
+            {theirName}&rsquo;s habits
+          </SectionLabel>
+          <div className="space-y-1.5">
+            {theirs.map((h) => (
+              <button
+                key={h.id}
+                type="button"
+                onClick={() => setEditing({ habit: h })}
+                className="lift-press flex w-full items-center gap-2.5 rounded bg-surface-2 px-3 py-2 text-left"
+              >
+                <span aria-hidden="true" className="text-[18px] leading-none">
+                  {h.emoji}
+                </span>
+                <span className="min-w-0 flex-1 truncate font-sans text-sm text-fg">
+                  {h.title}
+                </span>
+                <span className="shrink-0 font-sans text-[11px] text-muted">
+                  {h.schedule === 'weekly'
+                    ? `${h.target_per_week} per week`
+                    : 'every day'}
+                </span>
+                <Pencil
+                  className="h-3.5 w-3.5 shrink-0 text-gold/60"
+                  strokeWidth={2}
+                />
+              </button>
+            ))}
+            {theirs.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setEditing({ habit: null, forHer: true })}
+                className="lift-press flex w-full items-center gap-2.5 rounded px-3 py-2 text-left text-gold"
+                style={{ border: '1px dashed rgba(228,195,106,.4)' }}
+              >
+                <Plus className="h-4 w-4 shrink-0" strokeWidth={2.2} />
+                <span className="font-sans text-sm">Ask one more of her</span>
+              </button>
+            )}
+          </div>
+        </Card>
+      )}
+
+      {/* ── where the money went ─────────────────────────────────────────── */}
+      <BetList
+        bets={bets ?? []}
+        isKeeper={isKeeper}
+        onSettle={(bet) => setSettling(bet)}
+        onAdd={() => setPlacing(true)}
+      />
+
+      <BetForm
+        // Keyed to what he owes, so the stake is never still showing the zero
+        // it was mounted with before the pots arrived.
+        key={pots.betCents - pots.stakedCents}
+        open={placing}
+        day={today}
+        owed={Math.max(0, pots.betCents - pots.stakedCents)}
+        onClose={() => setPlacing(false)}
+        onSave={(draft) => {
+          addBet.mutate(draft);
+          setPlacing(false);
+        }}
+      />
+
+      <SettleBet
+        key={settling?.id ?? 'none'}
+        bet={settling}
+        onClose={() => setSettling(null)}
+        onSettle={(status, payoutCents) => {
+          if (!settling || !subjectId) return;
+          settleBet.mutate({
+            bet: settling,
+            status,
+            payoutCents,
+            subjectId,
+          });
+          setSettling(null);
+        }}
+      />
+
+      <HardDaySheet
+        open={callingHard}
+        onClose={() => setCallingHard(false)}
+        onSave={(note) => {
+          if (!subjectId) return;
+          hardDay.mutate({ userId: subjectId, day: herDay, note });
+          setCallingHard(false);
+        }}
+      />
+
+      <Dials
+        key={`${stakes.giftCents}:${stakes.betCents}`}
+        open={dials}
+        onClose={() => setDials(false)}
+        isKeeper={isKeeper}
+        active={active}
+        giftCents={stakes.giftCents}
+        betCents={stakes.betCents}
+        onSave={(next) =>
+          subjectId && saveSettings.mutate({ userId: subjectId, ...next })
+        }
+      />
+
+      <DaySheet day={sheetDay} view={view} onClose={() => setSheetDay(null)} />
+      {editing && (
+        <HabitEditor
+          open
+          habit={editing.habit}
+          forUserId={
+            editing.forHer || editing.habit?.user_id === subject?.user_id
+              ? (subjectId ?? undefined)
+              : undefined
+          }
+          effectiveFrom={mine.length === 0 ? today : addDays(today, 1)}
+          startsToday={mine.length === 0}
+          onClose={() => setEditing(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+/**
+ * Calling a day hard, and saying why if she wants to.
+ *
+ * The note is why this is a panel and not a single tap. A hard day with nothing
+ * in it is a hole in the data; a hard day with one line in it is a message that
+ * reaches his phone, which is the thing she actually asked for when she asked
+ * for help. Skipping it is one button and costs nothing.
+ */
+function HardDaySheet({
+  open,
+  onClose,
+  onSave,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSave: (note: string | null) => void;
+}) {
+  const [note, setNote] = useState('');
+  return (
+    <Dialog open={open} onClose={onClose} title="Today was hard">
+      <div className="flex flex-col gap-3">
+        <p className="font-sans text-sm leading-relaxed text-muted">
+          Nothing more is asked of today, and nothing is owed. Anything you did
+          still counts.
+        </p>
+        <Field label="Want to tell him why?" hint="He gets this, nobody else">
+          <Textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={3}
+            placeholder="Optional"
+          />
+        </Field>
+        <Button onClick={() => onSave(note || null)}>
+          {note.trim() ? 'Send it, and rest' : 'Just rest'}
+        </Button>
+      </div>
+    </Dialog>
+  );
+}
+
+/**
+ * Her switch and his two dials, in one panel behind the gear.
+ *
+ * Hers is first and it is a switch, not a menu: whatever else this is, it has
+ * to be one tap to stop. His dials are below it and only he sees them - not
+ * because the numbers are a secret, but because they are his money, and a screen
+ * that invited her to lower her own stakes would be asking her to negotiate with
+ * herself on a bad day.
+ */
+function Dials({
+  open,
+  onClose,
+  isKeeper,
+  active,
+  giftCents,
+  betCents,
+  onSave,
+}: {
+  open: boolean;
+  onClose: () => void;
+  isKeeper: boolean;
+  active: boolean;
+  giftCents: number;
+  betCents: number;
+  onSave: (next: {
+    active?: boolean;
+    giftCents?: number;
+    betCents?: number;
+  }) => void;
+}) {
+  const [gift, setGift] = useState(String(giftCents / 100));
+  const [bet, setBet] = useState(String(betCents / 100));
+  const asCents = (v: string) => Math.round(Number(v.replace(',', '.')) * 100);
+  const giftNext = asCents(gift);
+  const betNext = asCents(bet);
+  const valid = Number.isFinite(giftNext) && Number.isFinite(betNext);
+
+  return (
+    <Dialog open={open} onClose={onClose} title="The money">
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="font-sans text-sm font-semibold text-fg">
+              The money is on
+            </p>
+            <p className="font-sans text-xs leading-relaxed text-muted">
+              Turn it off and nothing is asked of you, and neither pot moves.
+              Your habits stay exactly where they are.
+            </p>
+          </div>
+          <Switch
+            checked={active}
+            onChange={(next) => onSave({ active: next })}
+            label="The money is on"
+          />
+        </div>
+
+        {isKeeper && (
+          <div className="flex flex-col gap-3">
+            <Field label="A habit held, to her gift" hint="dollars">
+              <Input
+                value={gift}
+                onChange={(e) => setGift(e.target.value)}
+                inputMode="decimal"
+              />
+            </Field>
+            <Field label="One missed, to the bookmaker" hint="dollars">
+              <Input
+                value={bet}
+                onChange={(e) => setBet(e.target.value)}
+                inputMode="decimal"
+              />
+            </Field>
+            <p className="font-sans text-xs leading-relaxed tabular-nums text-muted">
+              Days already settled keep the stakes they were settled at.
+            </p>
+            <Button
+              disabled={!valid}
+              onClick={() => {
+                if (!valid) return;
+                onSave({ giftCents: giftNext, betCents: betNext });
+                onClose();
+              }}
+            >
+              Save the stakes
+            </Button>
+          </div>
+        )}
+      </div>
+    </Dialog>
+  );
+}
+
+function Legend({ state, children }: { state: DayState; children: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <StateSwatch state={state} />
+      <span className="font-sans text-[10px] text-muted">{children}</span>
+    </span>
+  );
+}
+
+function ordinal(n: number): string {
+  return ['first', 'second', 'third', 'fourth'][n - 1] ?? `${n}th`;
+}
