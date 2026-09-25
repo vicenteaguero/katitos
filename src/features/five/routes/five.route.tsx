@@ -95,10 +95,14 @@ export function FiveRoute() {
   const { data: bets } = useFiveBets();
   const { data: pauses } = useFivePauses(subjectId, from);
 
+  // Narrow on purpose. One correction on a settled day is eleven events - the
+  // mark, then five ledger deletes and five inserts - and pointed at `five.all`
+  // every one of them refetched all seven queries on the screen, pots RPC
+  // included. The ledger only ever changes the pots; the bets only the list.
   useTableSync('five_marks', qk.five.all());
   useTableSync('five_days', qk.five.all());
-  useTableSync('five_ledger', qk.five.all());
-  useTableSync('five_bets', qk.five.all());
+  useTableSync('five_ledger', qk.five.pots(subjectId ?? 'none'));
+  useTableSync('five_bets', qk.five.bets());
   useDesk();
 
   const mark = useMarkGoal();
@@ -290,6 +294,9 @@ export function FiveRoute() {
       />
 
       <SettleBet
+        // Keyed to the bet, so the payout field does not arrive carrying the
+        // figure he typed for a different one.
+        key={settling?.id ?? 'none'}
         bet={settling}
         onClose={() => setSettling(null)}
         onSettle={(status, payoutCents) => {
