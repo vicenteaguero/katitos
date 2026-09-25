@@ -8,9 +8,9 @@ import { splitDay } from '../lib/money';
 import { localDay } from '../lib/five-days';
 import {
   useFiveDays,
-  useFiveMarks,
   useFiveSettings,
   useFiveWho,
+  useGoalTicks,
 } from '../api/five.queries';
 
 /**
@@ -28,16 +28,16 @@ export function FiveWidget() {
   const subjectId = subject?.user_id ?? null;
   const today = localDay(zone, now);
   const { stakes, active } = useFiveSettings(subjectId);
-  const { data: marks } = useFiveMarks(subjectId, today);
+  const { data: ticks } = useGoalTicks(subjectId, today);
   const { data: dayRows } = useFiveDays(subjectId, today);
 
   if (!subjectId) return null;
 
   const hardDay = (dayRows ?? []).some((d) => d.day === today && d.hard_day);
   const split = splitDay({
-    done: (marks ?? [])
-      .filter((m) => m.day === today && !m.revoked_at)
-      .map((m) => m.goal_id),
+    done: (ticks ?? [])
+      .filter((t) => t.day === today && !t.revokedAt)
+      .map((t) => t.goalId),
     hardDay,
     paused: !active,
     stakes,
