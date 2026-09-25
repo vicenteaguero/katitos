@@ -1,41 +1,59 @@
 import { describe, expect, it } from 'vitest';
 import { EMPTY_POTS, money, splitDay, unplaced } from './money';
 
+/** Her habits on a day, five of them, with the first `n` held. */
+const day = (held: number, total = 5) =>
+  Array.from({ length: total }, (_, i) => ({
+    habitId: `h${i + 1}`,
+    held: i < held,
+  }));
+
 describe('a day, to each pot', () => {
-  it('pays a dollar a goal and burns three a miss', () => {
-    const s = splitDay({ done: ['sleep', 'work', 'eat'] });
-    // Always in her reading order, whatever order they were tapped in.
-    expect(s.done).toEqual(['sleep', 'eat', 'work']);
-    expect(s.missed).toEqual(['study', 'move']);
+  it('pays a dollar a habit and burns three a miss', () => {
+    const s = splitDay({ habits: day(3) });
+    expect(s.held).toHaveLength(3);
+    expect(s.missed).toEqual(['h4', 'h5']);
     expect(s.giftCents).toBe(300);
     expect(s.betCents).toBe(600);
   });
 
-  it('gives her five dollars for a perfect day, and burns nothing', () => {
-    const s = splitDay({ done: ['sleep', 'study', 'eat', 'work', 'move'] });
+  it('gives her the lot for a perfect day, and burns nothing', () => {
+    const s = splitDay({ habits: day(5) });
     expect(s.giftCents).toBe(500);
     expect(s.betCents).toBe(0);
     expect(s.missed).toEqual([]);
   });
 
   it('burns fifteen on a day she did not open the app', () => {
-    const s = splitDay({ done: [] });
+    const s = splitDay({ habits: day(0) });
     expect(s.giftCents).toBe(0);
     expect(s.betCents).toBe(1500);
   });
 
+  it('follows however many habits he has given her', () => {
+    // Three habits, two held: the arithmetic is the habits, not a fixed five.
+    const s = splitDay({ habits: day(2, 3) });
+    expect(s.giftCents).toBe(200);
+    expect(s.betCents).toBe(300);
+  });
+
+  it('is a quiet zero on a day she has no habits at all', () => {
+    const s = splitDay({ habits: [] });
+    expect(s.giftCents).toBe(0);
+    expect(s.betCents).toBe(0);
+  });
+
   it('keeps what she held on a hard day, and burns none of the rest', () => {
-    // The valve must not have a price on it: on the day she can least afford
-    // it, pressing it used to cost her the two dollars she had already earned.
-    const s = splitDay({ done: ['sleep', 'work'], hardDay: true });
+    // The valve must not have a price on it: pressing it used to cost her the
+    // dollars she had already earned, on the day she could least afford it.
+    const s = splitDay({ habits: day(2), hardDay: true });
     expect(s.forgiven).toBe(true);
     expect(s.giftCents).toBe(200);
     expect(s.betCents).toBe(0);
-    expect(s.done).toEqual(['sleep', 'work']);
   });
 
   it('moves nothing at all while she has it switched off', () => {
-    const s = splitDay({ done: ['sleep'], paused: true });
+    const s = splitDay({ habits: day(1), paused: true });
     expect(s.free).toBe(true);
     expect(s.forgiven).toBe(true);
     expect(s.giftCents).toBe(0);
@@ -44,17 +62,11 @@ describe('a day, to each pot', () => {
 
   it('honours retuned stakes', () => {
     const s = splitDay({
-      done: ['sleep'],
+      habits: day(1),
       stakes: { giftCents: 200, betCents: 500 },
     });
     expect(s.giftCents).toBe(200);
     expect(s.betCents).toBe(2000);
-  });
-
-  it('ignores a goal id that is not one of the five', () => {
-    const s = splitDay({ done: ['sleep', 'yoga'] });
-    expect(s.done).toEqual(['sleep']);
-    expect(s.missed).toHaveLength(4);
   });
 });
 
