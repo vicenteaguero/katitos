@@ -4,14 +4,15 @@ import { EMPTY_POTS, money, splitDay, unplaced } from './money';
 describe('a day, to each pot', () => {
   it('pays a dollar a goal and burns three a miss', () => {
     const s = splitDay({ done: ['sleep', 'work', 'eat'] });
-    expect(s.done).toEqual(['sleep', 'work', 'eat']);
+    // Always in her reading order, whatever order they were tapped in.
+    expect(s.done).toEqual(['sleep', 'eat', 'work']);
     expect(s.missed).toEqual(['study', 'move']);
     expect(s.giftCents).toBe(300);
     expect(s.betCents).toBe(600);
   });
 
   it('gives her five dollars for a perfect day, and burns nothing', () => {
-    const s = splitDay({ done: ['sleep', 'work', 'study', 'eat', 'move'] });
+    const s = splitDay({ done: ['sleep', 'study', 'eat', 'work', 'move'] });
     expect(s.giftCents).toBe(500);
     expect(s.betCents).toBe(0);
     expect(s.missed).toEqual([]);
