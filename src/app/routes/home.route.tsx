@@ -21,8 +21,10 @@ import { usePartnerPresence } from '@features/presence';
 import { LastPolaroidWidget } from '@features/polaroid';
 import { StreakWidget } from '@features/streak';
 import { NextLessonWidget, TeachingWidget } from '@features/language';
+import { FiveWidget } from '@features/five';
 import { loveNoteFor, useLovePhrases } from '@features/love';
 import { sendLoveBurst } from '../shell/love-channel';
+import { useFiveVisible } from '../shell/use-five-visible';
 
 /** Our pet names by role: him (a) is Katito, her (b) is Katita. */
 function petNameOf(role: string | null | undefined): 'Katito' | 'Katita' {
@@ -392,6 +394,9 @@ export function HomeRoute() {
   // on her home screen is the loudest way to tell her. It waits for the same
   // word the changelog waits for; he sees it now, since he is building on it.
   const classroom = !!self?.is_admin || isAnnounced('2026-08-19');
+  // The Five is his own instrument for now, and a card on her home would be the
+  // first she heard of it. See shell/use-five-visible.ts.
+  const five = useFiveVisible();
   return (
     <div
       className="curtain-reveal space-y-5"
@@ -399,6 +404,7 @@ export function HomeRoute() {
     >
       <Greeting />
       <StreakWidget />
+      {five && <FiveWidget />}
       <TogetherHero />
       <LastPolaroidWidget />
       {classroom && <NextLessonWidget />}
