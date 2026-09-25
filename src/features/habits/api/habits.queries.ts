@@ -25,7 +25,13 @@ export function useHabits() {
   });
 }
 
-/** The ticks inside one window of days, inclusive at both ends. */
+/**
+ * The ticks inside one window of days, inclusive at both ends.
+ *
+ * A revoked tick is not a tick. The row stays, because the history is that she
+ * said she had and he found out otherwise, but the money reads it as missed and
+ * so must the calendar - it was counting a lit square against a billed day.
+ */
 export function useEntries(from: string, to: string, enabled = true) {
   return useQuery({
     queryKey: qk.habits.entries(from, to),
@@ -34,6 +40,7 @@ export function useEntries(from: string, to: string, enabled = true) {
       const { data, error } = await supabase
         .from('habit_entries')
         .select('*')
+        .is('revoked_at', null)
         .gte('day', from)
         .lte('day', to);
       if (error) throw error;
