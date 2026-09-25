@@ -14,7 +14,7 @@ import {
   SectionLabel,
 } from '@kernel/ui';
 import { money } from '../lib/money';
-import type { BetStatus, FiveBet } from '../types';
+import type { Bet, BetStatus } from '../types';
 
 /**
  * Every bet her missed goals paid for, kept forever.
@@ -40,9 +40,9 @@ export function BetList({
   onSettle,
   onAdd,
 }: {
-  bets: FiveBet[];
+  bets: Bet[];
   isKeeper: boolean;
-  onSettle: (bet: FiveBet) => void;
+  onSettle: (bet: Bet) => void;
   onAdd?: () => void;
 }) {
   return (
@@ -235,7 +235,7 @@ export function SettleBet({
   onClose,
   onSettle,
 }: {
-  bet: FiveBet | null;
+  bet: Bet | null;
   onClose: () => void;
   onSettle: (status: 'won' | 'lost' | 'void', payoutCents?: number) => void;
 }) {
