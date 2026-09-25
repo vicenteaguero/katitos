@@ -26,7 +26,13 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
 import { corsHeaders, json } from '../_shared/cors.ts';
-import { endOfDay, localDay, startOfDay } from '../_shared/zone.ts';
+import {
+  atLocalHour,
+  endOfDay,
+  localDay,
+  nextDay,
+  startOfDay,
+} from '../_shared/zone.ts';
 import {
   FIVE_GOALS,
   FIVE_GOAL_IDS,
@@ -106,6 +112,14 @@ function zoneOf(m: Member): string {
   }
 }
 
+/** The Monday of the week an ISO date falls in. */
+function mondayOf(isoDay: string): string {
+  const d = new Date(`${isoDay}T00:00:00Z`);
+  const back = (d.getUTCDay() + 6) % 7;
+  d.setUTCDate(d.getUTCDate() - back);
+  return d.toISOString().slice(0, 10);
+}
+
 /** The day before an ISO date, as 'YYYY-MM-DD'. */
 function prevDay(isoDay: string): string {
   const d = new Date(`${isoDay}T00:00:00Z`);
@@ -113,9 +127,16 @@ function prevDay(isoDay: string): string {
   return d.toISOString().slice(0, 10);
 }
 
-/** When `day` stops being correctable for her: 3AM the morning after. */
+/**
+ * When `day` stops being correctable for her: 3AM the morning after, read off
+ * her wall clock - the same instant `five_guard_window` and `closesAt()` in
+ * src/features/five/lib/five-days.ts compute. Adding three hours to the end of
+ * the day instead is an hour wrong on a night the clocks move, and that hour is
+ * the difference between a day she can still fix and one she has been charged
+ * for.
+ */
 function closesAt(zone: string, isoDay: string): Date {
-  return new Date(endOfDay(zone, isoDay).getTime() + GRACE_HOUR * 3_600_000);
+  return atLocalHour(zone, nextDay(isoDay), GRACE_HOUR);
 }
 
 /** Dollars, the way a notification should say them: $9, never $9.00. */
@@ -162,10 +183,20 @@ Deno.serve(async (req) => {
     now?: string;
     dryRun?: boolean;
   };
-  const now = body?.now ? new Date(body.now) : new Date();
-  if (Number.isNaN(now.getTime())) {
+  const asked = body?.now ? new Date(body.now) : new Date();
+  if (Number.isNaN(asked.getTime())) {
     return json({ error: 'unreadable `now`' }, 400);
   }
+  /**
+   * A named instant is for watching what WOULD happen, never for making it
+   * happen early. `now` in the future settles days she is still living, as five
+   * misses, with real money - and the key that reaches this door is the one he
+   * tests with.
+   */
+  if (!body?.dryRun && asked.getTime() > Date.now()) {
+    return json({ error: '`now` in the future needs dryRun' }, 400);
+  }
+  const now = asked;
   const dryRun = body?.dryRun === true;
 
   const { data: members } = await admin
@@ -345,7 +376,12 @@ Deno.serve(async (req) => {
         for (const goal of FIVE_GOALS) {
           const row = reminder(today, goal.id);
           if (!row || row.sent_at) continue;
-          if (new Date(row.slot_at).getTime() > now.getTime()) continue;
+          const due = new Date(row.slot_at).getTime();
+          if (due > now.getTime()) continue;
+          // The planner refuses to write a stale slot; the sender has to refuse
+          // to fire one too, or a scheduler that was down all morning delivers
+          // "Morning, did you sleep?" at eight in the evening.
+          if (due < now.getTime() - STALE_MS) continue;
           if (isLive(today, goal.id)) continue;
           pushes.push({
             to: FIVE_OPEN ? subject : keeper,
