@@ -107,17 +107,17 @@ export function useToggleEntry() {
     onSuccess: (_r, { shared, selfName }, ctx) => {
       if (ctx?.next && shared) {
         void notifyPartner({
-          kind: 'streak',
+          kind: 'habits',
           title: '📞 Katitos',
           body: `${selfName ?? 'Your love'} marked that we talked today 🔥`,
-          url: '/streak',
+          url: '/habits',
         });
       }
     },
     onSettled: () => {
       // Only the ticks. Refetching the habits on every tap was work nobody
       // asked for, and one more response for a tap to race.
-      void qc.invalidateQueries({ queryKey: qk.streak.allEntries() });
+      void qc.invalidateQueries({ queryKey: qk.habits.allEntries() });
     },
   });
 }
@@ -133,6 +133,8 @@ export interface NewHabit {
    * even begin would be silly.
    */
   effectiveFrom: string;
+  /** Hers, when he is setting her habits. Defaults to your own. */
+  forUserId?: string;
 }
 
 export function useCreateHabit() {
@@ -145,7 +147,9 @@ export function useCreateHabit() {
       const { data, error } = await supabase
         .from('habits')
         .insert({
-          user_id: userId,
+          // Whose habit it is. Hers when he is the one asking it of her; the
+          // database refuses anyone but him for that.
+          user_id: h.forUserId ?? userId,
           kind: 'personal',
           title: h.title.trim(),
           emoji: h.emoji,
@@ -159,7 +163,7 @@ export function useCreateHabit() {
       return data;
     },
     onError: (err) => toast.error(streakErrorMessage(err)),
-    onSettled: () => void qc.invalidateQueries({ queryKey: qk.streak.all() }),
+    onSettled: () => void qc.invalidateQueries({ queryKey: qk.habits.all() }),
   });
 }
 
@@ -191,7 +195,7 @@ export function useUpdateHabit() {
       if (error) throw error;
     },
     onError: (err) => toast.error(streakErrorMessage(err)),
-    onSettled: () => void qc.invalidateQueries({ queryKey: qk.streak.all() }),
+    onSettled: () => void qc.invalidateQueries({ queryKey: qk.habits.all() }),
   });
 }
 
@@ -214,6 +218,6 @@ export function useArchiveHabit() {
       if (error) throw error;
     },
     onError: (err) => toast.error(streakErrorMessage(err)),
-    onSettled: () => void qc.invalidateQueries({ queryKey: qk.streak.all() }),
+    onSettled: () => void qc.invalidateQueries({ queryKey: qk.habits.all() }),
   });
 }
