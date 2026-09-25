@@ -2,7 +2,7 @@
  * Where a day's money goes.
  *
  * The rule is one sentence and it is lopsided on purpose: a habit of hers held
- * puts a dollar in her gift pot, one missed puts three in the pot he bets on
+ * puts a dollar in her gift, one missed puts three in the money he bets on
  * sport. A miss costs three times what a win pays, so what pulls is the loss and
  * not the prize - which is the only reason a tracker like this works on someone
  * who is already tired of being scored.
@@ -11,25 +11,25 @@
  * separately from the screen.
  *
  * A HARD DAY stops the burn and nothing else. It used to stop both, and that was
- * the worst bug in the feature: on a day she managed two of the five and was
+ * the worst bug in the feature: on a day she managed two of her five and was
  * drowning, pressing the one button meant for her worst days took away the two
  * dollars she had already earned and greyed out the rows, so the valve had a
  * price on it and she would learn not to press it. Now a hard day keeps every
  * dollar she held and forgives every one she did not.
  *
- * A PAUSED Five stops everything, because a switch she turned off is not consent
+ * A PAUSED pot stops everything, because a switch she turned off is not consent
  * she withdrew from halfway. The scheduler also never settles a day she was
  * paused through, so coming back is never a bill.
  *
- * The scheduler (`supabase/functions/five/index.ts`) and `five_reconcile_day()`
- * write the ledger from exactly this rule. This is the copy the screen projects
- * today's split with, before any of it is real.
+ * The clock (`supabase/functions/habits-tick/index.ts`) and
+ * `money_reconcile_day()` write the ledger from exactly this rule. This is the
+ * copy the screen projects today's split with, before any of it is real.
  */
 
 export interface Stakes {
-  /** Cents to her gift pot, per goal held. */
+  /** Cents to her gift, per habit held. */
   giftCents: number;
-  /** Cents to the bookmaker, per goal missed. */
+  /** Cents to the betting money, per habit missed. */
   betCents: number;
 }
 
@@ -100,6 +100,16 @@ export function money(cents: number, currency = 'USD'): string {
   return currency === 'USD' ? `$${value}` : `${value} ${currency}`;
 }
 
+/**
+ * The two pots, and the periods that make them pots rather than totals.
+ *
+ * The plain figures are lifetime: every dollar her habits have ever earned or
+ * burned. The `*Period` ones are what the screen leads with, because a pot you
+ * never empty is a scoreboard: the betting money is one week, Monday to Sunday,
+ * and her gift is one calendar month. `money_windows()` works the dates out
+ * (including the first one, which swallows the stub) and hands them back here,
+ * so the screen prints a calendar it does not own.
+ */
 export interface Pots {
   giftCents: number;
   betCents: number;
@@ -107,6 +117,15 @@ export interface Pots {
   lostCents: number;
   wonCents: number;
   openCents: number;
+  /** This month's gift, and this week's burn. */
+  giftPeriodCents: number;
+  betPeriodCents: number;
+  /** Of that week's burn, what he has already put on a match. */
+  betPeriodStakedCents: number;
+  giftFrom: string | null;
+  giftTo: string | null;
+  betFrom: string | null;
+  betTo: string | null;
 }
 
 export const EMPTY_POTS: Pots = {
@@ -116,13 +135,20 @@ export const EMPTY_POTS: Pots = {
   lostCents: 0,
   wonCents: 0,
   openCents: 0,
+  giftPeriodCents: 0,
+  betPeriodCents: 0,
+  betPeriodStakedCents: 0,
+  giftFrom: null,
+  giftTo: null,
+  betFrom: null,
+  betTo: null,
 };
 
 /**
  * What the bet pot is actually doing.
  *
- * `bet` is what her missed goals condemned; `staked` is what he has since handed
- * to a bookmaker, and it trails, because he places them in his own time. The
+ * `bet` is what her missed habits condemned; `staked` is what he has since put
+ * on a match, and it trails, because he places them in his own time. The
  * difference is money he owes the pot, and the screen says so rather than
  * quietly rounding it into "burned" - the whole mechanic rests on that number
  * being true.
