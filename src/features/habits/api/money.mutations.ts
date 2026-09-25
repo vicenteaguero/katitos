@@ -170,6 +170,8 @@ export interface BetDraft {
   pick: string;
   stakeCents: number;
   odds: number | null;
+  /** When the match starts, as an instant. The clock chases the result from it. */
+  kickoff: string | null;
   note: string | null;
 }
 
@@ -184,6 +186,7 @@ export function useAddBet() {
         pick: draft.pick,
         stake_cents: draft.stakeCents,
         odds: draft.odds,
+        kickoff: draft.kickoff,
         note: draft.note,
       });
       if (error) throw error;
@@ -203,6 +206,11 @@ export function useAddBet() {
  * previous payout is taken back first, because settling is not a one-way door -
  * he corrects a win to a loss, or fixes a figure he mistyped, and without that
  * her pot would keep money from a bet that lost.
+ *
+ * It pays into the gift that is OPEN, dated the day he settles it and not the day
+ * the match was played. Her gift is a month now: a bet from September that comes
+ * in halfway through October, credited to September, would be money she can see
+ * and never be given.
  */
 export function useSettleBet() {
   const qc = useQueryClient();
@@ -212,11 +220,14 @@ export function useSettleBet() {
       status,
       payoutCents,
       subjectId,
+      day,
     }: {
       bet: { id: string; day: string; stake_cents: number };
       status: 'won' | 'lost' | 'void';
       payoutCents?: number;
       subjectId: string;
+      /** Her day, now: which month's gift this lands in. */
+      day: string;
     }) => {
       const { error } = await supabase
         .from('bets')
@@ -236,7 +247,7 @@ export function useSettleBet() {
       if (status !== 'won' || !payoutCents) return;
       const { error: payErr } = await supabase.from('money_ledger').insert({
         user_id: subjectId,
-        day: bet.day,
+        day,
         habit_id: null,
         direction: 'gift',
         amount_cents: payoutCents,
