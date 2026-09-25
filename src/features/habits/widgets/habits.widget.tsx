@@ -4,14 +4,16 @@ import { Flame } from 'lucide-react';
 import { DateTime } from 'luxon';
 import { usePartner, useUserId } from '@kernel/auth';
 import { cn } from '@kernel/lib';
-import { useToggleEntry } from '../api/streak.mutations';
+import { useToggleEntry } from '../api/habits.mutations';
 import { activeOn } from '../lib/streak';
 import { petName } from '../lib/names';
 import { useStreak } from '../lib/use-streak';
+import { useMoneyPots, useMoneyWho } from '../api/money.queries';
+import { money } from '../lib/money';
 import { HabitButton } from '../components/habit-button';
 import { CallPill } from '../components/call-pill';
 import { DaySheet } from '../components/day-sheet';
-import '../streak.css';
+import '../habits.css';
 
 /**
  * The streak, on the home screen.
@@ -28,8 +30,10 @@ import '../streak.css';
  * box and the seal hangs off the corner; a scroller or an `overflow-hidden`
  * card shears both, which is exactly what the first version did.
  */
-export function StreakWidget() {
+export function HabitsWidget() {
   const { self, partner } = usePartner();
+  const { subject } = useMoneyWho();
+  const { pots } = useMoneyPots(subject?.user_id ?? null);
   const userId = useUserId();
   const view = useStreak();
   const toggle = useToggleEntry();
@@ -86,7 +90,7 @@ export function StreakWidget() {
 
         <div className="flex items-center gap-2">
           <Link
-            to="/streak"
+            to="/habits"
             className="lift-press flex min-w-0 flex-1 items-center gap-2"
           >
             <Flame
@@ -115,6 +119,15 @@ export function StreakWidget() {
                   : theirs.done === theirs.required
                     ? `${theirName} is all in 🤍`
                     : `${theirName} ${theirs.done}/${theirs.required}`}
+                {pots.giftCents > 0 && (
+                  // The gift, and only the gift. What the days have EARNED is
+                  // worth carrying to the home screen; what they have cost is
+                  // a number for the page that can explain it.
+                  <span className="tabular-nums text-gold">
+                    {', '}
+                    {money(pots.giftCents)} saved
+                  </span>
+                )}
               </span>
             </span>
           </Link>
@@ -173,7 +186,7 @@ export function StreakWidget() {
             }}
           >
             {DateTime.fromISO(yesterday, { zone: 'utc' }).toFormat('cccc')} is
-            still open — fix it
+            still open, fix it
           </button>
         )}
       </div>
