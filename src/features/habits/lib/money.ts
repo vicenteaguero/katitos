@@ -1,10 +1,8 @@
-import { GOAL_IDS, type GoalId } from './goals';
-
 /**
  * Where a day's money goes.
  *
- * The rule is one sentence and it is lopsided on purpose: a goal she held puts a
- * dollar in her gift pot, a goal she missed puts three in the pot he bets on
+ * The rule is one sentence and it is lopsided on purpose: a habit of hers held
+ * puts a dollar in her gift pot, one missed puts three in the pot he bets on
  * sport. A miss costs three times what a win pays, so what pulls is the loss and
  * not the prize - which is the only reason a tracker like this works on someone
  * who is already tired of being scored.
@@ -37,17 +35,28 @@ export interface Stakes {
 
 export const DEFAULT_STAKES: Stakes = { giftCents: 100, betCents: 300 };
 
+/**
+ * One of her habits on one day: was it held?
+ *
+ * Deliberately not a list of names. The money used to ride on five hard-coded
+ * ids; it rides on whatever habits he has given her, so a day is described by
+ * the habits that were in force on it.
+ */
+export interface HabitDay {
+  habitId: string;
+  held: boolean;
+}
+
 export interface DayInput {
-  /** The goals with a live, unrevoked mark on this day. */
-  done: Iterable<GoalId | string>;
+  habits: HabitDay[];
   hardDay?: boolean;
   paused?: boolean;
   stakes?: Stakes;
 }
 
 export interface DaySplit {
-  done: GoalId[];
-  missed: GoalId[];
+  held: string[];
+  missed: string[];
   giftCents: number;
   betCents: number;
   /** Nothing she missed costs anything today. */
@@ -58,23 +67,22 @@ export interface DaySplit {
 
 /** What a day is worth, to each pot. */
 export function splitDay(input: DayInput): DaySplit {
-  const held = new Set(input.done);
-  const done = GOAL_IDS.filter((id) => held.has(id));
-  const missed = GOAL_IDS.filter((id) => !held.has(id));
+  const held = input.habits.filter((h) => h.held).map((h) => h.habitId);
+  const missed = input.habits.filter((h) => !h.held).map((h) => h.habitId);
   const paused = !!input.paused;
   const forgiven = paused || !!input.hardDay;
   const stakes = input.stakes ?? DEFAULT_STAKES;
   return {
-    done,
+    held,
     missed,
-    giftCents: paused ? 0 : done.length * stakes.giftCents,
+    giftCents: paused ? 0 : held.length * stakes.giftCents,
     betCents: forgiven ? 0 : missed.length * stakes.betCents,
     forgiven,
     free: paused,
   };
 }
 
-/** What the goals still open are about to cost him, if the day ends like this. */
+/** What the habits still open are about to cost him, if the day ends like this. */
 export function atStake(split: DaySplit): number {
   return split.forgiven ? 0 : split.betCents;
 }
