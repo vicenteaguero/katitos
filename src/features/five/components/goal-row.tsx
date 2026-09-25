@@ -1,5 +1,6 @@
+import type { ReactNode } from 'react';
 import { Check } from 'lucide-react';
-import { cn } from '@kernel/lib';
+import { cn, tap } from '@kernel/lib';
 import { money } from '../lib/money';
 import type { Goal } from '../lib/goals';
 
@@ -7,65 +8,49 @@ import type { Goal } from '../lib/goals';
  * One of the five, as a thing you press.
  *
  * A full-width row, not a tile in a grid: five rows read down like a day, and a
- * row is a thumb's worth of target anywhere along its length. Done is a wine
- * wash and a tick; open is quiet, never red, and never a percentage.
+ * row is a thumb's worth of target anywhere along its length.
  *
- * What a row says about money changes with who is looking at it and whether the
- * day is still hers to change - but it never says it twice. Open rows carry the
- * three dollars at stake, done rows carry the dollar they earned, and on a free
- * day nothing carries anything, because nothing is moving.
+ * What the row does NOT say is the important part. It used to print "$3 at
+ * stake" on every open goal, so a fresh morning showed her five copies of the
+ * price of her own day, which is the one thing a person with depression does not
+ * need before breakfast. The money is real and it is on the screen once, at the
+ * top. A row says what it is and whether she has it.
+ *
+ * Done is a wine wash and a tick, deliberately not the streak's gilt disc and
+ * seal: these two widgets sit next to each other on Home and they mean different
+ * things - one is a run the two of them share, one is a day of hers - so they are
+ * allowed to look different.
  */
 export function GoalRow({
   goal,
   done,
   revoked,
-  free,
   interactive,
   giftCents,
-  betCents,
   onToggle,
 }: {
   goal: Goal;
   done: boolean;
-  /** He took this one back. The row still shows what she said. */
+  /** He took this one back. Shown to him; she is told by him, not by an app. */
   revoked?: boolean;
-  /** A hard day or a paused Five: the row is real, the money is not. */
-  free?: boolean;
   interactive: boolean;
   giftCents: number;
-  betCents: number;
   onToggle?: () => void;
 }) {
   const press = () => {
     if (!interactive) return;
-    navigator.vibrate?.(done ? [0, 12] : [0, 26]);
+    tap(done ? 'off' : 'on');
     onToggle?.();
   };
 
-  const note = free
-    ? null
-    : done
-      ? `+${money(giftCents)}`
-      : `${money(betCents)} at stake`;
-
-  return (
-    <button
-      type="button"
-      onClick={press}
-      disabled={!interactive}
-      aria-pressed={done}
-      className={cn(
-        'flex w-full items-center gap-3 rounded px-3 py-2.5 text-left transition-colors duration-150',
-        done ? 'bg-accent/[0.18]' : 'bg-surface-2',
-        interactive ? 'lift-press' : 'cursor-default',
-        !interactive && !done && 'opacity-55'
-      )}
-    >
+  const body: ReactNode = (
+    <>
       <span
         aria-hidden="true"
         className={cn(
           'grid h-10 w-10 shrink-0 place-items-center rounded-full text-lg',
-          done ? 'bg-accent text-accent-fg' : 'bg-fg/[0.06]'
+          done ? 'bg-accent text-accent-fg' : 'bg-fg/[0.06]',
+          !interactive && !done && 'opacity-50'
         )}
       >
         {done ? <Check className="h-5 w-5" strokeWidth={2.5} /> : goal.emoji}
@@ -74,25 +59,49 @@ export function GoalRow({
         <span className="block truncate font-sans text-sm font-semibold text-fg">
           {goal.label}
           {revoked && (
-            <span className="ml-2 font-normal normal-case text-muted">
-              taken back
-            </span>
+            <span className="ml-2 font-normal text-muted">not counted</span>
           )}
         </span>
         <span className="block truncate font-sans text-xs text-muted">
           {goal.hint}
         </span>
       </span>
-      {note && (
-        <span
-          className={cn(
-            'shrink-0 font-sans text-xs font-semibold tabular-nums',
-            done ? 'text-gold' : 'text-muted'
-          )}
-        >
-          {note}
+      {done && (
+        <span className="shrink-0 font-sans text-xs font-semibold tabular-nums text-gold">
+          +{money(giftCents)}
         </span>
       )}
+    </>
+  );
+
+  const shape = cn(
+    'flex w-full items-center gap-3 rounded px-3 py-2.5 text-left transition-colors duration-150',
+    done ? 'bg-accent/[0.18]' : 'bg-surface-2'
+  );
+
+  // A closed day is not a broken button. A disabled <button> leaves the row out
+  // of the tab order and out of a screen reader's reach, and her history is
+  // almost entirely closed days - so when there is nothing to press, this is
+  // text, the way the language kit does it.
+  if (!interactive) {
+    return (
+      <span
+        className={shape}
+        aria-label={`${goal.label}, ${done ? 'done' : 'not done'}`}
+      >
+        {body}
+      </span>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={press}
+      aria-pressed={done}
+      className={cn(shape, 'lift-press')}
+    >
+      {body}
     </button>
   );
 }
