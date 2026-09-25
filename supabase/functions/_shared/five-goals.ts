@@ -19,14 +19,29 @@
  */
 export const FIVE_OPEN = false;
 
-/** Her day stays markable until 3AM the next morning. */
-export const GRACE_HOUR = 3;
+/**
+ * There is no window of the Five's own any more: a goal is a habit, a tick is a
+ * row of `habit_entries`, and a day is settled when it has ended for both of
+ * them. See `isDayFinal` in ../five/index.ts.
+ */
+
+/** The hours a nudge may land in, on her clock: 07:00 to 23:59. */
+export const DAY_FROM = 7;
+export const DAY_TO = 23.98;
 
 export interface FiveGoal {
   id: string;
   label: string;
   emoji: string;
-  /** Local hours the single random nudge may land between. */
+  /**
+   * Local hours the single random nudge may land between.
+   *
+   * All five share the same window now - seven in the morning to just before
+   * midnight, her time - because the ask was for the day's five nudges to land
+   * at genuinely random hours rather than each one inside the slot where its
+   * goal "belongs". The scheduler spreads them across that window (see
+   * `functions/five/index.ts`) so five random draws cannot all land at once.
+   */
   window: [number, number];
   /** One of these is picked at random, so it never reads like a cron job. */
   nudges: string[];
@@ -47,20 +62,18 @@ export const FIVE_GOALS: FiveGoal[] = [
     id: 'sleep',
     label: 'Sleep',
     emoji: '🌙',
-    // Late enough that it does not go off while she is still asleep: a nudge
-    // sent at 09:20 to a sleeping phone is stamped as said and never repeats.
-    window: [10, 13],
+    window: [DAY_FROM, DAY_TO],
     nudges: [
       'Seven or eight hours last night? Tap it if you got them 🤍',
       'If the night gave you seven, this one is already done.',
-      'Morning. One tap if the night was a real one 🌙',
+      'One tap if last night was a real one 🌙',
     ],
   },
   {
     id: 'work',
     label: 'Work',
     emoji: '💼',
-    window: [10, 19],
+    window: [DAY_FROM, DAY_TO],
     nudges: [
       'Work in? Tap it when the day is done 💼',
       'Whatever you got through today counts. Tap it.',
@@ -71,7 +84,7 @@ export const FIVE_GOALS: FiveGoal[] = [
     id: 'study',
     label: 'Study',
     emoji: '📚',
-    window: [11, 17.5],
+    window: [DAY_FROM, DAY_TO],
     nudges: [
       'Any studying today? Even a short one counts 📚',
       'Open the book for a bit and this one is yours.',
@@ -82,7 +95,7 @@ export const FIVE_GOALS: FiveGoal[] = [
     id: 'eat',
     label: 'Eat well',
     emoji: '🍲',
-    window: [13, 15.5],
+    window: [DAY_FROM, DAY_TO],
     nudges: [
       'When you eat something proper today, this one is yours 🍲',
       'A plate and a chair, whenever it fits.',
@@ -93,7 +106,7 @@ export const FIVE_GOALS: FiveGoal[] = [
     id: 'move',
     label: 'Walk or train',
     emoji: '🏃',
-    window: [16, 20.5],
+    window: [DAY_FROM, DAY_TO],
     nudges: [
       'Out for a walk? Twenty minutes is a walk 🏃',
       'Twenty minutes outside, if the day allows it 🏃',
