@@ -910,6 +910,33 @@ export type Database = {
         }
         Relationships: []
       }
+      five_pauses: {
+        Row: {
+          created_at: string
+          from_day: string
+          id: string
+          reason: string
+          to_day: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          from_day: string
+          id?: string
+          reason?: string
+          to_day?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          from_day?: string
+          id?: string
+          reason?: string
+          to_day?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       five_reminders: {
         Row: {
           day: string
@@ -2995,6 +3022,10 @@ export type Database = {
         }[]
       }
       can_upload_flowers: { Args: never; Returns: boolean }
+      five_day_paused: {
+        Args: { p_day: string; p_user: string }
+        Returns: boolean
+      }
       five_pots: { Args: { p_user: string }; Returns: Json }
       five_reconcile_day: {
         Args: { p_day: string; p_user: string }
