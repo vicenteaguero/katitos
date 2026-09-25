@@ -2,7 +2,7 @@ import { DateTime } from 'luxon';
 import { cn } from '@kernel/lib';
 import { Kicker } from '@kernel/ui';
 import { GOALS, GOAL_IDS } from '../lib/goals';
-import type { FiveDayRow, FiveMark } from '../types';
+import type { FiveDayRow, GoalTick } from '../types';
 
 /**
  * The last few weeks, as a shape rather than a score.
@@ -23,7 +23,7 @@ import type { FiveDayRow, FiveMark } from '../types';
  */
 export function DayStrip({
   days,
-  marks,
+  ticks,
   dayRows,
   zone,
   now,
@@ -31,7 +31,7 @@ export function DayStrip({
 }: {
   /** Newest first, as `recentDays` returns them. */
   days: string[];
-  marks: FiveMark[];
+  ticks: GoalTick[];
   dayRows: FiveDayRow[];
   zone: string | null;
   now: DateTime;
@@ -40,7 +40,7 @@ export function DayStrip({
 }) {
   const today = now.setZone(zone ?? 'UTC').toISODate();
   const held = new Set(
-    marks.filter((m) => !m.revoked_at).map((m) => `${m.day}:${m.goal_id}`)
+    ticks.filter((t) => !t.revokedAt).map((t) => `${t.day}:${t.goalId}`)
   );
   const hard = new Set(dayRows.filter((d) => d.hard_day).map((d) => d.day));
   const ordered = [...days].reverse();
