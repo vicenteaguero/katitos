@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Flame, Lock, Pencil, Plus, Settings2 } from 'lucide-react';
 import { usePartner, useUserId } from '@kernel/auth';
 import { useTableSync } from '@kernel/realtime';
@@ -84,8 +84,14 @@ export function HabitsRoute() {
 
   const { subject, isKeeper } = useMoneyWho();
   const subjectId = subject?.user_id ?? null;
+  /**
+   * Her day, whichever of us is holding the phone, and worked out before the
+   * loading return because a hook cannot live behind one. The money is hers, and
+   * so are the week and the month the pots count in.
+   */
+  const herDay = isKeeper ? view.partnerToday : view.today;
   const { stakes, active } = useMoneySettings(subjectId);
-  const { pots } = useMoneyPots(subjectId);
+  const { pots } = useMoneyPots(subjectId, herDay);
   const { data: bets } = useBets();
   // Far enough back to cover the calendar's month and the week the hard-day
   // rule counts over.
@@ -136,8 +142,8 @@ export function HabitsRoute() {
   }
 
   const { today, partnerToday, shared, mine, theirs, streak } = view;
-  /** Her day, whichever of us is holding the phone. The money is hers. */
-  const herDay = isKeeper ? partnerToday : today;
+  const mineToday = mine.filter((h) => activeOn(h, today));
+  const theirsToday = theirs.filter((h) => activeOn(h, partnerToday));
   const theirName =
     partner?.display_name?.split(' ')[0] ?? petName(partner?.role);
 
@@ -266,31 +272,31 @@ export function HabitsRoute() {
         >
           Yours today
         </SectionLabel>
-        {mine.length === 0 ? (
+        {mineToday.length === 0 ? (
           <p className="font-sans text-xs text-muted">Nothing yours yet.</p>
         ) : (
-          <div className="flex flex-wrap gap-2">
-            {mine
-              .filter((h) => activeOn(h, today))
-              .map((h) => (
-                <HabitButton
-                  key={h.id}
-                  habit={h}
-                  done={view.isDone(h.id, today)}
-                  interactive
-                  weekly={
-                    h.schedule === 'weekly' ? view.weekly(h, today) : undefined
-                  }
-                  onToggle={() =>
-                    toggle.mutate({
-                      habitId: h.id,
-                      day: today,
-                      on: !view.isDone(h.id, today),
-                    })
-                  }
-                />
-              ))}
-          </div>
+          <HabitRow count={mineToday.length}>
+            {mineToday.map((h) => (
+              <HabitButton
+                key={h.id}
+                habit={h}
+                done={view.isDone(h.id, today)}
+                interactive
+                fluid={mineToday.length > 4}
+                size={mineToday.length > 5 ? 'sm' : 'md'}
+                weekly={
+                  h.schedule === 'weekly' ? view.weekly(h, today) : undefined
+                }
+                onToggle={() =>
+                  toggle.mutate({
+                    habitId: h.id,
+                    day: today,
+                    on: !view.isDone(h.id, today),
+                  })
+                }
+              />
+            ))}
+          </HabitRow>
         )}
 
         {lostWeeks.length > 0 && (
@@ -354,26 +360,26 @@ export function HabitsRoute() {
           )
         )}
 
-        {theirs.length > 0 && (
+        {theirsToday.length > 0 && (
           <>
             <SectionLabel className="mt-3">{theirName}</SectionLabel>
-            <div className="flex flex-wrap gap-2">
-              {theirs
-                .filter((h) => activeOn(h, partnerToday))
-                .map((h) => (
-                  <HabitButton
-                    key={h.id}
-                    habit={h}
-                    done={view.isDone(h.id, partnerToday)}
-                    interactive={false}
-                    weekly={
-                      h.schedule === 'weekly'
-                        ? view.weekly(h, partnerToday)
-                        : undefined
-                    }
-                  />
-                ))}
-            </div>
+            <HabitRow count={theirsToday.length}>
+              {theirsToday.map((h) => (
+                <HabitButton
+                  key={h.id}
+                  habit={h}
+                  done={view.isDone(h.id, partnerToday)}
+                  interactive={false}
+                  fluid={theirsToday.length > 4}
+                  size={theirsToday.length > 5 ? 'sm' : 'md'}
+                  weekly={
+                    h.schedule === 'weekly'
+                      ? view.weekly(h, partnerToday)
+                      : undefined
+                  }
+                />
+              ))}
+            </HabitRow>
           </>
         )}
       </Card>
@@ -532,12 +538,13 @@ export function HabitsRoute() {
       />
 
       <BetForm
-        // Keyed to what he owes, so the stake is never still showing the zero
-        // it was mounted with before the pots arrived.
-        key={pots.betCents - pots.stakedCents}
+        // Keyed to what this week owes, so the stake is never still showing the
+        // zero it was mounted with before the pots arrived.
+        key={pots.betPeriodCents - pots.betPeriodStakedCents}
         open={placing}
         day={today}
-        owed={Math.max(0, pots.betCents - pots.stakedCents)}
+        owed={Math.max(0, pots.betPeriodCents - pots.betPeriodStakedCents)}
+        zone={self?.timezone}
         onClose={() => setPlacing(false)}
         onSave={(draft) => {
           addBet.mutate(draft);
@@ -556,6 +563,7 @@ export function HabitsRoute() {
             status,
             payoutCents,
             subjectId,
+            day: herDay,
           });
           setSettling(null);
         }}
@@ -710,7 +718,7 @@ function Dials({
                 inputMode="decimal"
               />
             </Field>
-            <Field label="One missed, to the bookmaker" hint="dollars">
+            <Field label="One missed, to the betting money" hint="dollars">
               <Input
                 value={bet}
                 onChange={(e) => setBet(e.target.value)}
@@ -734,6 +742,28 @@ function Dials({
         )}
       </div>
     </Dialog>
+  );
+}
+
+/**
+ * A day's habits, in a row that cannot wrap.
+ *
+ * Five of hers at a fixed 62px plus their gaps are wider than an iPhone 13, so
+ * the fifth dropped onto a line of its own and her day read 4 + 1. A grid with
+ * one column each shares out whatever the card has instead: up to four they keep
+ * their natural width and sit left, from five they divide the row, and past five
+ * the circles come down a size rather than the row breaking.
+ */
+function HabitRow({ count, children }: { count: number; children: ReactNode }) {
+  return (
+    <div
+      className="grid gap-1.5"
+      style={{
+        gridTemplateColumns: `repeat(${count}, minmax(0, ${count > 4 ? '1fr' : '62px'}))`,
+      }}
+    >
+      {children}
+    </div>
   );
 }
 
