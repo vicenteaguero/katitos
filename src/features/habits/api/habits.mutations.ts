@@ -4,7 +4,7 @@ import { qk } from '@kernel/query';
 import { useUserId } from '@kernel/auth';
 import { notifyPartner } from '@kernel/push';
 import { toast } from '@kernel/ui';
-import { inOrder, useIntents } from '../lib/intents';
+import { commit, useIntents } from '../lib/intents';
 import { tickKey } from '../lib/streak';
 import type { Habit } from '../types';
 
@@ -25,6 +25,10 @@ export function streakErrorMessage(err: unknown): string {
       return 'That day has not started for you yet';
     case 'not_owner':
       return 'That one is not yours to tick';
+    case 'revoked':
+      // He took this tick back, and only he can put it back. Saying so is the
+      // point: an honour system where a no can be quietly undone is not one.
+      return 'He took that one back. Talk to him 🤍';
     case 'not_started':
       return 'That habit had not started yet on that day';
     case 'archived':
@@ -51,68 +55,51 @@ export interface ToggleVars {
 }
 
 /**
- * Tick or untick one habit on one day.
+ * Say what one square should be, on one day.
  *
- * Optimistic, because the whole widget is one thumb tap and a round trip from
- * Novosibirsk is long enough to feel like the tap missed.
+ * Not "toggle": the tap flips the wish inside the store and this asks the
+ * database for the RESULT. That is the difference between a tap that can arrive
+ * out of order and a state that cannot, and it is why tapping three hundred
+ * times as fast as a thumb can go ends with the screen and the row agreeing. See
+ * `lib/intents.ts` - the rules live there, with the reasons.
+ *
+ * Optimistic either way, because a round trip from Novosibirsk is long enough to
+ * feel like the tap missed.
  */
 export function useToggleEntry() {
   const qc = useQueryClient();
   const userId = useUserId();
-  const want = useIntents((s) => s.want);
-  const forget = useIntents((s) => s.forget);
+  const flip = useIntents((s) => s.flip);
 
   return useMutation({
     mutationFn: async ({ habitId, day }: ToggleVars) => {
       if (!userId) throw new Error('Not signed in');
-      const key = tickKey(habitId, day);
-      return inOrder(key, async () => {
-        // Read the wish at the moment of writing rather than the moment of
-        // tapping. Three quick taps become three writes that all agree on what
-        // you last asked for, so they cannot land out of order and disagree.
-        const on = useIntents.getState().wanted[key];
-        if (on === undefined) return;
-        if (on) {
-          const { error } = await supabase
-            .from('habit_entries')
-            .insert({ habit_id: habitId, day });
-          // 23505 is the row already being there, which is what we wanted.
-          if (error && error.code !== '23505') throw error;
-        } else {
-          const { error } = await supabase
-            .from('habit_entries')
-            .delete()
-            .eq('habit_id', habitId)
-            .eq('day', day);
-          if (error) throw error;
-        }
-      });
+      return commit(
+        tickKey(habitId, day),
+        (on) => writeTick(habitId, day, on),
+        (err) => toast.error(streakErrorMessage(err))
+      );
     },
-    onMutate: ({ habitId, day, on }) => {
-      const key = tickKey(habitId, day);
-      const wanted = useIntents.getState().wanted;
-      // `on` is what the button worked out from the last render, which is a
-      // beat behind a thumb. If a wish for this square is already standing, the
-      // truth is that wish - otherwise two taps inside one render cycle both
-      // read the same "before" and the second one does nothing.
-      const next = key in wanted ? !wanted[key] : on;
-      want(key, next);
-      return { next };
-    },
+    onMutate: ({ habitId, day, on }) => ({
+      next: flip(tickKey(habitId, day), on),
+    }),
     onError: (err, { habitId, day }) => {
-      // The one case where the server really does know better.
-      forget(tickKey(habitId, day));
+      // `commit` handles a refusal from the database itself, so this is the
+      // local ones only - not signed in, and nothing else today.
+      useIntents.getState().forget(tickKey(habitId, day));
       toast.error(streakErrorMessage(err));
     },
-    onSuccess: (_r, { shared, selfName }, ctx) => {
-      if (ctx?.next && shared) {
-        void notifyPartner({
-          kind: 'habits',
-          title: '📞 Katitos',
-          body: `${selfName ?? 'Your love'} marked that we talked today 🔥`,
-          url: '/habits',
-        });
-      }
+    onSuccess: (wrote, { shared, selfName }) => {
+      // `wrote` is what actually reached the database, and it is null for a tap
+      // that joined a write already on its way. So a bounced thumb sends her one
+      // notification about the call, or none, and never four.
+      if (wrote !== true || !shared) return;
+      void notifyPartner({
+        kind: 'habits',
+        title: '📞 Katitos',
+        body: `${selfName ?? 'Your love'} marked that we talked today 🔥`,
+        url: '/habits',
+      });
     },
     onSettled: () => {
       // Only the ticks. Refetching the habits on every tap was work nobody
@@ -120,6 +107,42 @@ export function useToggleEntry() {
       void qc.invalidateQueries({ queryKey: qk.habits.allEntries() });
     },
   });
+}
+
+/**
+ * The one write, and it is idempotent in both directions.
+ *
+ * On is an UPSERT rather than an insert, and it clears `revoked_at`, which fixes
+ * a quiet lie: a tick he had taken back was still a row, so the insert came back
+ * "already there", the circle lit, and the money went on counting the day as
+ * missed. Now it either genuinely un-takes it (his to do) or the trigger refuses
+ * her out loud.
+ *
+ * Off is a delete of a row that may not be there, which is a no-op. Neither call
+ * can half-succeed, so "the database has been told" and "the database agrees" are
+ * the same sentence - which is what lets the writer in `commit` trust one reply.
+ */
+async function writeTick(
+  habitId: string,
+  day: string,
+  on: boolean
+): Promise<void> {
+  if (on) {
+    const { error } = await supabase
+      .from('habit_entries')
+      .upsert(
+        { habit_id: habitId, day, revoked_at: null, revoked_by: null },
+        { onConflict: 'habit_id,day' }
+      );
+    if (error) throw error;
+    return;
+  }
+  const { error } = await supabase
+    .from('habit_entries')
+    .delete()
+    .eq('habit_id', habitId)
+    .eq('day', day);
+  if (error) throw error;
 }
 
 export interface NewHabit {
