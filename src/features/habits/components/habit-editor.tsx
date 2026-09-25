@@ -12,7 +12,7 @@ import {
   useArchiveHabit,
   useCreateHabit,
   useUpdateHabit,
-} from '../api/streak.mutations';
+} from '../api/habits.mutations';
 import type { Habit } from '../types';
 import { EmojiField } from './emoji-field';
 
@@ -24,6 +24,8 @@ export interface HabitEditorProps {
   /** Today or tomorrow, decided by the caller. */
   effectiveFrom: string;
   startsToday: boolean;
+  /** Set when he is asking this one of her rather than taking it on himself. */
+  forUserId?: string;
 }
 
 const PER_WEEK = ['1', '2', '3', '4', '5', '6', '7'] as const;
@@ -41,6 +43,7 @@ export function HabitEditor({
   habit,
   effectiveFrom,
   startsToday,
+  forUserId,
 }: HabitEditorProps) {
   const create = useCreateHabit();
   const update = useUpdateHabit();
@@ -80,6 +83,7 @@ export function HabitEditor({
         schedule,
         targetPerWeek,
         effectiveFrom,
+        forUserId,
       });
     }
     onClose();
