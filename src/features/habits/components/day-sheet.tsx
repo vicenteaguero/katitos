@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon';
 import { Sheet, Kicker } from '@kernel/ui';
 import { usePartner } from '@kernel/auth';
-import { useToggleEntry } from '../api/streak.mutations';
+import { useToggleEntry } from '../api/habits.mutations';
 import { activeOn } from '../lib/streak';
 import { petName } from '../lib/names';
 import type { StreakView } from '../lib/use-streak';
