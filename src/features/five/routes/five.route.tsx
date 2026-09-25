@@ -14,6 +14,8 @@ import {
   Input,
   Kicker,
   SectionLabel,
+  Skeleton,
+  Textarea,
   Switch,
   TopBarButton,
   useDesk,
@@ -105,6 +107,8 @@ export function FiveRoute() {
   const [settling, setSettling] = useState<FiveBet | null>(null);
   /** A day he opened from the strip, to put right. */
   const [opened, setOpened] = useState<string | null>(null);
+  /** The day she is calling hard, while she decides whether to say why. */
+  const [calling, setCalling] = useState<string | null>(null);
 
   useScreenChrome(
     {
@@ -119,7 +123,19 @@ export function FiveRoute() {
     []
   );
 
-  if (isLoading) return null;
+  // A blank flash is worse than a shape: the sibling screen paints skeletons for
+  // exactly this beat (streak.route.tsx).
+  if (isLoading) {
+    return (
+      <Desk narrow>
+        <div className="flex flex-col gap-3">
+          <Skeleton className="h-[7.5rem] rounded-lg" />
+          <Skeleton className="h-[22rem] rounded-card" />
+          <Skeleton className="h-24 rounded-card" />
+        </div>
+      </Desk>
+    );
+  }
   if (!visible) return <Navigate to="/" replace />;
   if (!subject || !subjectId) {
     return (
@@ -142,8 +158,11 @@ export function FiveRoute() {
   const allMarks = marks ?? [];
   const allDays = dayRows ?? [];
   const hardDays = allDays.filter((d) => d.hard_day).map((d) => d.day);
-  // One a week, counted the same way the trigger counts it.
-  const hardDaySpent = hardDays.some((d) => d > addDays(today, -7));
+  // One a rolling week, counted from the day in question and not from today -
+  // the trigger counts it that way, and on yesterday's card the two answers
+  // differ by exactly one day at the edge.
+  const hardDaySpentFor = (day: string) =>
+    hardDays.some((d) => d !== day && d > addDays(day, -7));
 
   const toggle = (day: string, goalId: GoalId, done: boolean) => {
     if (!done) {
@@ -155,7 +174,7 @@ export function FiveRoute() {
 
   return (
     <Desk narrow>
-      <div className="curtain-reveal flex flex-col gap-4 pb-2">
+      <div className="curtain-reveal flex flex-col gap-3 pb-2">
         <Pots pots={pots} />
 
         {!active && (
@@ -191,18 +210,20 @@ export function FiveRoute() {
             zone={zone}
             marks={allMarks}
             hardDay={hardDays.includes(day)}
+            hardDayNote={allDays.find((d) => d.day === day)?.note ?? null}
             paused={!active}
             stakes={stakes}
             canMark={active && canMarkDay(day, zone, isKeeper, now)}
             isToday={day === today}
+            isKeeper={isKeeper}
             onToggle={(goalId, done) => toggle(day, goalId, done)}
-            onHardDay={() => hardDay.mutate({ userId: subjectId, day })}
+            onHardDay={() => setCalling(day)}
             onUndoHardDay={
               hardDays.includes(day)
                 ? () => undoHardDay.mutate({ userId: subjectId, day })
                 : undefined
             }
-            hardDaySpent={hardDaySpent && !hardDays.includes(day)}
+            hardDaySpent={hardDaySpentFor(day)}
             now={now}
           />
         ))}
@@ -236,6 +257,16 @@ export function FiveRoute() {
           onAdd={() => setPlacing(true)}
         />
       </div>
+
+      <HardDay
+        day={calling}
+        onClose={() => setCalling(null)}
+        onSave={(note) => {
+          if (!calling) return;
+          hardDay.mutate({ userId: subjectId, day: calling, note });
+          setCalling(null);
+        }}
+      />
 
       <BetForm
         open={placing}
@@ -271,6 +302,48 @@ export function FiveRoute() {
         onSave={(next) => saveSettings.mutate({ userId: subjectId, ...next })}
       />
     </Desk>
+  );
+}
+
+/**
+ * Calling a day hard, and saying why if she wants to.
+ *
+ * The note is the reason this is a panel and not a single tap. A hard day with
+ * nothing in it is a hole in the data; a hard day with one line in it is a
+ * message that reaches his phone, which is the thing she actually asked for when
+ * she asked for help. Skipping it is one button and costs nothing.
+ */
+function HardDay({
+  day,
+  onClose,
+  onSave,
+}: {
+  day: string | null;
+  onClose: () => void;
+  onSave: (note: string | null) => void;
+}) {
+  const [note, setNote] = useState('');
+  if (!day) return null;
+  return (
+    <Dialog open onClose={onClose} title="Today was hard">
+      <div className="flex flex-col gap-3">
+        <p className="font-sans text-sm leading-relaxed text-muted">
+          Nothing more is asked of today, and nothing is owed. Anything you did
+          still counts.
+        </p>
+        <Field label="Want to tell him why?" hint="He gets this, nobody else">
+          <Textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={3}
+            placeholder="Optional"
+          />
+        </Field>
+        <Button onClick={() => onSave(note || null)}>
+          {note.trim() ? 'Send it, and rest' : 'Just rest'}
+        </Button>
+      </div>
+    </Dialog>
   );
 }
 
@@ -326,7 +399,7 @@ function Dials({
           <Switch
             checked={active}
             onChange={(next) => onSave({ active: next })}
-            label="Keep the Five going"
+            label="The Five is on"
           />
         </div>
 
