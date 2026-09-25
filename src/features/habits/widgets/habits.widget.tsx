@@ -32,10 +32,15 @@ import '../habits.css';
  */
 export function HabitsWidget() {
   const { self, partner } = usePartner();
-  const { subject } = useMoneyWho();
-  const { pots } = useMoneyPots(subject?.user_id ?? null);
+  const { subject, isKeeper } = useMoneyWho();
   const userId = useUserId();
   const view = useStreak();
+  // Her month, whichever of us is holding the phone: the gift is hers and so is
+  // the calendar it is counted in.
+  const { pots } = useMoneyPots(
+    subject?.user_id ?? null,
+    isKeeper ? view.partnerToday : view.today
+  );
   const toggle = useToggleEntry();
   const [sheetDay, setSheetDay] = useState<string | null>(null);
 
@@ -119,13 +124,14 @@ export function HabitsWidget() {
                   : theirs.done === theirs.required
                     ? `${theirName} is all in 🤍`
                     : `${theirName} ${theirs.done}/${theirs.required}`}
-                {pots.giftCents > 0 && (
-                  // The gift, and only the gift. What the days have EARNED is
-                  // worth carrying to the home screen; what they have cost is
-                  // a number for the page that can explain it.
+                {pots.giftPeriodCents > 0 && (
+                  // The gift, and only the gift, and only this month's: what the
+                  // days have EARNED is worth carrying to the home screen, what
+                  // they have cost is a number for the page that can explain it,
+                  // and a figure with no period on it is not a present.
                   <span className="tabular-nums text-gold">
                     {', '}
-                    {money(pots.giftCents)} saved
+                    {money(pots.giftPeriodCents)} gift
                   </span>
                 )}
               </span>
