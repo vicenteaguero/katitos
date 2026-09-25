@@ -307,6 +307,48 @@ export type Database = {
         }
         Relationships: []
       }
+      bets: {
+        Row: {
+          day: string
+          id: string
+          note: string | null
+          odds: number | null
+          payout_cents: number | null
+          pick: string
+          placed_at: string
+          settled_at: string | null
+          sport: string | null
+          stake_cents: number
+          status: string
+        }
+        Insert: {
+          day: string
+          id?: string
+          note?: string | null
+          odds?: number | null
+          payout_cents?: number | null
+          pick: string
+          placed_at?: string
+          settled_at?: string | null
+          sport?: string | null
+          stake_cents: number
+          status?: string
+        }
+        Update: {
+          day?: string
+          id?: string
+          note?: string | null
+          odds?: number | null
+          payout_cents?: number | null
+          pick?: string
+          placed_at?: string
+          settled_at?: string | null
+          sport?: string | null
+          stake_cents?: number
+          status?: string
+        }
+        Relationships: []
+      }
       budget_lines: {
         Row: {
           created_at: string
@@ -770,194 +812,6 @@ export type Database = {
         }
         Relationships: []
       }
-      five_bets: {
-        Row: {
-          day: string
-          id: string
-          note: string | null
-          odds: number | null
-          payout_cents: number | null
-          pick: string
-          placed_at: string
-          settled_at: string | null
-          sport: string | null
-          stake_cents: number
-          status: string
-        }
-        Insert: {
-          day: string
-          id?: string
-          note?: string | null
-          odds?: number | null
-          payout_cents?: number | null
-          pick: string
-          placed_at?: string
-          settled_at?: string | null
-          sport?: string | null
-          stake_cents: number
-          status?: string
-        }
-        Update: {
-          day?: string
-          id?: string
-          note?: string | null
-          odds?: number | null
-          payout_cents?: number | null
-          pick?: string
-          placed_at?: string
-          settled_at?: string | null
-          sport?: string | null
-          stake_cents?: number
-          status?: string
-        }
-        Relationships: []
-      }
-      five_days: {
-        Row: {
-          day: string
-          hard_day: boolean
-          hard_day_at: string | null
-          note: string | null
-          user_id: string
-        }
-        Insert: {
-          day: string
-          hard_day?: boolean
-          hard_day_at?: string | null
-          note?: string | null
-          user_id: string
-        }
-        Update: {
-          day?: string
-          hard_day?: boolean
-          hard_day_at?: string | null
-          note?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      five_ledger: {
-        Row: {
-          amount_cents: number
-          bet_id: string | null
-          created_at: string
-          day: string
-          direction: string
-          goal_id: string | null
-          id: string
-          reason: string
-          user_id: string
-        }
-        Insert: {
-          amount_cents: number
-          bet_id?: string | null
-          created_at?: string
-          day: string
-          direction: string
-          goal_id?: string | null
-          id?: string
-          reason: string
-          user_id: string
-        }
-        Update: {
-          amount_cents?: number
-          bet_id?: string | null
-          created_at?: string
-          day?: string
-          direction?: string
-          goal_id?: string | null
-          id?: string
-          reason?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "five_ledger_bet_id_fkey"
-            columns: ["bet_id"]
-            isOneToOne: false
-            referencedRelation: "five_bets"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      five_pauses: {
-        Row: {
-          created_at: string
-          from_day: string
-          id: string
-          reason: string
-          to_day: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          from_day: string
-          id?: string
-          reason?: string
-          to_day?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          from_day?: string
-          id?: string
-          reason?: string
-          to_day?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      five_reminders: {
-        Row: {
-          day: string
-          goal_id: string
-          sent_at: string | null
-          slot_at: string
-          user_id: string
-        }
-        Insert: {
-          day: string
-          goal_id: string
-          sent_at?: string | null
-          slot_at: string
-          user_id: string
-        }
-        Update: {
-          day?: string
-          goal_id?: string
-          sent_at?: string | null
-          slot_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      five_settings: {
-        Row: {
-          active: boolean
-          bet_cents: number
-          gift_cents: number
-          started_on: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          active?: boolean
-          bet_cents?: number
-          gift_cents?: number
-          started_on?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          active?: boolean
-          bet_cents?: number
-          gift_cents?: number
-          started_on?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       flowers: {
         Row: {
           created_at: string
@@ -1026,6 +880,30 @@ export type Database = {
           },
         ]
       }
+      habit_nudges: {
+        Row: {
+          day: string
+          goal_id: string
+          sent_at: string | null
+          slot_at: string
+          user_id: string
+        }
+        Insert: {
+          day: string
+          goal_id: string
+          sent_at?: string | null
+          slot_at: string
+          user_id: string
+        }
+        Update: {
+          day?: string
+          goal_id?: string
+          sent_at?: string | null
+          slot_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       habit_reminders: {
         Row: {
           day: string
@@ -1053,7 +931,6 @@ export type Database = {
           created_at: string
           effective_from: string
           emoji: string
-          five_goal_id: string | null
           id: string
           kind: string
           schedule: string
@@ -1068,7 +945,6 @@ export type Database = {
           created_at?: string
           effective_from?: string
           emoji?: string
-          five_goal_id?: string | null
           id?: string
           kind?: string
           schedule?: string
@@ -1083,7 +959,6 @@ export type Database = {
           created_at?: string
           effective_from?: string
           emoji?: string
-          five_goal_id?: string | null
           id?: string
           kind?: string
           schedule?: string
@@ -1092,6 +967,30 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      hard_days: {
+        Row: {
+          day: string
+          hard_day: boolean
+          hard_day_at: string | null
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          day: string
+          hard_day?: boolean
+          hard_day_at?: string | null
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          day?: string
+          hard_day?: boolean
+          hard_day_at?: string | null
+          note?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -1941,6 +1840,111 @@ export type Database = {
           text?: string
           updated_at?: string
           weight?: number
+        }
+        Relationships: []
+      }
+      money_ledger: {
+        Row: {
+          amount_cents: number
+          bet_id: string | null
+          created_at: string
+          day: string
+          direction: string
+          habit_id: string | null
+          id: string
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          bet_id?: string | null
+          created_at?: string
+          day: string
+          direction: string
+          habit_id?: string | null
+          id?: string
+          reason: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          bet_id?: string | null
+          created_at?: string
+          day?: string
+          direction?: string
+          habit_id?: string | null
+          id?: string
+          reason?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "five_ledger_bet_id_fkey"
+            columns: ["bet_id"]
+            isOneToOne: false
+            referencedRelation: "bets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "money_ledger_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      money_pauses: {
+        Row: {
+          created_at: string
+          from_day: string
+          id: string
+          reason: string
+          to_day: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          from_day: string
+          id?: string
+          reason?: string
+          to_day?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          from_day?: string
+          id?: string
+          reason?: string
+          to_day?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      money_settings: {
+        Row: {
+          active: boolean
+          bet_cents: number
+          gift_cents: number
+          started_on: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          bet_cents?: number
+          gift_cents?: number
+          started_on?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          bet_cents?: number
+          gift_cents?: number
+          started_on?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -3001,22 +3005,6 @@ export type Database = {
         }[]
       }
       can_upload_flowers: { Args: never; Returns: boolean }
-      five_adopt_habits: { Args: { p_user: string }; Returns: number }
-      five_day_paused: {
-        Args: { p_day: string; p_user: string }
-        Returns: boolean
-      }
-      five_held: {
-        Args: { p_day: string; p_goal: string; p_user: string }
-        Returns: boolean
-      }
-      five_mirroring: { Args: never; Returns: boolean }
-      five_pots: { Args: { p_user: string }; Returns: Json }
-      five_reconcile_day: {
-        Args: { p_day: string; p_user: string }
-        Returns: number
-      }
-      five_unpay_bet: { Args: { p_bet: string }; Returns: number }
       habit_day_open: { Args: { d: string; u: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
       is_member: { Args: never; Returns: boolean }
@@ -3054,17 +3042,34 @@ export type Database = {
         Args: { p_day_id: string; p_guess: string; p_own: string }
         Returns: undefined
       }
+      money_day_paused: {
+        Args: { p_day: string; p_user: string }
+        Returns: boolean
+      }
+      money_habits: {
+        Args: { p_day: string; p_user: string }
+        Returns: {
+          habit_id: string
+          held: boolean
+        }[]
+      }
+      money_pots: { Args: { p_user: string }; Returns: Json }
+      money_reconcile_day: {
+        Args: { p_day: string; p_user: string }
+        Returns: number
+      }
+      money_unpay_bet: { Args: { p_bet: string }; Returns: number }
       partner_id: { Args: never; Returns: string }
       polaroid_day_open: { Args: { d: string }; Returns: boolean }
       safe_tz: { Args: { tz: string }; Returns: string }
+      seed_her_habits: { Args: { p_user: string }; Returns: number }
       set_block_vocab: {
         Args: { p_block: string; p_vocab: string[] }
         Returns: undefined
       }
       streak_days: { Args: never; Returns: number }
-      tick_five: { Args: never; Returns: undefined }
+      tick_habits: { Args: never; Returns: undefined }
       tick_polaroid_reminders: { Args: never; Returns: undefined }
-      tick_streak_reminders: { Args: never; Returns: undefined }
       vpn_status: {
         Args: never
         Returns: {
