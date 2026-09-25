@@ -52,10 +52,9 @@ export interface FiveGoal {
  * that file holds these two copies to it: the same five, the same names, the
  * same reading down a day.
  *
- * Sleep is asked about in the morning, because it is the only one you can
- * answer for a night that is already over. The rest sit inside the hours she
- * would plausibly be doing them, wide enough that the time is never the same
- * two days running.
+ * The order is HER order - sleep, study, eat, work, walk - and a test in
+ * src/features/five/lib/goals.ts holds both copies to it. It is the order she
+ * reads her own day in, which is not the order I guessed.
  */
 export const FIVE_GOALS: FiveGoal[] = [
   {
@@ -67,17 +66,6 @@ export const FIVE_GOALS: FiveGoal[] = [
       'Seven or eight hours last night? Tap it if you got them 🤍',
       'If the night gave you seven, this one is already done.',
       'One tap if last night was a real one 🌙',
-    ],
-  },
-  {
-    id: 'work',
-    label: 'Work',
-    emoji: '💼',
-    window: [DAY_FROM, DAY_TO],
-    nudges: [
-      'Work in? Tap it when the day is done 💼',
-      'Whatever you got through today counts. Tap it.',
-      'Any work at all today? It counts 💼',
     ],
   },
   {
@@ -100,6 +88,17 @@ export const FIVE_GOALS: FiveGoal[] = [
       'When you eat something proper today, this one is yours 🍲',
       'A plate and a chair, whenever it fits.',
       'Lunch, then tap. That order 🤍',
+    ],
+  },
+  {
+    id: 'work',
+    label: 'Work',
+    emoji: '💼',
+    window: [DAY_FROM, DAY_TO],
+    nudges: [
+      'Work in? Tap it when the day is done 💼',
+      'Whatever you got through today counts. Tap it.',
+      'Any work at all today? It counts 💼',
     ],
   },
   {
