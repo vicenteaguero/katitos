@@ -1,0 +1,85 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import { FIVE_OPEN, GOAL_IDS, GOALS, GRACE_HOUR, goalById } from './goals';
+
+/**
+ * The five live in two files - this one, and the scheduler's copy in
+ * `supabase/functions/_shared/five-goals.ts`, which runs in Deno and cannot
+ * import anything from the bundle. Two copies of a constant is a drift waiting
+ * to happen, and the drift would be expensive: a goal id the app writes and the
+ * scheduler never settles is three dollars that vanish, and a FIVE_OPEN that is
+ * true on one side is a push landing on her phone before she has been told this
+ * exists.
+ *
+ * So the copy is read from disk and compared, rather than trusted.
+ */
+const scheduler = readFileSync(
+  resolve(__dirname, '../../../../supabase/functions/_shared/five-goals.ts'),
+  'utf8'
+);
+
+describe('the app and the scheduler agree', () => {
+  it('on the same five goals, in the same order', () => {
+    const ids = [...scheduler.matchAll(/^\s{4}id: '([a-z]+)',$/gm)].map(
+      (m) => m[1]
+    );
+    expect(ids).toEqual(GOAL_IDS);
+  });
+
+  it('on their labels', () => {
+    const labels = [...scheduler.matchAll(/^\s{4}label: '([^']+)',$/gm)].map(
+      (m) => m[1]
+    );
+    expect(new Set(labels)).toEqual(new Set(GOALS.map((g) => g.label)));
+  });
+
+  it('on whether she can see any of this yet', () => {
+    const open = /export const FIVE_OPEN = (true|false);/.exec(scheduler)?.[1];
+    expect(open).toBe(String(FIVE_OPEN));
+  });
+
+  it('on when her day closes', () => {
+    const hour = /export const GRACE_HOUR = (\d+);/.exec(scheduler)?.[1];
+    expect(Number(hour)).toBe(GRACE_HOUR);
+  });
+
+  it('gives every goal a window inside one day', () => {
+    const windows = [
+      ...scheduler.matchAll(/window: \[([\d.]+), ([\d.]+)\]/g),
+    ].map((m) => [Number(m[1]), Number(m[2])]);
+    expect(windows).toHaveLength(GOAL_IDS.length);
+    for (const [from, to] of windows) {
+      expect(from).toBeGreaterThanOrEqual(0);
+      expect(to).toBeLessThanOrEqual(24);
+      expect(to).toBeGreaterThan(from);
+    }
+  });
+
+  it('gives every goal more than one thing to say', () => {
+    const pools = scheduler.match(/nudges: \[/g) ?? [];
+    expect(pools).toHaveLength(GOAL_IDS.length);
+  });
+});
+
+describe('the five themselves', () => {
+  it('are five', () => {
+    expect(GOALS).toHaveLength(5);
+  });
+
+  it('are the ones she asked for', () => {
+    expect(GOAL_IDS).toEqual(['sleep', 'work', 'study', 'eat', 'move']);
+  });
+
+  it('each have a hint that says what counts', () => {
+    for (const goal of GOALS) {
+      expect(goal.hint.length).toBeGreaterThan(8);
+      expect(goal.emoji).not.toBe('');
+    }
+  });
+
+  it('are looked up by id, and unknown ids are simply unknown', () => {
+    expect(goalById('move')?.label).toBe('Walk or train');
+    expect(goalById('yoga')).toBeUndefined();
+  });
+});
