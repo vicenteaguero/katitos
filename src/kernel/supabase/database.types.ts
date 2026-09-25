@@ -3031,6 +3031,7 @@ export type Database = {
         Args: { p_day: string; p_user: string }
         Returns: number
       }
+      five_unpay_bet: { Args: { p_bet: string }; Returns: number }
       habit_day_open: { Args: { d: string; u: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
       is_member: { Args: never; Returns: boolean }
