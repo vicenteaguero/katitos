@@ -10,7 +10,7 @@ import {
   type Stakes,
 } from '../lib/money';
 import { addDays, localDay } from '../lib/five-days';
-import type { FiveBet, FiveDayRow, FiveMark } from '../types';
+import type { FiveBet, FiveDayRow, FiveMark, FivePause } from '../types';
 
 /**
  * Whose five these are, and who is reading them.
@@ -109,6 +109,36 @@ export function useFiveDays(userId: string | null | undefined, from: string) {
       return data ?? [];
     },
   });
+}
+
+/**
+ * Every stretch she had it switched off that could still cover a day on screen.
+ *
+ * Kept separate from `active`, which only says whether it is off RIGHT NOW. A
+ * day inside a pause has no money on it and never will, and a card from last
+ * week must not be relabelled by a switch she threw this morning.
+ */
+export function useFivePauses(userId: string | null | undefined, from: string) {
+  return useQuery({
+    queryKey: qk.five.pauses(userId ?? 'none', from),
+    enabled: !!userId,
+    queryFn: async (): Promise<FivePause[]> => {
+      const { data, error } = await supabase
+        .from('five_pauses')
+        .select('from_day, to_day')
+        .eq('user_id', userId!)
+        .or(`to_day.is.null,to_day.gte.${from}`);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+/** Was the Five switched off on this day? */
+export function pausedOn(pauses: FivePause[], day: string): boolean {
+  return pauses.some(
+    (p) => p.from_day <= day && (!p.to_day || p.to_day >= day)
+  );
 }
 
 /** The two pots, summed by the database - one round trip, five integers. */
