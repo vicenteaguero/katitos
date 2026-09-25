@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { usePartner, useUserId } from '@kernel/auth';
 import { useNow } from '@kernel/hooks';
-import { useEntries, useHabits } from '../api/streak.queries';
+import { useEntries, useHabits } from '../api/habits.queries';
 import { useIntents, withIntents } from './intents';
 import type { Habit } from '../types';
 import { addDays, furthestDay, isDayOpen, isSettled, localDay } from './days';
