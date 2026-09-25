@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@kernel/lib';
 import { addDays, monthGrid, monthOf } from '../lib/days';
 import type { DayStatus } from '../lib/streak';
-import '../streak.css';
+import '../habits.css';
 
 const WEEKDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
