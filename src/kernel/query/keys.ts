@@ -47,8 +47,11 @@ export const qk = {
   five: {
     all: () => ['five'] as const,
     settings: (userId: string) => ['five', 'settings', userId] as const,
-    marks: (userId: string, from: string) =>
-      ['five', 'marks', userId, from] as const,
+    /** Her five, as habits in the streak. */
+    habits: (userId: string) => ['five', 'habits', userId] as const,
+    /** Her ticks, read out of `habit_entries` through those habits. */
+    ticks: (userId: string, from: string) =>
+      ['five', 'ticks', userId, from] as const,
     days: (userId: string, from: string) =>
       ['five', 'days', userId, from] as const,
     /** The stretches she had it switched off. */
