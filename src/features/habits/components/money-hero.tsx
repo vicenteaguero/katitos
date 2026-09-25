@@ -33,31 +33,35 @@ export function MoneyHero({ pots }: { pots: Pots }) {
     earlier > 0 ? `${money(earlier)} from the months before` : null,
   ].filter(Boolean);
 
-  const dates = [
-    pots.giftTo ? `yours on ${on(pots.giftTo)}` : null,
-    pots.betTo ? `placed ${weekday(pots.betTo)} ${on(pots.betTo)}` : null,
-  ].filter(Boolean);
-
   return (
     <Card tone="hero" className="flex flex-col gap-1.5 rounded-lg">
-      <div className="flex items-end justify-between gap-4">
+      <div className="flex items-end justify-between gap-3">
         <div className="min-w-0">
           <Kicker tone="gold">Your surprise gift 🎁</Kicker>
           <p className="gilt-text gilt-figures font-display text-[2.75rem] font-semibold leading-none tracking-tight">
             {money(pots.giftPeriodCents)}
           </p>
+          {/* Each figure carries its own date, under itself. One line holding
+              both read as though the second date belonged to the gift. */}
+          {pots.giftTo && (
+            <p className="mt-1 font-sans text-[11px] leading-none text-gold/70">
+              yours on {on(pots.giftTo)}
+            </p>
+          )}
         </div>
-        <StatPill
-          value={money(pots.betPeriodCents)}
-          label="Betting money 🤑"
-          tone="fg"
-        />
+        <div className="shrink-0 text-right">
+          <StatPill
+            value={money(pots.betPeriodCents)}
+            label="Betting money 🤑"
+            tone="fg"
+          />
+          {pots.betTo && (
+            <p className="mt-1 font-sans text-[11px] leading-none text-muted">
+              goes in {weekday(pots.betTo)} {on(pots.betTo)}
+            </p>
+          )}
+        </div>
       </div>
-      {dates.length > 0 && (
-        <p className="m-0 font-sans text-[11px] leading-tight text-gold/70">
-          {dates.join(', ')}
-        </p>
-      )}
       {notes.length > 0 && (
         <p className="font-sans text-xs leading-relaxed tabular-nums text-muted">
           {notes.join(', ')}
@@ -72,6 +76,7 @@ function on(day: string): string {
   return DateTime.fromISO(day, { zone: 'utc' }).toFormat('d LLL');
 }
 
+/** Sun, not Sunday: it sits beside a date in a column half a screen wide. */
 function weekday(day: string): string {
-  return DateTime.fromISO(day, { zone: 'utc' }).toFormat('cccc');
+  return DateTime.fromISO(day, { zone: 'utc' }).toFormat('ccc');
 }
