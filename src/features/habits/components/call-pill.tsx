@@ -1,7 +1,7 @@
 import { Check, Phone } from 'lucide-react';
 import { cn } from '@kernel/lib';
 import type { Habit } from '../types';
-import '../streak.css';
+import '../habits.css';
 
 export interface CallPillProps {
   habit: Habit;
@@ -85,7 +85,7 @@ export function CallPill({
       >
         {today ? `${habit.title} today` : habit.title}
         {done && byName && (
-          <span className="font-normal text-muted"> · {byName}</span>
+          <span className="font-normal text-muted">, {byName}</span>
         )}
       </span>
 
