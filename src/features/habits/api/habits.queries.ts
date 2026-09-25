@@ -12,7 +12,7 @@ import type { Habit, HabitEntry } from '../types';
  */
 export function useHabits() {
   return useQuery({
-    queryKey: qk.streak.habits(),
+    queryKey: qk.habits.list(),
     queryFn: async (): Promise<Habit[]> => {
       const { data, error } = await supabase
         .from('habits')
@@ -28,7 +28,7 @@ export function useHabits() {
 /** The ticks inside one window of days, inclusive at both ends. */
 export function useEntries(from: string, to: string, enabled = true) {
   return useQuery({
-    queryKey: qk.streak.entries(from, to),
+    queryKey: qk.habits.entries(from, to),
     enabled: enabled && !!from && !!to,
     queryFn: async (): Promise<HabitEntry[]> => {
       const { data, error } = await supabase
