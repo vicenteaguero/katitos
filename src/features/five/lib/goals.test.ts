@@ -74,7 +74,7 @@ describe('the five themselves', () => {
   });
 
   it('are the ones she asked for', () => {
-    expect(GOAL_IDS).toEqual(['sleep', 'work', 'study', 'eat', 'move']);
+    expect(GOAL_IDS).toEqual(['sleep', 'study', 'eat', 'work', 'move']);
   });
 
   it('each have a hint that says what counts', () => {
