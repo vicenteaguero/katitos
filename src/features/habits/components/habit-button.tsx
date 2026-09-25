@@ -1,7 +1,7 @@
 import { Check } from 'lucide-react';
 import { cn, tap } from '@kernel/lib';
 import type { Habit } from '../types';
-import '../streak.css';
+import '../habits.css';
 
 export interface HabitButtonProps {
   habit: Habit;
