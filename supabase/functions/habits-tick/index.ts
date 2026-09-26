@@ -30,8 +30,14 @@ import { corsHeaders, json } from '../_shared/cors.ts';
 import { endOfDay, localDay, nextDay, startOfDay } from '../_shared/zone.ts';
 import { DAY_FROM, DAY_TO, NUDGES_ON, nudgeFor } from '../_shared/habits.ts';
 
-/** Fire the end-of-day nudge with this much of your own day left. */
-const DAY_END_MS = 3 * 60 * 60 * 1000;
+/**
+ * Fire the end-of-day nudge with this much of your own day left.
+ *
+ * Two hours, not three, because polaroid-reminder fires at exactly three and
+ * the two crons are five minutes apart: she was going to get "3 hours of
+ * Saturday left" and "3 hours left today" back to back, every evening.
+ */
+const DAY_END_MS = 2 * 60 * 60 * 1000;
 /** Fire the last call with this much of the grace window left. */
 const LAST_CALL_MS = 60 * 60 * 1000;
 /** Reminders older than this are bookkeeping nobody will ever read. */
@@ -187,12 +193,16 @@ async function tick(req: Request): Promise<Response> {
     .select('user_id, role, timezone, is_admin, display_name');
   if (!members || members.length === 0) return json({ sent: 0, due: 0 });
 
+  // Archived ones INCLUDED. A day is judged against the habits that were in
+  // force on it, and `activeOn` below applies exactly that rule per day - the
+  // same one `money_habits()` applies in the database. Filtering them out here
+  // meant that putting a habit away on Monday quietly rewrote Sunday's money,
+  // and made the two writers of the ledger disagree about the same day.
   const { data: habits } = await admin
     .from('habits')
     .select(
       'id, user_id, kind, schedule, title, emoji, effective_from, archived_at'
-    )
-    .is('archived_at', null);
+    );
   const daily = ((habits ?? []) as Habit[]).filter(
     (h) => h.schedule === 'daily'
   );
@@ -241,6 +251,45 @@ async function tick(req: Request): Promise<Response> {
       )
     );
 
+  // ── who the money is on, and the one thing that silences her phone ──────
+  //
+  // Hoisted above the nudges deliberately. A hard day is HER valve, and the two
+  // pushes below name every habit she has not ticked - which on the day she has
+  // said she cannot do is the exact message this feature exists not to send.
+  // They used to be built three hundred lines before anything here knew what a
+  // hard day was.
+  const keeper = (members as Member[]).find((m) => m.is_admin) ?? null;
+  const subject = (members as Member[]).find((m) => !m.is_admin) ?? null;
+  /** The clock behind: the earliest date either of them is living right now. */
+  const nearest = todays.reduce((a, b) => (a < b ? a : b));
+  /** A day is final once the day after it is behind the slower clock. */
+  const isDayFinal = (day: string) => nextDay(day) < nearest;
+
+  const subjectToday = subject
+    ? localDay(zoneOf(subject), now)
+    : lookup[lookup.length - 1];
+  /** As far back as the money ever looks: a week of closes, plus one. */
+  const moneyFrom = (() => {
+    let d = subjectToday;
+    for (let i = 0; i < CLOSE_LOOKBACK_DAYS + 1; i++) d = yesterdayOf(d);
+    return d;
+  })();
+
+  const hardRows = subject
+    ? (
+        await admin
+          .from('hard_days')
+          .select('day, hard_day')
+          .eq('user_id', subject.user_id)
+          .gte('day', moneyFrom)
+      ).data
+    : null;
+  const isHard = (day: string) =>
+    (hardRows ?? []).some((d) => d.day === day && d.hard_day);
+  /** Nothing more is asked of a day she has called hard. Not one push. */
+  const resting = (m: Member, day: string) =>
+    !!subject && m.user_id === subject.user_id && isHard(day);
+
   const due: Due[] = [];
 
   for (const member of members as Member[]) {
@@ -254,7 +303,7 @@ async function tick(req: Request): Promise<Response> {
 
     // ── three hours of your own day left ──────────────────────────────────
     const todo = owed(member, today);
-    if (todo.length > 0) {
+    if (todo.length > 0 && !resting(member, today)) {
       const left = endOfDay(zone, today).getTime() - now.getTime();
       if (left > 0 && left <= DAY_END_MS) {
         due.push({
@@ -271,7 +320,7 @@ async function tick(req: Request): Promise<Response> {
     // For him that is yesterday; for her, a day ahead, it is the day before.
     const closing = lookup[0];
     const late = owed(member, closing);
-    if (late.length > 0) {
+    if (late.length > 0 && !resting(member, closing)) {
       const left = closesAt(closing) - now.getTime();
       if (left > 0 && left <= LAST_CALL_MS) {
         due.push({
@@ -294,25 +343,14 @@ async function tick(req: Request): Promise<Response> {
   // she does not. It is his money either way. Everything below happens at the
   // close of a day, which is an hour when nobody is looking at a phone, which
   // is why it lives in the clock and not in the app.
-  const keeper = (members as Member[]).find((m) => m.is_admin) ?? null;
-  const subject = (members as Member[]).find((m) => !m.is_admin) ?? null;
-  /** The clock behind: the earliest date either of them is living right now. */
-  const nearest = todays.reduce((a, b) => (a < b ? a : b));
-  /** A day is final once the day after it is behind the slower clock. */
-  const isDayFinal = (day: string) => nextDay(day) < nearest;
-
   const settled: Record<string, unknown>[] = [];
   const quieted: string[] = [];
   const planned: Record<string, string>[] = [];
 
   if (subject && keeper) {
     const zone = zoneOf(subject);
-    const herToday = localDay(zone, now);
-    const from = (() => {
-      let d = herToday;
-      for (let i = 0; i < CLOSE_LOOKBACK_DAYS + 1; i++) d = yesterdayOf(d);
-      return d;
-    })();
+    const herToday = subjectToday;
+    const from = moneyFrom;
 
     // Her row, created the first time the clock sees her. `started_on` defaults
     // to today in the database, so the first day is the first day and every day
@@ -363,11 +401,6 @@ async function tick(req: Request): Promise<Response> {
         .eq('user_id', subject.user_id)
         .not('habit_id', 'is', null)
         .gte('day', from);
-      const { data: hardRows } = await admin
-        .from('hard_days')
-        .select('day, hard_day')
-        .eq('user_id', subject.user_id)
-        .gte('day', from);
       const { data: pauses } = await admin
         .from('money_pauses')
         .select('from_day, to_day')
@@ -385,8 +418,6 @@ async function tick(req: Request): Promise<Response> {
         );
       const isSettled = (day: string) =>
         (ledger ?? []).some((l) => l.day === day);
-      const isHard = (day: string) =>
-        (hardRows ?? []).some((d) => d.day === day && d.hard_day);
       const pausedOn = (day: string) =>
         (pauses ?? []).some(
           (p) => p.from_day <= day && (!p.to_day || p.to_day >= day)
@@ -399,14 +430,20 @@ async function tick(req: Request): Promise<Response> {
       // A silent stretch is the symptom, not laziness, and the right answer is
       // to stop the meter and tell HIM - not to keep charging fifteen a day and
       // keep buzzing her about it.
+      //
+      // It walks back PAST the days that are still open. It used to break on
+      // the first one, and the first one is always her yesterday, which is
+      // never final yet - so `closedDays` was always empty, `silent` was always
+      // false, and the brake that was supposed to stop the meter during a bad
+      // stretch had never once been able to fire.
       const closedDays: string[] = [];
       for (
-        let d = yesterdayOf(herToday), i = 0;
-        i < QUIET_DAYS;
-        i++, d = yesterdayOf(d)
+        let d = yesterdayOf(herToday), guard = 0;
+        guard < CLOSE_LOOKBACK_DAYS + 2 && closedDays.length < QUIET_DAYS;
+        guard++, d = yesterdayOf(d)
       ) {
-        if (!isDayFinal(d)) break;
         if (d <= startedOn) break;
+        if (!isDayFinal(d)) continue;
         closedDays.push(d);
       }
       const silent =
