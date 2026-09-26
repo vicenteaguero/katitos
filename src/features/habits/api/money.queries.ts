@@ -202,6 +202,10 @@ export function useBets(limit = 60) {
       const { data, error } = await supabase
         .from('bets')
         .select('*')
+        // 'void' is a dead status: a bet placed by mistake is deleted now, so
+        // the only rows still carrying it are older than that decision and have
+        // nothing to say.
+        .neq('status', 'void')
         .order('placed_at', { ascending: false })
         .limit(limit);
       if (error) throw error;
