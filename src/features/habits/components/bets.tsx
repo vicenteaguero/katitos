@@ -9,32 +9,42 @@ import {
   Dialog,
   Empty,
   Field,
-  FieldRow,
   Input,
+  Roller,
   SectionLabel,
 } from '@kernel/ui';
-import { money } from '../lib/money';
+import {
+  ODDS,
+  clp,
+  nearestStake,
+  oddsLadder,
+  stakeLadder,
+  toPesos,
+} from '../lib/money';
 import type { Bet, BetStatus } from '../types';
 
 /**
  * Every bet her missed habits paid for, kept forever.
  *
  * This list is the memory of the whole feature. A pot that goes down is abstract;
- * "Sunday, Bayern to win, $9, lost" is not, and it is still here in March. So
- * nothing is deleted - a mistake is voided and stays visible - and the list is
- * shown to both of them, because she is the one who is meant to remember it.
+ * "Thursday, Bayern to win, 9.500 CLP, lost" is not, and it is still here in
+ * March. It is shown to both of them - she is the one who is meant to remember
+ * it - and only he can write to it, which the database enforces rather than this
+ * screen.
+ *
+ * Every figure here is in pesos, because pesos are what he actually hands over.
  */
-const TONE: Record<
-  BetStatus,
-  { label: string; tone: 'neutral' | 'danger' | 'success' | 'warning' }
-> = {
-  open: { label: 'riding', tone: 'warning' },
-  lost: { label: 'lost', tone: 'danger' },
-  // 'won', not 'came back': the gold +$28.80 beside it already says where the
-  // money went, and a wide badge eats the name of the thing he backed.
-  won: { label: 'won', tone: 'success' },
-  void: { label: 'void', tone: 'neutral' },
-};
+
+/** What he put on it. Pesos, falling back to the dollars on a row that predates them. */
+function stakeOf(bet: Bet, rate: number): number {
+  return bet.stake_clp ?? toPesos(bet.stake_cents, rate);
+}
+
+function payoutOf(bet: Bet, rate: number): number | null {
+  if (bet.payout_clp != null) return bet.payout_clp;
+  if (bet.payout_cents != null) return toPesos(bet.payout_cents, rate);
+  return null;
+}
 
 /** A bet that has been played and never settled. The clock chases him for these. */
 function needsResult(bet: Bet): boolean {
@@ -48,11 +58,14 @@ function needsResult(bet: Bet): boolean {
 export function BetList({
   bets,
   isKeeper,
+  rate,
   onSettle,
   onAdd,
 }: {
   bets: Bet[];
   isKeeper: boolean;
+  /** A dollar in pesos, for the few old rows that predate pesos. */
+  rate: number;
   onSettle: (bet: Bet) => void;
   onAdd?: () => void;
 }) {
@@ -87,10 +100,9 @@ export function BetList({
         <Card tone="flat" className="p-0">
           <CardRows>
             {bets.map((bet) => {
-              const played = needsResult(bet);
-              const look = played
-                ? { label: 'result?', tone: 'warning' as const }
-                : TONE[(bet.status as BetStatus) ?? 'open'];
+              const status = (bet.status as BetStatus) ?? 'open';
+              const stake = stakeOf(bet, rate);
+              const payout = payoutOf(bet, rate);
               const body = (
                 <>
                   <span className="min-w-0 flex-1">
@@ -103,19 +115,31 @@ export function BetList({
                         .join(', ')}
                     </span>
                   </span>
-                  <span className="w-20 shrink-0 text-right">
-                    <span className="block font-sans text-sm font-semibold tabular-nums text-fg">
-                      {money(bet.stake_cents)}
+
+                  {/* What went in, and what came out, in one column: "lost" is
+                      a label, "-11.500 CLP" is the thing. The badge sits under
+                      them rather than beside them, because a word as wide as
+                      UPCOMING out here eats the name of what he backed. */}
+                  <span className="shrink-0 text-right">
+                    <span className="block font-sans text-[12px] tabular-nums text-muted">
+                      Bet {clp(stake)}
                     </span>
-                    {bet.status === 'won' && bet.payout_cents ? (
-                      <span className="block font-sans text-xs font-semibold tabular-nums text-gold">
-                        +{money(bet.payout_cents)}
+                    {status === 'won' && payout != null && (
+                      <span className="block font-sans text-[13px] font-semibold tabular-nums text-success">
+                        Won +{clp(payout)}
                       </span>
-                    ) : null}
+                    )}
+                    {status === 'lost' && (
+                      <span className="block font-sans text-[13px] font-semibold tabular-nums text-danger">
+                        Lost -{clp(stake)}
+                      </span>
+                    )}
+                    {status !== 'won' && status !== 'lost' && (
+                      <Badge tone="warning" className="mt-0.5">
+                        {needsResult(bet) ? 'result?' : 'upcoming'}
+                      </Badge>
+                    )}
                   </span>
-                  <Badge tone={look.tone} className="shrink-0">
-                    {look.label}
-                  </Badge>
                 </>
               );
               const shape =
@@ -160,91 +184,92 @@ function when(bet: Bet): string {
   return DateTime.fromISO(bet.day, { zone: 'utc' }).toFormat('d LLL');
 }
 
-/** He places one. Dollars in the field, cents in the database. */
+/** Built once, at module load: a few hundred rows each, and they never change. */
+const ODDS_LADDER = oddsLadder();
+const STAKE_LADDER = stakeLadder();
+
+/**
+ * He places one.
+ *
+ * Three things and no more: what he backed, the two numbers on the slip, and
+ * when it plays. The sport is always football, so it is not a question. The odds
+ * and the stake are wheels, so they cannot be half-typed and cannot hold a
+ * number he would never actually bet - and a wheel is one flick on a phone,
+ * where a decimal keypad is four taps and a mistake.
+ */
 export function BetForm({
   open,
   day,
-  owed,
+  owedClp,
   zone,
   onClose,
   onSave,
 }: {
   open: boolean;
   day: string;
-  /** What the week's pot says he owes, so the stake starts there. */
-  owed: number;
+  /** What this week's betting money says he owes, in pesos. */
+  owedClp: number;
   /** His clock, so "Thursday 09:00" means nine in the morning where he is. */
   zone?: string | null;
   onClose: () => void;
   onSave: (draft: {
     day: string;
-    sport: string | null;
     pick: string;
-    stakeCents: number;
-    odds: number | null;
+    stakeClp: number;
+    odds: number;
     kickoff: string | null;
-    note: string | null;
   }) => void;
 }) {
   const [pick, setPick] = useState('');
-  const [sport, setSport] = useState('');
-  const [stake, setStake] = useState(() =>
-    owed > 0 ? String(owed / 100) : ''
-  );
-  const [odds, setOdds] = useState('');
-  const [kickoff, setKickoff] = useState('');
+  const [odds, setOdds] = useState<number>(ODDS.start);
+  const [stake, setStake] = useState(() => nearestStake(owedClp));
+  // The next full hour, his time. An empty datetime field renders as today's
+  // date on iOS and then saves nothing, which is a control that lies; and a bet
+  // with a kickoff is a bet the clock can chase him about.
+  const [kickoff, setKickoff] = useState(() => nextHour(zone));
 
-  const cents = Math.round(Number(stake.replace(',', '.')) * 100);
-  const valid = pick.trim().length > 0 && Number.isFinite(cents) && cents > 0;
+  const valid = pick.trim().length > 0;
 
   return (
-    <Dialog open={open} onClose={onClose} title="A bet">
+    <Dialog open={open} onClose={onClose} title="Add a bet">
       <div className="flex flex-col gap-3">
-        <Field label="What you backed">
-          <Input
-            value={pick}
-            onChange={(e) => setPick(e.target.value)}
-            placeholder="Bayern to win"
-            autoFocus
+        <Input
+          value={pick}
+          onChange={(e) => setPick(e.target.value)}
+          placeholder="Bet name"
+          aria-label="Bet name"
+          autoFocus
+        />
+
+        <div className="flex items-start gap-3">
+          <Roller
+            className="flex-1"
+            label="Odds"
+            values={ODDS_LADDER}
+            value={odds}
+            onChange={setOdds}
+            format={(v) => v.toFixed(2)}
           />
-        </Field>
-        <FieldRow>
-          <Field label="Sport">
-            <Input
-              value={sport}
-              onChange={(e) => setSport(e.target.value)}
-              placeholder="Football"
-            />
-          </Field>
-          <Field label="Odds">
-            <Input
-              value={odds}
-              onChange={(e) => setOdds(e.target.value)}
-              inputMode="decimal"
-              placeholder="2.10"
-            />
-          </Field>
-        </FieldRow>
-        <Field
-          label="Stake"
-          hint={owed > 0 ? `${money(owed)} still to place` : undefined}
-        >
-          <Input
+          <Roller
+            className="flex-1"
+            label={owedClp > 0 ? `Stake, ${clp(owedClp)} owed` : 'Stake'}
+            values={STAKE_LADDER}
             value={stake}
-            onChange={(e) => setStake(e.target.value)}
-            inputMode="decimal"
-            placeholder="9"
+            onChange={setStake}
+            format={(v) => clp(v)}
           />
-        </Field>
+        </div>
+
         {/* The whole reason the result ever gets filled in: two hours after this
             the clock asks him for it, and keeps asking. */}
-        <Field label="When it plays" hint="Your time. Optional">
+        <Field label="When it plays">
           <Input
             type="datetime-local"
             value={kickoff}
             onChange={(e) => setKickoff(e.target.value)}
           />
         </Field>
+
         <Button
           className="w-full"
           disabled={!valid}
@@ -252,17 +277,13 @@ export function BetForm({
             if (!valid) return;
             onSave({
               day,
-              sport: sport.trim() || null,
               pick: pick.trim(),
-              stakeCents: cents,
-              odds: odds ? Number(odds.replace(',', '.')) : null,
+              stakeClp: stake,
+              odds,
               kickoff: toInstant(kickoff, zone),
-              note: null,
             });
             setPick('');
-            setSport('');
-            setOdds('');
-            setKickoff('');
+            setKickoff(nextHour(zone));
           }}
         >
           Place it
@@ -270,6 +291,12 @@ export function BetForm({
       </div>
     </Dialog>
   );
+}
+
+/** The next full hour on his clock, as the field wants it written. */
+function nextHour(zone?: string | null): string {
+  const now = zone ? DateTime.now().setZone(zone) : DateTime.now();
+  return now.plus({ hours: 1 }).startOf('hour').toFormat("yyyy-LL-dd'T'HH:mm");
 }
 
 /**
@@ -285,56 +312,63 @@ function toInstant(local: string, zone?: string | null): string | null {
   return dt.isValid ? dt.toUTC().toISO() : null;
 }
 
-/** It came in, or it did not. A win pays her, so the payout is asked for. */
+/**
+ * It came in, or it did not.
+ *
+ * A win pays her, so the payout is asked for, in pesos, starting at whatever the
+ * odds say it should be. The third button DELETES: a bet logged by mistake is
+ * not history, it is a mistake, and keeping it in the log as "void" was a row
+ * that said nothing forever.
+ */
 export function SettleBet({
   bet,
+  rate,
   onClose,
   onSettle,
+  onDelete,
 }: {
   bet: Bet | null;
+  rate: number;
   onClose: () => void;
-  onSettle: (status: 'won' | 'lost' | 'void', payoutCents?: number) => void;
+  onSettle: (status: 'won' | 'lost', payoutClp?: number) => void;
+  onDelete: () => void;
 }) {
   const [payout, setPayout] = useState('');
   if (!bet) return null;
-  const suggested = bet.odds
-    ? Math.round(bet.stake_cents * Number(bet.odds))
-    : bet.stake_cents;
-  const cents = payout
-    ? Math.round(Number(payout.replace(',', '.')) * 100)
-    : suggested;
-  // A half-typed figure is not a payout. Without this, "12,5o" marks the bet won
-  // with nothing written to her pot and nothing said about it.
-  const payable = Number.isFinite(cents) && cents > 0;
+  const stake = stakeOf(bet, rate);
+  const suggested = bet.odds ? Math.round(stake * Number(bet.odds)) : stake;
+  // Pesos have no cents, so anything that is not a digit is a slip of the thumb.
+  const typed = Number(payout.replace(/\D/g, ''));
+  const pesos = payout.trim() ? typed : suggested;
+  const payable = Number.isFinite(pesos) && pesos > 0;
 
   return (
     <Dialog open onClose={onClose} title={bet.pick}>
       <div className="flex flex-col gap-3">
         <p className="font-sans text-sm leading-relaxed text-muted">
-          {money(bet.stake_cents)}, {when(bet)}. A win goes straight into her
-          gift, not back to you.
+          {clp(stake)}, {when(bet)}. A win goes straight into her gift, not back
+          to you.
         </p>
-        <Field label="If it came in, what it paid">
-          <Input
-            value={payout}
-            onChange={(e) => setPayout(e.target.value)}
-            inputMode="decimal"
-            placeholder={String(suggested / 100)}
-          />
-        </Field>
+        <Input
+          value={payout}
+          onChange={(e) => setPayout(e.target.value)}
+          inputMode="numeric"
+          placeholder={`It paid ${clp(suggested)}`}
+          aria-label="What it paid"
+        />
         <div className="flex flex-col gap-2">
           <Button
             variant="affirm"
             disabled={!payable}
-            onClick={() => payable && onSettle('won', cents)}
+            onClick={() => payable && onSettle('won', pesos)}
           >
             It came in
           </Button>
           <Button variant="destructive" onClick={() => onSettle('lost')}>
             Gone
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => onSettle('void')}>
-            Void it, this was a mistake
+          <Button variant="ghost" size="sm" onClick={onDelete}>
+            Delete it, this was a mistake
           </Button>
         </div>
       </div>
