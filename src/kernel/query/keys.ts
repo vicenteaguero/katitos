@@ -56,6 +56,8 @@ export const qk = {
     pots: (userId: string, day: string) =>
       ['habits', 'pots', userId, day] as const,
     bets: () => ['habits', 'bets'] as const,
+    /** A dollar in pesos, for the bets he places in Chile. */
+    rate: () => ['habits', 'rate'] as const,
   },
   chalkboard: {
     notes: () => ['chalkboard', 'notes'] as const,
