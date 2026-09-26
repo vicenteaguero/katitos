@@ -77,9 +77,51 @@
   }
 }
 
+.lb-sticker {
+  position: absolute;
+  top: 38%;
+  left: 50%;
+  width: min(62vw, 260px);
+  transform: translate(-50%, -50%) scale(0);
+  filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.45));
+  will-change: transform, opacity;
+  animation: lb-sticker 4.4s ease forwards;
+}
+
+/* Pop in, a happy wobble, a little breathing, then away. */
+@keyframes lb-sticker {
+  0% {
+    transform: translate(-50%, -50%) scale(0) rotate(-20deg);
+    opacity: 0;
+  }
+  10% {
+    transform: translate(-50%, -50%) scale(1.12) rotate(6deg);
+    opacity: 1;
+  }
+  16% {
+    transform: translate(-50%, -50%) scale(0.96) rotate(-4deg);
+  }
+  22%,
+  60% {
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  }
+  41% {
+    transform: translate(-50%, -50%) scale(1.05) rotate(2deg);
+  }
+  84% {
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(0.6) rotate(0deg);
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .lb-heart,
-  .lb-bubble {
+  .lb-bubble,
+  .lb-sticker {
     animation-duration: 0.6s !important;
   }
   @keyframes lb-float {
