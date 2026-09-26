@@ -130,6 +130,11 @@ function dollars(cents: number): string {
   return `$${Number.isInteger(d) ? d : d.toFixed(2)}`;
 }
 
+/** Pesos, the way Chile writes them: 9.500 CLP. The bets are placed in these. */
+function pesos(clp: number): string {
+  return `${Math.round(clp).toLocaleString('es-CL')} CLP`;
+}
+
 /** The Monday of the week an ISO date falls in. */
 function mondayOf(isoDay: string): string {
   const d = new Date(`${isoDay}T00:00:00Z`);
@@ -585,20 +590,22 @@ async function tick(req: Request): Promise<Response> {
     // kickoff it asks him, and asks again tomorrow until it is settled or void.
     const { data: riding } = await admin
       .from('bets')
-      .select('id, pick, stake_cents, odds, kickoff, status')
+      .select('id, pick, stake_cents, stake_clp, odds, kickoff, status')
       .eq('status', 'open')
       .not('kickoff', 'is', null)
       .lt('kickoff', new Date(now.getTime() - PLAYED_MS).toISOString());
     for (const bet of riding ?? []) {
+      // What he actually put on it. The dollars are only the pot's bookkeeping.
+      const stake = bet.stake_clp ?? Math.round((bet.stake_cents / 100) * 950);
       const back = bet.odds
-        ? ` ${dollars(Math.round(bet.stake_cents * Number(bet.odds)))} if it came in.`
+        ? ` ${pesos(Math.round(stake * Number(bet.odds)))} if it came in.`
         : '';
       due.push({
         member: keeper,
         kind: `bet:${bet.id}`,
         day: localDay(zoneOf(keeper), now),
         title: '🎟️ How did it go?',
-        body: `${bet.pick}, ${dollars(bet.stake_cents)}.${back} Put the result in - a win goes straight to her gift.`,
+        body: `${bet.pick}, ${pesos(stake)}.${back} Put the result in - a win goes straight to her gift.`,
       });
     }
   }
