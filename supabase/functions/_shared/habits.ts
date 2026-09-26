@@ -74,7 +74,7 @@ export const FIXED_NUDGES: readonly {
         title: '🌙 How did you sleep?',
         lines: [
           'Good morning, Liubimaya. Slept well? Mark it 🤍',
-          'Morning, my sunshine ☀️ Tap it if the night was good.',
+          'Morning, bonita ☀️ Tap it if the night was good.',
         ],
       },
       {
@@ -98,7 +98,7 @@ export const FIXED_NUDGES: readonly {
         title: '🍲 Lunch time',
         lines: [
           'A good lunch today, Liubimaya? Something real 🍲',
-          'Middle of the day: eat something proper, my sunshine ☀️',
+          'Middle of the day: eat something proper, katita ☀️',
         ],
       },
       {
