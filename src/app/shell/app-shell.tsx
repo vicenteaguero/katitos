@@ -57,7 +57,10 @@ function TopBar() {
   const close = chrome.back?.icon === 'close';
   const goBack = () => {
     if (chrome.back?.to) return navigate(chrome.back.to);
-    return window.history.length > 1 ? navigate(-1) : navigate('/');
+    // The router's own index, not history.length: that one also counts pages
+    // from before the app opened, so a deep link would "go back" out of it.
+    const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0;
+    return idx > 0 ? navigate(-1) : navigate('/', { replace: true });
   };
 
   return (
