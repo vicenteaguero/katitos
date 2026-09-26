@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DateTime } from 'luxon';
 import { cn } from '@kernel/lib';
 import {
@@ -227,6 +227,12 @@ export function BetForm({
   // date on iOS and then saves nothing, which is a control that lies; and a bet
   // with a kickoff is a bet the clock can chase him about.
   const [kickoff, setKickoff] = useState(() => nextHour(zone));
+
+  // Each opening starts on what is owed now. Keying the form to that figure
+  // remounted it mid-entry whenever the pots or the rate refetched.
+  useEffect(() => {
+    if (open) setStake(nearestStake(owedClp));
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const valid = pick.trim().length > 0;
 
