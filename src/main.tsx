@@ -54,3 +54,10 @@ createRoot(document.getElementById('root')!).render(
 // JS never boots at all (so React can't clear it) - long enough to never
 // preempt a slow auth check.
 window.setTimeout(() => document.getElementById('boot')?.remove(), 8000);
+
+// Once the app has stood up, a later stale chunk deserves its own reload: the
+// guard only exists to stop a loop, not to spend its one try per session.
+window.setTimeout(
+  () => sessionStorage.removeItem('katitos:chunk-reload'),
+  5000
+);
