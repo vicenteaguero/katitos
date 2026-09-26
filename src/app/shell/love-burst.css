@@ -83,7 +83,6 @@
   left: 50%;
   width: min(62vw, 260px);
   transform: translate(-50%, -50%) scale(0);
-  filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.45));
   will-change: transform, opacity;
   animation: lb-sticker 4.4s ease forwards;
 }
