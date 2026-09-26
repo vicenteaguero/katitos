@@ -9,17 +9,16 @@
 /**
  * Is the clock allowed to buzz HER phone?
  *
- * False until he has told her about any of this, and it gates every push to
- * her, not just the new random ones. That is the whole point: the streak's
- * "still to tick" nudge lists her habits by name, so tonight it would have
- * handed her five new ones at eleven o'clock, from a phone on her bedside
- * table, before he had said a word.
+ * On since the morning of 26 September 2026, the day he told her. It gates
+ * every push to her, not just the random ones: while it was false the streak's
+ * "still to tick" nudge would have listed her five new habits by name on her
+ * lock screen before he had said a word.
  *
- * Everything else runs exactly as it should: the day settles, the money moves,
- * a silent stretch switches it off, and HE is told all of it. Flip this on the
- * day he shows her.
+ * It is still the one switch. If any of this ever has to go quiet for her -
+ * a bad week, a hospital, a phone she does not want going off - this is the
+ * line to flip, and everything else keeps running for him.
  */
-export const NUDGES_ON = false;
+export const NUDGES_ON = true;
 
 /** The hours a nudge may land in, on her clock: 07:00 to 23:59. */
 export const DAY_FROM = 7;
