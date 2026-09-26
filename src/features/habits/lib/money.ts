@@ -101,6 +101,62 @@ export function money(cents: number, currency = 'USD'): string {
 }
 
 /**
+ * Pesos, the way Chile writes them: 9.569 CLP.
+ *
+ * The pots are in dollars, because the stakes are a dollar held and three
+ * missed. The BETS are in pesos, because that is what he actually hands over at
+ * a bookmaker in Santiago, and a screen that makes him convert is a screen he
+ * fills in wrong on a Thursday morning.
+ */
+export function clp(pesos: number): string {
+  return `${Math.round(pesos).toLocaleString('es-CL')} CLP`;
+}
+
+/** Dollars in cents, at the rate of the day, to whole pesos. */
+export function toPesos(cents: number, rate: number): number {
+  return Math.round((cents / 100) * rate);
+}
+
+/** And back, which is the figure the pot is settled against. */
+export function toCents(pesos: number, rate: number): number {
+  return Math.max(1, Math.round((pesos / rate) * 100));
+}
+
+/** If the rates have not loaded yet. Close enough to place a bet on. */
+export const USD_CLP_FALLBACK = 950;
+
+/**
+ * What a bet may be.
+ *
+ * He never backs anything under 1.01 or over 4, so the wheel does not offer it;
+ * 2 is where it opens because that is the shape of the bets he actually places.
+ * The stake moves in 500s: a bet slip is not an invoice.
+ */
+export const ODDS = { min: 1.01, max: 4, step: 0.01, start: 2 } as const;
+export const STAKE = { min: 500, max: 150_000, step: 500 } as const;
+
+/** Every value the wheel offers, built once. */
+export function oddsLadder(): number[] {
+  const out: number[] = [];
+  for (let v = ODDS.min; v <= ODDS.max + 1e-9; v += ODDS.step) {
+    out.push(Math.round(v * 100) / 100);
+  }
+  return out;
+}
+
+export function stakeLadder(): number[] {
+  const out: number[] = [];
+  for (let v = STAKE.min; v <= STAKE.max; v += STAKE.step) out.push(v);
+  return out;
+}
+
+/** The nearest stake the wheel can actually hold. */
+export function nearestStake(pesos: number): number {
+  const snapped = Math.round(pesos / STAKE.step) * STAKE.step;
+  return Math.min(STAKE.max, Math.max(STAKE.min, snapped));
+}
+
+/**
  * The two pots, and the periods that make them pots rather than totals.
  *
  * The plain figures are lifetime: every dollar her habits have ever earned or
@@ -122,6 +178,9 @@ export interface Pots {
   betPeriodCents: number;
   /** Of that week's burn, what he has already put on a match. */
   betPeriodStakedCents: number;
+  /** What the bets themselves did, in the money they were placed in. */
+  lostClp: number;
+  wonClp: number;
   giftFrom: string | null;
   giftTo: string | null;
   betFrom: string | null;
@@ -138,6 +197,8 @@ export const EMPTY_POTS: Pots = {
   giftPeriodCents: 0,
   betPeriodCents: 0,
   betPeriodStakedCents: 0,
+  lostClp: 0,
+  wonClp: 0,
   giftFrom: null,
   giftTo: null,
   betFrom: null,
