@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react';
+import { DateTime } from 'luxon';
 import { usePartner, useUserId } from '@kernel/auth';
 import { useNow } from '@kernel/hooks';
 import { useEntries, useHabits } from '../api/habits.queries';
@@ -68,7 +69,24 @@ export function useStreak(): StreakView {
   const now = useNow(60_000);
   const userId = useUserId();
   const { self, partner, isLoading: loadingMembers } = usePartner();
-  const { data: habits, isLoading: loadingHabits } = useHabits();
+  const { data: rawHabits, isLoading: loadingHabits } = useHabits();
+
+  // "Put away on" is a day on its owner's clock, as the money reads it. Taken
+  // from the UTC timestamp, a habit archived just after her midnight also
+  // vanished from the day that had just ended, which the ledger still charged.
+  const habits = useMemo(
+    () =>
+      rawHabits?.map((h) => {
+        if (!h.archived_at) return h;
+        const zone =
+          h.user_id === partner?.user_id ? partner?.timezone : self?.timezone;
+        return {
+          ...h,
+          archived_at: localDay(zone, DateTime.fromISO(h.archived_at)),
+        };
+      }),
+    [rawHabits, self?.timezone, partner?.timezone, partner?.user_id]
+  );
 
   const today = localDay(self?.timezone, now);
   const partnerToday = localDay(partner?.timezone, now);
