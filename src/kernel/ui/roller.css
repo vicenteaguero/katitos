@@ -1,0 +1,32 @@
+/* The wheel. Snap points do the settling; the mask does the depth. */
+.roller {
+  scroll-snap-type: y mandatory;
+  /* The gesture belongs to the wheel, not to the sheet behind it. */
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  /* A wheel with a bar down its side is a list. */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 26%,
+    #000 74%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 26%,
+    #000 74%,
+    transparent 100%
+  );
+}
+
+.roller::-webkit-scrollbar {
+  display: none;
+}
+
+.roller-row {
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+}
