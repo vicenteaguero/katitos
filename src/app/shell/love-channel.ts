@@ -6,7 +6,8 @@ import { supabase } from '@kernel/supabase';
  * the sender instantly and - over this Supabase broadcast channel - on the
  * partner's screen too. (The native push still covers the app-closed case.)
  */
-type Listener = (note: string) => void;
+export type BurstKind = 'love' | 'cheer';
+type Listener = (note: string, kind: BurstKind) => void;
 const listeners = new Set<Listener>();
 let channel: RealtimeChannel | null = null;
 
@@ -15,26 +16,37 @@ function ensureChannel(): RealtimeChannel {
   channel = supabase.channel('love-burst', {
     config: { broadcast: { self: false } },
   });
-  channel.on('broadcast', { event: 'love' }, (msg) => {
-    const note = (msg.payload as { note?: string } | undefined)?.note ?? '';
-    listeners.forEach((l) => l(note));
-  });
+  for (const kind of ['love', 'cheer'] as const) {
+    channel.on('broadcast', { event: kind }, (msg) => {
+      const note = (msg.payload as { note?: string } | undefined)?.note ?? '';
+      listeners.forEach((l) => l(note, kind));
+    });
+  }
   channel.subscribe();
   return channel;
 }
 
-/** Broadcast + play a love burst. Safe to call from anywhere. */
-export function sendLoveBurst(note: string): void {
+function send(note: string, kind: BurstKind): void {
   try {
     void ensureChannel().send({
       type: 'broadcast',
-      event: 'love',
+      event: kind,
       payload: { note },
     });
   } catch {
     /* best-effort - the local burst below still plays */
   }
-  listeners.forEach((l) => l(note));
+  listeners.forEach((l) => l(note, kind));
+}
+
+/** Broadcast + play a love burst. Safe to call from anywhere. */
+export function sendLoveBurst(note: string): void {
+  send(note, 'love');
+}
+
+/** Broadcast + play the congratulations festival: all her habits are in. */
+export function sendCheerBurst(note: string): void {
+  send(note, 'cheer');
 }
 
 /** Subscribe to incoming love bursts. Returns an unsubscribe fn. */
