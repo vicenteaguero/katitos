@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { Camera, Heart } from 'lucide-react';
 import { cn } from '@kernel/lib';
 import { usePolaroidDraft, usePolaroidNudge } from '@features/polaroid';
@@ -27,6 +27,7 @@ import { usePolaroidDraft, usePolaroidNudge } from '@features/polaroid';
 /** `raised`: the bar's version hangs out of its slot; the rail's sits flat. */
 export function PhotoButton({ raised = true }: { raised?: boolean } = {}) {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { state, today, rescueDay, isLoading } = usePolaroidNudge();
   const setDraft = usePolaroidDraft((s) => s.setDraft);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -39,9 +40,16 @@ export function PhotoButton({ raised = true }: { raised?: boolean } = {}) {
 
   const openCamera = useCallback(() => inputRef.current?.click(), []);
 
+  // Already on the album, a tap moves it rather than stacking another copy of
+  // it for Back to wade through.
+  const go = (to: string) =>
+    navigate(to, { replace: pathname === '/polaroid' });
+
   const tap = () => {
-    if (rescue && rescueDay) navigate(`/polaroid?catchup=${rescueDay}`);
-    else if (done) navigate('/polaroid');
+    // Not known yet whether today is taken: open the album, never the camera.
+    if (!settled) go('/polaroid');
+    else if (rescue && rescueDay) go(`/polaroid?catchup=${rescueDay}`);
+    else if (done) go('/polaroid');
     else openCamera();
   };
 
@@ -104,7 +112,7 @@ export function PhotoButton({ raised = true }: { raised?: boolean } = {}) {
           e.target.value = '';
           if (!file) return;
           setDraft({ day: today, file });
-          navigate('/polaroid');
+          go('/polaroid');
         }}
       />
     </div>
