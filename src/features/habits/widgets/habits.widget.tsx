@@ -42,6 +42,8 @@ export function HabitsWidget() {
   const [celebrate, setCelebrate] = useState(false);
   const wasComplete = useRef<boolean | null>(null);
   useEffect(() => {
+    // Not a finish while the habits are still loading in.
+    if (view.isLoading) return;
     const done = todayStatus.complete;
     const rose = wasComplete.current === false && done;
     wasComplete.current = done;
@@ -49,7 +51,7 @@ export function HabitsWidget() {
     setCelebrate(true);
     const t = window.setTimeout(() => setCelebrate(false), 1200);
     return () => window.clearTimeout(t);
-  }, [todayStatus.complete]);
+  }, [todayStatus.complete, view.isLoading]);
 
   if (view.isLoading || !shared) return null;
 
