@@ -4,6 +4,7 @@ import { usePartner } from '@kernel/auth';
 import { notifyPartner } from '@kernel/push';
 import { qk } from '@kernel/query';
 import { toast } from '@kernel/ui';
+import { toCents } from '../lib/money';
 
 /**
  * Everything that moves money.
@@ -166,32 +167,64 @@ export function useSaveMoneySettings() {
 
 export interface BetDraft {
   day: string;
-  sport: string | null;
   pick: string;
-  stakeCents: number;
-  odds: number | null;
+  /** What he actually puts on it, in pesos. */
+  stakeClp: number;
+  odds: number;
   /** When the match starts, as an instant. The clock chases the result from it. */
   kickoff: string | null;
-  note: string | null;
+  /** A dollar in pesos, right now. Frozen into the row, never applied twice. */
+  rate: number;
 }
 
-/** He places one. The list it joins is never pruned - that is the whole point. */
+/**
+ * He places one.
+ *
+ * The peso figure is what he handed over; the dollar figure is what that was
+ * worth AT THAT MOMENT, and it is the one the pot is settled against. Freezing
+ * it is the point: a rate that moves next week must not repaint what a bet cost.
+ *
+ * The sport is always football, so it is not a question anybody is asked.
+ */
 export function useAddBet() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (draft: BetDraft) => {
       const { error } = await supabase.from('bets').insert({
         day: draft.day,
-        sport: draft.sport,
+        sport: 'Football',
         pick: draft.pick,
-        stake_cents: draft.stakeCents,
+        stake_clp: draft.stakeClp,
+        stake_cents: toCents(draft.stakeClp, draft.rate),
         odds: draft.odds,
         kickoff: draft.kickoff,
-        note: draft.note,
       });
       if (error) throw error;
     },
     onError: (err) => toast.error(moneyRefusal(err)),
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: qk.habits.all() });
+    },
+  });
+}
+
+/**
+ * It was a mistake, so it goes.
+ *
+ * There used to be a 'void' status for this, which left a row in the log saying
+ * nothing forever. A bet that was never placed is not history. The ledger row a
+ * won bet wrote goes with it, on cascade, so her gift cannot keep money from a
+ * bet that never existed.
+ */
+export function useDeleteBet() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('bets').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onError: (err) => toast.error(moneyRefusal(err)),
+    onSuccess: () => toast.info('Gone, as if it had never been placed'),
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: qk.habits.all() });
     },
@@ -218,22 +251,29 @@ export function useSettleBet() {
     mutationFn: async ({
       bet,
       status,
-      payoutCents,
+      payoutClp,
       subjectId,
       day,
+      rate,
     }: {
       bet: { id: string; day: string; stake_cents: number };
-      status: 'won' | 'lost' | 'void';
-      payoutCents?: number;
+      status: 'won' | 'lost';
+      /** What it paid, in pesos. */
+      payoutClp?: number;
       subjectId: string;
       /** Her day, now: which month's gift this lands in. */
       day: string;
+      /** A dollar in pesos, for the figure her gift is credited in. */
+      rate: number;
     }) => {
+      const won = status === 'won' && !!payoutClp;
+      const payoutCents = won ? toCents(payoutClp!, rate) : null;
       const { error } = await supabase
         .from('bets')
         .update({
           status,
-          payout_cents: status === 'won' ? (payoutCents ?? null) : null,
+          payout_clp: won ? payoutClp : null,
+          payout_cents: payoutCents,
           settled_at: new Date().toISOString(),
         })
         .eq('id', bet.id);
@@ -244,7 +284,7 @@ export function useSettleBet() {
       });
       if (undoErr) throw undoErr;
 
-      if (status !== 'won' || !payoutCents) return;
+      if (!won || !payoutCents) return;
       const { error: payErr } = await supabase.from('money_ledger').insert({
         user_id: subjectId,
         day,
@@ -257,9 +297,9 @@ export function useSettleBet() {
       if (payErr) throw payErr;
     },
     onError: (err) => toast.error(moneyRefusal(err)),
-    onSuccess: (_d, { status, payoutCents }) => {
-      if (status === 'won' && payoutCents) {
-        toast.success('It came in. Straight into her pot 🤍');
+    onSuccess: (_d, { status, payoutClp }) => {
+      if (status === 'won' && payoutClp) {
+        toast.success('It came in. Straight into her gift 🤍');
       }
     },
     onSettled: () => {
