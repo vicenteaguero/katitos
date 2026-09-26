@@ -28,6 +28,7 @@ import { SideRail } from './side-rail';
 import { CacheWarmer } from './cache-warmer';
 import { SplashScreen } from './splash-screen';
 import { LoveBurst } from './love-burst';
+import { HabitsCheer } from './habits-cheer';
 import { NotificationPrompt } from './notification-prompt';
 import { ChangelogModal } from './changelog-modal';
 import { PendingPill } from './pending-pill';
@@ -209,6 +210,7 @@ function ShellColumn({ desk }: { desk: boolean }) {
       </div>
       {!desk && !immersive && <BottomNav />}
       <LoveBurst />
+      <HabitsCheer />
       <NotificationPrompt />
       <ChangelogModal />
     </div>
