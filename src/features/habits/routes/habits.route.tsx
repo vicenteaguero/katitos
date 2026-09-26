@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Flame, Lock, Pencil, Plus, Settings2 } from 'lucide-react';
+import { Eye, Flame, Lock, Pencil, Plus, Settings2 } from 'lucide-react';
 import { usePartner, useUserId } from '@kernel/auth';
 import { useTableSync } from '@kernel/realtime';
 import { qk } from '@kernel/query';
@@ -16,6 +16,7 @@ import {
   Switch,
   Textarea,
   TopBarButton,
+  confirmDialog,
   useScreenChrome,
 } from '@kernel/ui';
 import { cn } from '@kernel/lib';
@@ -28,16 +29,18 @@ import {
   useMoneyPots,
   useMoneySettings,
   useMoneyWho,
+  useUsdToClp,
 } from '../api/money.queries';
 import {
   useAddBet,
+  useDeleteBet,
   useHardDay,
   useSaveMoneySettings,
   useSeedHerHabits,
   useSettleBet,
   useUndoHardDay,
 } from '../api/money.mutations';
-import { money, splitDay } from '../lib/money';
+import { money, splitDay, toPesos } from '../lib/money';
 import { MoneyHero } from '../components/money-hero';
 import { BetForm, BetList, SettleBet } from '../components/bets';
 import { addDays, monthOf } from '../lib/days';
@@ -82,8 +85,19 @@ export function HabitsRoute() {
   const view = useStreak();
   const toggle = useToggleEntry();
 
-  const { subject, isKeeper } = useMoneyWho();
+  const { subject, isKeeper: isAdmin } = useMoneyWho();
   const subjectId = subject?.user_id ?? null;
+  /**
+   * His screen, seen as hers.
+   *
+   * There is no way for him to log in as her, and there should not be. This
+   * only drops HIS privileges in the UI - the gear, the pencils, the bet form,
+   * the hard-day undo - so he can check what she is actually looking at before
+   * he shows it to her. The database is not fooled by it and does not need to
+   * be: everything it would refuse her is already gone from the screen.
+   */
+  const [asHer, setAsHer] = useState(false);
+  const isKeeper = isAdmin && !asHer;
   /**
    * Her day, whichever of us is holding the phone, and worked out before the
    * loading return because a hook cannot live behind one. The money is hers, and
@@ -104,6 +118,8 @@ export function HabitsRoute() {
   const saveSettings = useSaveMoneySettings();
   const addBet = useAddBet();
   const settleBet = useSettleBet();
+  const deleteBet = useDeleteBet();
+  const rate = useUsdToClp();
 
   const [month, setMonth] = useState(() =>
     monthOf(new Date().toISOString().slice(0, 10))
@@ -189,8 +205,28 @@ export function HabitsRoute() {
   const callBy = shared ? view.tickedBy(shared.id, today) : null;
   const callByName = !callBy ? null : callBy === userId ? 'you' : theirName;
 
+  const owedClp = toPesos(
+    Math.max(0, pots.betPeriodCents - pots.betPeriodStakedCents),
+    rate
+  );
+
   return (
     <div className="curtain-reveal space-y-3">
+      {asHer && (
+        <button
+          type="button"
+          onClick={() => setAsHer(false)}
+          className="lift-press flex w-full items-center justify-center gap-2 rounded-full py-1.5 font-sans text-[11px] font-semibold text-gold"
+          style={{
+            background: 'rgba(228,195,106,.1)',
+            border: '1px solid rgba(228,195,106,.3)',
+          }}
+        >
+          <Eye className="h-3.5 w-3.5" strokeWidth={2} />
+          Seeing it as {theirName}. Tap to come back
+        </button>
+      )}
+
       {/* ── what her days are worth ──────────────────────────────────────── */}
       <MoneyHero pots={pots} />
 
@@ -404,37 +440,26 @@ export function HabitsRoute() {
       </Card>
 
       {/* ── the habits you own ───────────────────────────────────────────── */}
+      {/* Only he may write a habit now, hers or his own, so only he is offered a
+          pencil. She used to get one on every row of her own five, and an empty
+          slot inviting her to add a sixth - both of which the database refuses.
+          A button that cannot work is worse than no button. */}
       <Card tone="hairline">
-        <SectionLabel note={`${mine.length} of ${MAX_SLOTS}`}>
+        <SectionLabel
+          note={isKeeper ? `${mine.length} of ${MAX_SLOTS}` : undefined}
+        >
           My habits
         </SectionLabel>
         <div className="space-y-1.5">
           {mine.map((h) => (
-            <button
+            <HabitLine
               key={h.id}
-              type="button"
-              onClick={() => setEditing({ habit: h })}
-              className="lift-press flex w-full items-center gap-2.5 rounded bg-surface-2 px-3 py-2 text-left"
-            >
-              <span aria-hidden="true" className="text-[18px] leading-none">
-                {h.emoji}
-              </span>
-              <span className="min-w-0 flex-1 truncate font-sans text-sm text-fg">
-                {h.title}
-              </span>
-              <span className="shrink-0 font-sans text-[11px] text-muted">
-                {h.schedule === 'weekly'
-                  ? `${h.target_per_week} per week`
-                  : 'every day'}
-              </span>
-              <Pencil
-                className="h-3.5 w-3.5 shrink-0 text-gold/60"
-                strokeWidth={2}
-              />
-            </button>
+              habit={h}
+              onEdit={isKeeper ? () => setEditing({ habit: h }) : undefined}
+            />
           ))}
 
-          {canAdd && (
+          {isKeeper && canAdd && (
             <button
               type="button"
               onClick={() => setEditing({ habit: null })}
@@ -446,27 +471,28 @@ export function HabitsRoute() {
             </button>
           )}
 
-          {Array.from(
-            { length: MAX_SLOTS - Math.max(mine.length, allowed) },
-            (_, i) => {
-              const nth = Math.max(mine.length, allowed) + 1 + i;
-              return (
-                <div
-                  key={nth}
-                  className="flex w-full items-center gap-2.5 rounded px-3 py-2 opacity-40"
-                  style={{ border: '1px dashed rgba(251,245,240,.12)' }}
-                >
-                  <Lock
-                    className="h-3.5 w-3.5 shrink-0 text-muted"
-                    strokeWidth={2}
-                  />
-                  <span className="font-sans text-[13px] text-muted">
-                    A {ordinal(nth)} habit, at {SLOT_THRESHOLDS[nth - 1]} days
-                  </span>
-                </div>
-              );
-            }
-          )}
+          {isKeeper &&
+            Array.from(
+              { length: MAX_SLOTS - Math.max(mine.length, allowed) },
+              (_, i) => {
+                const nth = Math.max(mine.length, allowed) + 1 + i;
+                return (
+                  <div
+                    key={nth}
+                    className="flex w-full items-center gap-2.5 rounded px-3 py-2 opacity-40"
+                    style={{ border: '1px dashed rgba(251,245,240,.12)' }}
+                  >
+                    <Lock
+                      className="h-3.5 w-3.5 shrink-0 text-muted"
+                      strokeWidth={2}
+                    />
+                    <span className="font-sans text-[13px] text-muted">
+                      A {ordinal(nth)} habit, at {SLOT_THRESHOLDS[nth - 1]} days
+                    </span>
+                  </div>
+                );
+              }
+            )}
         </div>
       </Card>
 
@@ -491,28 +517,11 @@ export function HabitsRoute() {
           </SectionLabel>
           <div className="space-y-1.5">
             {theirs.map((h) => (
-              <button
+              <HabitLine
                 key={h.id}
-                type="button"
-                onClick={() => setEditing({ habit: h })}
-                className="lift-press flex w-full items-center gap-2.5 rounded bg-surface-2 px-3 py-2 text-left"
-              >
-                <span aria-hidden="true" className="text-[18px] leading-none">
-                  {h.emoji}
-                </span>
-                <span className="min-w-0 flex-1 truncate font-sans text-sm text-fg">
-                  {h.title}
-                </span>
-                <span className="shrink-0 font-sans text-[11px] text-muted">
-                  {h.schedule === 'weekly'
-                    ? `${h.target_per_week} per week`
-                    : 'every day'}
-                </span>
-                <Pencil
-                  className="h-3.5 w-3.5 shrink-0 text-gold/60"
-                  strokeWidth={2}
-                />
-              </button>
+                habit={h}
+                onEdit={() => setEditing({ habit: h })}
+              />
             ))}
             {theirs.length > 0 && (
               <button
@@ -533,21 +542,22 @@ export function HabitsRoute() {
       <BetList
         bets={bets ?? []}
         isKeeper={isKeeper}
+        rate={rate}
         onSettle={(bet) => setSettling(bet)}
         onAdd={() => setPlacing(true)}
       />
 
       <BetForm
-        // Keyed to what this week owes, so the stake is never still showing the
-        // zero it was mounted with before the pots arrived.
-        key={pots.betPeriodCents - pots.betPeriodStakedCents}
+        // Keyed to what this week owes, so the wheel never opens on the zero it
+        // was mounted with before the pots arrived.
+        key={owedClp}
         open={placing}
         day={today}
-        owed={Math.max(0, pots.betPeriodCents - pots.betPeriodStakedCents)}
+        owedClp={owedClp}
         zone={self?.timezone}
         onClose={() => setPlacing(false)}
         onSave={(draft) => {
-          addBet.mutate(draft);
+          addBet.mutate({ ...draft, rate });
           setPlacing(false);
         }}
       />
@@ -555,17 +565,30 @@ export function HabitsRoute() {
       <SettleBet
         key={settling?.id ?? 'none'}
         bet={settling}
+        rate={rate}
         onClose={() => setSettling(null)}
-        onSettle={(status, payoutCents) => {
+        onSettle={(status, payoutClp) => {
           if (!settling || !subjectId) return;
           settleBet.mutate({
             bet: settling,
             status,
-            payoutCents,
+            payoutClp,
             subjectId,
             day: herDay,
+            rate,
           });
           setSettling(null);
+        }}
+        onDelete={() => {
+          const bet = settling;
+          if (!bet) return;
+          setSettling(null);
+          void confirmDialog({
+            title: 'Delete this bet?',
+            body: `${bet.pick} goes out of the log for good, and anything it paid her goes with it.`,
+            confirmLabel: 'Delete it',
+            danger: true,
+          }).then((ok) => ok && deleteBet.mutate(bet.id));
         }}
       />
 
@@ -584,6 +607,15 @@ export function HabitsRoute() {
         open={dials}
         onClose={() => setDials(false)}
         isKeeper={isKeeper}
+        theirName={theirName}
+        onSeeAsHer={
+          isAdmin && !asHer
+            ? () => {
+                setAsHer(true);
+                setDials(false);
+              }
+            : undefined
+        }
         active={active}
         giftCents={stakes.giftCents}
         betCents={stakes.betCents}
@@ -668,6 +700,8 @@ function Dials({
   active,
   giftCents,
   betCents,
+  theirName,
+  onSeeAsHer,
   onSave,
 }: {
   open: boolean;
@@ -676,6 +710,9 @@ function Dials({
   active: boolean;
   giftCents: number;
   betCents: number;
+  theirName: string;
+  /** Only he gets this, and only when he is not already looking at her side. */
+  onSeeAsHer?: () => void;
   onSave: (next: {
     active?: boolean;
     giftCents?: number;
@@ -740,8 +777,52 @@ function Dials({
             </Button>
           </div>
         )}
+
+        {/* There is no logging in as her, and there should not be. This drops
+            his own buttons for a moment so he can read the page she reads. */}
+        {onSeeAsHer && (
+          <Button variant="ghost" size="sm" onClick={onSeeAsHer}>
+            See this page as {theirName}
+          </Button>
+        )}
       </div>
     </Dialog>
+  );
+}
+
+/**
+ * One habit, as a line in a list: face, name, how often.
+ *
+ * With a pencil when it is yours to change, and without one when it is not -
+ * which for her is always, since he is the one who sets habits now.
+ */
+function HabitLine({ habit, onEdit }: { habit: Habit; onEdit?: () => void }) {
+  const inside = (
+    <>
+      <span aria-hidden="true" className="text-[18px] leading-none">
+        {habit.emoji}
+      </span>
+      <span className="min-w-0 flex-1 truncate font-sans text-sm text-fg">
+        {habit.title}
+      </span>
+      <span className="shrink-0 font-sans text-[11px] text-muted">
+        {habit.schedule === 'weekly'
+          ? `${habit.target_per_week} per week`
+          : 'every day'}
+      </span>
+      {onEdit && (
+        <Pencil className="h-3.5 w-3.5 shrink-0 text-gold/60" strokeWidth={2} />
+      )}
+    </>
+  );
+  const shape =
+    'flex w-full items-center gap-2.5 rounded bg-surface-2 px-3 py-2 text-left';
+  return onEdit ? (
+    <button type="button" onClick={onEdit} className={cn(shape, 'lift-press')}>
+      {inside}
+    </button>
+  ) : (
+    <div className={shape}>{inside}</div>
   );
 }
 
