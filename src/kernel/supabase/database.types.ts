@@ -315,11 +315,13 @@ export type Database = {
           note: string | null
           odds: number | null
           payout_cents: number | null
+          payout_clp: number | null
           pick: string
           placed_at: string
           settled_at: string | null
           sport: string | null
           stake_cents: number
+          stake_clp: number | null
           status: string
         }
         Insert: {
@@ -329,11 +331,13 @@ export type Database = {
           note?: string | null
           odds?: number | null
           payout_cents?: number | null
+          payout_clp?: number | null
           pick: string
           placed_at?: string
           settled_at?: string | null
           sport?: string | null
           stake_cents: number
+          stake_clp?: number | null
           status?: string
         }
         Update: {
@@ -343,11 +347,13 @@ export type Database = {
           note?: string | null
           odds?: number | null
           payout_cents?: number | null
+          payout_clp?: number | null
           pick?: string
           placed_at?: string
           settled_at?: string | null
           sport?: string | null
           stake_cents?: number
+          stake_clp?: number | null
           status?: string
         }
         Relationships: []
