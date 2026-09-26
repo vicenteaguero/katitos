@@ -467,11 +467,22 @@ async function tick(req: Request): Promise<Response> {
             .from('money_settings')
             .update({ active: false })
             .eq('user_id', subject.user_id);
+          // The pause reaches back over the quiet days themselves: each was
+          // settled as a miss at its own midnight, and moving the start back
+          // lets the database's trigger hand those misses back.
           await admin
             .from('money_pauses')
             .update({ reason: 'quiet' })
             .eq('user_id', subject.user_id)
             .is('to_day', null);
+          // Only ever further back: this runs every tick of the silence, and
+          // the window of quiet days slides forward as it goes on.
+          await admin
+            .from('money_pauses')
+            .update({ from_day: closedDays[closedDays.length - 1] })
+            .eq('user_id', subject.user_id)
+            .is('to_day', null)
+            .gt('from_day', closedDays[closedDays.length - 1]);
         }
         due.push({
           member: keeper,
@@ -480,73 +491,76 @@ async function tick(req: Request): Promise<Response> {
           title: '🤍 Three quiet days',
           body: `Nothing ticked since ${closedDays[closedDays.length - 1]}. The money is off and nothing is being charged. Ring her.`,
         });
-      } else {
-        // ── close every day that is over for both of us ───────────────────
-        // One summary a tick, however many days are owed: a backlog is a clock
-        // that was down, not several things he needs to hear about at once.
-        let told = false;
-        for (
-          let d = yesterdayOf(herToday), i = 0;
-          i < CLOSE_LOOKBACK_DAYS;
-          i++, d = yesterdayOf(d)
-        ) {
-          if (d <= startedOn) break;
-          if (isSettled(d)) continue;
-          if (!isDayFinal(d)) continue;
-          if (pausedOn(d)) {
-            settled.push({ day: d, paused: true });
-            continue;
-          }
+      }
 
-          const hers = hersOn(d);
-          if (hers.length === 0) continue; // nothing was asked of her that day
+      // ── settle every day of hers that is over ─────────────────────────
+      //
+      // Her day is settled the moment it ends on HER clock, not once Chile has
+      // caught up two days later. `money_settle_day` owns the rule and
+      // compares before it writes, so asking again every ten minutes is free;
+      // everything that changes a day afterwards (a late tick, a tick he took
+      // back, a hard day, a pause, an archived habit) re-settles it through the
+      // database's own triggers. This loop is the backstop for a day that ended
+      // with nothing happening in it, and for a trigger that ever failed.
+      //
+      // One summary a tick, however many days are owed: a backlog is a clock
+      // that was down, not several things he needs to hear about at once.
+      let told = false;
+      for (
+        let d = yesterdayOf(herToday), i = 0;
+        i < CLOSE_LOOKBACK_DAYS;
+        i++, d = yesterdayOf(d)
+      ) {
+        if (d <= startedOn) break;
+        const before = isSettled(d);
+        const paused = pausedOn(d);
+        const hers = hersOn(d);
+        const hard = isHard(d);
+        const done = hers.filter((h) => held(h.id, d));
+        const gift = paused ? 0 : done.length * giftCents;
+        const bet = paused || hard ? 0 : (hers.length - done.length) * betCents;
 
-          const hard = isHard(d);
-          const done = hers.filter((h) => held(h.id, d));
-          const missed = hers.filter((h) => !held(h.id, d));
-          const gift = done.length * giftCents;
-          const bet = hard ? 0 : missed.length * betCents;
-          settled.push({ day: d, done: done.length, gift, bet, hardDay: hard });
-
-          if (!dryRun) {
-            // A hard day forgives the misses and keeps every dollar she held.
-            const rows = hers
-              .filter((h) => held(h.id, d) || !hard)
-              .map((h) => ({
-                user_id: subject.user_id,
-                day: d,
-                habit_id: h.id,
-                direction: held(h.id, d) ? 'gift' : 'bet',
-                amount_cents: held(h.id, d) ? giftCents : betCents,
-                reason: held(h.id, d) ? 'done' : 'missed',
-              }));
-            if (rows.length > 0) {
-              // The unique index is the rule: two overlapping ticks both reach
-              // this line and exactly one set of rows lands.
-              const { error } = await admin.from('money_ledger').insert(rows);
-              if (error) {
-                settled.pop();
-                continue;
-              }
-            }
-          }
-
-          if (!told && !nudge(d, '_closed')) {
-            told = true;
-            due.push({
-              member: keeper,
-              kind: 'closed',
-              day: d,
-              title: hard
-                ? 'Habits: a hard day'
-                : `Habits: ${done.length} of ${hers.length}`,
-              body: hard
-                ? `She called it a hard day, and it cost nothing. ${dollars(gift)} to her gift. Ring her.`
-                : `${dollars(gift)} to her gift, ${dollars(bet)} to the betting money.`,
-            });
-          }
+        let changed: boolean;
+        if (dryRun) {
+          changed = !before && !paused && hers.length > 0;
+        } else {
+          const { data, error } = await admin.rpc('money_settle_day', {
+            p_user: subject.user_id,
+            p_day: d,
+          });
+          if (error) continue;
+          changed = data === true;
         }
+        if (!changed) continue;
+        settled.push({
+          day: d,
+          done: done.length,
+          gift,
+          bet,
+          hardDay: hard,
+          paused,
+        });
 
+        // Only the first close is news. A correction afterwards is his own
+        // doing, or hers inside her grace, and the pots already show it.
+        if (before || paused || hers.length === 0) continue;
+        if (!told && !nudge(d, '_closed')) {
+          told = true;
+          due.push({
+            member: keeper,
+            kind: 'closed',
+            day: d,
+            title: hard
+              ? 'Habits: a hard day'
+              : `Habits: ${done.length} of ${hers.length}`,
+            body: hard
+              ? `She called it a hard day, and it cost nothing. ${dollars(gift)} to her gift. Ring her.`
+              : `${dollars(gift)} to her gift, ${dollars(bet)} to the betting money.`,
+          });
+        }
+      }
+
+      if (!silent) {
         // ── her own nudges, when he has switched them on ──────────────────
         if (NUDGES_ON && !isHard(herToday)) {
           const hers = hersOn(herToday);
