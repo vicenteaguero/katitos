@@ -6,7 +6,7 @@ import { supabase } from '@kernel/supabase';
  * the sender instantly and - over this Supabase broadcast channel - on the
  * partner's screen too. (The native push still covers the app-closed case.)
  */
-export type BurstKind = 'love' | 'cheer';
+export type BurstKind = 'love' | 'cheer' | 'cheerHim';
 type Listener = (note: string, kind: BurstKind) => void;
 const listeners = new Set<Listener>();
 let channel: RealtimeChannel | null = null;
@@ -16,7 +16,7 @@ function ensureChannel(): RealtimeChannel {
   channel = supabase.channel('love-burst', {
     config: { broadcast: { self: false } },
   });
-  for (const kind of ['love', 'cheer'] as const) {
+  for (const kind of ['love', 'cheer', 'cheerHim'] as const) {
     channel.on('broadcast', { event: kind }, (msg) => {
       const note = (msg.payload as { note?: string } | undefined)?.note ?? '';
       listeners.forEach((l) => l(note, kind));
@@ -44,9 +44,9 @@ export function sendLoveBurst(note: string): void {
   send(note, 'love');
 }
 
-/** Broadcast + play the congratulations festival: all her habits are in. */
-export function sendCheerBurst(note: string): void {
-  send(note, 'cheer');
+/** Broadcast + play the congratulations festival: all of someone's habits are in. */
+export function sendCheerBurst(note: string, forHim = false): void {
+  send(note, forHim ? 'cheerHim' : 'cheer');
 }
 
 /** Subscribe to incoming love bursts. Returns an unsubscribe fn. */
