@@ -3055,6 +3055,21 @@ export type Database = {
         Args: { p_day: string; p_user: string }
         Returns: boolean
       }
+      money_day_want: {
+        Args: {
+          p_bet: number
+          p_day: string
+          p_gift: number
+          p_hard: boolean
+          p_user: string
+        }
+        Returns: {
+          amount_cents: number
+          direction: string
+          habit_id: string
+          reason: string
+        }[]
+      }
       money_habits: {
         Args: { p_day: string; p_user: string }
         Returns: {
@@ -3069,6 +3084,18 @@ export type Database = {
       }
       money_reconcile_day: {
         Args: { p_day: string; p_user: string }
+        Returns: number
+      }
+      money_settle_day: {
+        Args: { p_day: string; p_user: string }
+        Returns: boolean
+      }
+      money_settle_quietly: {
+        Args: { p_from: string; p_to: string; p_user: string }
+        Returns: undefined
+      }
+      money_settle_range: {
+        Args: { p_from: string; p_to: string; p_user: string }
         Returns: number
       }
       money_unpay_bet: { Args: { p_bet: string }; Returns: number }
