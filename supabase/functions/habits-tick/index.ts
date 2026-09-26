@@ -28,7 +28,14 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
 import { corsHeaders, json } from '../_shared/cors.ts';
 import { endOfDay, localDay, nextDay, startOfDay } from '../_shared/zone.ts';
-import { DAY_FROM, DAY_TO, NUDGES_ON, nudgeFor } from '../_shared/habits.ts';
+import {
+  DAY_FROM,
+  DAY_TO,
+  NUDGES_ON,
+  fixedFor,
+  lineOf,
+  nudgeFor,
+} from '../_shared/habits.ts';
 
 /**
  * Fire the end-of-day nudge with this much of your own day left.
@@ -547,7 +554,9 @@ async function tick(req: Request): Promise<Response> {
           // Random, but not independently random: five free draws clump, and
           // three reminders inside ten minutes is a phone going off, not a day
           // with reminders in it. One stretch each, shuffled daily.
-          const order = [...hers];
+          // Sleep and eating keep their own hours (FIXED_NUDGES); only the
+          // rest share out the day at random.
+          const order = hers.filter((h) => !fixedFor(h.title));
           for (let i = order.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [order[i], order[j]] = [order[j], order[i]];
@@ -575,6 +584,21 @@ async function tick(req: Request): Promise<Response> {
           }
 
           for (const habit of hers) {
+            for (const f of fixedFor(habit.title) ?? []) {
+              const at = dayStart + f.hour * 3_600_000;
+              if (at > now.getTime() || at < now.getTime() - STALE_MS) continue;
+              if (f.ifUndone && held(habit.id, herToday)) continue;
+              due.push({
+                member: subject,
+                kind: `habit:${habit.id}@${f.hour}`,
+                day: herToday,
+                title: f.title,
+                body: lineOf(f),
+              });
+            }
+          }
+
+          for (const habit of order) {
             const row = nudge(herToday, habit.id);
             if (!row || row.sent_at) continue;
             const at = new Date(row.slot_at).getTime();
