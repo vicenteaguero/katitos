@@ -34,6 +34,24 @@ export interface ChangelogEntry {
 /** Every release ever written, newest first - held ones included. */
 export const ALL_ENTRIES: ChangelogEntry[] = [
   {
+    // Shipped 26 September 2026, and announced the same morning - she asked him
+    // for help with five things and this is the help.
+    //
+    // FIVE LINES, and they are short on purpose. She has to understand the whole
+    // deal in one read, on a phone, before breakfast, and the card only shows
+    // about this much before it starts scrolling. The one thing every line
+    // protects: the money is HIS.
+    title: 'Your five, and my money on them',
+    date: '2026-09-26',
+    lines: [
+      'Tap the flame: your five are there. Sleep, study, eat well, work, walk or train. One tap each.',
+      'Every one you keep puts $1 into a surprise gift for you. Every one you miss puts $3 of MY money on a football bet. Never yours.',
+      'The gift is yours on 31 October, and every month after that. Every bet stays on the page, won or lost.',
+      'A bad day is allowed: press "Today was hard" and nothing more is asked of it. Once a week.',
+      'A few reminders will find you during the day. The gear turns the money and the reminders off whenever you want.',
+    ],
+  },
+  {
     // Shipped 18 September 2026.
     title: 'More time to fix yesterday',
     date: '2026-09-18',
