@@ -6,6 +6,7 @@ import { qk } from '@kernel/query';
 import {
   DEFAULT_STAKES,
   EMPTY_POTS,
+  USD_CLP_FALLBACK,
   type Pots,
   type Stakes,
 } from '../lib/money';
@@ -155,6 +156,8 @@ export function useMoneyPots(userId: string | null | undefined, day: string) {
         giftPeriodCents: n('gift_period_cents'),
         betPeriodCents: n('bet_period_cents'),
         betPeriodStakedCents: n('bet_period_staked_cents'),
+        lostClp: n('lost_clp'),
+        wonClp: n('won_clp'),
         giftFrom: d('gift_from'),
         giftTo: d('gift_to'),
         betFrom: d('bet_from'),
@@ -165,7 +168,33 @@ export function useMoneyPots(userId: string | null | undefined, day: string) {
   return { ...query, pots: query.data ?? EMPTY_POTS };
 }
 
-/** His bets, newest first. Nothing is ever deleted from this list. */
+/**
+ * What a dollar is worth in pesos today.
+ *
+ * The same row the currency screen reads, refreshed by its own cron. A bet is
+ * entered in pesos and settled against the pot in dollars, so this is the one
+ * number that joins the two - and it is frozen into the bet at the moment it is
+ * placed, never applied again afterwards.
+ */
+export function useUsdToClp() {
+  const query = useQuery({
+    queryKey: qk.habits.rate(),
+    staleTime: 60 * 60_000,
+    queryFn: async (): Promise<number> => {
+      const { data, error } = await supabase
+        .from('currency_rates')
+        .select('rate')
+        .eq('base', 'USD')
+        .eq('quote', 'CLP')
+        .maybeSingle();
+      if (error) throw error;
+      return data?.rate ?? USD_CLP_FALLBACK;
+    },
+  });
+  return query.data ?? USD_CLP_FALLBACK;
+}
+
+/** His bets, newest first. He writes them; she only reads them. */
 export function useBets(limit = 60) {
   return useQuery({
     queryKey: qk.habits.bets(),
