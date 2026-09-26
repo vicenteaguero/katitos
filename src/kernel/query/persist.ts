@@ -25,7 +25,7 @@ import { dehydrate, hydrate, type QueryClient } from '@tanstack/react-query';
 //        nothing invalidates any more.
 const KEY = 'katitos:rq-cache:v5';
 const MAX_AGE = 24 * 60 * 60 * 1000; // a day - older snapshots are dropped
-const WRITE_DEBOUNCE = 1000;
+const WRITE_DEBOUNCE = 3000;
 
 interface Snapshot {
   at: number;
@@ -113,9 +113,27 @@ export function startPersisting(qc: QueryClient): () => void {
     timer = setTimeout(flush, WRITE_DEBOUNCE);
   };
 
-  const unsub = qc.getQueryCache().subscribe(schedule);
+  // Only when data actually lands or leaves. Every other cache event (an
+  // observer mounting, a fetch starting, a screen changing) used to re-write
+  // the whole snapshot, a big JSON.stringify on the main thread, about once a
+  // second while anything moved - on a phone, that is the stutter.
+  const unsub = qc.getQueryCache().subscribe((event) => {
+    if (
+      event.type === 'removed' ||
+      (event.type === 'updated' && event.action.type === 'success')
+    )
+      schedule();
+  });
+  // Going to the background is the last chance to write what is pending.
+  const onHide = () => {
+    if (document.visibilityState !== 'hidden' || !timer) return;
+    clearTimeout(timer);
+    flush();
+  };
+  document.addEventListener('visibilitychange', onHide);
   return () => {
     unsub();
+    document.removeEventListener('visibilitychange', onHide);
     if (timer) clearTimeout(timer);
   };
 }
