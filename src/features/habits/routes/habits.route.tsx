@@ -40,11 +40,12 @@ import {
   useSettleBet,
   useUndoHardDay,
 } from '../api/money.mutations';
-import { money, splitDay, toPesos } from '../lib/money';
+import { money, splitDay, toPesos, unplaced } from '../lib/money';
 import { MoneyHero } from '../components/money-hero';
 import { BetForm, BetList, SettleBet } from '../components/bets';
 import { addDays, monthOf } from '../lib/days';
 import {
+  MAX_HERS,
   MAX_SLOTS,
   SLOT_THRESHOLDS,
   activeOn,
@@ -103,7 +104,7 @@ export function HabitsRoute() {
    * loading return because a hook cannot live behind one. The money is hers, and
    * so are the week and the month the pots count in.
    */
-  const herDay = isKeeper ? view.partnerToday : view.today;
+  const herDay = isAdmin ? view.partnerToday : view.today;
   const { stakes, active } = useMoneySettings(subjectId);
   const { pots } = useMoneyPots(subjectId, herDay);
   const { data: bets } = useBets();
@@ -158,10 +159,26 @@ export function HabitsRoute() {
   }
 
   const { today, partnerToday, shared, mine, theirs, streak } = view;
-  const mineToday = mine.filter((h) => activeOn(h, today));
-  const theirsToday = theirs.filter((h) => activeOn(h, partnerToday));
   const theirName =
     partner?.display_name?.split(' ')[0] ?? petName(partner?.role);
+
+  /**
+   * Whose habits are on top, and whose are below.
+   *
+   * The preview swaps the two SIDES, not just the buttons: bound to `isKeeper`
+   * it showed him his own day with the pencils taken off, which is not her page
+   * at all - her five were never rendered, and the hard-day button could not
+   * appear because his one habit can never leave three of hers missing.
+   */
+  const ownHabits = asHer ? theirs : mine;
+  const ownDay = asHer ? partnerToday : today;
+  const otherHabits = asHer ? mine : theirs;
+  const otherDay = asHer ? today : partnerToday;
+  const otherName = asHer
+    ? (self?.display_name?.split(' ')[0] ?? petName(self?.role))
+    : theirName;
+  const mineToday = ownHabits.filter((h) => activeOn(h, ownDay));
+  const theirsToday = otherHabits.filter((h) => activeOn(h, otherDay));
 
   // The gate counts habits, not slot numbers: what a streak buys you is a
   // NUMBER of habits, and emptying one does not make the next one cheaper.
@@ -189,7 +206,7 @@ export function HabitsRoute() {
   // Her habits are what the money rides on. Daily ones only: a weekly habit
   // cannot be missed on any particular day, so putting three dollars on a
   // Tuesday it was never owed would be inventing a debt.
-  const hers = (isKeeper ? theirs : mine).filter(
+  const hers = (isAdmin ? theirs : mine).filter(
     (h) => h.schedule === 'daily' && activeOn(h, herDay)
   );
   const herSplit = splitDay({
@@ -205,10 +222,16 @@ export function HabitsRoute() {
   const callBy = shared ? view.tickedBy(shared.id, today) : null;
   const callByName = !callBy ? null : callBy === userId ? 'you' : theirName;
 
-  const owedClp = toPesos(
-    Math.max(0, pots.betPeriodCents - pots.betPeriodStakedCents),
-    rate
-  );
+  /**
+   * What the wheel opens on.
+   *
+   * The LIFETIME debt, not this week's. A day only settles once it is over for
+   * both of us, which is two days after it ends, so the last days of every week
+   * are written after the week has rolled and appear in no weekly figure at all.
+   * Prefilling from the week therefore left money condemned and never placed.
+   * The week is the rhythm; this is the obligation.
+   */
+  const owedClp = toPesos(unplaced(pots), rate);
 
   return (
     <div className="curtain-reveal space-y-3">
@@ -283,17 +306,17 @@ export function HabitsRoute() {
 
       {/* ── what is left today ───────────────────────────────────────────── */}
       <Card tone="hairline">
-        {shared && activeOn(shared, today) && (
+        {shared && activeOn(shared, ownDay) && (
           <CallPill
             habit={shared}
-            done={view.isDone(shared.id, today)}
-            interactive
+            done={view.isDone(shared.id, ownDay)}
+            interactive={!asHer}
             byName={callByName}
             today
             onToggle={() =>
               toggle.mutate({
                 habitId: shared.id,
-                day: today,
+                day: ownDay,
                 on: !view.isDone(shared.id, today),
                 shared: true,
                 selfName: self?.display_name,
@@ -304,7 +327,7 @@ export function HabitsRoute() {
 
         <SectionLabel
           className="mt-3"
-          note={view.statusOf(today).complete ? 'all in 🤍' : undefined}
+          note={view.statusOf(ownDay).complete ? 'all in 🤍' : undefined}
         >
           Yours today
         </SectionLabel>
@@ -316,18 +339,20 @@ export function HabitsRoute() {
               <HabitButton
                 key={h.id}
                 habit={h}
-                done={view.isDone(h.id, today)}
-                interactive
+                done={view.isDone(h.id, ownDay)}
+                // Nothing is tappable in the preview: it is there to be read,
+                // and a stray thumb there would tick one of HER habits.
+                interactive={!asHer}
                 fluid={mineToday.length > 4}
                 size={mineToday.length > 5 ? 'sm' : 'md'}
                 weekly={
-                  h.schedule === 'weekly' ? view.weekly(h, today) : undefined
+                  h.schedule === 'weekly' ? view.weekly(h, ownDay) : undefined
                 }
                 onToggle={() =>
                   toggle.mutate({
                     habitId: h.id,
-                    day: today,
-                    on: !view.isDone(h.id, today),
+                    day: ownDay,
+                    on: !view.isDone(h.id, ownDay),
                   })
                 }
               />
@@ -398,19 +423,19 @@ export function HabitsRoute() {
 
         {theirsToday.length > 0 && (
           <>
-            <SectionLabel className="mt-3">{theirName}</SectionLabel>
+            <SectionLabel className="mt-3">{otherName}</SectionLabel>
             <HabitRow count={theirsToday.length}>
               {theirsToday.map((h) => (
                 <HabitButton
                   key={h.id}
                   habit={h}
-                  done={view.isDone(h.id, partnerToday)}
+                  done={view.isDone(h.id, otherDay)}
                   interactive={false}
                   fluid={theirsToday.length > 4}
                   size={theirsToday.length > 5 ? 'sm' : 'md'}
                   weekly={
                     h.schedule === 'weekly'
-                      ? view.weekly(h, partnerToday)
+                      ? view.weekly(h, otherDay)
                       : undefined
                   }
                 />
@@ -451,7 +476,7 @@ export function HabitsRoute() {
           My habits
         </SectionLabel>
         <div className="space-y-1.5">
-          {mine.map((h) => (
+          {ownHabits.map((h) => (
             <HabitLine
               key={h.id}
               habit={h}
@@ -523,7 +548,7 @@ export function HabitsRoute() {
                 onEdit={() => setEditing({ habit: h })}
               />
             ))}
-            {theirs.length > 0 && (
+            {theirs.length > 0 && theirs.length < MAX_HERS && (
               <button
                 type="button"
                 onClick={() => setEditing({ habit: null, forHer: true })}
@@ -735,8 +760,8 @@ function Dials({
               The money is on
             </p>
             <p className="font-sans text-xs leading-relaxed text-muted">
-              Turn it off and nothing is asked of you, and neither pot moves.
-              Your habits stay exactly where they are.
+              Turn it off and both pots stop, and so do the reminders. Your
+              habits stay exactly where they are.
             </p>
           </div>
           <Switch
