@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router';
 import { Camera, ImagePlus } from 'lucide-react';
 import { DateTime } from 'luxon';
 import { usePartner } from '@kernel/auth';
+import { useBackCloses } from '@kernel/hooks';
 import { qk } from '@kernel/query';
 import { useTableSync } from '@kernel/realtime';
 import { BUCKETS, usePrefetchImages, useSignedUrls } from '@kernel/storage';
@@ -61,6 +62,18 @@ export function PolaroidRoute() {
     null
   );
   const [viewer, setViewer] = useState<Polaroid | null>(null);
+  // Back closes whatever is on top, not the album under it. One entry for all
+  // three, so the sheet handing its photo to the cropper does not pop it.
+  useBackCloses(!!viewer || !!cropping || catchUpOpen, () => {
+    if (viewer) setViewer(null);
+    else if (cropping) setCropping(null);
+    else {
+      setCatchUpOpen(false);
+      setUrgentDay(null);
+    }
+  });
+  const viewerPhotos = useMemo(() => (viewer ? [viewer] : []), [viewer]);
+  const closeViewer = useCallback(() => setViewer(null), []);
   // Her day sits on top when you open the app. Tapping mine brings it forward.
   const [todayFocus, setTodayFocus] = useState<Focus>('theirs');
   const [params, setParams] = useSearchParams();
@@ -322,9 +335,9 @@ export function PolaroidRoute() {
 
       {viewer && (
         <PolaroidViewer
-          photos={[viewer]}
+          photos={viewerPhotos}
           initialIndex={0}
-          onClose={() => setViewer(null)}
+          onClose={closeViewer}
         />
       )}
     </div>
