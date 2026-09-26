@@ -122,9 +122,10 @@ export function HabitsRoute() {
   const deleteBet = useDeleteBet();
   const rate = useUsdToClp();
 
-  const [month, setMonth] = useState(() =>
-    monthOf(new Date().toISOString().slice(0, 10))
-  );
+  // Null until touched: then it follows her calendar day, not UTC, which is a
+  // month off on the evening of the last day in Chile.
+  const [pickedMonth, setMonth] = useState<string | null>(null);
+  const month = pickedMonth ?? monthOf(view.today);
   const [dials, setDials] = useState(false);
   const [placing, setPlacing] = useState(false);
   const [settling, setSettling] = useState<Bet | null>(null);
@@ -406,7 +407,9 @@ export function HabitsRoute() {
             )}
           </div>
         ) : (
-          !isKeeper &&
+          // His real role, not the preview's: "see it as her" must not let
+          // him file her hard day.
+          !isAdmin &&
           subjectId &&
           !hardSpent &&
           herSplit.missed.length >= 3 && (
@@ -573,9 +576,6 @@ export function HabitsRoute() {
       />
 
       <BetForm
-        // Keyed to what this week owes, so the wheel never opens on the zero it
-        // was mounted with before the pots arrived.
-        key={owedClp}
         open={placing}
         day={today}
         owedClp={owedClp}
@@ -644,8 +644,11 @@ export function HabitsRoute() {
         active={active}
         giftCents={stakes.giftCents}
         betCents={stakes.betCents}
+        // The preview is for reading: its switch must not turn her money off.
         onSave={(next) =>
-          subjectId && saveSettings.mutate({ userId: subjectId, ...next })
+          !asHer &&
+          subjectId &&
+          saveSettings.mutate({ userId: subjectId, ...next })
         }
       />
 
