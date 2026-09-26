@@ -258,7 +258,9 @@ self.addEventListener('notificationclick', (event) => {
         for (const client of clients) {
           if ('focus' in client) {
             void client.focus();
-            if ('navigate' in client) void client.navigate(target);
+            // The open app moves itself: client.navigate() is a full reload,
+            // which on a phone is a white flash and a cold start.
+            client.postMessage({ type: 'navigate', url: target });
             return;
           }
         }
