@@ -33,6 +33,15 @@ export function tickKey(habitId: string, day: string): string {
 export const SLOT_THRESHOLDS = [0, 7, 14, 21] as const;
 export const MAX_SLOTS = SLOT_THRESHOLDS.length;
 
+/**
+ * How many habits he may ask of her.
+ *
+ * `habits_guard()` parks hers in slots 5 to 9 and refuses a sixth, so this is
+ * the database's number, not the screen's. The screen only needs it to stop
+ * offering a button that would be refused.
+ */
+export const MAX_HERS = 5;
+
 /** How many personal habits a streak entitles you to. */
 export function slotsAllowed(streak: number): number {
   return SLOT_THRESHOLDS.filter((t) => streak >= t).length;
