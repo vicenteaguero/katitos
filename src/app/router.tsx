@@ -25,3 +25,13 @@ export const router = createBrowserRouter([
     ],
   },
 ]);
+
+// A tapped notification, while the app is already open: the service worker
+// asks it to move rather than reloading it (see sw.ts, notificationclick).
+navigator.serviceWorker?.addEventListener('message', (e: MessageEvent) => {
+  const data = e.data as { type?: string; url?: string } | null;
+  if (data?.type !== 'navigate' || !data.url) return;
+  const url = new URL(data.url, location.origin);
+  if (url.origin !== location.origin) return;
+  void router.navigate(url.pathname + url.search + url.hash);
+});
