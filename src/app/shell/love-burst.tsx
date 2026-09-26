@@ -50,7 +50,7 @@ const SHOW = {
   cheer: {
     pool: CONFETTI,
     words: CHEERS,
-    count: [36, 52],
+    count: [24, 32],
     dur: [1.6, 3.4],
     extra: 4,
     ms: 4600,
@@ -58,7 +58,7 @@ const SHOW = {
   cheerHim: {
     pool: CONFETTI,
     words: CHEERS_HIM,
-    count: [36, 52],
+    count: [24, 32],
     dur: [1.6, 3.4],
     extra: 4,
     ms: 4600,
