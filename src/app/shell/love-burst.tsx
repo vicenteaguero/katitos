@@ -24,11 +24,17 @@ const CONFETTI = ['🎉', '🥳', '🏆', '✨', '🎊', '👑', '🌟', '🍾',
 const CHEERS = [
   'Молодец! 💪',
   'Bravo, Liubimaya 👑',
-  'Proud of you 🥹',
   'Ты умница ✨',
   'Te pasaste, bonita 🎉',
-  'My sunshine did it ☀️',
   'Queen of habits 👑',
+];
+const CHEERS_HIM = [
+  'Молодец! 💪',
+  'Bravo, Liubimonkey 👑',
+  'My sunshine did it ☀️',
+  'Te pasaste, bonito 🎉',
+  'King of habits 👑',
+  'любимый 🤎',
 ];
 
 /** How much of a show each kind puts on. */
@@ -44,6 +50,14 @@ const SHOW = {
   cheer: {
     pool: CONFETTI,
     words: CHEERS,
+    count: [36, 52],
+    dur: [1.6, 3.4],
+    extra: 4,
+    ms: 4600,
+  },
+  cheerHim: {
+    pool: CONFETTI,
+    words: CHEERS_HIM,
     count: [36, 52],
     dur: [1.6, 3.4],
     extra: 4,
@@ -70,6 +84,7 @@ interface BubbleCfg {
 }
 interface Burst {
   id: number;
+  kind: BurstKind;
   hearts: HeartCfg[];
   bubbles: BubbleCfg[];
 }
@@ -79,7 +94,7 @@ let counter = 0;
 function makeBurst(note: string, kind: BurstKind): Burst {
   const show = SHOW[kind];
   const n = Math.round(rand(show.count[0], show.count[1]));
-  const wide = kind === 'cheer';
+  const wide = kind !== 'love';
   const hearts: HeartCfg[] = Array.from({ length: n }, (_, k) => ({
     k,
     emoji: pick(show.pool),
@@ -103,13 +118,14 @@ function makeBurst(note: string, kind: BurstKind): Burst {
     k,
     word,
     style: {
-      // A centred cluster over the hero.
-      top: `${rand(30, 62)}%`,
+      // A centred cluster over the hero; a cheer keeps them under the
+      // sticker, not over its face.
+      top: wide ? `${rand(62, 84)}%` : `${rand(30, 62)}%`,
       left: `${rand(28, 72)}%`,
       ['--delay' as string]: `${(k * 0.35 + rand(0, 0.2)).toFixed(2)}s`,
     } as CSSProperties,
   }));
-  return { id: ++counter, hearts, bubbles };
+  return { id: ++counter, kind, hearts, bubbles };
 }
 
 export function LoveBurst() {
@@ -139,6 +155,10 @@ export function LoveBurst() {
               {h.emoji}
             </span>
           ))}
+          {/* Our sticker: how we say proud, "I'm brownie of you". */}
+          {burst.kind !== 'love' && (
+            <img className="lb-sticker" src="/brownie.webp" alt="" />
+          )}
           {burst.bubbles.map((b) => (
             <div key={b.k} className="lb-bubble" style={b.style}>
               {b.word}
