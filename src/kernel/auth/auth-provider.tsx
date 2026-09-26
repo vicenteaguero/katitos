@@ -92,10 +92,30 @@ function rememberUser(qc: QueryClient, session: Session | null) {
   }
 }
 
+/**
+ * The session this phone saved last time, read straight from storage.
+ *
+ * getSession() refreshes an expired token over the network before it answers,
+ * and on iOS it can also sit waiting on a storage lock, so every open after an
+ * hour away was a splash that waited on a round trip to Frankfurt. The saved
+ * session is enough to paint the app from the cache; getSession() still has
+ * the last word, and a dead refresh token signs out through the listener.
+ */
+function storedSession(): Session | null {
+  if (isLocalAuth) return null;
+  try {
+    const raw = localStorage.getItem('katitos-auth');
+    const s = raw ? (JSON.parse(raw) as Session) : null;
+    return s?.user?.id && s.refresh_token ? s : null;
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
-  const [status, setStatus] = useState<'loading' | 'authed' | 'anon'>(
-    'loading'
+  const [session, setSession] = useState<Session | null>(storedSession);
+  const [status, setStatus] = useState<'loading' | 'authed' | 'anon'>(() =>
+    storedSession() ? 'authed' : 'loading'
   );
   const [devSlot, setSlot] = useState<DevSlot | null>(
     isLocalAuth ? getDevSlot() : null
