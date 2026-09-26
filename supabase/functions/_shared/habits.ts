@@ -45,3 +45,81 @@ export function nudgeFor(title: string, emoji: string): string {
     .replaceAll('{title}', title.toLowerCase())
     .replaceAll('{emoji}', emoji);
 }
+
+/**
+ * Habits that do not wait for a random slot: they go off at set hours on her
+ * clock, each hour with its own voice. Matched by title, since he can rename.
+ *
+ * `ifUndone` drops the reminder once the habit is ticked for the day. The
+ * morning sleep one asks her to mark the night, so a tick answers it; the
+ * bedtime one is about tonight and goes regardless.
+ */
+export interface FixedNudge {
+  hour: number;
+  ifUndone: boolean;
+  title: string;
+  lines: readonly string[];
+}
+
+export const FIXED_NUDGES: readonly {
+  match: RegExp;
+  at: readonly FixedNudge[];
+}[] = [
+  {
+    match: /sleep|сон|спат|dormir/i,
+    at: [
+      {
+        hour: 9,
+        ifUndone: true,
+        title: '🌙 How did you sleep?',
+        lines: [
+          'Good morning, Liubimaya. Slept well? Mark it 🤍',
+          'Morning, my sunshine ☀️ Tap it if the night was good.',
+        ],
+      },
+      {
+        hour: 22,
+        ifUndone: false,
+        title: '🌙 Bedtime, katita',
+        lines: [
+          'Go to sleep, beautiful katita. You need your rest 🤍',
+          'Phone down, eyes closed, bonita. Sleep well 🌙',
+          'Спокойной ночи, любимая. Bed now 😴',
+        ],
+      },
+    ],
+  },
+  {
+    match: /\beat|food|lunch|comer|еда/i,
+    at: [
+      {
+        hour: 12,
+        ifUndone: true,
+        title: '🍲 Lunch time',
+        lines: [
+          'A good lunch today, Liubimaya? Something real 🍲',
+          'Middle of the day: eat something proper, my sunshine ☀️',
+        ],
+      },
+      {
+        hour: 18,
+        ifUndone: false,
+        title: '🍲 Snack patrol',
+        lines: [
+          'No shitty snacks tonight, bonita 🙅‍♀️🍫',
+          'Chips are not dinner, katita. Eat something good 🥗',
+          'Put the sweets down, Liubimaya 👀 a real dinner instead.',
+        ],
+      },
+    ],
+  },
+];
+
+/** The fixed reminders for a habit, or null if it takes a random slot. */
+export function fixedFor(title: string): readonly FixedNudge[] | null {
+  return FIXED_NUDGES.find((f) => f.match.test(title))?.at ?? null;
+}
+
+export function lineOf(n: FixedNudge): string {
+  return n.lines[Math.floor(Math.random() * n.lines.length)];
+}
