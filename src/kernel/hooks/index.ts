@@ -3,3 +3,4 @@ export * from './use-now';
 export * from './use-hotkeys';
 export * from './use-roving-focus';
 export * from './use-media-query';
+export * from './use-back-closes';
