@@ -24,6 +24,7 @@ export { RowToolbar, ROW_TOOL, ROW_TOOL_TOUCH } from './row-toolbar';
 export { Kicker } from './kicker';
 export { Chip, ChipRow } from './chip';
 export { StatPill } from './stat-pill';
+export { Roller } from './roller';
 export { Kbd } from './kbd';
 export { TopBarButton, TopBarPill } from './top-bar-button';
 export { SectionLabel } from './section-label';
