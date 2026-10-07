@@ -201,6 +201,7 @@ export function BetForm({
   open,
   day,
   owedClp,
+  maxClp,
   zone,
   onClose,
   onSave,
@@ -209,6 +210,8 @@ export function BetForm({
   day: string;
   /** What this week's betting money says he owes, in pesos. */
   owedClp: number;
+  /** The most the pot can still pay for. 0 means nothing can be placed. */
+  maxClp: number;
   /** His clock, so "Thursday 09:00" means nine in the morning where he is. */
   zone?: string | null;
   onClose: () => void;
@@ -222,7 +225,9 @@ export function BetForm({
 }) {
   const [pick, setPick] = useState('');
   const [odds, setOdds] = useState<number>(ODDS.start);
-  const [stake, setStake] = useState(() => nearestStake(owedClp));
+  const ladder = STAKE_LADDER.filter((v) => v <= maxClp);
+  const startAt = () => Math.min(nearestStake(owedClp), maxClp);
+  const [stake, setStake] = useState(startAt);
   // The next full hour, his time. An empty datetime field renders as today's
   // date on iOS and then saves nothing, which is a control that lies; and a bet
   // with a kickoff is a bet the clock can chase him about.
@@ -231,10 +236,10 @@ export function BetForm({
   // Each opening starts on what is owed now. Keying the form to that figure
   // remounted it mid-entry whenever the pots or the rate refetched.
   useEffect(() => {
-    if (open) setStake(nearestStake(owedClp));
+    if (open) setStake(startAt());
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const valid = pick.trim().length > 0;
+  const valid = pick.trim().length > 0 && maxClp > 0 && stake <= maxClp;
 
   return (
     <Dialog open={open} onClose={onClose} title="Add a bet">
@@ -258,8 +263,10 @@ export function BetForm({
           />
           <Roller
             className="flex-1"
-            label={owedClp > 0 ? `Stake, ${clp(owedClp)} owed` : 'Stake'}
-            values={STAKE_LADDER}
+            label={
+              maxClp > 0 ? `Stake, ${clp(owedClp)} owed` : 'The pot is empty'
+            }
+            values={ladder.length > 0 ? ladder : [0]}
             value={stake}
             onChange={setStake}
             format={(v) => clp(v)}
