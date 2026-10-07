@@ -258,13 +258,7 @@ async function tick(req: Request): Promise<Response> {
       )
     );
 
-  // ── who the money is on, and the one thing that silences her phone ──────
-  //
-  // Hoisted above the nudges deliberately. A hard day is HER valve, and the two
-  // pushes below name every habit she has not ticked - which on the day she has
-  // said she cannot do is the exact message this feature exists not to send.
-  // They used to be built three hundred lines before anything here knew what a
-  // hard day was.
+  // ── who the money is on ─────────────────────────────────────────────────
   const keeper = (members as Member[]).find((m) => m.is_admin) ?? null;
   const subject = (members as Member[]).find((m) => !m.is_admin) ?? null;
   /** The clock behind: the earliest date either of them is living right now. */
@@ -282,20 +276,18 @@ async function tick(req: Request): Promise<Response> {
     return d;
   })();
 
-  const hardRows = subject
-    ? (
-        await admin
-          .from('hard_days')
-          .select('day, hard_day')
-          .eq('user_id', subject.user_id)
-          .gte('day', moneyFrom)
-      ).data
-    : null;
-  const isHard = (day: string) =>
-    (hardRows ?? []).some((d) => d.day === day && d.hard_day);
-  /** Nothing more is asked of a day she has called hard. Not one push. */
-  const resting = (m: Member, day: string) =>
-    !!subject && m.user_id === subject.user_id && isHard(day);
+  /**
+   * Her cheat day: the first day of its Monday-to-Sunday week on which she
+   * held fewer than three. The database owns the rule; this only asks it.
+   */
+  const isCheat = async (day: string) => {
+    if (!subject) return false;
+    const { data } = await admin.rpc('habit_cheat_day', {
+      p_user: subject.user_id,
+      p_day: day,
+    });
+    return data === true;
+  };
 
   const due: Due[] = [];
 
@@ -310,7 +302,7 @@ async function tick(req: Request): Promise<Response> {
 
     // ── three hours of your own day left ──────────────────────────────────
     const todo = owed(member, today);
-    if (todo.length > 0 && !resting(member, today)) {
+    if (todo.length > 0) {
       const left = endOfDay(zone, today).getTime() - now.getTime();
       if (left > 0 && left <= DAY_END_MS) {
         due.push({
@@ -327,7 +319,7 @@ async function tick(req: Request): Promise<Response> {
     // For him that is yesterday; for her, a day ahead, it is the day before.
     const closing = lookup[0];
     const late = owed(member, closing);
-    if (late.length > 0 && !resting(member, closing)) {
+    if (late.length > 0) {
       const left = closesAt(closing) - now.getTime();
       if (left > 0 && left <= LAST_CALL_MS) {
         due.push({
@@ -456,8 +448,7 @@ async function tick(req: Request): Promise<Response> {
       const silent =
         closedDays.length === QUIET_DAYS &&
         closedDays.every(
-          (d) =>
-            !isHard(d) && !pausedOn(d) && hersOn(d).every((h) => !held(h.id, d))
+          (d) => !pausedOn(d) && hersOn(d).every((h) => !held(h.id, d))
         );
 
       if (silent) {
@@ -499,7 +490,7 @@ async function tick(req: Request): Promise<Response> {
       // caught up two days later. `money_settle_day` owns the rule and
       // compares before it writes, so asking again every ten minutes is free;
       // everything that changes a day afterwards (a late tick, a tick he took
-      // back, a hard day, a pause, an archived habit) re-settles it through the
+      // back, a pause, an archived habit) re-settles it through the
       // database's own triggers. This loop is the backstop for a day that ended
       // with nothing happening in it, and for a trigger that ever failed.
       //
@@ -515,10 +506,11 @@ async function tick(req: Request): Promise<Response> {
         const before = isSettled(d);
         const paused = pausedOn(d);
         const hers = hersOn(d);
-        const hard = isHard(d);
+        const cheat = await isCheat(d);
         const done = hers.filter((h) => held(h.id, d));
-        const gift = paused ? 0 : done.length * giftCents;
-        const bet = paused || hard ? 0 : (hers.length - done.length) * betCents;
+        const gift = paused || cheat ? 0 : done.length * giftCents;
+        const bet =
+          paused || cheat ? 0 : (hers.length - done.length) * betCents;
 
         let changed: boolean;
         if (dryRun) {
@@ -537,7 +529,7 @@ async function tick(req: Request): Promise<Response> {
           done: done.length,
           gift,
           bet,
-          hardDay: hard,
+          cheatDay: cheat,
           paused,
         });
 
@@ -550,11 +542,11 @@ async function tick(req: Request): Promise<Response> {
             member: keeper,
             kind: 'closed',
             day: d,
-            title: hard
-              ? 'Habits: a hard day'
+            title: cheat
+              ? `Habits: her cheat day, ${done.length} of ${hers.length}`
               : `Habits: ${done.length} of ${hers.length}`,
-            body: hard
-              ? `She called it a hard day, and it cost nothing. ${dollars(gift)} to her gift. Ring her.`
+            body: cheat
+              ? 'Her one cheat day this week. The streak holds and no money moves. Ring her.'
               : `${dollars(gift)} to her gift, ${dollars(bet)} to the betting money.`,
           });
         }
@@ -562,7 +554,7 @@ async function tick(req: Request): Promise<Response> {
 
       if (!silent) {
         // ── her own nudges, when he has switched them on ──────────────────
-        if (NUDGES_ON && !isHard(herToday)) {
+        if (NUDGES_ON) {
           const hers = hersOn(herToday);
           const dayStart = startOfDay(zone, herToday).getTime();
           // Random, but not independently random: five free draws clump, and
