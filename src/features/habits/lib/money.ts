@@ -10,12 +10,10 @@
  * Two things change the arithmetic, and they are the reason this file exists
  * separately from the screen.
  *
- * A HARD DAY stops the burn and nothing else. It used to stop both, and that was
- * the worst bug in the feature: on a day she managed two of her five and was
- * drowning, pressing the one button meant for her worst days took away the two
- * dollars she had already earned and greyed out the rows, so the valve had a
- * price on it and she would learn not to press it. Now a hard day keeps every
- * dollar she held and forgives every one she did not.
+ * HER CHEAT DAY moves nothing, in either direction. It is the first day of a
+ * Monday-to-Sunday week on which she held fewer than three, and it comes by
+ * itself: there is no button to press and nothing to explain. A second short
+ * day in the same week is an ordinary day and costs what it costs.
  *
  * A PAUSED pot stops everything, because a switch she turned off is not consent
  * she withdrew from halfway. The scheduler also never settles a day she was
@@ -49,7 +47,8 @@ export interface HabitDay {
 
 export interface DayInput {
   habits: HabitDay[];
-  hardDay?: boolean;
+  /** Her cheat day: see `isCheatDay` in `streak.ts`. */
+  cheatDay?: boolean;
   paused?: boolean;
   stakes?: Stakes;
 }
@@ -61,7 +60,7 @@ export interface DaySplit {
   betCents: number;
   /** Nothing she missed costs anything today. */
   forgiven: boolean;
-  /** Nothing moves at all, in either direction: she has it switched off. */
+  /** Nothing moves at all, in either direction: switched off, or her cheat day. */
   free: boolean;
 }
 
@@ -69,16 +68,15 @@ export interface DaySplit {
 export function splitDay(input: DayInput): DaySplit {
   const held = input.habits.filter((h) => h.held).map((h) => h.habitId);
   const missed = input.habits.filter((h) => !h.held).map((h) => h.habitId);
-  const paused = !!input.paused;
-  const forgiven = paused || !!input.hardDay;
+  const free = !!input.paused || !!input.cheatDay;
   const stakes = input.stakes ?? DEFAULT_STAKES;
   return {
     held,
     missed,
-    giftCents: paused ? 0 : held.length * stakes.giftCents,
-    betCents: forgiven ? 0 : missed.length * stakes.betCents,
-    forgiven,
-    free: paused,
+    giftCents: free ? 0 : held.length * stakes.giftCents,
+    betCents: free ? 0 : missed.length * stakes.betCents,
+    forgiven: free,
+    free,
   };
 }
 
