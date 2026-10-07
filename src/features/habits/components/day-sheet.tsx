@@ -41,7 +41,15 @@ export function DaySheet({ day, view, onClose }: DaySheetProps) {
       open={day !== null}
       onClose={onClose}
       title={heading}
-      subtitle={status?.complete ? 'complete' : open ? 'still open' : 'closed'}
+      subtitle={
+        status?.complete
+          ? status.cheat && !open
+            ? 'cheat day 🍰'
+            : 'complete'
+          : open
+            ? 'still open'
+            : 'closed'
+      }
       size="auto"
     >
       {day && (
