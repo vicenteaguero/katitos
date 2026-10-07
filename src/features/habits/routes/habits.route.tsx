@@ -36,7 +36,7 @@ import {
   useSeedHerHabits,
   useSettleBet,
 } from '../api/money.mutations';
-import { money, splitDay, toPesos, unplaced } from '../lib/money';
+import { maxStake, money, splitDay, toPesos, unplaced } from '../lib/money';
 import { MoneyHero } from '../components/money-hero';
 import { BetForm, BetList, SettleBet } from '../components/bets';
 import { addDays, monthOf } from '../lib/days';
@@ -232,7 +232,7 @@ export function HabitsRoute() {
       )}
 
       {/* ── what her days are worth ──────────────────────────────────────── */}
-      <MoneyHero pots={pots} />
+      <MoneyHero pots={pots} rate={rate} />
 
       {/* ── how are we doing ─────────────────────────────────────────────── */}
       {/* Flat, not a hero: the money above it is the one lit card on this page
@@ -516,6 +516,7 @@ export function HabitsRoute() {
         open={placing}
         day={today}
         owedClp={owedClp}
+        maxClp={maxStake(unplaced(pots), rate)}
         zone={self?.timezone}
         onClose={() => setPlacing(false)}
         onSave={(draft) => {
