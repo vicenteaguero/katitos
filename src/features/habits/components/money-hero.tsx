@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon';
 import { Card, Kicker, StatPill } from '@kernel/ui';
-import { clp, money, toPesos, unplaced, type Pots } from '../lib/money';
+import { clp, money, type Pots } from '../lib/money';
 
 /**
  * The two numbers the page opens on, and the two under them that never reset.
@@ -21,7 +21,7 @@ import { clp, money, toPesos, unplaced, type Pots } from '../lib/money';
  * to be printed here - riding, still to place, came back - was bookkeeping said
  * out loud.
  */
-export function MoneyHero({ pots, rate }: { pots: Pots; rate: number }) {
+export function MoneyHero({ pots }: { pots: Pots }) {
   return (
     <>
       <Card tone="hero" className="flex flex-col gap-1.5 rounded-lg">
@@ -63,14 +63,6 @@ export function MoneyHero({ pots, rate }: { pots: Pots; rate: number }) {
           label="Lost on bets"
           tone="fg"
           align="left"
-        />
-        {/* Betting money no bet covers yet. It stays owed until bets add up to
-            it, and no bet can stake more than this. */}
-        <StatPill
-          value={money(unplaced(pots))}
-          label={`Not bet yet, ${clp(toPesos(unplaced(pots), rate))}`}
-          tone="fg"
-          align="center"
         />
         <StatPill value={money(pots.giftCents)} label="Earned in gifts" />
       </Card>
