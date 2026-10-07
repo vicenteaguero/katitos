@@ -1,7 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@kernel/supabase';
-import { usePartner } from '@kernel/auth';
-import { notifyPartner } from '@kernel/push';
 import { qk } from '@kernel/query';
 import { toast } from '@kernel/ui';
 import { toCents } from '../lib/money';
@@ -20,22 +18,6 @@ import { toCents } from '../lib/money';
  * pays her through a policy narrow enough to name.
  */
 
-/** Put a settled day right. His tool: the RPC refuses anyone else. */
-async function reconcile(
-  userId: string,
-  day: string,
-  asKeeper: boolean
-): Promise<void> {
-  if (!asKeeper) return;
-  const { error } = await supabase.rpc('money_reconcile_day', {
-    p_user: userId,
-    p_day: day,
-  });
-  // A failure here means the pots disagree with the ticks until the next
-  // correction - worth a word, never worth losing the tick that caused it.
-  if (error) toast.error('The pots did not follow that one. Try again.');
-}
-
 /** What the database says when it will not take something. */
 export function moneyRefusal(err: unknown): string {
   const code = (err as { code?: string } | null)?.code;
@@ -44,92 +26,8 @@ export function moneyRefusal(err: unknown): string {
     return 'That day is closed. Ask your Katito.';
   }
   if (hint === 'day_future') return 'That day has not started yet.';
-  if (code === 'P0003') {
-    return "This week's hard day is used. Tell your Katito and he can give you another.";
-  }
-  if (code === 'P0004') {
-    return 'Today has gone better than that. Save it for one that has not.';
-  }
   if (hint === 'not_owner') return 'Your habits are his to set. Ask him.';
   return (err as { message?: string } | null)?.message ?? 'That did not save.';
-}
-
-/**
- * Today was hard.
- *
- * The valve, and the most important button on the page. The day stays in the
- * calendar, every dollar she did hold is kept, nothing is owed for the rest,
- * and he is told - not so he can check up on her, but because a day she had to
- * call hard is the day to ring her first. One a week, and only on a day with
- * three or more of hers still missing, both counted by the database.
- */
-export function useHardDay() {
-  const qc = useQueryClient();
-  const { self } = usePartner();
-  return useMutation({
-    mutationFn: async ({
-      userId,
-      day,
-      note,
-    }: {
-      userId: string;
-      day: string;
-      /** Optional, and the whole point: a hard day with a line in it is a
-       *  message to him rather than a hole in the data. */
-      note?: string | null;
-    }) => {
-      const { error } = await supabase.from('hard_days').upsert(
-        {
-          user_id: userId,
-          day,
-          hard_day: true,
-          hard_day_at: new Date().toISOString(),
-          note: note?.trim() || null,
-        },
-        { onConflict: 'user_id,day' }
-      );
-      if (error) throw error;
-    },
-    onError: (err) => toast.error(moneyRefusal(err)),
-    onSuccess: (_d, { userId, day, note }) => {
-      void reconcile(userId, day, !!self?.is_admin);
-      toast.info('Nothing more is asked of today 🤍');
-      void notifyPartner({
-        kind: 'habits',
-        title: '🤍 A hard day',
-        body: note?.trim()
-          ? `She called today a hard one: "${note.trim()}"`
-          : 'She called today a hard one. Nothing is owed. Maybe ring her.',
-        url: '/habits',
-        tag: 'habits-hard-day',
-      });
-    },
-    onSettled: () => {
-      void qc.invalidateQueries({ queryKey: qk.habits.all() });
-    },
-  });
-}
-
-/** Take a hard day back: tapped by accident, or the day turned around. */
-export function useUndoHardDay() {
-  const qc = useQueryClient();
-  const { self } = usePartner();
-  return useMutation({
-    mutationFn: async ({ userId, day }: { userId: string; day: string }) => {
-      const { error } = await supabase
-        .from('hard_days')
-        .update({ hard_day: false, hard_day_at: null })
-        .eq('user_id', userId)
-        .eq('day', day);
-      if (error) throw error;
-    },
-    onError: (err) => toast.error(moneyRefusal(err)),
-    onSuccess: (_d, { userId, day }) =>
-      void reconcile(userId, day, !!self?.is_admin),
-    onSettled: () => {
-      void qc.invalidateQueries({ queryKey: qk.habits.all() });
-    },
-  });
 }
 
 /** Her switch, and his dials. Both live in one row, written on first touch. */
