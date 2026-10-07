@@ -43,12 +43,10 @@ describe('a day, to each pot', () => {
     expect(s.betCents).toBe(0);
   });
 
-  it('keeps what she held on a hard day, and burns none of the rest', () => {
-    // The valve must not have a price on it: pressing it used to cost her the
-    // dollars she had already earned, on the day she could least afford it.
-    const s = splitDay({ habits: day(2), hardDay: true });
-    expect(s.forgiven).toBe(true);
-    expect(s.giftCents).toBe(200);
+  it('moves nothing at all on her cheat day', () => {
+    const s = splitDay({ habits: day(2), cheatDay: true });
+    expect(s.free).toBe(true);
+    expect(s.giftCents).toBe(0);
     expect(s.betCents).toBe(0);
   });
 
