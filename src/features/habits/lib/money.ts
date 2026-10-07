@@ -148,6 +148,20 @@ export function stakeLadder(): number[] {
   return out;
 }
 
+/**
+ * The biggest stake the pot can still pay for, in pesos, or 0 when not even the
+ * smallest one fits. All bets together never stake more than the pot has ever
+ * held; `bets_within_pot()` refuses anything over, in the same cents.
+ */
+export function maxStake(unplacedCents: number, rate: number): number {
+  let best = 0;
+  for (let v = STAKE.min; v <= STAKE.max; v += STAKE.step) {
+    if (toCents(v, rate) > unplacedCents) break;
+    best = v;
+  }
+  return best;
+}
+
 /** The nearest stake the wheel can actually hold. */
 export function nearestStake(pesos: number): number {
   const snapped = Math.round(pesos / STAKE.step) * STAKE.step;
