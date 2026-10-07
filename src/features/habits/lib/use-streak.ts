@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { DateTime } from 'luxon';
 import { usePartner, useUserId } from '@kernel/auth';
+import { useMoneyWho } from '../api/money.queries';
 import { useNow } from '@kernel/hooks';
 import { useEntries, useHabits } from '../api/habits.queries';
 import { useIntents, withIntents } from './intents';
@@ -69,6 +70,8 @@ export function useStreak(): StreakView {
   const now = useNow(60_000);
   const userId = useUserId();
   const { self, partner, isLoading: loadingMembers } = usePartner();
+  const { subject } = useMoneyWho();
+  const subjectId = subject?.user_id ?? null;
   const { data: rawHabits, isLoading: loadingHabits } = useHabits();
 
   // "Put away on" is a day on its owner's clock, as the money reads it. Taken
@@ -143,6 +146,7 @@ export function useStreak(): StreakView {
       done,
       selfId: userId,
       partnerId: partner?.user_id ?? null,
+      subjectId,
       selfZone: self?.timezone,
       partnerZone: partner?.timezone,
       furthest,
@@ -156,7 +160,7 @@ export function useStreak(): StreakView {
     );
 
     const statusOf = (day: string) =>
-      dayStatus(day, all, done, userId, partner?.user_id ?? null);
+      dayStatus(day, all, done, userId, partner?.user_id ?? null, subjectId);
 
     return {
       isLoading: loadingMembers || loadingHabits || loadingEntries,
@@ -176,7 +180,8 @@ export function useStreak(): StreakView {
         done,
         userId,
         partner?.user_id ?? null,
-        furthest
+        furthest,
+        subjectId
       ),
       slots: slotsAllowed(streak.days),
       toNextSlot: daysToNextSlot(streak.days, mine.length),
@@ -210,6 +215,7 @@ export function useStreak(): StreakView {
     self?.timezone,
     partner?.timezone,
     partner?.user_id,
+    subjectId,
     today,
     partnerToday,
     furthest,
