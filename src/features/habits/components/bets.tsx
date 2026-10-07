@@ -16,6 +16,7 @@ import {
 import {
   ODDS,
   clp,
+  money,
   nearestStake,
   oddsLadder,
   stakeLadder,
@@ -59,6 +60,7 @@ export function BetList({
   bets,
   isKeeper,
   rate,
+  unplacedCents,
   onSettle,
   onAdd,
 }: {
@@ -66,6 +68,8 @@ export function BetList({
   isKeeper: boolean;
   /** A dollar in pesos, for the few old rows that predate pesos. */
   rate: number;
+  /** Betting money no bet covers yet. Owed until bets add up to it. */
+  unplacedCents: number;
   onSettle: (bet: Bet) => void;
   onAdd?: () => void;
 }) {
@@ -165,6 +169,14 @@ export function BetList({
             })}
           </CardRows>
         </Card>
+      )}
+      {unplacedCents > 0 && (
+        <p className="mt-1.5 flex items-baseline justify-between gap-3 px-1 font-sans text-xs text-muted">
+          <span>Not bet yet</span>
+          <span className="tabular-nums text-fg">
+            {clp(toPesos(unplacedCents, rate))} ({money(unplacedCents)})
+          </span>
+        </p>
       )}
     </section>
   );
