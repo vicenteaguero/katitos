@@ -10,7 +10,7 @@ import {
   type Pots,
   type Stakes,
 } from '../lib/money';
-import type { Bet, HardDayRow, MoneyPause } from '../types';
+import type { Bet, MoneyPause } from '../types';
 
 /**
  * Whose money this is, and who is looking at it.
@@ -67,24 +67,6 @@ export function useMoneySettings(userId: string | null | undefined) {
     active: query.data?.active ?? true,
     startedOn: query.data?.started_on ?? null,
   };
-}
-
-/** The days she called hard, and anything she said about them. */
-export function useHardDays(userId: string | null | undefined, from: string) {
-  return useQuery({
-    queryKey: qk.habits.hardDays(userId ?? 'none', from),
-    enabled: !!userId,
-    queryFn: async (): Promise<HardDayRow[]> => {
-      const { data, error } = await supabase
-        .from('hard_days')
-        .select('*')
-        .eq('user_id', userId!)
-        .gte('day', from)
-        .order('day', { ascending: false });
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
 }
 
 /**
