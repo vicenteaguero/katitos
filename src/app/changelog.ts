@@ -34,6 +34,16 @@ export interface ChangelogEntry {
 /** Every release ever written, newest first - held ones included. */
 export const ALL_ENTRIES: ChangelogEntry[] = [
   {
+    // Shipped 7 October 2026.
+    title: 'Three of five, and a cheat day',
+    date: '2026-10-07',
+    lines: [
+      'The streak now needs three of your five, not all five. Every one still counts for the gift and the bets.',
+      'One day a week, Monday to Sunday, you can do fewer than three and nothing happens: the streak holds and no money moves, not even the gift. That is your cheat day 🍰',
+      'It comes by itself, so the "Today was hard" button is gone. A second day under three in the same week counts as usual.',
+    ],
+  },
+  {
     // Shipped 26 September 2026, and announced the same morning - she asked him
     // for help with five things and this is the help.
     //
