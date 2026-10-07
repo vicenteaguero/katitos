@@ -232,7 +232,7 @@ export function HabitsRoute() {
       )}
 
       {/* ── what her days are worth ──────────────────────────────────────── */}
-      <MoneyHero pots={pots} rate={rate} />
+      <MoneyHero pots={pots} />
 
       {/* ── how are we doing ─────────────────────────────────────────────── */}
       {/* Flat, not a hero: the money above it is the one lit card on this page
@@ -508,6 +508,7 @@ export function HabitsRoute() {
         bets={bets ?? []}
         isKeeper={isKeeper}
         rate={rate}
+        unplacedCents={unplaced(pots)}
         onSettle={(bet) => setSettling(bet)}
         onAdd={() => setPlacing(true)}
       />
