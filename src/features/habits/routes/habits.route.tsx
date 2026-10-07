@@ -14,7 +14,6 @@ import {
   SectionLabel,
   Skeleton,
   Switch,
-  Textarea,
   TopBarButton,
   confirmDialog,
   useScreenChrome,
@@ -24,7 +23,6 @@ import { useToggleEntry } from '../api/habits.mutations';
 import {
   pausedOn,
   useBets,
-  useHardDays,
   useMoneyPauses,
   useMoneyPots,
   useMoneySettings,
@@ -34,11 +32,9 @@ import {
 import {
   useAddBet,
   useDeleteBet,
-  useHardDay,
   useSaveMoneySettings,
   useSeedHerHabits,
   useSettleBet,
-  useUndoHardDay,
 } from '../api/money.mutations';
 import { money, splitDay, toPesos, unplaced } from '../lib/money';
 import { MoneyHero } from '../components/money-hero';
@@ -92,8 +88,7 @@ export function HabitsRoute() {
    * His screen, seen as hers.
    *
    * There is no way for him to log in as her, and there should not be. This
-   * only drops HIS privileges in the UI - the gear, the pencils, the bet form,
-   * the hard-day undo - so he can check what she is actually looking at before
+   * only drops HIS privileges in the UI - the gear, the pencils, and the bet form - so he can check what she is actually looking at before
    * he shows it to her. The database is not fooled by it and does not need to
    * be: everything it would refuse her is already gone from the screen.
    */
@@ -108,14 +103,10 @@ export function HabitsRoute() {
   const { stakes, active } = useMoneySettings(subjectId);
   const { pots } = useMoneyPots(subjectId, herDay);
   const { data: bets } = useBets();
-  // Far enough back to cover the calendar's month and the week the hard-day
-  // rule counts over.
+  // Far enough back to cover the calendar's month.
   const moneyFrom = addDays(new Date().toISOString().slice(0, 10), -45);
-  const { data: hardDays } = useHardDays(subjectId, moneyFrom);
   const { data: pauses } = useMoneyPauses(subjectId, moneyFrom);
   const seed = useSeedHerHabits();
-  const hardDay = useHardDay();
-  const undoHardDay = useUndoHardDay();
   const saveSettings = useSaveMoneySettings();
   const addBet = useAddBet();
   const settleBet = useSettleBet();
@@ -129,7 +120,6 @@ export function HabitsRoute() {
   const [dials, setDials] = useState(false);
   const [placing, setPlacing] = useState(false);
   const [settling, setSettling] = useState<Bet | null>(null);
-  const [callingHard, setCallingHard] = useState(false);
 
   useScreenChrome(
     {
@@ -168,8 +158,7 @@ export function HabitsRoute() {
    *
    * The preview swaps the two SIDES, not just the buttons: bound to `isKeeper`
    * it showed him his own day with the pencils taken off, which is not her page
-   * at all - her five were never rendered, and the hard-day button could not
-   * appear because his one habit can never leave three of hers missing.
+   * at all - her five were never rendered.
    */
   const ownHabits = asHer ? theirs : mine;
   const ownDay = asHer ? partnerToday : today;
@@ -195,15 +184,6 @@ export function HabitsRoute() {
     .map((h) => view.weekly(h, h.user_id === userId ? today : partnerToday))
     .filter((w) => !w.possible);
 
-  const hardToday = (hardDays ?? []).some(
-    (d) => d.day === herDay && d.hard_day
-  );
-  const hardNote = (hardDays ?? []).find((d) => d.day === herDay)?.note ?? null;
-  // One a rolling week, counted the way the database counts it.
-  const hardSpent = (hardDays ?? []).some(
-    (d) => d.hard_day && d.day !== herDay && d.day > addDays(herDay, -7)
-  );
-
   // Her habits are what the money rides on. Daily ones only: a weekly habit
   // cannot be missed on any particular day, so putting three dollars on a
   // Tuesday it was never owed would be inventing a debt.
@@ -215,7 +195,7 @@ export function HabitsRoute() {
       habitId: h.id,
       held: view.isDone(h.id, herDay),
     })),
-    hardDay: hardToday,
+    cheatDay: view.statusOf(herDay).cheat,
     paused: !active || pausedOn(pauses ?? [], herDay),
     stakes,
   });
@@ -379,49 +359,6 @@ export function HabitsRoute() {
           <p className="mt-2 font-sans text-[11px] tabular-nums text-gold">
             {money(herSplit.giftCents)} yours today 🤍
           </p>
-        )}
-
-        {/* The valve. Only on a day that is going badly - three or more of
-            hers still missing - and only if the week's one is unused, so it is
-            quiet the rest of the time instead of being a line about a thing she
-            cannot do. */}
-        {hardToday ? (
-          <div className="mt-3 flex items-center justify-between gap-3">
-            <p className="min-w-0 font-sans text-xs leading-relaxed text-muted">
-              {hardNote ? (
-                <span className="text-fg">&ldquo;{hardNote}&rdquo;</span>
-              ) : (
-                'A hard day. It cost nothing, and nothing was asked.'
-              )}
-            </p>
-            {isKeeper && subjectId && (
-              <Button
-                variant="quiet"
-                size="xs"
-                onClick={() =>
-                  undoHardDay.mutate({ userId: subjectId, day: herDay })
-                }
-              >
-                Undo
-              </Button>
-            )}
-          </div>
-        ) : (
-          // His real role, not the preview's: "see it as her" must not let
-          // him file her hard day.
-          !isAdmin &&
-          subjectId &&
-          !hardSpent &&
-          herSplit.missed.length >= 3 && (
-            <Button
-              variant="ghost"
-              size="xs"
-              className="mt-2.5 self-start"
-              onClick={() => setCallingHard(true)}
-            >
-              Today was hard
-            </Button>
-          )
         )}
 
         {theirsToday.length > 0 && (
@@ -617,16 +554,6 @@ export function HabitsRoute() {
         }}
       />
 
-      <HardDaySheet
-        open={callingHard}
-        onClose={() => setCallingHard(false)}
-        onSave={(note) => {
-          if (!subjectId) return;
-          hardDay.mutate({ userId: subjectId, day: herDay, note });
-          setCallingHard(false);
-        }}
-      />
-
       <Dials
         key={`${stakes.giftCents}:${stakes.betCents}`}
         open={dials}
@@ -668,47 +595,6 @@ export function HabitsRoute() {
         />
       )}
     </div>
-  );
-}
-
-/**
- * Calling a day hard, and saying why if she wants to.
- *
- * The note is why this is a panel and not a single tap. A hard day with nothing
- * in it is a hole in the data; a hard day with one line in it is a message that
- * reaches his phone, which is the thing she actually asked for when she asked
- * for help. Skipping it is one button and costs nothing.
- */
-function HardDaySheet({
-  open,
-  onClose,
-  onSave,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onSave: (note: string | null) => void;
-}) {
-  const [note, setNote] = useState('');
-  return (
-    <Dialog open={open} onClose={onClose} title="Today was hard">
-      <div className="flex flex-col gap-3">
-        <p className="font-sans text-sm leading-relaxed text-muted">
-          Nothing more is asked of today, and nothing is owed. Anything you did
-          still counts.
-        </p>
-        <Field label="Want to tell him why?" hint="He gets this, nobody else">
-          <Textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            rows={3}
-            placeholder="Optional"
-          />
-        </Field>
-        <Button onClick={() => onSave(note || null)}>
-          {note.trim() ? 'Send it, and rest' : 'Just rest'}
-        </Button>
-      </div>
-    </Dialog>
   );
 }
 
