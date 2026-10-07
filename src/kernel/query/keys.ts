@@ -46,9 +46,6 @@ export const qk = {
     allEntries: () => ['habits', 'entries'] as const,
     /** Her stakes and her pause switch. */
     settings: (userId: string) => ['habits', 'settings', userId] as const,
-    /** The days she called hard. */
-    hardDays: (userId: string, from: string) =>
-      ['habits', 'hard-days', userId, from] as const,
     /** The stretches the money was switched off. */
     pauses: (userId: string, from: string) =>
       ['habits', 'pauses', userId, from] as const,
