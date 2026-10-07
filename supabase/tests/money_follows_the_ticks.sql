@@ -35,6 +35,8 @@ $$;
 
 \set her '''22222222-2222-2222-2222-222222222222'''
 \set sat '''2026-09-26'''
+\set tue '''2026-09-29'''
+\set thu '''2026-10-01'''
 \set sleep '''35adb565-675c-4843-ba1d-720f2e3d7001'''
 \set study '''40971e1d-1019-4825-988a-704d145c78f5'''
 \set eat '''39f46073-5bcd-428e-bc30-d334432cd016'''
@@ -62,16 +64,27 @@ select pg_temp.expect('delete -> missed', (select direction || '/' || reason fro
 insert into habit_entries (habit_id, day, marked_by) values (:study, :sat, :her);
 select pg_temp.expect('late tick -> gift', pg_temp.pots(:sat), 'gift=500 bet=0');
 
--- 7. A hard day forgives the misses and keeps what she held.
+-- 7. Three of five still pays and burns as ever.
 delete from habit_entries where habit_id in (:study, :eat) and day = :sat;
 select pg_temp.expect('two missed', pg_temp.pots(:sat), 'gift=300 bet=600');
-insert into hard_days (user_id, day, hard_day) values (:her, :sat, true);
-select pg_temp.expect('hard day forgives', pg_temp.pots(:sat), 'gift=300 bet=0');
-update hard_days set hard_day = false where user_id = :her and day = :sat;
-select pg_temp.expect('hard day lifted', pg_temp.pots(:sat), 'gift=300 bet=600');
-update hard_days set hard_day = true where user_id = :her and day = :sat;
-delete from hard_days where user_id = :her and day = :sat;
-select pg_temp.expect('hard day deleted', pg_temp.pots(:sat), 'gift=300 bet=600');
+
+-- 7b. Fewer than three is her cheat day: no money at all. A second short day
+--     in the same week is an ordinary miss, until the first is filled in and
+--     the second becomes the cheat day.
+delete from habit_entries where habit_id in (:sleep, :study, :eat) and day = :tue;
+select pg_temp.expect('short day is her cheat day', pg_temp.pots(:tue), 'gift=0 bet=0');
+delete from habit_entries where habit_id in (:sleep, :study, :eat) and day = :thu;
+select pg_temp.expect('second short day is a miss', pg_temp.pots(:thu), 'gift=200 bet=900');
+insert into habit_entries (habit_id, day, marked_by)
+  select h, :tue::date, :her::uuid from unnest(array[:sleep, :study, :eat]::uuid[]) h;
+select pg_temp.expect('cheat day filled in', pg_temp.pots(:tue), 'gift=500 bet=0');
+select pg_temp.expect('the cheat moves to thursday', pg_temp.pots(:thu), 'gift=0 bet=0');
+insert into habit_entries (habit_id, day, marked_by)
+  select h, :thu::date, :her::uuid from unnest(array[:sleep, :study, :eat]::uuid[]) h;
+select pg_temp.expect('week restored', pg_temp.pots(:thu), 'gift=500 bet=0');
+-- Her old habit left Monday 21 short. That was before her five, so it does not
+-- spend the cheat day of Saturday's week.
+select pg_temp.expect('before her five counts for nothing', public.habit_cheat_day(:her, '2026-09-21')::text, 'false');
 
 -- 8. The money switched off over that day: nothing; back on: it all returns.
 insert into money_pauses (user_id, from_day, to_day) values (:her, :sat, :sat);
