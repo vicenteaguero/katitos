@@ -27,6 +27,7 @@ export function moneyRefusal(err: unknown): string {
   }
   if (hint === 'day_future') return 'That day has not started yet.';
   if (hint === 'not_owner') return 'Your habits are his to set. Ask him.';
+  if (hint === 'over_pot') return 'That is more than the pot holds.';
   return (err as { message?: string } | null)?.message ?? 'That did not save.';
 }
 
