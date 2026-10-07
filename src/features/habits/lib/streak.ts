@@ -93,10 +93,71 @@ export interface DayStatus {
   shared: boolean | null;
   mine: SideStatus;
   theirs: SideStatus;
-  /** Everything daily that was due that day is ticked. */
+  /**
+   * The day keeps the streak: his habits and the call all ticked, and hers at
+   * `HER_FLOOR` or better, or on her cheat day.
+   */
   complete: boolean;
+  /**
+   * Hers fell short and this is the first such day of its week: her side is
+   * forgiven and no money moves, whatever the rest of the day did.
+   */
+  cheat: boolean;
   /** Nothing at all was ticked. */
   empty: boolean;
+}
+
+/** How many of hers keep a day. All of them, if she has fewer. */
+export const HER_FLOOR = 3;
+
+/** Her daily habits on one day, as required and held. */
+function herSide(
+  day: string,
+  habits: readonly HabitLike[],
+  done: DoneSet,
+  subjectId: string
+): SideStatus {
+  const side: SideStatus = { required: 0, done: 0 };
+  for (const h of habits) {
+    if (h.schedule !== 'daily' || h.kind !== 'personal') continue;
+    if (h.user_id !== subjectId || !activeOn(h, day)) continue;
+    side.required += 1;
+    if (done.has(tickKey(h.id, day))) side.done += 1;
+  }
+  return side;
+}
+
+/** Did her side fall short of the floor? A day with none of hers never does. */
+export function isShort(side: SideStatus): boolean {
+  return side.required > 0 && side.done < Math.min(HER_FLOOR, side.required);
+}
+
+/**
+ * The day her five started. Nothing before it is a cheat day, and nothing
+ * before it uses one up. `public.habit_rule_from()` holds the same date.
+ */
+export const CHEAT_FROM = '2026-09-26';
+
+/**
+ * Her cheat day: the first short day of its Monday-to-Sunday week.
+ *
+ * It keeps the streak and moves no money. A second short day in the same week
+ * is an ordinary miss. `public.habit_cheat_day()` is the database's copy.
+ */
+export function isCheatDay(
+  day: string,
+  habits: readonly HabitLike[],
+  done: DoneSet,
+  subjectId: string | null | undefined
+): boolean {
+  if (!subjectId || day < CHEAT_FROM) return false;
+  if (!isShort(herSide(day, habits, done, subjectId))) return false;
+  for (const d of weekDays(day)) {
+    if (d >= day) break;
+    if (d < CHEAT_FROM) continue;
+    if (isShort(herSide(d, habits, done, subjectId))) return false;
+  }
+  return true;
 }
 
 /**
@@ -104,13 +165,17 @@ export interface DayStatus {
  *
  * Weekly habits are absent on purpose: they cannot break a single day, only the
  * week they end short. See `weekVerdict`.
+ *
+ * `subjectId` is her: the one whose habits keep a day at three. Without it every
+ * daily habit has to be ticked.
  */
 export function dayStatus(
   day: string,
   habits: readonly HabitLike[],
   done: DoneSet,
   selfId: string | null,
-  partnerId: string | null
+  partnerId: string | null,
+  subjectId?: string | null
 ): DayStatus {
   const mine: SideStatus = { required: 0, done: 0 };
   const theirs: SideStatus = { required: 0, done: 0 };
@@ -122,7 +187,10 @@ export function dayStatus(
     if (h.schedule !== 'daily' || !activeOn(h, day)) continue;
     required += 1;
     const ticked = done.has(tickKey(h.id, day));
-    if (!ticked) complete = false;
+    // Hers are judged as a side, below.
+    const isHers =
+      !!subjectId && h.kind === 'personal' && h.user_id === subjectId;
+    if (!ticked && !isHers) complete = false;
 
     if (h.kind === 'shared') {
       shared = ticked;
@@ -135,6 +203,12 @@ export function dayStatus(
     if (ticked) side.done += 1;
   }
 
+  let cheat = false;
+  if (subjectId && isShort(herSide(day, habits, done, subjectId))) {
+    cheat = isCheatDay(day, habits, done, subjectId);
+    if (!cheat) complete = false;
+  }
+
   const empty = !shared && mine.done === 0 && theirs.done === 0;
   // A day nobody had a habit on is not a day we kept: it is a day before the
   // streak existed. Counting it would have made every date since the epoch
@@ -145,6 +219,7 @@ export function dayStatus(
     mine,
     theirs,
     complete: complete && required > 0,
+    cheat,
     empty,
   };
 }
@@ -243,6 +318,8 @@ export interface StreakInput {
   done: DoneSet;
   selfId: string | null;
   partnerId: string | null;
+  /** Her, whose habits keep a day at three. */
+  subjectId?: string | null;
   selfZone: string | null | undefined;
   partnerZone: string | null | undefined;
   /** The later of our two clocks - where the walk starts. */
@@ -266,6 +343,7 @@ export function computeStreak(input: StreakInput): StreakResult {
     done,
     selfId,
     partnerId,
+    subjectId,
     selfZone,
     partnerZone,
     furthest,
@@ -299,7 +377,7 @@ export function computeStreak(input: StreakInput): StreakResult {
     const week = verdictFor(day);
     if (week === 'failed') break;
 
-    const status = dayStatus(day, habits, done, selfId, partnerId);
+    const status = dayStatus(day, habits, done, selfId, partnerId, subjectId);
     if (status.complete) {
       if (week === 'pending') atStake += 1;
       else days += 1;
@@ -321,7 +399,8 @@ export function longestStreak(
   done: DoneSet,
   selfId: string | null,
   partnerId: string | null,
-  furthest: string
+  furthest: string,
+  subjectId?: string | null
 ): number {
   const earliest = habits.reduce<string | null>(
     (min, h) =>
@@ -333,7 +412,7 @@ export function longestStreak(
   let best = 0;
   let run = 0;
   for (let day = earliest; day <= furthest; day = addDays(day, 1)) {
-    if (dayStatus(day, habits, done, selfId, partnerId).complete) {
+    if (dayStatus(day, habits, done, selfId, partnerId, subjectId).complete) {
       run += 1;
       if (run > best) best = run;
     } else {
