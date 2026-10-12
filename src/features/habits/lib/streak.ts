@@ -133,36 +133,6 @@ export function isShort(side: SideStatus): boolean {
 }
 
 /**
- * The day her five started. Nothing before it is a cheat day, and nothing
- * before it uses one up. `public.habit_rule_from()` holds the same date.
- */
-export const CHEAT_FROM = '2026-09-26';
-
-/**
- * Her cheat day: the first short day of its Monday-to-Sunday week.
- *
- * It keeps the streak and moves no money. A second short day in the same week
- * is an ordinary miss. `public.habit_cheat_day()` is the database's copy.
- */
-export function isCheatDay(
-  day: string,
-  habits: readonly HabitLike[],
-  done: DoneSet,
-  subjectId: string | null | undefined,
-  granted?: ReadonlySet<string>
-): boolean {
-  if (!subjectId || day < CHEAT_FROM) return false;
-  if (!isShort(herSide(day, habits, done, subjectId))) return false;
-  for (const d of weekDays(day)) {
-    if (d >= day) break;
-    // A day he granted is already spoken for and spends nothing.
-    if (d < CHEAT_FROM || granted?.has(d)) continue;
-    if (isShort(herSide(d, habits, done, subjectId))) return false;
-  }
-  return true;
-}
-
-/**
  * What happened on one day.
  *
  * Weekly habits are absent on purpose: they cannot break a single day, only the
@@ -206,11 +176,11 @@ export function dayStatus(
     if (ticked) side.done += 1;
   }
 
-  // A day he set ahead of time is a cheat day whatever she held.
-  let cheat = !!subjectId && !!granted?.has(day);
+  // A cheat day is only ever a day he set ahead of time. It forgives her side
+  // whatever she held; any other short day breaks the streak.
+  const cheat = !!subjectId && !!granted?.has(day);
   if (!cheat && subjectId && isShort(herSide(day, habits, done, subjectId))) {
-    cheat = isCheatDay(day, habits, done, subjectId, granted);
-    if (!cheat) complete = false;
+    complete = false;
   }
 
   const empty = !shared && mine.done === 0 && theirs.done === 0;
