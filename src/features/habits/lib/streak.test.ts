@@ -305,7 +305,7 @@ describe('the slots', () => {
   });
 });
 
-describe('three of hers, and a cheat day a week', () => {
+describe('three of hers, and the cheat days he sets', () => {
   const FIVE = ['h1', 'h2', 'h3', 'h4', 'h5'].map((id) =>
     habit({ id, user_id: A })
   );
@@ -329,33 +329,30 @@ describe('three of hers, and a cheat day a week', () => {
     expect(dayStatus('2026-09-30', ALL, done, V, A, A).complete).toBe(false);
   });
 
-  it('forgives the first short day of the week, and only the first', () => {
-    // Tue 29 Sep and Thu 1 Oct, both two of five, in one Monday-to-Sunday week.
-    const done = new Set(
-      range('2026-09-28', '2026-10-04').flatMap((d) =>
-        heldOn(d, d === '2026-09-29' || d === '2026-10-01' ? 2 : 4)
-      )
-    );
-    const tue = dayStatus('2026-09-29', ALL, done, V, A, A);
-    expect(tue.cheat).toBe(true);
-    expect(tue.complete).toBe(true);
-    const thu = dayStatus('2026-10-01', ALL, done, V, A, A);
-    expect(thu.cheat).toBe(false);
-    expect(thu.complete).toBe(false);
+  it('breaks the day when she is short and he did not set a cheat day', () => {
+    const done = new Set(heldOn('2026-09-29', 2));
+    const st = dayStatus('2026-09-29', ALL, done, V, A, A);
+    expect(st.cheat).toBe(false);
+    expect(st.complete).toBe(false);
   });
 
-  it('gives a new week its own cheat day', () => {
-    // Sun 4 Oct is short, and so is Mon 5 Oct: two weeks, two cheat days.
-    const done = new Set(
-      range('2026-09-28', '2026-10-05').flatMap((d) =>
-        heldOn(d, d === '2026-10-04' ? 1 : d === '2026-10-05' ? 0 : 4)
-      )
-    );
-    expect(dayStatus('2026-10-04', ALL, done, V, A, A).cheat).toBe(true);
-    expect(dayStatus('2026-10-05', ALL, done, V, A, A).cheat).toBe(true);
+  it('forgives a short day only when he set it', () => {
+    const done = new Set(heldOn('2026-09-29', 2));
+    const granted = new Set(['2026-09-29']);
+    const st = dayStatus('2026-09-29', ALL, done, V, A, A, granted);
+    expect(st.cheat).toBe(true);
+    expect(st.complete).toBe(true);
   });
 
-  it('carries the streak across a cheat day', () => {
+  it('marks a set day as a cheat day even when she held everything', () => {
+    const done = new Set(heldOn('2026-09-29', 5));
+    const granted = new Set(['2026-09-29']);
+    expect(dayStatus('2026-09-29', ALL, done, V, A, A, granted).cheat).toBe(
+      true
+    );
+  });
+
+  it('carries the streak across a cheat day he set', () => {
     const days = range('2026-09-28', '2026-10-04');
     const done = new Set(
       days.flatMap((d) => heldOn(d, d === '2026-10-01' ? 1 : 4))
@@ -365,15 +362,9 @@ describe('three of hers, and a cheat day a week', () => {
       habits: ALL,
       done,
       subjectId: A,
+      granted: new Set(['2026-10-01']),
       furthest: '2026-10-04',
     });
     expect(r.days).toBe(7);
-  });
-
-  it('never counts a day before her five started', () => {
-    // Mon 21 Sep was short on her old habit; Sat 26 Sep is still the cheat day.
-    const done = new Set(heldOn('2026-09-26', 2));
-    expect(dayStatus('2026-09-26', ALL, done, V, A, A).cheat).toBe(true);
-    expect(dayStatus('2026-09-21', ALL, done, V, A, A).cheat).toBe(false);
   });
 });
