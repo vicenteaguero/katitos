@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import { DateTime } from 'luxon';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import { cn } from '@kernel/lib';
 import { addDays, monthGrid, monthOf } from '../lib/days';
 import type { DayStatus } from '../lib/streak';
@@ -10,6 +10,8 @@ const WEEKDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 export type DayState =
   | 'complete'
+  /** A day he set as a cheat day: painted like a kept day, with a star. */
+  | 'cheat'
   | 'partial'
   | 'missed'
   | 'open'
@@ -27,6 +29,8 @@ export interface MonthGridProps {
   /** The first day anything was due; before it there was nothing to miss. */
   since: string | null;
   onPick: (day: string) => void;
+  /** He can set a day that has not happened yet; she cannot open one. */
+  pickFuture?: boolean;
 }
 
 /**
@@ -44,6 +48,7 @@ export function MonthGrid({
   statusOf,
   since,
   onPick,
+  pickFuture = false,
 }: MonthGridProps) {
   const days = monthGrid(month);
   const label = DateTime.fromISO(`${month}-01`, { zone: 'utc' }).toFormat(
@@ -53,6 +58,7 @@ export function MonthGrid({
   const atEnd = month >= monthOf(furthest);
 
   const stateOf = (day: string): DayState => {
+    if (statusOf(day).cheat) return 'cheat';
     if (day > furthest) return 'future';
     // Before the first habit existed there was nothing to keep, so those days
     // are blank rather than failed. A wall of misses for a month you had not
@@ -114,7 +120,9 @@ export function MonthGrid({
               key={day}
               type="button"
               onClick={() => onPick(day)}
-              disabled={state === 'future' || state === 'before'}
+              disabled={
+                state === 'before' || (state === 'future' && !pickFuture)
+              }
               aria-label={DateTime.fromISO(day, { zone: 'utc' }).toFormat(
                 'cccc d LLLL'
               )}
@@ -130,7 +138,9 @@ export function MonthGrid({
                 run &&
                   (i % 7 === 6 || !isRun(addDays(day, 1))) &&
                   'cal-run--end',
-                state !== 'future' && state !== 'before' && 'lift-press'
+                (state !== 'future' || pickFuture) &&
+                  state !== 'before' &&
+                  'lift-press'
               )}
             >
               <DayDot
@@ -177,6 +187,7 @@ const THEIRS = '#b5633a';
 function dotStyle(state: DayState): CSSProperties | undefined {
   switch (state) {
     case 'complete':
+    case 'cheat':
       return { background: 'linear-gradient(150deg, #e4c36a, #b8912f)' };
     case 'open':
       return { border: '1.5px dashed rgba(228,195,106,.55)' };
@@ -201,6 +212,9 @@ export function StateSwatch({ state }: { state: DayState }) {
       aria-hidden="true"
     >
       {state === 'partial' && <SplitRing mine theirs={false} size={15} />}
+      {state === 'cheat' && (
+        <Star className="h-2.5 w-2.5 fill-current text-bg" strokeWidth={0} />
+      )}
     </span>
   );
 }
@@ -228,7 +242,7 @@ function DayDot({
       <span
         className={cn(
           'relative grid h-[26px] w-[26px] place-items-center rounded-full font-sans text-[11px] tabular-nums',
-          state === 'complete' && 'font-bold text-bg',
+          (state === 'complete' || state === 'cheat') && 'font-bold text-bg',
           state === 'before' && 'text-fg/20',
           state !== 'complete' &&
             state !== 'before' &&
@@ -237,14 +251,14 @@ function DayDot({
         style={dotStyle(state)}
       >
         {state === 'partial' && <SplitRing mine={mineIn} theirs={theirsIn} />}
-        <span className="relative">{n}</span>
-        {status.cheat && (
-          <span
-            aria-hidden="true"
-            className="absolute -right-1 -top-1 text-[8px] leading-none"
-          >
-            ⭐
-          </span>
+        {state === 'cheat' ? (
+          <Star
+            className="relative h-3.5 w-3.5 fill-current"
+            strokeWidth={0}
+            aria-label={`${n}, cheat day`}
+          />
+        ) : (
+          <span className="relative">{n}</span>
         )}
       </span>
       <span
