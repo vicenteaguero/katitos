@@ -148,13 +148,15 @@ export function isCheatDay(
   day: string,
   habits: readonly HabitLike[],
   done: DoneSet,
-  subjectId: string | null | undefined
+  subjectId: string | null | undefined,
+  granted?: ReadonlySet<string>
 ): boolean {
   if (!subjectId || day < CHEAT_FROM) return false;
   if (!isShort(herSide(day, habits, done, subjectId))) return false;
   for (const d of weekDays(day)) {
     if (d >= day) break;
-    if (d < CHEAT_FROM) continue;
+    // A day he granted is already spoken for and spends nothing.
+    if (d < CHEAT_FROM || granted?.has(d)) continue;
     if (isShort(herSide(d, habits, done, subjectId))) return false;
   }
   return true;
@@ -175,7 +177,8 @@ export function dayStatus(
   done: DoneSet,
   selfId: string | null,
   partnerId: string | null,
-  subjectId?: string | null
+  subjectId?: string | null,
+  granted?: ReadonlySet<string>
 ): DayStatus {
   const mine: SideStatus = { required: 0, done: 0 };
   const theirs: SideStatus = { required: 0, done: 0 };
@@ -203,9 +206,10 @@ export function dayStatus(
     if (ticked) side.done += 1;
   }
 
-  let cheat = false;
-  if (subjectId && isShort(herSide(day, habits, done, subjectId))) {
-    cheat = isCheatDay(day, habits, done, subjectId);
+  // A day he set ahead of time is a cheat day whatever she held.
+  let cheat = !!subjectId && !!granted?.has(day);
+  if (!cheat && subjectId && isShort(herSide(day, habits, done, subjectId))) {
+    cheat = isCheatDay(day, habits, done, subjectId, granted);
     if (!cheat) complete = false;
   }
 
@@ -320,6 +324,8 @@ export interface StreakInput {
   partnerId: string | null;
   /** Her, whose habits keep a day at three. */
   subjectId?: string | null;
+  /** Days he set as cheat days ahead of time. */
+  granted?: ReadonlySet<string>;
   selfZone: string | null | undefined;
   partnerZone: string | null | undefined;
   /** The later of our two clocks - where the walk starts. */
@@ -344,6 +350,7 @@ export function computeStreak(input: StreakInput): StreakResult {
     selfId,
     partnerId,
     subjectId,
+    granted,
     selfZone,
     partnerZone,
     furthest,
@@ -377,7 +384,15 @@ export function computeStreak(input: StreakInput): StreakResult {
     const week = verdictFor(day);
     if (week === 'failed') break;
 
-    const status = dayStatus(day, habits, done, selfId, partnerId, subjectId);
+    const status = dayStatus(
+      day,
+      habits,
+      done,
+      selfId,
+      partnerId,
+      subjectId,
+      granted
+    );
     if (status.complete) {
       if (week === 'pending') atStake += 1;
       else days += 1;
@@ -400,7 +415,8 @@ export function longestStreak(
   selfId: string | null,
   partnerId: string | null,
   furthest: string,
-  subjectId?: string | null
+  subjectId?: string | null,
+  granted?: ReadonlySet<string>
 ): number {
   const earliest = habits.reduce<string | null>(
     (min, h) =>
@@ -412,7 +428,10 @@ export function longestStreak(
   let best = 0;
   let run = 0;
   for (let day = earliest; day <= furthest; day = addDays(day, 1)) {
-    if (dayStatus(day, habits, done, selfId, partnerId, subjectId).complete) {
+    if (
+      dayStatus(day, habits, done, selfId, partnerId, subjectId, granted)
+        .complete
+    ) {
       run += 1;
       if (run > best) best = run;
     } else {
