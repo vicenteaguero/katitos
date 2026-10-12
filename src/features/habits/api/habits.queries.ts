@@ -48,3 +48,17 @@ export function useEntries(from: string, to: string, enabled = true) {
     },
   });
 }
+
+/** The days he has set as cheat days ahead of time, as plain dates. */
+export function useCheatDays() {
+  return useQuery({
+    queryKey: qk.habits.cheatDays(),
+    queryFn: async (): Promise<string[]> => {
+      const { data, error } = await supabase
+        .from('habit_cheat_days')
+        .select('day');
+      if (error) throw error;
+      return (data ?? []).map((r) => r.day);
+    },
+  });
+}
