@@ -3,7 +3,7 @@ import { DateTime } from 'luxon';
 import { usePartner, useUserId } from '@kernel/auth';
 import { useMoneyWho } from '../api/money.queries';
 import { useNow } from '@kernel/hooks';
-import { useEntries, useHabits } from '../api/habits.queries';
+import { useCheatDays, useEntries, useHabits } from '../api/habits.queries';
 import { useIntents, withIntents } from './intents';
 import type { Habit } from '../types';
 import { addDays, furthestDay, isDayOpen, isSettled, localDay } from './days';
@@ -59,6 +59,8 @@ export interface StreakView {
   /** Who put the tick there, for the shared habit where it could be either. */
   tickedBy: (habitId: string, day: string) => string | null;
   statusOf: (day: string) => DayStatus;
+  /** Did he set this day as a cheat day ahead of time? She cannot change it. */
+  isGranted: (day: string) => boolean;
   weekly: (habit: Habit, day: string) => WeeklyProgress;
   /** Days I can still tick and have not finished. Drives the amber nudge. */
   unfinished: string[];
@@ -73,6 +75,8 @@ export function useStreak(): StreakView {
   const { subject } = useMoneyWho();
   const subjectId = subject?.user_id ?? null;
   const { data: rawHabits, isLoading: loadingHabits } = useHabits();
+  const { data: cheatDays } = useCheatDays();
+  const granted = useMemo(() => new Set(cheatDays ?? []), [cheatDays]);
 
   // "Put away on" is a day on its owner's clock, as the money reads it. Taken
   // from the UTC timestamp, a habit archived just after her midnight also
@@ -147,6 +151,7 @@ export function useStreak(): StreakView {
       selfId: userId,
       partnerId: partner?.user_id ?? null,
       subjectId,
+      granted,
       selfZone: self?.timezone,
       partnerZone: partner?.timezone,
       furthest,
@@ -160,7 +165,15 @@ export function useStreak(): StreakView {
     );
 
     const statusOf = (day: string) =>
-      dayStatus(day, all, done, userId, partner?.user_id ?? null, subjectId);
+      dayStatus(
+        day,
+        all,
+        done,
+        userId,
+        partner?.user_id ?? null,
+        subjectId,
+        granted
+      );
 
     return {
       isLoading: loadingMembers || loadingHabits || loadingEntries,
@@ -181,7 +194,8 @@ export function useStreak(): StreakView {
         userId,
         partner?.user_id ?? null,
         furthest,
-        subjectId
+        subjectId,
+        granted
       ),
       slots: slotsAllowed(streak.days),
       toNextSlot: daysToNextSlot(streak.days, mine.length),
@@ -193,6 +207,7 @@ export function useStreak(): StreakView {
       tickedBy: (habitId: string, day: string) =>
         by.get(tickKey(habitId, day)) ?? null,
       statusOf,
+      isGranted: (day: string) => granted.has(day),
       weekly: (habit: Habit, day: string) =>
         weeklyProgress(
           habit,
@@ -216,6 +231,7 @@ export function useStreak(): StreakView {
     partner?.timezone,
     partner?.user_id,
     subjectId,
+    granted,
     today,
     partnerToday,
     furthest,
