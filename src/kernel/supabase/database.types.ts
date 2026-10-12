@@ -851,6 +851,24 @@ export type Database = {
         }
         Relationships: []
       }
+      habit_cheat_days: {
+        Row: {
+          created_at: string
+          day: string
+          set_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          day: string
+          set_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          day?: string
+          set_by?: string | null
+        }
+        Relationships: []
+      }
       habit_entries: {
         Row: {
           created_at: string
