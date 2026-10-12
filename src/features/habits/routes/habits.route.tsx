@@ -396,10 +396,12 @@ export function HabitsRoute() {
           statusOf={view.statusOf}
           since={view.since}
           onPick={setSheetDay}
+          pickFuture={isAdmin}
         />
         <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1">
           <Legend state="complete">both of us</Legend>
           <Legend state="partial">one of us</Legend>
+          <Legend state="cheat">cheat day</Legend>
           <Legend state="open">still open</Legend>
           <Legend state="missed">missed</Legend>
         </div>
