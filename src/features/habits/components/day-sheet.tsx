@@ -52,9 +52,11 @@ export function DaySheet({ day, view, onClose }: DaySheetProps) {
             ? status.cheat && !open
               ? 'cheat day ⭐'
               : 'complete'
-            : open
-              ? 'still open'
-              : 'closed'
+            : day !== null && day > view.furthest
+              ? 'not yet'
+              : open
+                ? 'still open'
+                : 'closed'
       }
       size="auto"
     >
