@@ -238,6 +238,14 @@ function DayDot({
       >
         {state === 'partial' && <SplitRing mine={mineIn} theirs={theirsIn} />}
         <span className="relative">{n}</span>
+        {status.cheat && (
+          <span
+            aria-hidden="true"
+            className="absolute -right-1 -top-1 text-[8px] leading-none"
+          >
+            ⭐
+          </span>
+        )}
       </span>
       <span
         aria-hidden="true"
