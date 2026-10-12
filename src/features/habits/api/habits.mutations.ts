@@ -244,3 +244,19 @@ export function useArchiveHabit() {
     onSettled: () => void qc.invalidateQueries({ queryKey: qk.habits.all() }),
   });
 }
+
+/** Set a day as a cheat day, or take it back. Only the keeper can: RLS. */
+export function useSetCheatDay() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ day, on }: { day: string; on: boolean }) => {
+      const q = supabase.from('habit_cheat_days');
+      const { error } = on
+        ? await q.upsert({ day }, { onConflict: 'day' })
+        : await q.delete().eq('day', day);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.habits.all() }),
+    onError: () => toast.error('Could not change that day'),
+  });
+}
