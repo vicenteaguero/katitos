@@ -73,6 +73,7 @@ import '../habits.css';
 export function HabitsRoute() {
   useTableSync('habits', qk.habits.list());
   useTableSync('habit_entries', qk.habits.allEntries());
+  useTableSync('habit_cheat_days', qk.habits.cheatDays());
   // The ledger only ever moves the pots; the bets only the list.
   useTableSync('money_ledger', qk.habits.all());
   useTableSync('bets', qk.habits.bets());
