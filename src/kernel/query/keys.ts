@@ -44,6 +44,8 @@ export const qk = {
       ['habits', 'entries', from, to] as const,
     /** Every window at once - what a tick invalidates, and nothing else. */
     allEntries: () => ['habits', 'entries'] as const,
+    /** The days he has set as cheat days ahead of time. */
+    cheatDays: () => ['habits', 'cheat-days'] as const,
     /** Her stakes and her pause switch. */
     settings: (userId: string) => ['habits', 'settings', userId] as const,
     /** The stretches the money was switched off. */
