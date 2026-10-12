@@ -1,7 +1,8 @@
 import { DateTime } from 'luxon';
 import { Sheet, Kicker } from '@kernel/ui';
 import { usePartner } from '@kernel/auth';
-import { useToggleEntry } from '../api/habits.mutations';
+import { useSetCheatDay, useToggleEntry } from '../api/habits.mutations';
+import { useMoneyWho } from '../api/money.queries';
 import { activeOn } from '../lib/streak';
 import { petName } from '../lib/names';
 import type { StreakView } from '../lib/use-streak';
@@ -24,9 +25,12 @@ export interface DaySheetProps {
 export function DaySheet({ day, view, onClose }: DaySheetProps) {
   const { self, partner } = usePartner();
   const toggle = useToggleEntry();
+  const setCheat = useSetCheatDay();
+  const { isKeeper } = useMoneyWho();
 
   const open = day !== null && view.isOpen(day);
   const status = day ? view.statusOf(day) : null;
+  const granted = day !== null && view.isGranted(day);
   const heading = day
     ? DateTime.fromISO(day, { zone: 'utc' }).toFormat('cccc d LLLL')
     : '';
@@ -42,18 +46,35 @@ export function DaySheet({ day, view, onClose }: DaySheetProps) {
       onClose={onClose}
       title={heading}
       subtitle={
-        status?.complete
-          ? status.cheat && !open
-            ? 'cheat day 🍰'
-            : 'complete'
-          : open
-            ? 'still open'
-            : 'closed'
+        granted
+          ? 'cheat day ⭐'
+          : status?.complete
+            ? status.cheat && !open
+              ? 'cheat day ⭐'
+              : 'complete'
+            : open
+              ? 'still open'
+              : 'closed'
       }
       size="auto"
     >
       {day && (
         <div className="space-y-4 pb-2">
+          {granted && !isKeeper && (
+            <p className="font-sans text-[13px] text-fg/70">
+              A cheat day. The streak holds and no money moves.
+            </p>
+          )}
+          {isKeeper && (
+            <button
+              type="button"
+              disabled={setCheat.isPending}
+              onClick={() => setCheat.mutate({ day, on: !granted })}
+              className="lift-press w-full rounded-xl border border-fg/15 px-3 py-2 font-sans text-[13px] text-fg/80"
+            >
+              {granted ? 'Take the cheat day back' : 'Make it a cheat day ⭐'}
+            </button>
+          )}
           {shared && (
             <CallPill
               habit={shared}
