@@ -365,6 +365,6 @@ describe('three of hers, and the cheat days he sets', () => {
       granted: new Set(['2026-10-01']),
       furthest: '2026-10-04',
     });
-    expect(r.days).toBe(7);
+    expect(r.days).toBe(6);
   });
 });

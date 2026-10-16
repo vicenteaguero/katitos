@@ -363,7 +363,9 @@ export function computeStreak(input: StreakInput): StreakResult {
       subjectId,
       granted
     );
-    if (status.complete) {
+    if (status.complete && status.cheat) {
+      // A cheat day holds the run: it neither adds a day nor breaks it.
+    } else if (status.complete) {
       if (week === 'pending') atStake += 1;
       else days += 1;
       from = day;
@@ -398,10 +400,18 @@ export function longestStreak(
   let best = 0;
   let run = 0;
   for (let day = earliest; day <= furthest; day = addDays(day, 1)) {
-    if (
-      dayStatus(day, habits, done, selfId, partnerId, subjectId, granted)
-        .complete
-    ) {
+    const status = dayStatus(
+      day,
+      habits,
+      done,
+      selfId,
+      partnerId,
+      subjectId,
+      granted
+    );
+    if (status.complete && status.cheat) {
+      // Holds the run, adds nothing.
+    } else if (status.complete) {
       run += 1;
       if (run > best) best = run;
     } else {
